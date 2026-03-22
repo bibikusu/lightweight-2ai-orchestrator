@@ -1,0 +1,24 @@
+# 実行時設定（プロバイダ・コマンド・上限）
+providers:
+  openai:
+    model: gpt-4o
+    timeout_sec: 120
+    max_output_tokens: 4000
+  claude:
+    model: claude-sonnet-4-20250514
+    timeout_sec: 180
+    max_output_tokens: 6000
+
+commands:
+  test: ""
+  lint: ""
+  typecheck: ""
+  build: ""
+
+runtime:
+  stop_on_first_check_failure: true
+
+limits:
+  max_retries: 3
+  # 1セッションあたりの変更ファイル上限（patch 適用前チェック）
+  max_changed_files: 5

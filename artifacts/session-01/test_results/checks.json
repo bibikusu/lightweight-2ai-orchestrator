@@ -1,0 +1,31 @@
+{
+  "test": {
+    "status": "skipped",
+    "command": "",
+    "returncode": null,
+    "stdout": "",
+    "stderr": ""
+  },
+  "lint": {
+    "status": "skipped",
+    "command": "",
+    "returncode": null,
+    "stdout": "",
+    "stderr": ""
+  },
+  "typecheck": {
+    "status": "skipped",
+    "command": "",
+    "returncode": null,
+    "stdout": "",
+    "stderr": ""
+  },
+  "build": {
+    "status": "skipped",
+    "command": "",
+    "returncode": null,
+    "stdout": "",
+    "stderr": ""
+  },
+  "success": true
+}

@@ -1,0 +1,27 @@
+session_id: session-01
+
+acceptance:
+  - id: AC-01
+    description: run_session.py が session-01.json を読める
+
+  - id: AC-02
+    description: acceptance/session-01.yaml を参照できる
+
+  - id: AC-03
+    description: artifacts/session-01/ 配下に response と report が保存される
+
+  - id: AC-04
+    description: prepared_spec.json が保存される
+
+  - id: AC-05
+    description: implementation_result.json が保存される
+
+  - id: AC-06
+    description: session_report.md が保存される
+
+  - id: AC-07
+    description: 例外発生時にプロセスがエラー終了する
+
+notes:
+  - v1ではAI APIの実接続は未実装でもよい
+  - v1ではローカルチェックはダミー結果でもよい

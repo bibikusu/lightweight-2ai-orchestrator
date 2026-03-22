@@ -1,0 +1,11 @@
+{
+  "session_id": "session-01",
+  "changed_files": [],
+  "implementation_summary": [
+    "dry-run: 実装 API は未実行"
+  ],
+  "patch_status": "dry_run",
+  "risks": [],
+  "open_issues": [],
+  "proposed_patch": ""
+}
