@@ -1,0 +1,23 @@
+{
+  "session_id": "session-02",
+  "phase_id": "phase-02",
+  "title": "provider 最小実装と prepared_spec 到達",
+  "goal": "orchestration/providers を配置し、通常実行で prepared_spec 呼び出し（import 以降）まで到達できる",
+  "scope": [
+    "providers.openai_client / claude_client / llm_json の最小実装",
+    "session-02.json と acceptance/session-02.yaml の配置",
+    "artifacts/session-02/ へのプロンプト・応答保存の前提"
+  ],
+  "out_of_scope": [
+    "本番デプロイ",
+    "patch 本適用",
+    "retry の Claude 再投入ループ",
+    "複数セッション並列"
+  ],
+  "constraints": [
+    "1セッション1目的",
+    "main/master を直接変更しない",
+    "API キーは環境変数で渡す"
+  ],
+  "acceptance_ref": "acceptance/session-02.yaml"
+}

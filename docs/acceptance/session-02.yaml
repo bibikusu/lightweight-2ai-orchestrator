@@ -1,0 +1,17 @@
+session_id: session-02
+
+acceptance:
+  - id: AC-02-01
+    description: session-02.json が読み込める
+
+  - id: AC-02-02
+    description: acceptance/session-02.yaml を参照できる
+
+  - id: AC-02-03
+    description: providers パッケージが import 可能である
+
+  - id: AC-02-04
+    description: 通常実行で prepared_spec 段階まで到達できる（API キー未設定時はその旨のエラーでよい）
+
+notes:
+  - API 実通信の成功までは本セッションの必須としない場合がある
