@@ -36,6 +36,7 @@ class OpenAIClientWrapper:
         )
 
     def _responses_json(self, system_prompt: str, user_prompt: str) -> Dict[str, Any]:
+        print("[INFO] OpenAI Responses API 呼び出し直前（同期待ち）", flush=True)
         response = self._client.responses.create(
             model=self._config.model,
             instructions=system_prompt,

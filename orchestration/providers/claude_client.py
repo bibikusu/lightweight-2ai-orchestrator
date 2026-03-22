@@ -45,6 +45,7 @@ class ClaudeClientWrapper:
         )
 
     def request_implementation(self, system_prompt: str, user_prompt: str) -> Dict[str, Any]:
+        print("[INFO] Claude Messages API 呼び出し直前（同期待ち）", flush=True)
         message = self._client.messages.create(
             model=self._config.model,
             max_tokens=self._config.max_output_tokens,
