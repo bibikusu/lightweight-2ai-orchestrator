@@ -8,6 +8,7 @@ import json
 import subprocess
 import sys
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -145,27 +146,111 @@ def save_text(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
+def _utc_timestamp_compact() -> str:
+    """ログファイル名用 UTC タイムスタンプ（例: 20260322T051030Z）。"""
+    return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+
+
+def _git_branch_safe() -> Optional[str]:
+    """ブランチ名を返す。Git でない／取得失敗時は None。"""
+    if not _is_git_repository():
+        return None
+    try:
+        return get_current_git_branch()
+    except Exception:
+        return None
+
+
 def save_error_log(
     session_dir: Path,
     stage: str,
     error: Union[BaseException, str],
+    session_id: str,
+    *,
+    branch: Optional[str] = None,
     details: Optional[Dict[str, Any]] = None,
 ) -> None:
-    """失敗時に artifacts/session-XX/logs/error.json を保存する。"""
+    """
+    失敗時に error 系ログを保存する。
+    - error.json / error_latest.json: 同一内容（後方互換と最新固定）
+    - error_<UTC>.json: タイムスタンプ付きコピー
+    """
     if isinstance(error, BaseException):
         error_type = type(error).__name__
         message = str(error)
     else:
         error_type = "Error"
         message = str(error)
+    resolved_branch = branch if branch is not None else _git_branch_safe()
+    ts = _utc_timestamp_compact()
     payload: Dict[str, Any] = {
         "stage": stage,
         "error_type": error_type,
         "message": message,
+        "session_id": session_id,
+        "branch": resolved_branch,
+        "timestamp_utc": ts,
     }
     if details:
         payload["details"] = details
-    save_json(session_dir / "logs" / "error.json", payload)
+
+    logs_dir = session_dir / "logs"
+    save_json(logs_dir / "error.json", payload)
+    save_json(logs_dir / "error_latest.json", payload)
+    save_json(logs_dir / f"error_{ts}.json", payload)
+
+
+def record_dry_run_git_warnings(session_dir: Path, session_id: str) -> None:
+    """
+    dry-run 専用: main/master 上でも実行は許可する。
+    dirty worktree のときは警告ログのみ残し、処理は継続する。
+    """
+    if not _is_git_repository():
+        return
+    try:
+        branch = get_current_git_branch()
+    except Exception as e:
+        warn = {
+            "level": "warning",
+            "reason": "git_branch_unavailable",
+            "session_id": session_id,
+            "branch": None,
+            "message": str(e),
+            "timestamp_utc": _utc_timestamp_compact(),
+        }
+        save_json(session_dir / "logs" / "dry_run_git_warning.json", warn)
+        return
+
+    if not is_git_worktree_dirty():
+        return
+
+    warn = {
+        "level": "warning",
+        "reason": "dirty_worktree",
+        "session_id": session_id,
+        "branch": branch,
+        "message": (
+            "dry-run のため続行しますが、作業ツリーに未コミットの変更があります。"
+            "通常実行前にクリーンな状態を推奨します。"
+        ),
+        "timestamp_utc": _utc_timestamp_compact(),
+    }
+    save_json(session_dir / "logs" / "dry_run_git_warning.json", warn)
+    print(
+        f"[WARN] dry-run: dirty worktree（branch={branch!r}）。"
+        f"詳細: {session_dir / 'logs' / 'dry_run_git_warning.json'}",
+        file=sys.stderr,
+    )
+
+
+def log_stage_progress(session_id: str, stage: str, detail: str = "") -> None:
+    """通常実行時、次の検証ステージが追えるよう標準出力に整理ログを出す。"""
+    br = _git_branch_safe()
+    suffix = f" | {detail}" if detail else ""
+    print(
+        f"[INFO] stage={stage} session_id={session_id} branch={br!r}{suffix}",
+        flush=True,
+    )
 
 
 def _git_run(args: List[str], *, check: bool = False) -> subprocess.CompletedProcess[str]:
@@ -694,9 +779,13 @@ def main() -> int:
         )
         max_changed_files = _max_changed_files_from_config(ctx.runtime_config)
 
-        if not args.dry_run:
+        if args.dry_run:
+            record_dry_run_git_warnings(session_dir, args.session_id)
+        else:
             stage = "git_guard"
+            log_stage_progress(args.session_id, stage, "ブランチ検証・sandbox へ切替")
             enforce_git_sandbox_branch(args.session_id)
+            log_stage_progress(args.session_id, "git_guard", "完了 → 以降は API 呼び出し")
 
         spec_system, spec_user = build_prepared_spec_prompts(ctx)
         save_text(session_dir / "prompts" / "prepared_spec_system.txt", spec_system)
@@ -728,6 +817,9 @@ def main() -> int:
             return 0
 
         stage = "prepared_spec"
+        log_stage_progress(
+            args.session_id, stage, "OpenAI（仕様整形）呼び出し開始"
+        )
         prepared_spec = call_chatgpt_for_prepared_spec(ctx)
         save_json(session_dir / "responses" / "prepared_spec.json", prepared_spec)
 
@@ -736,10 +828,14 @@ def main() -> int:
         save_text(session_dir / "prompts" / "implementation_user.txt", impl_user)
 
         stage = "implementation"
+        log_stage_progress(
+            args.session_id, stage, "Claude（実装案）呼び出し開始"
+        )
         impl_result = call_claude_for_implementation(prepared_spec, ctx)
         save_json(session_dir / "responses" / "implementation_result.json", impl_result)
 
         stage = "patch_validation"
+        log_stage_progress(args.session_id, stage, "changed_files 妥当性チェック")
         validate_changed_files_before_patch(
             impl_result,
             prepared_spec,
@@ -748,6 +844,7 @@ def main() -> int:
         )
 
         stage = "checks"
+        log_stage_progress(args.session_id, stage, "ローカル test/lint/typecheck/build")
         check_results = run_local_checks(ctx, skip_build=args.skip_build)
         save_json(session_dir / "test_results" / "checks.json", check_results)
 
@@ -755,6 +852,9 @@ def main() -> int:
 
         if not check_results.get("success"):
             stage = "retry_instruction"
+            log_stage_progress(
+                args.session_id, stage, "チェック失敗 → OpenAI でリトライ指示（設定時）"
+            )
             if max_retries > 0:
                 retry_instruction = call_chatgpt_for_retry_instruction(
                     ctx, prepared_spec, impl_result, check_results
@@ -779,8 +879,19 @@ def main() -> int:
         return 0 if check_results.get("success") else 1
 
     except Exception as e:
-        save_error_log(session_dir, stage, e)
-        print(f"[ERROR] [{stage}] {e}", file=sys.stderr)
+        br = _git_branch_safe()
+        save_error_log(
+            session_dir,
+            stage,
+            e,
+            args.session_id,
+            branch=br,
+        )
+        print(
+            f"[ERROR] stage={stage} session_id={args.session_id} branch={br!r} "
+            f"error_type={type(e).__name__} message={e}",
+            file=sys.stderr,
+        )
         # 可能なら途中までのレポートを残す
         try:
             if ctx is not None and stage not in ("loading", "validating", "init"):

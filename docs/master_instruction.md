@@ -1,4 +1,4 @@
-# Master Instruction
+# Master Instruction v1.2
 
 ## 1. プロジェクト名
 
@@ -8,9 +8,16 @@
 
 ## 2. 目的
 
-本プロジェクトの目的は、ChatGPT と Claude を API 経由で連携させ、
-システム開発を仕様駆動・検収前提・再試行可能な形で進めるための
+本プロジェクトの目的は、GPT・Claude・Cursor の3層体制を前提として、
+システム開発を **仕様駆動・検収前提・再試行可能** な形で進めるための
 最小実行基盤を構築することである。
+
+各ツールの役割は以下とする。
+
+- GPT = 指揮・仕様整理・判定
+- Claude = 分析・実装参謀
+- Cursor = 実作業・実行・検証
+- 人間 = 最終承認・優先順位判断・例外判断
 
 特に、以下を実現する。
 
@@ -25,6 +32,7 @@
 ## 3. スコープ
 
 ### 含むもの
+
 - セッション単位の仕様読込
 - ChatGPT API による仕様整形
 - Claude API による実装支援
@@ -33,8 +41,12 @@
 - retry 制御
 - session report 生成
 - sandbox branch 前提の運用
+- dry-run による安全な事前確認
+- git_guard による main/master 直実行抑止
+- error log の保存
 
 ### 含まないもの
+
 - 本番自動反映
 - 自動マージ
 - 複数セッション並列実行
@@ -42,57 +54,89 @@
 - UIダッシュボード
 - 高度な優先順位最適化
 - 本番DB直接操作
+- proposed_patch の自動本適用
+- retry の高度最適化
+- provider の大規模改修
 
 ---
 
 ## 4. 成功条件
 
-本プロジェクトの最初の成功条件は、以下の通りとする。
+本プロジェクトの v1 系成功条件は、以下の通りとする。
 
-1. `session-01.json` を読み込める
-2. `acceptance/session-01.yaml` を参照できる
-3. ChatGPT向け仕様整形結果を保存できる
-4. Claude向け実装結果を保存できる
-5. `artifacts/session-01/` に report を保存できる
-6. 失敗時にエラー終了できる
+- `docs/sessions/session-01.json` を読み込める
+- `docs/acceptance/session-01.yaml` を参照できる
+- `artifacts/session-01/responses/prepared_spec.json` を保存できる
+- `artifacts/session-01/responses/implementation_result.json` を保存できる
+- `artifacts/session-01/reports/session_report.md` を保存できる
+- 失敗時に `artifacts/session-01/logs/error_latest.json` を保存して終了できる
+- main/master 上の通常実行を git_guard で停止できる
+- `--dry-run` 実行時は、安全に成果物生成のみを行える
 
-v1段階では、実API未接続でも骨組み成立を優先してよい。
+### 補足
+
+- v1段階では、実API未接続でも骨組み成立を優先してよい
+- v1.1段階では、dry-run / git_guard / error log の挙動が固定されていることを重視する
 
 ---
 
 ## 5. 基本原則
 
 ### 原則1: 正本は1本
-現行仕様の正本は本ファイルと global_rules.md を基準とする。
+
+現行仕様の正本は本ファイルと `global_rules.md` を基準とする。
 
 ### 原則2: 1セッション1目的
+
 セッションは常に1つの目的に限定する。
 
 ### 原則3: 役割固定
-- ChatGPT = 仕様整理
-- Claude = 実装
-- オーケストレーター = 制御
-- 人間 = 承認
+
+- GPT = 指揮・仕様整理・判定
+- Claude = 分析・実装参謀
+- Cursor = 実作業・実行・検証
+- オーケストレーター = 実行制御
+- 人間 = 最終承認・例外判断
+
+この役割を越境させないことを前提とする。
+特に、仕様決定は GPT、比較分析は Claude、実作業は Cursor を基準とする。
 
 ### 原則4: 構造化優先
+
 自由文ではなく JSON / YAML / 明示的な項目定義を優先する。
 
 ### 原則5: 受入条件ベース
+
 完了判定は「コードが書けた」ではなく「受入条件を満たしたか」で判断する。
+
+### 原則6: 通常実行と dry-run を分ける
+
+- 通常実行は実API呼び出し・検証・制御を伴う
+- `--dry-run` は安全な事前確認と成果物確認のために使う
+- 通常実行と dry-run の挙動差は仕様として固定する
+
+### 原則7: main/master 保護
+
+- 通常実行は main/master 上では禁止
+- 実変更を伴う処理は sandbox branch 前提とする
 
 ---
 
 ## 6. フェーズ方針
 
 ### Phase 0
+
 骨組み作成
+
 - docs 作成
 - session 雛形作成
 - acceptance 雛形作成
 - run_session.py 骨組み作成
 
 ### Phase 1
+
 最小疎通
+
 - session読込
 - 仕様整形ダミー
 - 実装結果ダミー
@@ -100,14 +144,20 @@ v1段階では、実API未接続でも骨組み成立を優先してよい。
 - report 保存
 
 ### Phase 2
+
 実API連携
+
 - OpenAI API 接続
 - Claude API 接続
 - 応答保存
 - retry最小実装
 
 ### Phase 3
-ローカル検証連携
+
+Git安全弁 + ローカル検証連携
+
+- git_guard
+- sandbox branch 前提運用
 - test
 - lint
 - typecheck
@@ -115,14 +165,52 @@ v1段階では、実API未接続でも骨組み成立を優先してよい。
 - ログ保存
 
 ### Phase 4
-Git強化
-- sandbox branch 自動作成
+
+適用制御と retry 強化
+
 - diff summary
-- patch適用制御
+- patch適用前チェック
+- proposed_patch 適用制御
+- retry 再投入強化
 
 ---
 
-## 7. 禁止事項
+## 7. dry-run 方針
+
+`--dry-run` は、以下の目的で使用する。
+
+- 正本入力が読めるかの確認
+- artifacts 保存確認
+- 実行フローの骨組み確認
+- API未接続状態での事前確認
+
+### dry-run のルール
+
+- `--dry-run` 時は実API呼び出しを行わない
+- `--dry-run` 時は patch適用を行わない
+- `--dry-run` 時は Git変更を行わない
+- `--dry-run` 時はダミー応答またはスタブ結果で成果物生成のみを行う
+- `--dry-run` は main/master 上でも許可する
+- dirty worktree の場合は警告ログを残してよい
+- `--dry-run` の目的は「実装」ではなく「確認」である
+
+---
+
+## 8. 通常実行方針
+
+通常実行は、実際のセッション進行を前提とする。
+
+### 通常実行のルール
+
+- main/master 上では禁止
+- sandbox branch 前提
+- dirty worktree の場合は停止
+- 実API呼び出しを許可
+- check結果に応じて成功 / 停止 / retry判定を行う
+
+---
+
+## 9. 禁止事項
 
 - main/master への直接適用
 - 仕様未確定のまま実装開始
@@ -132,10 +220,12 @@ Git強化
 - 秘密情報をログへ保存すること
 - 実装前に完了扱いすること
 - archive せずに旧仕様を乱立させること
+- dry-run を通常実装の代替として扱うこと
+- proposed_patch を無検証で本適用すること
 
 ---
 
-## 8. 開発物一覧
+## 10. 開発物一覧
 
 最低限必要なファイルは以下とする。
 
@@ -151,28 +241,100 @@ Git強化
 - `orchestration/config.yaml`
 - `orchestration/providers/openai_client.py`
 - `orchestration/providers/claude_client.py`
+- `requirements.txt`
+
+加えて、運用上は以下を固定する。
+
+- GPT は正本仕様と受入条件の整理に使う
+- Claude は差分分析・実装方針・修正案の整理に使う
+- Cursor はファイル編集・コマンド実行・検証・Git操作に使う
+
+3ツールに同じ仕事をさせないことを原則とする。
 
 ---
 
-## 9. 受入方針
+## 11. 受入方針
 
-v1では、以下を満たせば合格候補とする。
+v1.2 では、以下を満たせば合格候補とする。
 
 - 骨組みが壊れていない
 - session が読み込める
 - acceptance が参照できる
 - response / report が保存される
 - エラー時の停止ができる
-- 次の実API連携へ進める状態になっている
+- `error_latest.json` に必要情報が残る
+- 通常実行と dry-run の挙動が分離されている
+- 次の patch適用前チェックと retry強化へ進める状態になっている
 
 ---
 
-## 10. 次にやること
+## 12. error log 方針
+
+失敗時は、最低限以下を記録する。
+
+- stage
+- error_type
+- message
+- session_id
+- branch
+- timestamp_utc
+
+### ログ保存方針
+
+- 最新状態は `error_latest.json`
+- 必要に応じて timestamp 付きエラーログも保存する
+- ターミナル表示順が前後する可能性があるため、最終確認はログファイルを基準とする
+
+---
+
+## 13. 現在地
+
+現時点で、以下は確認済みである。
+
+- main 上の `--dry-run` は成功する
+- main 上の通常実行は git_guard で停止する
+- `error_latest.json` に session_id / branch / timestamp_utc が入る
+- sandbox branch 上で次段検証へ進める前提がある
+
+未実装範囲は以下とする。
+
+- proposed_patch の実適用
+- retry の Claude 再投入ループ
+- provider の大改修
+- 自動 merge
+
+---
+
+## 14. 次にやること
 
 この文書を正本として固定した後、次の順で進める。
 
-1. `roadmap.yaml` を作る
-2. `run_session.py` をローカル配置する
-3. `session-01.json` と `acceptance/session-01.yaml` を置く
-4. ダミー実行で artifacts 出力を確認する
-5. その後に OpenAI / Claude API 実接続へ進む
+1. GPT・Claude・Cursor の3層体制を本プロジェクトの正式運用として固定する
+2. `config.yaml` に実プロジェクトの test / lint / typecheck / build を反映する
+3. `sandbox/session-01` 上で通常実行し、次の停止点を確認する
+4. Cursor に渡す実装依頼文の型を固定する
+5. Claude に渡す差分分析依頼文の型を固定する
+6. その後に patch適用前チェック強化と retry 再投入の最小ループへ進む
+
+---
+
+## 15. 最終方針
+
+本プロジェクトは、最初から完全自動化を目指さない。
+v1.2 の目的は、壊さず・追跡可能で・再試行可能な最小司令塔を成立させることである。
+
+したがって、優先順位は以下の通りとする。
+
+1. 正本維持
+2. 安全弁
+3. 実行記録
+4. 検証可能性
+5. 自動化の拡張
+
+また、本プロジェクトの運用は GPT・Claude・Cursor の3層分業を前提とする。
+
+- GPT は正本維持と判定を担う
+- Claude は実装参謀として差分分析と修正方針を担う
+- Cursor は実際の作業実行と検証を担う
+
+この分業を保つこと自体を、安全性と速度の両立条件とする。
