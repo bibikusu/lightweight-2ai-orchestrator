@@ -328,6 +328,47 @@ def normalize_changed_file_path(path_str: str) -> str:
     return rel.lstrip("./")
 
 
+MAX_FILES = 5
+
+FORBIDDEN_PATHS = [
+    "docs/sessions",
+    "docs/acceptance",
+    "artifacts",
+]
+
+
+def check_file_count(changed_files: List[str]) -> bool:
+    return len(changed_files) <= MAX_FILES
+
+
+def check_forbidden_paths(changed_files: List[str]) -> bool:
+    for f in changed_files:
+        for forbidden in FORBIDDEN_PATHS:
+            if f.startswith(forbidden):
+                return False
+    return True
+
+
+def validate_patch_files(changed_files: List[str]) -> Dict[str, Any]:
+    if not check_file_count(changed_files):
+        return {
+            "status": "error",
+            "error_type": "scope_violation",
+            "message": f"changed_files exceeds limit: {len(changed_files)} > {MAX_FILES}",
+        }
+
+    if not check_forbidden_paths(changed_files):
+        return {
+            "status": "error",
+            "error_type": "scope_violation",
+            "message": "forbidden path detected",
+        }
+
+    return {
+        "status": "success",
+    }
+
+
 def _collect_forbidden_phrases(
     session_data: Dict[str, Any],
     prepared_spec: Dict[str, Any],
@@ -367,6 +408,10 @@ def validate_changed_files_before_patch(
                 f"implementation_result.changed_files[{i}] は空でない文字列である必要があります。"
             )
         normalized.append(normalize_changed_file_path(item))
+
+    vp = validate_patch_files(normalized)
+    if vp["status"] == "error":
+        raise ValueError(vp.get("message", "scope violation"))
 
     if len(normalized) > max_changed_files:
         raise ValueError(
