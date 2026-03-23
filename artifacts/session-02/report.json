@@ -1,0 +1,51 @@
+{
+  "session_id": "session-02a",
+  "status": "completed",
+  "changed_files": [
+    "requirements.txt",
+    "artifacts/session-02/report.json"
+  ],
+  "test_result": "pass",
+  "lint_result": "pass",
+  "typecheck_result": "not_applicable",
+  "build_result": "not_applicable",
+  "acceptance_results": [
+    {
+      "id": "AC-02A-01",
+      "maps_to": "CC-02A-01",
+      "test": "manual_file_check",
+      "result": "pass"
+    },
+    {
+      "id": "AC-02A-02",
+      "maps_to": "CC-02A-02",
+      "test": "manual_json_validation",
+      "result": "pass"
+    },
+    {
+      "id": "AC-02A-03",
+      "maps_to": "CC-02A-03",
+      "test": "manual_json_validation",
+      "result": "pass"
+    },
+    {
+      "id": "AC-02A-04",
+      "maps_to": "CC-02A-04",
+      "test": "manual_json_validation",
+      "result": "pass"
+    },
+    {
+      "id": "AC-02A-05",
+      "maps_to": "CC-02A-05",
+      "test": "manual_diff_check",
+      "result": "pass"
+    }
+  ],
+  "risks": [
+    "artifacts/session-02/report.json は手動検証メタデータであり、CI との自動同期は未整備"
+  ],
+  "open_issues": [
+    "run_session のレポート生成と report.json v1.3 スキーマの自動連携は本 SESSION の scope 外"
+  ],
+  "diff_summary": "session_id を session-02a に統一した提出 JSON とし、typecheck_result / build_result を not_applicable、acceptance_results を object 配列へ修正。pytest 追加済み。"
+}
