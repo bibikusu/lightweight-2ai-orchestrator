@@ -3,3 +3,4 @@ artifacts/
 .pycache_py_compile/
 __pycache__/
 .venv/
+.DS_Store
