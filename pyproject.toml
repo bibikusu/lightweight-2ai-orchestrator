@@ -1,0 +1,24 @@
+[project]
+name = "lightweight-orchestrator"
+version = "0.1.0"
+
+[project.optional-dependencies]
+dev = [
+  "mypy"
+]
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests"]
+addopts = "-q"
+[project]
+name = "lightweight-orchestrator"
+version = "0.1.0"
+
+[project.optional-dependencies]
+dev = [
+  "mypy"
+]
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests"]
+addopts = "-q"

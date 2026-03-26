@@ -1,0 +1,56 @@
+name: run-orchestrator
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install pytest mypy
+
+      - name: Run orchestrator (dry-run)
+        run: |
+          python orchestration/run_session.py --dry-run
+
+      - name: Run tests
+        run: |
+          pytest backend/tests -q
+name: run-orchestrator
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install pytest mypy
+
+      - name: Run orchestrator (dry-run)
+        run: |
+          python orchestration/run_session.py --dry-run
+
+      - name: Run tests
+        run: |
+          pytest backend/tests -q
