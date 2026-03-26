@@ -9,16 +9,16 @@ providers:
     timeout_sec: 180
     max_output_tokens: 6000
 
-# commands: run_session の cwd はリポジトリルート。空文字は skipped（未導入のため意図的に空）。
+# commands: run_session の cwd はリポジトリルート。空文字は skipped。
 commands:
   # test: 未導入のため意図的に空（pytest 等のテストスイート・tests/ なし）
   test: ""
   # lint: 標準ライブラリのみ。PYTHONPYCACHEPREFIX で .pyc をリポジトリ配下に寄せ、権限の厳しい環境でも失敗しにくくする
   lint: 'PYTHONPYCACHEPREFIX="./.pycache_py_compile" python3 -m py_compile orchestration/run_session.py'
-  # typecheck: 未導入のため意図的に空（mypy / pyright 等なし）
-  typecheck: ""
-  # build: 未導入のため意図的に空（Node/Java 等のビルドパイプラインなし）
-  build: ""
+  # typecheck: session-07a 正本
+  typecheck: "python3 -m mypy orchestration --ignore-missing-imports"
+  # build: session-07a 正本
+  build: 'PYTHONPYCACHEPREFIX="./.pycache_compileall" python3 -m compileall -q -f orchestration backend'
 
 runtime:
   stop_on_first_check_failure: true

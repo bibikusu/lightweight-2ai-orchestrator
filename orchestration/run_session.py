@@ -9,6 +9,7 @@ import subprocess
 import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
+import hashlib
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -29,6 +30,16 @@ SESSIONS_DIR = DOCS_DIR / "sessions"
 
 # Git 保護で拒否するブランチ名（小文字比較）
 FORBIDDEN_BRANCHES = frozenset({"main", "master"})
+
+
+def _ensure_repo_root_on_sys_path() -> None:
+    """
+    互換レイヤー: 実行時のみ ROOT_DIR を sys.path に追加する。
+    import 時に副作用を持たせないため、main の冒頭でのみ呼ぶ。
+    """
+    root = str(ROOT_DIR)
+    if root not in sys.path:
+        sys.path.insert(0, root)
 
 
 @dataclass
@@ -527,6 +538,7 @@ implementation_notes
 def build_implementation_prompts(
     prepared_spec: Dict[str, Any],
     ctx: SessionContext,
+    retry_instruction: Optional[Dict[str, Any]] = None,
 ) -> Tuple[str, str]:
     system_prompt = """You are a strict implementation assistant.
 Return only valid JSON.
@@ -534,6 +546,12 @@ Do not add markdown fences.
 Do not expand scope.
 If implementation is not possible, explain in JSON.
 """
+
+    retry_block = ""
+    if retry_instruction:
+        retry_block = "\n\n[retry_instruction]\n" + json.dumps(
+            retry_instruction, ensure_ascii=False, indent=2
+        )
 
     user_prompt = f"""
 session_id: {ctx.session_id}
@@ -543,6 +561,7 @@ session_id: {ctx.session_id}
 
 [session_json]
 {json.dumps(ctx.session_data, ensure_ascii=False, indent=2)}
+{retry_block}
 
 Return JSON with keys:
 session_id
@@ -566,8 +585,10 @@ def build_retry_prompts(
 Return only valid JSON.
 Do not add markdown fences.
 Do not change scope.
+Do not expand scope.
 """
 
+    canonical = resolve_canonical_failure_type(check_results)
     user_prompt = f"""
 session_id: {ctx.session_id}
 
@@ -580,19 +601,26 @@ session_id: {ctx.session_id}
 [check_results]
 {json.dumps(check_results, ensure_ascii=False, indent=2)}
 
+Scope note: Do not expand scope. Respect allowed_changes / forbidden_changes described in prepared_spec.
+
 Return JSON with keys:
 session_id
-failure_type
+failure_type  # failure_type は出力に1つのみ（exactly one）
 priority
 cause_summary
 fix_instructions
 do_not_change
+failed_tests
+error_summary
+changed_files
+
+Known failure_type (canonical): {canonical.get("failure_type")} (priority={canonical.get("priority")})
 """
     return system_prompt, user_prompt
 
 
 def call_chatgpt_for_prepared_spec(ctx: SessionContext) -> Dict[str, Any]:
-    from providers.openai_client import OpenAIClientConfig, OpenAIClientWrapper
+    from orchestration.providers.openai_client import OpenAIClientConfig, OpenAIClientWrapper
 
     openai_cfg = ctx.runtime_config["providers"]["openai"]
     client = OpenAIClientWrapper(
@@ -612,7 +640,21 @@ def call_chatgpt_for_retry_instruction(
     impl_result: Dict[str, Any],
     check_results: Dict[str, Any],
 ) -> Dict[str, Any]:
-    from providers.openai_client import OpenAIClientConfig, OpenAIClientWrapper
+    # 同一原因のリトライ抑止（過去 retry_instruction.json の fingerprint と一致する場合）
+    cause_fp = _compute_retry_cause_fingerprint(check_results)
+    prev_path = ARTIFACTS_DIR / ctx.session_id / "responses" / "retry_instruction.json"
+    if prev_path.is_file():
+        try:
+            prev = json.loads(prev_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            prev = {}
+        if isinstance(prev, dict) and prev.get("cause_fingerprint") == cause_fp:
+            merged = _merge_retry_instruction({}, ctx, prepared_spec, impl_result, check_results)
+            merged["cause_fingerprint"] = cause_fp
+            merged["retry_skipped_same_cause"] = True
+            return merged
+
+    from orchestration.providers.openai_client import OpenAIClientConfig, OpenAIClientWrapper
 
     openai_cfg = ctx.runtime_config["providers"]["openai"]
     client = OpenAIClientWrapper(
@@ -625,14 +667,260 @@ def call_chatgpt_for_retry_instruction(
     system_prompt, user_prompt = build_retry_prompts(
         ctx, prepared_spec, impl_result, check_results
     )
-    return client.request_retry_instruction(system_prompt, user_prompt)
+    raw = client.request_retry_instruction(system_prompt, user_prompt)
+    merged = _merge_retry_instruction(raw, ctx, prepared_spec, impl_result, check_results)
+    merged["cause_fingerprint"] = cause_fp
+    return merged
+
+
+def validate_acceptance_test_mapping(
+    acceptance_items: List[Dict[str, Any]],
+    available_test_names: List[str],
+) -> Dict[str, Any]:
+    """acceptance の test_name が pytest の利用可能テスト名に存在するか検証する。"""
+    avail = {x for x in available_test_names if isinstance(x, str)}
+    missing: List[str] = []
+    for item in acceptance_items:
+        if not isinstance(item, dict):
+            continue
+        tn = item.get("test_name")
+        if isinstance(tn, str) and tn and tn not in avail:
+            missing.append(tn)
+    if missing:
+        return {"status": "error", "missing_test_names": missing}
+    return {"status": "success", "missing_test_names": []}
+
+
+def normalize_check_results_for_retry(check_results: Dict[str, Any]) -> Dict[str, Any]:
+    """retry 判定用にチェック結果を正規化する（オプショナル項目をデフォルト化）。"""
+    out = dict(check_results or {})
+    out.setdefault("scope_violation", False)
+    out.setdefault("regression_detected", False)
+    out.setdefault("spec_missing_detected", False)
+    out.setdefault("error_messages", [])
+    return out
+
+
+def resolve_canonical_failure_type(check_results: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    正本7値＋ no_failure を返す。
+    priority は小さいほど高優先（0 は no_failure）。
+    """
+    cr = normalize_check_results_for_retry(check_results or {})
+
+    # フラグ系（テストが成功でも scope_violation 等が立つことがある）
+    flag_map = [
+        ("scope_violation", "scope_violation", 5),
+        ("regression_detected", "regression", 6),
+        ("spec_missing_detected", "spec_missing", 7),
+    ]
+    flagged: List[Tuple[str, int]] = []
+    for k, ft, pri in flag_map:
+        if cr.get(k) is True:
+            flagged.append((ft, pri))
+    if flagged:
+        ft, pri = sorted(flagged, key=lambda x: x[1])[0]
+        return {"failure_type": ft, "priority": pri}
+
+    if cr.get("success") is True:
+        return {"failure_type": "no_failure", "priority": 0}
+
+    build = (cr.get("build") or {}).get("status")
+    typecheck = (cr.get("typecheck") or {}).get("status")
+    lint = (cr.get("lint") or {}).get("status")
+    test = (cr.get("test") or {}).get("status")
+
+    if build == "failed":
+        return {"failure_type": "build_error", "priority": 1}
+
+    # import_error は test の stderr から推定（ModuleNotFoundError 等）
+    if test == "failed":
+        stderr = str((cr.get("test") or {}).get("stderr") or "")
+        if "ModuleNotFoundError" in stderr or "ImportError" in stderr:
+            return {"failure_type": "import_error", "priority": 2}
+
+    if typecheck == "failed":
+        return {"failure_type": "type_mismatch", "priority": 3}
+
+    if lint == "failed" or test == "failed":
+        return {"failure_type": "test_failure", "priority": 4}
+
+    # ここまで来たら「失敗だが特定できない」扱い。最小限で test_failure に寄せる。
+    return {"failure_type": "test_failure", "priority": 4}
+
+
+def classify_failure_type(check_results: Dict[str, Any]) -> Dict[str, Any]:
+    """旧互換: build/typecheck/lint/test の固定優先順位で failure_type を返す。"""
+    cr = check_results or {}
+    order = [("build", "build_failure", 4), ("typecheck", "typecheck_failure", 3), ("lint", "lint_failure", 2), ("test", "test_failure", 1)]
+    for key, ft, pri in order:
+        if (cr.get(key) or {}).get("status") == "failed":
+            return {"failure_type": ft, "priority": pri}
+    return {"failure_type": "no_failure", "priority": 0}
+
+
+def _compute_retry_cause_fingerprint(check_results: Dict[str, Any]) -> str:
+    """同一原因判定用のフィンガープリント（安定・短縮）。"""
+    cr = normalize_check_results_for_retry(check_results or {})
+    canonical = resolve_canonical_failure_type(cr)
+    parts = {
+        "failure_type": canonical.get("failure_type"),
+        "priority": canonical.get("priority"),
+        "test_stderr": ((cr.get("test") or {}).get("stderr") or "")[:500],
+        "build_stderr": ((cr.get("build") or {}).get("stderr") or "")[:500],
+        "typecheck_stderr": ((cr.get("typecheck") or {}).get("stderr") or "")[:500],
+        "lint_stderr": ((cr.get("lint") or {}).get("stderr") or "")[:500],
+        "flags": {
+            "scope_violation": bool(cr.get("scope_violation")),
+            "regression_detected": bool(cr.get("regression_detected")),
+            "spec_missing_detected": bool(cr.get("spec_missing_detected")),
+        },
+    }
+    s = json.dumps(parts, ensure_ascii=False, sort_keys=True)
+    return hashlib.sha256(s.encode("utf-8")).hexdigest()[:16]
+
+
+def _merge_retry_instruction(
+    raw: Dict[str, Any],
+    ctx: SessionContext,
+    prepared_spec: Dict[str, Any],
+    impl_result: Dict[str, Any],
+    check_results: Dict[str, Any],
+) -> Dict[str, Any]:
+    """OpenAI からの出力を正規化し、必須キーを埋める。"""
+    canonical = resolve_canonical_failure_type(check_results)
+    out: Dict[str, Any] = dict(raw or {})
+    out["session_id"] = ctx.session_id
+    out["failure_type"] = canonical["failure_type"]
+    out["priority"] = canonical["priority"]
+
+    if not isinstance(out.get("cause_summary"), str) or not str(out.get("cause_summary")).strip():
+        out["cause_summary"] = f"failure_type={canonical['failure_type']} priority={canonical['priority']}"
+
+    fi = out.get("fix_instructions")
+    if isinstance(fi, str):
+        fi = [fi]
+    if not isinstance(fi, list) or not any(isinstance(x, str) and x.strip() for x in fi):
+        out["fix_instructions"] = [
+            "失敗ログ（stderr / stdout）を確認し、原因に直接対応する最小修正を行うこと。",
+            "スコープを拡張せず、既存仕様・制約を守ること。",
+        ]
+    else:
+        out["fix_instructions"] = [str(x).strip() for x in fi if isinstance(x, str) and x.strip()]
+
+    dnc = out.get("do_not_change")
+    if isinstance(dnc, str):
+        dnc = [dnc]
+    if not isinstance(dnc, list):
+        dnc = []
+    forb = prepared_spec.get("forbidden_changes", [])
+    if isinstance(forb, list):
+        for x in forb:
+            if isinstance(x, str) and x.strip():
+                dnc.append(x.strip())
+    if not dnc:
+        dnc = ["out_of_scope と forbidden_changes を変更しないこと。"]
+    # 重複排除（順序維持）
+    seen: set[str] = set()
+    uniq: List[str] = []
+    for x in dnc:
+        sx = str(x).strip()
+        if not sx or sx in seen:
+            continue
+        seen.add(sx)
+        uniq.append(sx)
+    out["do_not_change"] = uniq
+
+    return out
+
+
+def compute_next_retry_count(current: int, did_request_new_instruction: bool) -> int:
+    """リトライ指示を新規取得した場合のみ retry_count を +1 する。"""
+    if did_request_new_instruction:
+        return int(current) + 1
+    return int(current)
+
+
+def _read_retry_state_count(session_dir: Path) -> int:
+    p = session_dir / "responses" / "retry_state.json"
+    if not p.is_file():
+        return 0
+    try:
+        return int(json.loads(p.read_text(encoding="utf-8")).get("retry_count", 0))
+    except (ValueError, TypeError, json.JSONDecodeError):
+        return 0
+
+
+def _write_retry_state_count(session_dir: Path, n: int) -> None:
+    save_json(session_dir / "responses" / "retry_state.json", {"retry_count": int(n)})
+
+
+def build_session_report_record(
+    ctx: SessionContext,
+    prepared_spec: Dict[str, Any],
+    impl_result: Dict[str, Any],
+    checks: Dict[str, Any],
+    *,
+    retry_control: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """機械向けの session_report.json レコードを生成する。"""
+    rc = retry_control or {}
+    acceptance_items = []
+    parsed = (ctx.acceptance_data or {}).get("parsed") or {}
+    if isinstance(parsed, dict):
+        ai = parsed.get("acceptance", [])
+        if isinstance(ai, list):
+            acceptance_items = ai
+
+    fn_results = (checks or {}).get("test_function_results") or {}
+    acceptance_results: List[Dict[str, Any]] = []
+    for item in acceptance_items:
+        if not isinstance(item, dict):
+            continue
+        tid = item.get("id")
+        tn = item.get("test_name")
+        if not isinstance(tn, str) or not tn:
+            continue
+        passed = fn_results.get(tn)
+        if passed is True:
+            res = "pass"
+        elif passed is False:
+            res = "fail"
+        else:
+            res = "unknown"
+        acceptance_results.append({"id": tid, "test": tn, "result": res})
+
+    def _to_pf(v: Any) -> str:
+        return "pass" if v == "passed" else ("fail" if v == "failed" else "skip")
+
+    return {
+        "session_id": ctx.session_id,
+        "phase_id": (ctx.session_data or {}).get("phase_id"),
+        "title": (ctx.session_data or {}).get("title"),
+        "goal": (ctx.session_data or {}).get("goal"),
+        "objective": prepared_spec.get("objective"),
+        "changed_files": list(impl_result.get("changed_files", []) or []),
+        "diff_summary": impl_result.get("diff_summary"),
+        "test_result": _to_pf((checks.get("test") or {}).get("status")),
+        "lint_result": _to_pf((checks.get("lint") or {}).get("status")),
+        "typecheck_result": _to_pf((checks.get("typecheck") or {}).get("status")),
+        "build_result": _to_pf((checks.get("build") or {}).get("status")),
+        "risks": list(impl_result.get("risks", []) or []),
+        "open_issues": list(impl_result.get("open_issues", []) or []),
+        "acceptance_results": acceptance_results,
+        "retry_count": int(rc.get("retry_count", 0) or 0),
+        "max_retries": int(rc.get("max_retries", 0) or 0),
+        "retry_stopped_same_cause": bool(rc.get("retry_stopped_same_cause", False)),
+        "retry_stopped_max_retries": bool(rc.get("retry_stopped_max_retries", False)),
+    }
 
 
 def call_claude_for_implementation(
     prepared_spec: Dict[str, Any],
     ctx: SessionContext,
+    retry_instruction: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
-    from providers.claude_client import ClaudeClientConfig, ClaudeClientWrapper
+    from orchestration.providers.claude_client import ClaudeClientConfig, ClaudeClientWrapper
 
     claude_cfg = ctx.runtime_config["providers"]["claude"]
     client = ClaudeClientWrapper(
@@ -642,7 +930,9 @@ def call_claude_for_implementation(
             max_output_tokens=claude_cfg.get("max_output_tokens", 6000),
         )
     )
-    system_prompt, user_prompt = build_implementation_prompts(prepared_spec, ctx)
+    system_prompt, user_prompt = build_implementation_prompts(
+        prepared_spec, ctx, retry_instruction
+    )
     return client.request_implementation(system_prompt, user_prompt)
 
 
@@ -806,6 +1096,7 @@ def _max_changed_files_from_config(cfg: Dict[str, Any]) -> int:
 
 
 def main() -> int:
+    _ensure_repo_root_on_sys_path()
     args = parse_args()
     session_dir = ensure_artifact_dirs(args.session_id)
     stage = "init"
@@ -857,6 +1148,19 @@ def main() -> int:
                 retry_instruction=None,
             )
             save_text(session_dir / "reports" / "session_report.md", report_md)
+            report_obj = build_session_report_record(
+                ctx,
+                prepared_spec,
+                impl_result,
+                check_results,
+                retry_control={
+                    "retry_count": 0,
+                    "max_retries": int(ctx.runtime_config.get("limits", {}).get("max_retries", 0) or 0),
+                    "retry_stopped_same_cause": False,
+                    "retry_stopped_max_retries": False,
+                },
+            )
+            save_json(session_dir / "reports" / "session_report.json", report_obj)
             print(f"[OK] dry-run completed: {args.session_id}")
             print(f"[INFO] artifacts saved under: {session_dir}")
             return 0
@@ -868,15 +1172,14 @@ def main() -> int:
         prepared_spec = call_chatgpt_for_prepared_spec(ctx)
         save_json(session_dir / "responses" / "prepared_spec.json", prepared_spec)
 
-        impl_system, impl_user = build_implementation_prompts(prepared_spec, ctx)
+        impl_system, impl_user = build_implementation_prompts(prepared_spec, ctx, None)
         save_text(session_dir / "prompts" / "implementation_system.txt", impl_system)
         save_text(session_dir / "prompts" / "implementation_user.txt", impl_user)
 
+        # 実装＋チェック（初回）
         stage = "implementation"
-        log_stage_progress(
-            args.session_id, stage, "Claude（実装案）呼び出し開始"
-        )
-        impl_result = call_claude_for_implementation(prepared_spec, ctx)
+        log_stage_progress(args.session_id, stage, "Claude（実装案）呼び出し開始")
+        impl_result = call_claude_for_implementation(prepared_spec, ctx, None)
         save_json(session_dir / "responses" / "implementation_result.json", impl_result)
 
         stage = "patch_validation"
@@ -893,21 +1196,86 @@ def main() -> int:
         check_results = run_local_checks(ctx, skip_build=args.skip_build)
         save_json(session_dir / "test_results" / "checks.json", check_results)
 
-        retry_instruction = None
+        retry_instruction: Optional[Dict[str, Any]] = None
+        retry_stopped_same_cause = False
+        retry_stopped_max_retries = False
 
-        if not check_results.get("success"):
+        # retry_count は永続化（成功時は 0 に戻す）
+        retry_count = _read_retry_state_count(session_dir)
+        if check_results.get("success"):
+            if retry_count != 0:
+                retry_count = 0
+                _write_retry_state_count(session_dir, retry_count)
+
+        # 失敗時はリトライループへ
+        while not check_results.get("success"):
+            # 同一原因で打ち切り（retry_count 上限より優先）
+            fp = _compute_retry_cause_fingerprint(check_results)
+            prev_retry_path = session_dir / "responses" / "retry_instruction.json"
+            prev_fp = None
+            if prev_retry_path.is_file():
+                try:
+                    prev_fp = json.loads(prev_retry_path.read_text(encoding="utf-8")).get(
+                        "cause_fingerprint"
+                    )
+                except json.JSONDecodeError:
+                    prev_fp = None
+
+            # 上限到達で打ち切り（この場合 OpenAI は呼ばない）
+            if retry_count >= max_retries and not (prev_fp and prev_fp == fp):
+                retry_stopped_max_retries = True
+                retry_instruction = _merge_retry_instruction(
+                    {}, ctx, prepared_spec, impl_result, check_results
+                )
+                retry_instruction["retry_exhausted"] = True
+                retry_instruction["cause_fingerprint"] = fp
+                retry_instruction["retry_count"] = retry_count
+                retry_instruction["max_retries"] = max_retries
+                save_json(session_dir / "responses" / "retry_instruction.json", retry_instruction)
+                break
+
+            # retry 指示を生成（関数内で同一原因は抑止される）
             stage = "retry_instruction"
-            log_stage_progress(
-                args.session_id, stage, "チェック失敗 → OpenAI でリトライ指示（設定時）"
+            log_stage_progress(args.session_id, stage, "チェック失敗 → OpenAI でリトライ指示")
+            retry_instruction = call_chatgpt_for_retry_instruction(
+                ctx, prepared_spec, impl_result, check_results
             )
-            if max_retries > 0:
-                retry_instruction = call_chatgpt_for_retry_instruction(
-                    ctx, prepared_spec, impl_result, check_results
-                )
-                save_json(
-                    session_dir / "responses" / "retry_instruction.json",
-                    retry_instruction,
-                )
+            # 同一原因抑止の場合は retry_count を増やさない
+            did_new = not bool(retry_instruction.get("retry_skipped_same_cause"))
+            if did_new:
+                retry_count = compute_next_retry_count(retry_count, True)
+                _write_retry_state_count(session_dir, retry_count)
+            else:
+                retry_stopped_same_cause = True
+                print("同一原因のためリトライ試行を停止")
+
+            retry_instruction["retry_count"] = retry_count
+            retry_instruction["max_retries"] = max_retries
+            save_json(session_dir / "responses" / "retry_instruction.json", retry_instruction)
+
+            if retry_stopped_same_cause:
+                break
+
+            # Claude retry を実行
+            stage = "implementation_retry"
+            log_stage_progress(args.session_id, stage, f"retry_count={retry_count}")
+            impl_result = call_claude_for_implementation(
+                prepared_spec, ctx, retry_instruction
+            )
+            save_json(
+                session_dir / "responses" / "implementation_result.json",
+                impl_result,
+            )
+
+            stage = "checks"
+            log_stage_progress(args.session_id, stage, "ローカル checks 再実行")
+            check_results = run_local_checks(ctx, skip_build=args.skip_build)
+            save_json(session_dir / "test_results" / "checks.json", check_results)
+
+            if check_results.get("success"):
+                retry_count = 0
+                _write_retry_state_count(session_dir, retry_count)
+                break
 
         report_md = generate_report(
             ctx=ctx,
@@ -917,6 +1285,20 @@ def main() -> int:
             retry_instruction=retry_instruction,
         )
         save_text(session_dir / "reports" / "session_report.md", report_md)
+
+        report_obj = build_session_report_record(
+            ctx,
+            prepared_spec,
+            impl_result,
+            check_results,
+            retry_control={
+                "retry_count": retry_count,
+                "max_retries": max_retries,
+                "retry_stopped_same_cause": retry_stopped_same_cause,
+                "retry_stopped_max_retries": retry_stopped_max_retries,
+            },
+        )
+        save_json(session_dir / "reports" / "session_report.json", report_obj)
 
         print(f"[OK] session processed: {args.session_id}")
         print(f"[INFO] artifacts saved under: {session_dir}")
