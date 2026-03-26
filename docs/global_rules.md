@@ -418,3 +418,44 @@ v1.2 の目的は、壊さず・追跡可能で・再試行可能な最小司令
 5. 自動化の拡張
 
 GPT・Claude・Cursor の役割を混同せず、`master_instruction.md` v1.2 の原則3（役割固定）に従うこと。
+
+---
+
+■ allowed_changes_detail
+- session JSON の必須フィールドとする
+- 各ファイルに対して「許可する変更内容」を関数・セクション単位で記述する
+- allowed_changes_detail が未指定の場合、そのファイル内の新規関数追加のみ許可し、
+  既存関数の変更は禁止とする
+- 形式: list[str]（各要素は "ファイルパス: 許可内容" の形式）
+
+■ failure_type enum（優先順位順）
+1. build_error
+2. import_error
+3. type_mismatch
+4. test_failure
+5. scope_violation
+6. regression
+7. spec_missing
+- failure_type は1セッションにつき1つのみ指定する
+- 優先順位は上が高い（複数該当時は最も優先度の高いものを採用）
+
+■ not_applicable ルール
+- 検証結果の正式値は pass / fail / not_applicable の3値とする
+- skipped は正式値として使用禁止とする
+- config.yaml でコマンドが未設定の場合は not_applicable と記録する
+- 設定済みコマンドの結果は pass または fail のみ
+- not_applicable は完了判定から除外する
+
+■ review_points 4軸固定
+全セッション共通で以下の4項目を固定する:
+1. 仕様一致（AC達成）
+2. 変更範囲遵守
+3. 副作用なし（既存破壊なし）
+4. 実装過不足なし
+
+■ completion_criteria 型定義
+- completion_criteria は object の配列とする
+- 各要素は以下のキーを持つ:
+  - id: str（CC-XX-NN 形式）
+  - type: str（document_rule / artifact / non_regression / state_transition_consistent / side_effect_free）
+  - condition: str（判定条件の記述）

@@ -1,0 +1,89 @@
+{
+  "session_id": "session-09",
+  "objective": "運用仕様のうち allowed_changes_detail・failure_type・not_applicable・review_points 4軸・completion_criteria 型定義を正本 docs/global_rules.md に転記して固定する（転記のみ、他ファイルのスコープ外変更なし）。",
+  "inputs": [
+    "docs/master_instruction.md",
+    "docs/global_rules.md"
+  ],
+  "outputs": [
+    "docs/global_rules.md",
+    "docs/master_instruction.md",
+    "docs/sessions/session-09.json",
+    "docs/acceptance/session-09.yaml"
+  ],
+  "allowed_changes": [
+    "docs/global_rules.md",
+    "docs/master_instruction.md",
+    "docs/sessions/session-09.json",
+    "docs/acceptance/session-09.yaml"
+  ],
+  "allowed_changes_detail": [
+    "docs/global_rules.md: 下記「転記元（確定済み定義）」をそのまま追記する（文言変更禁止）。既存記述と重複する場合は統合するが意味変更は禁止",
+    "docs/master_instruction.md: 「session定義 / 検収基準は global_rules.md に従う」旨のみ追記。詳細仕様の追加は禁止",
+    "docs/sessions/session-09.json: 新規作成のみ",
+    "docs/acceptance/session-09.yaml: 新規作成のみ"
+  ],
+  "forbidden_changes": [
+    "orchestration/run_session.py の変更",
+    "orchestration/providers 配下の変更",
+    "orchestration/config.yaml の変更",
+    "docs/roadmap.yaml の変更",
+    "既存 session JSON / acceptance YAML の変更",
+    "docs/sessions/session-10.json 以降の新規作成",
+    "未合意仕様の追加",
+    "テストファイルの作成・変更"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-09-01",
+      "type": "document_rule",
+      "condition": "global_rules.md に5項目すべてが転記元通りに記載されている"
+    },
+    {
+      "id": "CC-09-02",
+      "type": "document_rule",
+      "condition": "各定義が曖昧でなく機械判定可能な形になっている"
+    },
+    {
+      "id": "CC-09-03",
+      "type": "artifact",
+      "condition": "session-09.json が allowed_changes_detail を含む"
+    },
+    {
+      "id": "CC-09-04",
+      "type": "artifact",
+      "condition": "acceptance YAML が id / description / test_name を持つ"
+    },
+    {
+      "id": "CC-09-05",
+      "type": "non_regression",
+      "condition": "既存のResponses API方針を変更していない"
+    },
+    {
+      "id": "CC-09-06",
+      "type": "non_regression",
+      "condition": "既存の役割構造を変更していない"
+    },
+    {
+      "id": "CC-09-07",
+      "type": "side_effect_free",
+      "condition": "副作用がない"
+    }
+  ],
+  "acceptance_criteria": [
+    "AC-09-01",
+    "AC-09-02",
+    "AC-09-03",
+    "AC-09-04",
+    "AC-09-05",
+    "AC-09-06",
+    "AC-09-07"
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "実装過不足なし"
+  ],
+  "acceptance_ref": "acceptance/session-09.yaml"
+}

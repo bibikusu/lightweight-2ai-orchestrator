@@ -1,0 +1,33 @@
+session_id: session-09
+
+acceptance:
+  - id: AC-09-01
+    description: allowed_changes_detail が定義されている
+    test_name: test_ac_09_01_allowed_changes_detail_defined
+
+  - id: AC-09-02
+    description: failure_type enum + priority が定義されている
+    test_name: test_ac_09_02_failure_type_enum_priority
+
+  - id: AC-09-03
+    description: not_applicable が定義され skipped が使われていない
+    test_name: test_ac_09_03_not_applicable_no_skipped
+
+  - id: AC-09-04
+    description: review_points が4軸で固定されている
+    test_name: test_ac_09_04_review_points_four_axes
+
+  - id: AC-09-05
+    description: completion_criteria が object schema で定義されている
+    test_name: test_ac_09_05_completion_criteria_object_schema
+
+  - id: AC-09-06
+    description: session-09.json が作成されている
+    test_name: test_ac_09_06_session_09_json_exists
+
+  - id: AC-09-07
+    description: acceptance YAML が正しい形式で作成されている
+    test_name: test_ac_09_07_acceptance_yaml_format
+
+notes:
+  - test_name は定義のみとし、テスト実装は本セッションの範囲外とする
