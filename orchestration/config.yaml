@@ -11,8 +11,8 @@ providers:
 
 # commands: run_session の cwd はリポジトリルート。空文字は skipped。
 commands:
-  # test: 未導入のため意図的に空（pytest 等のテストスイート・tests/ なし）
-  test: ""
+  # test: backend テストスイートを実行
+  test: ".venv/bin/pytest backend/tests/ -q"
   # lint: 標準ライブラリのみ。PYTHONPYCACHEPREFIX で .pyc をリポジトリ配下に寄せ、権限の厳しい環境でも失敗しにくくする
   lint: 'PYTHONPYCACHEPREFIX="./.pycache_py_compile" python3 -m py_compile orchestration/run_session.py'
   # typecheck: session-07a 正本
