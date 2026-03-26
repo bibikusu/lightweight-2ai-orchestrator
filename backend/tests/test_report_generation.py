@@ -7,7 +7,9 @@ import pytest
 from orchestration.run_session import (
     SessionContext,
     build_session_report_record,
+    decide_completion_status,
     generate_report,
+    persist_session_reports,
 )
 
 
@@ -350,3 +352,40 @@ def test_existing_report_consumption_not_broken():
     record = build_session_report_record(ctx, prepared_spec, impl_result, checks)
     assert record["changed_files"] == ["a"]
     assert record["test_result"] == "fail"
+
+
+def test_decide_completion_status_failed_status_is_prioritized():
+    """status=failed の場合は acceptance/risk 状態より優先して failed にする"""
+    out = decide_completion_status(
+        "failed",
+        acceptance_results=[],
+        risks=[],
+        open_issues=[],
+    )
+    assert out["completion_status"] == "failed"
+    assert out["human_review_needed"] is False
+
+
+def test_report_json_contains_risks_and_open_issues(tmp_path):
+    """report.json に risks/open_issues が常に含まれる"""
+    session_dir = tmp_path / "artifacts" / "session-keys"
+    checks = {"success": True}
+    impl_result = {
+        "changed_files": [],
+        "risks": ["r1"],
+        "open_issues": ["i1"],
+    }
+    persist_session_reports(
+        session_dir=session_dir,
+        ctx=None,
+        prepared_spec={},
+        impl_result=impl_result,
+        checks=checks,
+        status="success",
+        dry_run=False,
+        started_at="2026-01-01T00:00:00+00:00",
+        finished_at="2026-01-01T00:00:01+00:00",
+    )
+    report = json.loads((session_dir / "report.json").read_text(encoding="utf-8"))
+    assert report["risks"] == ["r1"]
+    assert report["open_issues"] == ["i1"]

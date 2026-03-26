@@ -959,11 +959,14 @@ def build_acceptance_results_for_report_json(
 
 
 def decide_completion_status(
+    status: str,
     acceptance_results: List[Dict[str, Any]],
     risks: List[Any],
     open_issues: List[Any],
 ) -> Dict[str, Any]:
     """completion_status と human_review_needed を決定する。"""
+    if status == "failed":
+        return {"completion_status": "failed", "human_review_needed": False}
     has_fail = any(
         isinstance(item, dict) and item.get("result") == "fail"
         for item in (acceptance_results or [])
@@ -1043,6 +1046,8 @@ def persist_session_reports(
         "started_at": started_at,
         "finished_at": finished_at,
         "changed_files": changed_files,
+        "risks": list(impl_result.get("risks", []) or []),
+        "open_issues": list(impl_result.get("open_issues", []) or []),
         "checks": checks if isinstance(checks, dict) else {},
         "failure_type": failure_type,
         "error_message": error_message if (status == "failed") else None,
@@ -1050,9 +1055,10 @@ def persist_session_reports(
     if "acceptance_results" not in payload:
         payload["acceptance_results"] = build_acceptance_results_for_report_json(ctx, checks)
     completion = decide_completion_status(
+        status,
         payload.get("acceptance_results", []),
-        list(impl_result.get("risks", []) or []),
-        list(impl_result.get("open_issues", []) or []),
+        payload.get("risks", []),
+        payload.get("open_issues", []),
     )
     payload["completion_status"] = completion["completion_status"]
     payload["human_review_needed"] = completion["human_review_needed"]
