@@ -920,6 +920,61 @@ def build_session_report_record(
     }
 
 
+def build_acceptance_results_for_report_json(
+    ctx: Optional[SessionContext],
+    checks: Dict[str, Any],
+) -> List[Dict[str, str]]:
+    """
+    report.json 用の acceptance_results を生成する。
+    形式は最小限（id, result）で、result は pass/fail/not_applicable の3値のみ。
+    """
+    if ctx is None:
+        return []
+    parsed = (ctx.acceptance_data or {}).get("parsed") or {}
+    acceptance_items = parsed.get("acceptance", []) if isinstance(parsed, dict) else []
+    if not isinstance(acceptance_items, list):
+        return []
+
+    fn_results = (checks or {}).get("test_function_results") or {}
+    out: List[Dict[str, str]] = []
+    for item in acceptance_items:
+        if not isinstance(item, dict):
+            continue
+        tid = item.get("id")
+        tn = item.get("test_name")
+        if not isinstance(tid, str) or not tid:
+            continue
+        if not isinstance(tn, str) or not tn:
+            result = "not_applicable"
+        else:
+            passed = fn_results.get(tn)
+            if passed is True:
+                result = "pass"
+            elif passed is False:
+                result = "fail"
+            else:
+                result = "not_applicable"
+        out.append({"id": tid, "result": result})
+    return out
+
+
+def decide_completion_status(
+    acceptance_results: List[Dict[str, Any]],
+    risks: List[Any],
+    open_issues: List[Any],
+) -> Dict[str, Any]:
+    """completion_status と human_review_needed を決定する。"""
+    has_fail = any(
+        isinstance(item, dict) and item.get("result") == "fail"
+        for item in (acceptance_results or [])
+    )
+    if has_fail:
+        return {"completion_status": "failed", "human_review_needed": False}
+    if len(risks or []) > 0 or len(open_issues or []) > 0:
+        return {"completion_status": "review_required", "human_review_needed": True}
+    return {"completion_status": "usable_for_self", "human_review_needed": False}
+
+
 def persist_session_reports(
     session_dir: Path,
     ctx: Optional[SessionContext],
@@ -992,6 +1047,15 @@ def persist_session_reports(
         "failure_type": failure_type,
         "error_message": error_message if (status == "failed") else None,
     }
+    if "acceptance_results" not in payload:
+        payload["acceptance_results"] = build_acceptance_results_for_report_json(ctx, checks)
+    completion = decide_completion_status(
+        payload.get("acceptance_results", []),
+        list(impl_result.get("risks", []) or []),
+        list(impl_result.get("open_issues", []) or []),
+    )
+    payload["completion_status"] = completion["completion_status"]
+    payload["human_review_needed"] = completion["human_review_needed"]
     save_json(session_dir / "report.json", payload)
 
 
