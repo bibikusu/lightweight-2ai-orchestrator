@@ -1,0 +1,8 @@
+session_id: real-run-safe-02
+acceptance:
+  - id: AC-RR-01
+    description: artifacts/.gitkeep が作成されている
+    test_name: test_gitkeep_created
+  - id: AC-RR-02
+    description: 既存テストがすべて pass する
+    test_name: test_no_regression

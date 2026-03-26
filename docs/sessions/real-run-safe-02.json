@@ -1,0 +1,20 @@
+{
+  "session_id": "real-run-safe-02",
+  "phase_id": "block5",
+  "title": "safe real run test",
+  "goal": "artifacts ディレクトリの存在保証のため .gitkeep を1ファイル追加する",
+  "scope": [
+    "artifacts/.gitkeep の新規作成"
+  ],
+  "out_of_scope": [
+    "既存ファイルの変更",
+    "orchestration の変更"
+  ],
+  "constraints": [
+    "1ファイルのみ"
+  ],
+  "acceptance_ref": "acceptance/real-run-safe-01.yaml",
+  "allowed_changes": [
+    "artifacts/.gitkeep"
+  ]
+}
