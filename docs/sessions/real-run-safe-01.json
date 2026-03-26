@@ -13,5 +13,5 @@
   "constraints": [
     "1ファイルのみ"
   ],
-  "acceptance_ref": "docs/acceptance/real-run-safe-01.yaml"
+  "acceptance_ref": "acceptance/real-run-safe-01.yaml"
 }
