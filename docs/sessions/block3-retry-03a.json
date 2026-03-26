@@ -1,0 +1,41 @@
+{
+  "session_id": "block3-retry-03a",
+  "objective": "v1 制約として retry 実行を単発（最大1回）に固定し、既存 retry ループ契約とテストを単発前提へ更新する",
+  "inputs": [
+    "docs/global_rules.md",
+    "orchestration/run_session.py",
+    "backend/tests/test_retry_loop_execution.py"
+  ],
+  "outputs": [
+    "orchestration/run_session.py",
+    "docs/global_rules.md",
+    "docs/sessions/block3-retry-03a.json",
+    "backend/tests/test_single_retry_limit.py",
+    "backend/tests/test_retry_loop_execution.py"
+  ],
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "docs/global_rules.md",
+    "docs/sessions/block3-retry-03a.json",
+    "backend/tests/test_single_retry_limit.py",
+    "backend/tests/test_retry_loop_execution.py"
+  ],
+  "forbidden_changes": [
+    "orchestration/config.yaml",
+    "docs/master_instruction.md",
+    "docs/roadmap.yaml",
+    "orchestration/providers/"
+  ],
+  "completion_criteria": [
+    "run_session.py に mr = min(mr, 1) が存在する",
+    "retry が最大1回で打ち切られる（max_retries が 1 に強制される）",
+    "backend/tests/ が全て PASS する"
+  ],
+  "acceptance_criteria": [],
+  "review_points": [
+    "変更範囲が 5 ファイル以内",
+    "既存契約の破壊がない（dry-run / report 形式維持）",
+    "同一原因打ち切り・上限打ち切りの優先順位が維持される"
+  ]
+}
+

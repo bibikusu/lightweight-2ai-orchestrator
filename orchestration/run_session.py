@@ -1113,6 +1113,11 @@ def main() -> int:
             if args.max_retries is not None
             else ctx.runtime_config.get("limits", {}).get("max_retries", 3)
         )
+        max_retries_config = int(max_retries) if isinstance(max_retries, int) else 0
+        # v1 制約: リトライ実行は最大1回まで（指示生成＋Claude再投入の単発）
+        mr = max_retries_config
+        mr = min(mr, 1)
+        max_retries_effective = mr
         max_changed_files = _max_changed_files_from_config(ctx.runtime_config)
 
         if args.dry_run:
@@ -1222,7 +1227,7 @@ def main() -> int:
                     prev_fp = None
 
             # 上限到達で打ち切り（この場合 OpenAI は呼ばない）
-            if retry_count >= max_retries and not (prev_fp and prev_fp == fp):
+            if retry_count >= max_retries_effective and not (prev_fp and prev_fp == fp):
                 retry_stopped_max_retries = True
                 retry_instruction = _merge_retry_instruction(
                     {}, ctx, prepared_spec, impl_result, check_results
@@ -1230,7 +1235,8 @@ def main() -> int:
                 retry_instruction["retry_exhausted"] = True
                 retry_instruction["cause_fingerprint"] = fp
                 retry_instruction["retry_count"] = retry_count
-                retry_instruction["max_retries"] = max_retries
+                retry_instruction["max_retries"] = max_retries_config
+                retry_instruction["max_retries_effective"] = max_retries_effective
                 save_json(session_dir / "responses" / "retry_instruction.json", retry_instruction)
                 break
 
@@ -1250,7 +1256,8 @@ def main() -> int:
                 print("同一原因のためリトライ試行を停止")
 
             retry_instruction["retry_count"] = retry_count
-            retry_instruction["max_retries"] = max_retries
+            retry_instruction["max_retries"] = max_retries_config
+            retry_instruction["max_retries_effective"] = max_retries_effective
             save_json(session_dir / "responses" / "retry_instruction.json", retry_instruction)
 
             if retry_stopped_same_cause:
@@ -1293,7 +1300,7 @@ def main() -> int:
             check_results,
             retry_control={
                 "retry_count": retry_count,
-                "max_retries": max_retries,
+                "max_retries": max_retries_config,
                 "retry_stopped_same_cause": retry_stopped_same_cause,
                 "retry_stopped_max_retries": retry_stopped_max_retries,
             },

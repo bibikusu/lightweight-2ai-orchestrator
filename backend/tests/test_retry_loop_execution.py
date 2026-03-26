@@ -75,11 +75,12 @@ def _patch_loop_base(monkeypatch, tmp_path, sid: str, *, max_retries: int = 5):
     return ctx
 
 
-def test_retry_loop_runs_multiple_iterations(monkeypatch, tmp_path):
-    """AC-01: リトライループで複数回 Claude（retry 付き）が走る"""
+def test_retry_loop_runs_single_iteration_under_v1_limit(monkeypatch, tmp_path):
+    """AC-01: v1 制約（最大1回）で Claude retry が単発で走る"""
     sid = "session-06a-multi"
     _patch_loop_base(monkeypatch, tmp_path, sid, max_retries=5)
-    seq = [_fail_checks("a"), _fail_checks("b"), _ok_checks()]
+    # v1 制約で retry は 1 回までなので、1 回目の retry で成功するシーケンスにする
+    seq = [_fail_checks("a"), _ok_checks()]
     si = {"i": 0}
 
     def _checks(_c, skip_build=False):
@@ -106,7 +107,7 @@ def test_retry_loop_runs_multiple_iterations(monkeypatch, tmp_path):
     with patch("orchestration.providers.openai_client.OpenAIClientWrapper") as m:
         m.return_value.request_retry_instruction.return_value = {}
         assert main() == 0
-    assert claude_retry["n"] >= 2
+    assert claude_retry["n"] == 1
 
 
 def test_retry_loop_updates_check_results_each_iteration(monkeypatch, tmp_path):
