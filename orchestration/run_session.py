@@ -425,7 +425,28 @@ def validate_changed_files_before_patch(
             )
         normalized.append(normalize_changed_file_path(item))
 
-    vp = validate_patch_files(normalized)
+    allowed_raw = prepared_spec.get("allowed_changes", [])
+    allowed_changes: List[str] = []
+    if isinstance(allowed_raw, list):
+        for item in allowed_raw:
+            if isinstance(item, str) and item.strip():
+                allowed_changes.append(normalize_changed_file_path(item))
+
+    def _is_explicitly_allowed(path: str) -> bool:
+        for allowed in allowed_changes:
+            # 末尾スラッシュはディレクトリ許可、それ以外は完全一致
+            if allowed.endswith("/"):
+                prefix = allowed.rstrip("/")
+                if path == prefix or path.startswith(prefix + "/"):
+                    return True
+                continue
+            if path == allowed:
+                return True
+        return False
+
+    non_explicit_files = [p for p in normalized if not _is_explicitly_allowed(p)]
+
+    vp = validate_patch_files(non_explicit_files)
     if vp["status"] == "error":
         raise ValueError(vp.get("message", "scope violation"))
 
@@ -436,7 +457,7 @@ def validate_changed_files_before_patch(
 
     phrases = _collect_forbidden_phrases(session_data, prepared_spec)
     min_phrase_len = 3
-    for path in normalized:
+    for path in non_explicit_files:
         path_l = path.lower()
         for phrase in phrases:
             pl = phrase.lower()
