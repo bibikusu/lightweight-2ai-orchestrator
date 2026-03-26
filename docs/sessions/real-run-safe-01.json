@@ -57,5 +57,6 @@
     "変更範囲遵守",
     "副作用なし（既存破壊なし）",
     "実装過不足なし"
-  ]
+  ],
+  "acceptance_ref": "acceptance/real-run-safe-01.yaml"
 }
