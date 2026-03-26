@@ -11,6 +11,175 @@ from orchestration.run_session import (
 )
 
 
+def _assert_required_report_keys(obj: dict) -> None:
+    for k in (
+        "session_id",
+        "status",
+        "dry_run",
+        "started_at",
+        "finished_at",
+        "changed_files",
+        "checks",
+        "failure_type",
+        "error_message",
+    ):
+        assert k in obj
+
+
+def test_report_json_is_generated_on_dry_run(monkeypatch, tmp_path):
+    """AC-B4R1-03/04: dry-run でも artifacts/<sid>/report.json が生成され required_keys を満たす"""
+    import orchestration.run_session as rs
+    import sys
+
+    sid = "session-01"
+    monkeypatch.setattr(rs, "ARTIFACTS_DIR", tmp_path / "artifacts")
+    monkeypatch.setattr(sys, "argv", ["run_session.py", "--dry-run", "--session-id", sid])
+    assert rs.main() == 0
+
+    p = tmp_path / "artifacts" / sid / "report.json"
+    assert p.is_file()
+    obj = json.loads(p.read_text(encoding="utf-8"))
+    _assert_required_report_keys(obj)
+    assert obj["status"] == "dry_run"
+    assert obj["dry_run"] is True
+
+
+def test_report_json_is_generated_on_success(monkeypatch, tmp_path):
+    """AC-B4R1-01/04: 成功時に report.json が生成され required_keys を満たす"""
+    import orchestration.run_session as rs
+    import sys
+
+    sid = "session-report-success"
+    ctx = rs.SessionContext(
+        session_id=sid,
+        session_data={
+            "session_id": sid,
+            "phase_id": "p",
+            "title": "t",
+            "goal": "g",
+            "scope": [],
+            "out_of_scope": [],
+            "constraints": [],
+            "acceptance_ref": "acceptance/session-01.yaml",
+        },
+        acceptance_data={"raw_yaml": "", "parsed": {"acceptance": []}},
+        master_instruction="",
+        global_rules="",
+        roadmap_text="",
+        runtime_config={
+            "limits": {"max_retries": 1, "max_changed_files": 5},
+            "providers": {"openai": {"model": "gpt-test", "timeout_sec": 1}},
+        },
+    )
+
+    monkeypatch.setattr(rs, "ARTIFACTS_DIR", tmp_path / "artifacts")
+    monkeypatch.setattr(rs, "load_session_context", lambda _sid: ctx)
+    monkeypatch.setattr(rs, "enforce_git_sandbox_branch", lambda _sid: None)
+    monkeypatch.setattr(
+        rs, "call_chatgpt_for_prepared_spec", lambda _c: {"objective": "obj", "forbidden_changes": []}
+    )
+    monkeypatch.setattr(
+        rs,
+        "call_claude_for_implementation",
+        lambda _ps, _c, _ri=None: {
+            "changed_files": ["orchestration/run_session.py"],
+            "implementation_summary": [],
+            "risks": [],
+            "open_issues": [],
+            "proposed_patch": "",
+        },
+    )
+    monkeypatch.setattr(
+        rs,
+        "run_local_checks",
+        lambda _c, **_: {
+            "test": {"status": "passed"},
+            "lint": {"status": "skipped"},
+            "typecheck": {"status": "skipped"},
+            "build": {"status": "skipped"},
+            "success": True,
+        },
+    )
+
+    monkeypatch.setattr(sys, "argv", ["run_session.py", "--session-id", sid])
+    assert rs.main() == 0
+
+    p = tmp_path / "artifacts" / sid / "report.json"
+    assert p.is_file()
+    obj = json.loads(p.read_text(encoding="utf-8"))
+    _assert_required_report_keys(obj)
+    assert obj["status"] == "success"
+    assert obj["dry_run"] is False
+    assert isinstance(obj["changed_files"], list)
+
+
+def test_report_json_is_generated_on_failure(monkeypatch, tmp_path):
+    """AC-B4R1-02/04: 失敗時にも report.json が生成され status=failed になる"""
+    import orchestration.run_session as rs
+    import sys
+
+    sid = "session-report-fail"
+    ctx = rs.SessionContext(
+        session_id=sid,
+        session_data={
+            "session_id": sid,
+            "phase_id": "p",
+            "title": "t",
+            "goal": "g",
+            "scope": [],
+            "out_of_scope": [],
+            "constraints": [],
+            "acceptance_ref": "acceptance/session-01.yaml",
+        },
+        acceptance_data={"raw_yaml": "", "parsed": {"acceptance": []}},
+        master_instruction="",
+        global_rules="",
+        roadmap_text="",
+        runtime_config={
+            "limits": {"max_retries": 1, "max_changed_files": 5},
+            "providers": {"openai": {"model": "gpt-test", "timeout_sec": 1}},
+        },
+    )
+
+    monkeypatch.setattr(rs, "ARTIFACTS_DIR", tmp_path / "artifacts")
+    monkeypatch.setattr(rs, "load_session_context", lambda _sid: ctx)
+    monkeypatch.setattr(rs, "enforce_git_sandbox_branch", lambda _sid: None)
+    monkeypatch.setattr(
+        rs, "call_chatgpt_for_prepared_spec", lambda _c: {"objective": "obj", "forbidden_changes": []}
+    )
+    monkeypatch.setattr(
+        rs,
+        "call_claude_for_implementation",
+        lambda _ps, _c, _ri=None: {
+            "changed_files": ["orchestration/run_session.py"],
+            "implementation_summary": [],
+            "risks": [],
+            "open_issues": [],
+            "proposed_patch": "",
+        },
+    )
+    monkeypatch.setattr(
+        rs,
+        "run_local_checks",
+        lambda _c, **_: {
+            "test": {"status": "failed", "command": "pytest", "returncode": 1, "stderr": "E", "stdout": ""},
+            "lint": {"status": "skipped"},
+            "typecheck": {"status": "skipped"},
+            "build": {"status": "skipped"},
+            "success": False,
+        },
+    )
+
+    monkeypatch.setattr(sys, "argv", ["run_session.py", "--session-id", sid])
+    assert rs.main() == 1
+
+    p = tmp_path / "artifacts" / sid / "report.json"
+    assert p.is_file()
+    obj = json.loads(p.read_text(encoding="utf-8"))
+    _assert_required_report_keys(obj)
+    assert obj["status"] == "failed"
+    assert obj["dry_run"] is False
+
 def test_report_contains_acceptance_status():
     """acceptanceごとの PASS/FAIL が機械向けレコードに含まれる"""
     ctx = SessionContext(

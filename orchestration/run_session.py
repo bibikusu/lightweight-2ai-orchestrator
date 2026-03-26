@@ -162,6 +162,11 @@ def _utc_timestamp_compact() -> str:
     return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
 
 
+def _iso_utc_now() -> str:
+    """report.json 用の ISO8601 UTC タイムスタンプ。"""
+    return datetime.now(timezone.utc).isoformat()
+
+
 def _git_branch_safe() -> Optional[str]:
     """ブランチ名を返す。Git でない／取得失敗時は None。"""
     if not _is_git_repository():
@@ -915,6 +920,81 @@ def build_session_report_record(
     }
 
 
+def persist_session_reports(
+    session_dir: Path,
+    ctx: Optional[SessionContext],
+    prepared_spec: Dict[str, Any],
+    impl_result: Dict[str, Any],
+    checks: Dict[str, Any],
+    *,
+    status: str,
+    dry_run: bool,
+    started_at: str,
+    finished_at: str,
+    retry_instruction: Optional[Dict[str, Any]] = None,
+    error_message: Optional[str] = None,
+    retry_control: Optional[Dict[str, Any]] = None,
+    aborted_stage: Optional[str] = None,
+) -> None:
+    """
+    既存 report 関数を活用しつつ、検収用 report.json を標準出力する。
+    - reports/session_report.md: 人間向け（既存 generate_report）
+    - reports/session_report.json: 機械向け（既存 build_session_report_record）
+    - report.json: 検収用の標準化レポート（本セッション仕様）
+    """
+    session_dir.mkdir(parents=True, exist_ok=True)
+    (session_dir / "reports").mkdir(parents=True, exist_ok=True)
+
+    # 既存の md/json（ctx が無い場合は最小限に落とす）
+    if ctx is not None:
+        report_md = generate_report(
+            ctx=ctx,
+            prepared_spec=prepared_spec,
+            impl_result=impl_result,
+            checks=checks,
+            retry_instruction=retry_instruction,
+            aborted_stage=aborted_stage,
+        )
+        save_text(session_dir / "reports" / "session_report.md", report_md)
+
+        report_obj = build_session_report_record(
+            ctx,
+            prepared_spec,
+            impl_result,
+            checks,
+            retry_control=retry_control,
+        )
+        save_json(session_dir / "reports" / "session_report.json", report_obj)
+
+    # 標準化 report.json（常に 1 つだけ上書き生成）
+    changed_files = impl_result.get("changed_files", [])
+    if not isinstance(changed_files, list):
+        changed_files = []
+
+    failure_type: Optional[str] = None
+    if status == "failed":
+        try:
+            failure_type = resolve_canonical_failure_type(checks).get("failure_type")
+        except Exception:
+            failure_type = None
+        # no_failure は失敗時の failure_type としては意味が薄いので null 扱い
+        if failure_type == "no_failure":
+            failure_type = None
+
+    payload: Dict[str, Any] = {
+        "session_id": (ctx.session_id if ctx is not None else str(session_dir.name)),
+        "status": status,
+        "dry_run": bool(dry_run),
+        "started_at": started_at,
+        "finished_at": finished_at,
+        "changed_files": changed_files,
+        "checks": checks if isinstance(checks, dict) else {},
+        "failure_type": failure_type,
+        "error_message": error_message if (status == "failed") else None,
+    }
+    save_json(session_dir / "report.json", payload)
+
+
 def call_claude_for_implementation(
     prepared_spec: Dict[str, Any],
     ctx: SessionContext,
@@ -1099,6 +1179,7 @@ def main() -> int:
     _ensure_repo_root_on_sys_path()
     args = parse_args()
     session_dir = ensure_artifact_dirs(args.session_id)
+    started_at = _iso_utc_now()
     stage = "init"
     ctx: Optional[SessionContext] = None
 
@@ -1145,27 +1226,27 @@ def main() -> int:
             check_results = build_skipped_checks_result()
             save_json(session_dir / "test_results" / "checks.json", check_results)
 
-            report_md = generate_report(
-                ctx=ctx,
-                prepared_spec=prepared_spec,
-                impl_result=impl_result,
-                checks=check_results,
-                retry_instruction=None,
-            )
-            save_text(session_dir / "reports" / "session_report.md", report_md)
-            report_obj = build_session_report_record(
+            persist_session_reports(
+                session_dir,
                 ctx,
                 prepared_spec,
                 impl_result,
                 check_results,
+                status="dry_run",
+                dry_run=True,
+                started_at=started_at,
+                finished_at=_iso_utc_now(),
+                retry_instruction=None,
+                error_message=None,
                 retry_control={
                     "retry_count": 0,
-                    "max_retries": int(ctx.runtime_config.get("limits", {}).get("max_retries", 0) or 0),
+                    "max_retries": int(
+                        ctx.runtime_config.get("limits", {}).get("max_retries", 0) or 0
+                    ),
                     "retry_stopped_same_cause": False,
                     "retry_stopped_max_retries": False,
                 },
             )
-            save_json(session_dir / "reports" / "session_report.json", report_obj)
             print(f"[OK] dry-run completed: {args.session_id}")
             print(f"[INFO] artifacts saved under: {session_dir}")
             return 0
@@ -1284,20 +1365,18 @@ def main() -> int:
                 _write_retry_state_count(session_dir, retry_count)
                 break
 
-        report_md = generate_report(
-            ctx=ctx,
-            prepared_spec=prepared_spec,
-            impl_result=impl_result,
-            checks=check_results,
-            retry_instruction=retry_instruction,
-        )
-        save_text(session_dir / "reports" / "session_report.md", report_md)
-
-        report_obj = build_session_report_record(
+        persist_session_reports(
+            session_dir,
             ctx,
             prepared_spec,
             impl_result,
             check_results,
+            status="success" if check_results.get("success") else "failed",
+            dry_run=False,
+            started_at=started_at,
+            finished_at=_iso_utc_now(),
+            retry_instruction=retry_instruction,
+            error_message=None,
             retry_control={
                 "retry_count": retry_count,
                 "max_retries": max_retries_config,
@@ -1305,7 +1384,6 @@ def main() -> int:
                 "retry_stopped_max_retries": retry_stopped_max_retries,
             },
         )
-        save_json(session_dir / "reports" / "session_report.json", report_obj)
 
         print(f"[OK] session processed: {args.session_id}")
         print(f"[INFO] artifacts saved under: {session_dir}")
@@ -1328,25 +1406,42 @@ def main() -> int:
         )
         # 可能なら途中までのレポートを残す
         try:
-            if ctx is not None and stage not in ("loading", "validating", "init"):
-                ps: Dict[str, Any] = {}
-                ir: Dict[str, Any] = {}
-                if (session_dir / "responses" / "prepared_spec.json").exists():
-                    ps = load_json(session_dir / "responses" / "prepared_spec.json")
-                if (session_dir / "responses" / "implementation_result.json").exists():
-                    ir = load_json(session_dir / "responses" / "implementation_result.json")
-                if ps or ir:
-                    chk: Dict[str, Any] = {"success": False}
-                    if (session_dir / "test_results" / "checks.json").exists():
-                        chk = load_json(session_dir / "test_results" / "checks.json")
-                    report_md = generate_report(
-                        ctx,
-                        ps or {"objective": None},
-                        ir or {"implementation_summary": [], "risks": [], "open_issues": []},
-                        chk,
-                        aborted_stage=stage,
-                    )
-                    save_text(session_dir / "reports" / "session_report.md", report_md)
+            ps: Dict[str, Any] = {}
+            ir: Dict[str, Any] = {}
+            if (session_dir / "responses" / "prepared_spec.json").exists():
+                ps = load_json(session_dir / "responses" / "prepared_spec.json")
+            if (session_dir / "responses" / "implementation_result.json").exists():
+                ir = load_json(session_dir / "responses" / "implementation_result.json")
+            chk: Dict[str, Any] = {"success": False}
+            if (session_dir / "test_results" / "checks.json").exists():
+                chk = load_json(session_dir / "test_results" / "checks.json")
+
+            persist_session_reports(
+                session_dir,
+                ctx,
+                ps or {"objective": None},
+                ir
+                or {
+                    "changed_files": [],
+                    "implementation_summary": [],
+                    "risks": [],
+                    "open_issues": [],
+                },
+                chk,
+                status="failed",
+                dry_run=bool(args.dry_run),
+                started_at=started_at,
+                finished_at=_iso_utc_now(),
+                retry_instruction=None,
+                error_message=str(e),
+                retry_control={
+                    "retry_count": 0,
+                    "max_retries": 0,
+                    "retry_stopped_same_cause": False,
+                    "retry_stopped_max_retries": False,
+                },
+                aborted_stage=stage,
+            )
         except Exception:
             pass
         return 1
