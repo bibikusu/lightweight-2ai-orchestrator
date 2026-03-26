@@ -1,0 +1,61 @@
+{
+  "session_id": "real-run-safe-01",
+  "objective": "artifacts ディレクトリの存在保証のため .gitkeep を1ファイル追加する",
+  "inputs": [
+    {
+      "name": "target_directory",
+      "type": "str"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "created_file",
+      "type": "str"
+    }
+  ],
+  "allowed_changes": [
+    "artifacts/.gitkeep"
+  ],
+  "allowed_changes_detail": [
+    "artifacts/.gitkeep: 新規空ファイルの作成のみ"
+  ],
+  "forbidden_changes": [
+    "既存ファイルの変更",
+    "orchestration 配下の変更",
+    "providers 配下の変更",
+    "config.yaml の変更",
+    "docs 配下の変更",
+    "テストファイルの変更",
+    "ディレクトリ構造の変更"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-RR-01",
+      "type": "artifact",
+      "condition": "artifacts/.gitkeep が存在する"
+    },
+    {
+      "id": "CC-RR-02",
+      "type": "side_effect_free",
+      "condition": "既存ファイルに変更がない"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-RR-01",
+      "type": "artifact",
+      "condition": "artifacts/.gitkeep が作成されている"
+    },
+    {
+      "id": "AC-RR-02",
+      "type": "non_regression",
+      "condition": "既存テストがすべて pass する"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "実装過不足なし"
+  ]
+}
