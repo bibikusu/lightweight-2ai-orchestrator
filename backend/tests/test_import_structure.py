@@ -43,6 +43,18 @@ def test_provider_modules_import_without_manual_pythonpath():
     assert ClaudeClientWrapper is not None
 
 
+def test_orchestration_imports_work_in_ci_layout(monkeypatch):
+    """AC-10-03: CI 想定の配置でも orchestration import が壊れない。"""
+    monkeypatch.chdir(ROOT_DIR)
+    import orchestration.run_session as rs
+    from orchestration.providers.claude_client import ClaudeClientConfig
+    from orchestration.providers.openai_client import OpenAIClientConfig
+
+    assert hasattr(rs, "main")
+    assert OpenAIClientConfig is not None
+    assert ClaudeClientConfig is not None
+
+
 def test_existing_tests_do_not_need_sys_path_insert():
     """AC-03: backend/tests/test_*.py にパス先頭注入（sys.path の insert）が無い"""
     offenders: list[str] = []

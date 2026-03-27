@@ -33,53 +33,52 @@ def test_ci_workflow_exists():
     assert "jobs" in data and isinstance(data["jobs"], dict)
 
 
-def test_ci_workflow_runs_dry_run_entry(workflow_data: dict, workflow_text: str):
-    """AC-02: dry-run エントリと session 指定がワークフローに明示されている"""
-    on_block = workflow_data.get("on")
-    assert on_block is not None and isinstance(
-        on_block, dict
-    ), "トリガー(on)が未定義または dict でない（ワークフローでは 'on': を使用すること）"
-    assert (
-        "workflow_dispatch" in on_block
-        or "pull_request" in on_block
-        or "push" in on_block
-    ), "push / pull_request / workflow_dispatch のいずれかが必要"
+def test_ci_commands_match_local_contract():
+    """AC-10-01: ci.yml が push/pull_request と checks の契約に一致する。"""
+    ci_path = ROOT_DIR / ".github" / "workflows" / "ci.yml"
+    assert ci_path.is_file(), f"missing: {ci_path}"
 
-    assert "--dry-run" in workflow_text
-    assert "session-01" in workflow_text or "--session-id" in workflow_text
-    assert "run_session.py" in workflow_text
+    workflow_text = ci_path.read_text(encoding="utf-8")
+    workflow_data = yaml.safe_load(workflow_text) or {}
+
+    on_block = workflow_data.get("on")
+    assert isinstance(on_block, dict), "トリガー(on)が dict で定義されていない"
+    assert "push" in on_block, "push トリガーが必要"
+    assert "pull_request" in on_block, "pull_request トリガーが必要"
 
     jobs = workflow_data.get("jobs") or {}
-    assert jobs, "jobs が空"
-    job_def = next(iter(jobs.values()))
-    steps = job_def.get("steps") or []
+    assert isinstance(jobs, dict) and jobs, "jobs が未定義"
+    checks = jobs.get("checks")
+    assert isinstance(checks, dict), "checks ジョブが未定義"
+    steps = checks.get("steps") or []
     run_snippets = [
-        str(s.get("run", "")) for s in steps if isinstance(s, dict) and "run" in s
+        str(step.get("run", ""))
+        for step in steps
+        if isinstance(step, dict) and "run" in step
     ]
     merged = "\n".join(run_snippets)
-    assert "--dry-run" in merged
-    assert "pytest" in merged and "test_ci_entry_conditions" in merged
+
+    assert re.search(r"PYTHONPATH=\.\s+pytest\s+backend/tests/?\s+-q", merged)
+    assert (
+        "python -m mypy --explicit-package-bases orchestration "
+        "--ignore-missing-imports --disable-error-code import-untyped"
+    ) in merged
+    assert (
+        'PYTHONPYCACHEPREFIX="./.pycache_compileall" python -m compileall -q -f '
+        "orchestration backend"
+    ) in merged
 
 
-def test_ci_does_not_modify_runtime_code(workflow_text: str):
-    """AC-03: CI が orchestration/run_session.py を書き換えない"""
-    assert RUN_SESSION_PATH.is_file()
-    before = RUN_SESSION_PATH.read_bytes()
+def test_ci_does_not_require_api_keys_for_checks_only():
+    """AC-10-02: checks 専用 CI は API キー前提にしない。"""
+    ci_path = ROOT_DIR / ".github" / "workflows" / "ci.yml"
+    workflow_text = ci_path.read_text(encoding="utf-8")
 
-    dangerous = [
-        r">>\s*orchestration/run_session\.py",
-        r">\s*orchestration/run_session\.py",
-        r"sed\s+-i.*run_session\.py",
-        r"tee\s+.*run_session\.py",
-    ]
-    for pat in dangerous:
-        assert re.search(pat, workflow_text, re.IGNORECASE) is None, (
-            f"禁止パターンに一致: {pat}"
-        )
-
-    # ローカル検証でファイルが触られていないこと
-    after = RUN_SESSION_PATH.read_bytes()
-    assert before == after
+    assert "OPENAI_API_KEY" not in workflow_text
+    assert "ANTHROPIC_API_KEY" not in workflow_text
+    assert "CLAUDE_API_KEY" not in workflow_text
+    assert "run_session.py" not in workflow_text
+    assert "--dry-run" not in workflow_text
 
 
 def test_existing_local_flow_not_broken(monkeypatch, tmp_path):
