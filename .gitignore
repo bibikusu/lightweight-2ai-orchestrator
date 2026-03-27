@@ -1,6 +1,7 @@
 # セッション成果物・キャッシュ（コミットしない）
 artifacts/
 .pycache_py_compile/
+.pycache_compileall/
 __pycache__/
 .venv/
 .DS_Store
