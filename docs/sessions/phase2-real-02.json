@@ -77,5 +77,6 @@
     "副作用なし（既存破壊なし）",
     "実装過不足なし"
   ],
-  "acceptance_ref": "acceptance/phase2-real-02.yaml"
+  "acceptance_ref": "acceptance/phase2-real-02.yaml",
+  "title": "Phase2-1 initial operational guide creation session"
 }
