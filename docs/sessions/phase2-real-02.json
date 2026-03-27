@@ -1,0 +1,81 @@
+{
+  "session_id": "phase2-real-02",
+  "phase_id": "phase-02",
+  "objective": "Phase2 の実務投入準備として docs/phase2_operation_guide.md を新規作成し、Phase1 で得た運用ルールを固定する",
+  "inputs": [
+    "PHASE1_COMPLETION.md",
+    "docs/master_instruction.md",
+    "docs/global_rules.md",
+    "docs/roadmap.yaml",
+    "docs/sessions/phase2-real-01.json",
+    "docs/acceptance/phase2-real-01.yaml",
+    "orchestration/run_session.py",
+    "orchestration/config.yaml",
+    "backend/tests/test_patch_validation.py",
+    "artifacts/real-run-safe-02/report.json"
+  ],
+  "outputs": [
+    "docs/phase2_operation_guide.md",
+    "artifacts/phase2-real-02/report.json"
+  ],
+  "allowed_changes": [
+    "docs/phase2_operation_guide.md",
+    "artifacts/phase2-real-02/report.json"
+  ],
+  "allowed_changes_detail": [
+    "docs/phase2_operation_guide.md の新規作成",
+    "artifacts/phase2-real-02/report.json の新規作成"
+  ],
+  "forbidden_changes": [
+    "orchestration/run_session.py の変更",
+    "orchestration/config.yaml の変更",
+    "orchestration/providers 配下の変更",
+    "backend/app 配下の変更",
+    "backend/tests 配下の変更",
+    "frontend 配下の変更",
+    "docs/master_instruction.md の変更",
+    "docs/global_rules.md の変更",
+    "docs/roadmap.yaml の変更",
+    "PHASE1_COMPLETION.md の変更",
+    "既存 session JSON / acceptance YAML の変更"
+  ],
+  "out_of_scope": [
+    "run_session.py の中核ロジック変更",
+    "validator の変更",
+    "CI の追加",
+    "複数ファイルにまたがる機能追加",
+    "テストコードの追加修正",
+    "API クライアントの変更",
+    "config.yaml の設定変更"
+  ],
+  "constraints": [
+    "1セッション1目的",
+    "変更ファイルは2件以内",
+    "実装コードは変更しない",
+    "既存ドキュメントは変更しない",
+    "新規作成する文書は Phase2 運用ルールの固定に限定する",
+    "checks（test/lint/typecheck/build）が通ること",
+    "既存テストに副作用を出さない"
+  ],
+  "completion_criteria": [
+    "docs/phase2_operation_guide.md が作成されている",
+    "運用ガイドに セッション種別・自動実行条件・手動実装切替条件・acceptance設計ルール・retry停止条件・report記録ルール・差戻し条件 が含まれている",
+    "変更が docs/phase2_operation_guide.md と artifacts/phase2-real-02/report.json に限定されている",
+    "checks（test/lint/typecheck/build）が通る",
+    "既存コードおよび既存設定に副作用がない"
+  ],
+  "acceptance_criteria": [
+    "AC-P2R2-01",
+    "AC-P2R2-02",
+    "AC-P2R2-03",
+    "AC-P2R2-04",
+    "AC-P2R2-05"
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "実装過不足なし"
+  ],
+  "acceptance_ref": "acceptance/phase2-real-02.yaml"
+}

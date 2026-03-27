@@ -1,0 +1,21 @@
+session_id: phase2-real-01
+acceptance:
+  - id: AC-P2R1-01
+    description: docs/sessions/phase2-real-01.json が作成されている
+    test_name: test_ac_p2r1_01_session_json_exists
+
+  - id: AC-P2R1-02
+    description: docs/acceptance/phase2-real-01.yaml が作成されている
+    test_name: test_ac_p2r1_02_acceptance_yaml_exists
+
+  - id: AC-P2R1-03
+    description: phase2-real-01.json の inputs が placeholder ではなく実在ファイル参照になっている
+    test_name: test_ac_p2r1_03_inputs_use_real_paths
+
+  - id: AC-P2R1-04
+    description: phase2-real-01.json の allowed_changes が session と acceptance の2ファイルに限定されている
+    test_name: test_ac_p2r1_04_allowed_changes_is_limited
+
+  - id: AC-P2R1-05
+    description: review_points が4軸固定で定義されている
+    test_name: test_ac_p2r1_05_review_points_four_axes

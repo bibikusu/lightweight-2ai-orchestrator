@@ -1,0 +1,75 @@
+{
+  "session_id": "phase2-real-01",
+  "phase_id": "phase-02",
+  "objective": "Phase2 で使用する session/acceptance の正本を固定するため、placeholder を使わない実在ファイル参照の定義を作成する",
+  "inputs": [
+    "docs/master_instruction.md",
+    "docs/global_rules.md",
+    "docs/roadmap.yaml",
+    "orchestration/run_session.py",
+    "orchestration/config.yaml",
+    "backend/tests/test_patch_validation.py",
+    "PHASE1_COMPLETION.md"
+  ],
+  "outputs": [
+    "docs/sessions/phase2-real-01.json",
+    "docs/acceptance/phase2-real-01.yaml"
+  ],
+  "allowed_changes": [
+    "docs/sessions/phase2-real-01.json",
+    "docs/acceptance/phase2-real-01.yaml"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/phase2-real-01.json の新規作成",
+    "docs/acceptance/phase2-real-01.yaml の新規作成"
+  ],
+  "forbidden_changes": [
+    "orchestration/run_session.py の変更",
+    "orchestration/config.yaml の変更",
+    "orchestration/providers 配下の変更",
+    "backend/tests 配下の変更",
+    "docs/master_instruction.md の変更",
+    "docs/global_rules.md の変更",
+    "docs/roadmap.yaml の変更",
+    "PHASE1_COMPLETION.md の変更",
+    "既存 session JSON の変更",
+    "既存 acceptance YAML の変更"
+  ],
+  "out_of_scope": [
+    "実装コードの変更",
+    "設定ファイルの変更",
+    "テストコードの変更",
+    "CI の追加",
+    "実案件の変更実行"
+  ],
+  "constraints": [
+    "1セッション1目的",
+    "変更ファイルは2件以内",
+    "placeholder を使わない",
+    "inputs は実在ファイル参照のみを記載する",
+    "review_points は4軸固定とする",
+    "既存ファイルは変更しない"
+  ],
+  "completion_criteria": [
+    "docs/sessions/phase2-real-01.json が作成されている",
+    "docs/acceptance/phase2-real-01.yaml が作成されている",
+    "phase2-real-01.json の inputs に placeholder ではなく実在ファイルパスのみが記載されている",
+    "allowed_changes が session/acceptance の2ファイルに限定されている",
+    "review_points が 仕様一致・変更範囲遵守・副作用なし・実装過不足なし の4軸で定義されている",
+    "既存コードおよび既存設定に副作用がない"
+  ],
+  "acceptance_criteria": [
+    "AC-P2R1-01",
+    "AC-P2R1-02",
+    "AC-P2R1-03",
+    "AC-P2R1-04",
+    "AC-P2R1-05"
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "実装過不足なし"
+  ],
+  "acceptance_ref": "acceptance/phase2-real-01.yaml"
+}
