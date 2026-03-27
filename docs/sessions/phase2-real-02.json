@@ -78,5 +78,6 @@
     "実装過不足なし"
   ],
   "acceptance_ref": "acceptance/phase2-real-02.yaml",
-  "title": "Phase2-1 initial operational guide creation session"
+  "title": "Phase2-1 initial operational guide creation session",
+  "goal": "Phase2 の実務投入準備として docs/phase2_operation_guide.md を新規作成し、Phase1 で得た運用ルールを固定する"
 }

@@ -71,5 +71,7 @@
     "副作用なし（既存破壊なし）",
     "実装過不足なし"
   ],
-  "acceptance_ref": "acceptance/phase2-real-01.yaml"
+  "acceptance_ref": "acceptance/phase2-real-01.yaml",
+  "title": "Phase2 で使用する session/acceptance の正本を固定するため、placeholder を使わない実在ファイル参照の定義を作成する",
+  "goal": "Phase2 で使用する session/acceptance の正本を固定するため、placeholder を使わない実在ファイル参照の定義を作成する"
 }
