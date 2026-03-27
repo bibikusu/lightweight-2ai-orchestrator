@@ -23,7 +23,7 @@ ROOT_DIR = Path(__file__).resolve().parents[2]
 CONFIG_PATH = ROOT_DIR / "orchestration" / "config.yaml"
 PYPROJECT_PATH = ROOT_DIR / "pyproject.toml"
 
-EXPECTED_TYPECHECK = "python3 -m mypy --explicit-package-bases orchestration --ignore-missing-imports --disable-error-code import-untyped"
+EXPECTED_TYPECHECK = ".venv/bin/python3 -m mypy --explicit-package-bases orchestration --ignore-missing-imports --disable-error-code import-untyped"
 EXPECTED_BUILD = (
     'PYTHONPYCACHEPREFIX="./.pycache_compileall" '
     "python3 -m compileall -q -f orchestration backend"
@@ -37,10 +37,16 @@ def _load_commands() -> dict:
 
 
 def _command_with_current_interpreter(cmd: str) -> str:
-    """config の先頭の python3 を pytest 実行インタープリタに置換（run_command が shell で別 python3 を拾わないようにする）。"""
+    """config の先頭の python3 を pytest 実行インタープリタに置換（run_command が shell で別 python3 を拾わないようにする）。
+    .venv/bin/python3 のようにパス内に埋め込まれた python3 は置換しない。
+    """
     if not cmd.strip():
         return cmd
-    return cmd.replace("python3", sys.executable, 1)
+    # コマンドが直接 python3 で始まる場合のみ置換（パス内の python3 は対象外）
+    stripped = cmd.strip()
+    if stripped.startswith("python3"):
+        return stripped.replace("python3", sys.executable, 1)
+    return cmd
 
 
 def test_config_has_typecheck_command():
