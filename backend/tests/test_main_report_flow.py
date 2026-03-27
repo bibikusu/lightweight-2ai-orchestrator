@@ -6,8 +6,8 @@ import sys
 import pytest
 
 
-def test_main_saves_report_in_expected_format(monkeypatch, tmp_path):
-    """AC-03: main（dry-run）経由で .md と .json が期待形式で保存される"""
+def test_success_flow_writes_normalized_session_report(monkeypatch, tmp_path):
+    """AC-09-04: 成功フローで正規化済み session_report.json が出力される"""
     import orchestration.run_session as rs
 
     monkeypatch.setattr(rs, "ARTIFACTS_DIR", tmp_path / "artifacts")
@@ -30,5 +30,17 @@ def test_main_saves_report_in_expected_format(monkeypatch, tmp_path):
 
     data = json.loads(json_path.read_text(encoding="utf-8"))
     assert data["session_id"] == "session-01"
-    assert "changed_files" in data
-    assert "acceptance_results" in data
+    assert data["status"] == "success"
+    assert data["completion"] in ("review_required", "retry_required", "stopped")
+    for key in (
+        "changed_files",
+        "test_result",
+        "lint_result",
+        "typecheck_result",
+        "build_result",
+        "acceptance_results",
+        "risks",
+        "open_issues",
+        "diff_summary",
+    ):
+        assert key in data

@@ -1042,6 +1042,8 @@ def build_session_report_record(
     impl_result: Dict[str, Any],
     checks: Dict[str, Any],
     *,
+    status: Optional[str] = None,
+    completion: Optional[str] = None,
     retry_control: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """機械向けの session_report.json レコードを生成する。"""
@@ -1072,23 +1074,53 @@ def build_session_report_record(
         acceptance_results.append({"id": tid, "test": tn, "result": res})
 
     def _to_pf(v: Any) -> str:
-        return "pass" if v == "passed" else ("fail" if v == "failed" else "skip")
+        s = str(v or "").strip().lower()
+        if s in ("passed", "pass", "ok", "success"):
+            return "pass"
+        if s in ("failed", "fail", "error"):
+            return "fail"
+        return "skip"
+
+    def _normalize_str_list(v: Any) -> List[str]:
+        if not isinstance(v, list):
+            return []
+        return [str(x) for x in v if isinstance(x, str)]
+
+    normalized_status = "failed" if str(status or "").strip().lower() == "failed" else "success"
+    normalized_completion = str(completion or "").strip().lower()
+    valid_completion = {"review_required", "retry_required", "stopped"}
+    if normalized_completion not in valid_completion:
+        if normalized_status == "success":
+            normalized_completion = "review_required"
+        else:
+            normalized_completion = "retry_required"
+
+    changed_files = _normalize_str_list(impl_result.get("changed_files", []))
+    diff_summary_raw = impl_result.get("diff_summary")
+    if isinstance(diff_summary_raw, str) and diff_summary_raw.strip():
+        diff_summary = diff_summary_raw.strip()
+    elif changed_files:
+        diff_summary = f"changed_files: {len(changed_files)} files"
+    else:
+        diff_summary = "changed_files: none"
 
     return {
         "session_id": ctx.session_id,
+        "status": normalized_status,
+        "completion": normalized_completion,
         "phase_id": (ctx.session_data or {}).get("phase_id"),
         "title": (ctx.session_data or {}).get("title"),
         "goal": (ctx.session_data or {}).get("goal"),
         "objective": prepared_spec.get("objective"),
-        "changed_files": list(impl_result.get("changed_files", []) or []),
-        "diff_summary": impl_result.get("diff_summary"),
+        "changed_files": changed_files,
+        "diff_summary": diff_summary,
         "test_result": _to_pf((checks.get("test") or {}).get("status")),
         "lint_result": _to_pf((checks.get("lint") or {}).get("status")),
         "typecheck_result": _to_pf((checks.get("typecheck") or {}).get("status")),
         "build_result": _to_pf((checks.get("build") or {}).get("status")),
-        "risks": list(impl_result.get("risks", []) or []),
-        "open_issues": list(impl_result.get("open_issues", []) or []),
-        "acceptance_results": acceptance_results,
+        "risks": _normalize_str_list(impl_result.get("risks", [])),
+        "open_issues": _normalize_str_list(impl_result.get("open_issues", [])),
+        "acceptance_results": list(acceptance_results),
         "retry_count": int(rc.get("retry_count", 0) or 0),
         "max_retries": int(rc.get("max_retries", 0) or 0),
         "retry_stopped_same_cause": bool(rc.get("retry_stopped_same_cause", False)),
@@ -1196,6 +1228,19 @@ def persist_session_reports(
             prepared_spec,
             impl_result,
             checks,
+            status=status,
+            completion=(
+                "review_required"
+                if status == "success"
+                else (
+                    "stopped"
+                    if (
+                        bool((retry_control or {}).get("retry_stopped_same_cause"))
+                        or bool((retry_control or {}).get("retry_stopped_max_retries"))
+                    )
+                    else "retry_required"
+                )
+            ),
             retry_control=retry_control,
         )
         save_json(session_dir / "reports" / "session_report.json", report_obj)

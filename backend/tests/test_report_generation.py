@@ -182,8 +182,8 @@ def test_report_json_is_generated_on_failure(monkeypatch, tmp_path):
     assert obj["status"] == "failed"
     assert obj["dry_run"] is False
 
-def test_report_contains_acceptance_status():
-    """acceptanceごとの PASS/FAIL が機械向けレコードに含まれる"""
+def test_session_report_contains_acceptance_results():
+    """AC-09-03: acceptance_results が list[object] で出力される"""
     ctx = SessionContext(
         session_id="session-04",
         session_data={"phase_id": "phase-04", "title": "t", "goal": "g"},
@@ -219,7 +219,14 @@ def test_report_contains_acceptance_status():
         "test_function_results": {"test_a": True, "test_b": False},
     }
 
-    report_obj = build_session_report_record(ctx, prepared_spec, impl_result, checks)
+    report_obj = build_session_report_record(
+        ctx,
+        prepared_spec,
+        impl_result,
+        checks,
+        status="success",
+        completion="review_required",
+    )
 
     acceptance_results = report_obj["acceptance_results"]
     assert len(acceptance_results) == 2
@@ -228,8 +235,8 @@ def test_report_contains_acceptance_status():
     assert next(x for x in acceptance_results if x["test"] == "test_b")["result"] == "fail"
 
 
-def test_report_contains_required_fields():
-    """AC-01: 機械向けレコードに必須フィールドが含まれる"""
+def test_session_report_contains_required_fields():
+    """AC-09-01: session_report.json に必須キーがすべて存在する"""
     ctx = SessionContext(
         session_id="session-04",
         session_data={"phase_id": "phase-04", "title": "t", "goal": "g"},
@@ -255,27 +262,66 @@ def test_report_contains_required_fields():
         "success": True,
     }
 
-    report_obj = build_session_report_record(ctx, prepared_spec, impl_result, checks)
+    report_obj = build_session_report_record(
+        ctx,
+        prepared_spec,
+        impl_result,
+        checks,
+        status="success",
+        completion="review_required",
+    )
 
     for key in [
+        "session_id",
+        "status",
+        "completion",
         "changed_files",
         "test_result",
         "lint_result",
         "typecheck_result",
         "build_result",
+        "acceptance_results",
         "risks",
         "open_issues",
         "diff_summary",
-        "acceptance_results",
-        "retry_count",
-        "max_retries",
-        "retry_stopped_same_cause",
-        "retry_stopped_max_retries",
     ]:
         assert key in report_obj
-    assert report_obj["retry_count"] == 0
-    assert report_obj["retry_stopped_same_cause"] is False
-    assert report_obj["retry_stopped_max_retries"] is False
+    assert report_obj["status"] == "success"
+    assert report_obj["completion"] == "review_required"
+    assert report_obj["diff_summary"] != ""
+
+
+def test_session_report_contains_check_results_as_strings():
+    """AC-09-02: check 結果が文字列へ正規化される"""
+    ctx = SessionContext(
+        session_id="session-04",
+        session_data={"phase_id": "phase-04", "title": "t", "goal": "g"},
+        acceptance_data={"raw_yaml": "", "parsed": {"acceptance": []}},
+        master_instruction="",
+        global_rules="",
+        roadmap_text="",
+        runtime_config={},
+    )
+    report_obj = build_session_report_record(
+        ctx,
+        {"objective": "obj"},
+        {"changed_files": [], "risks": [], "open_issues": []},
+        {
+            "test": {"status": "passed"},
+            "lint": {"status": "failed"},
+            "typecheck": {"status": "skipped"},
+            "build": {"status": None},
+            "success": False,
+        },
+        status="failed",
+        completion="retry_required",
+    )
+    assert isinstance(report_obj["test_result"], str)
+    assert isinstance(report_obj["lint_result"], str)
+    assert isinstance(report_obj["typecheck_result"], str)
+    assert isinstance(report_obj["build_result"], str)
+    assert report_obj["test_result"] == "pass"
+    assert report_obj["lint_result"] == "fail"
 
 
 def test_report_file_extension_matches_content():

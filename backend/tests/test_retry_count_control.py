@@ -230,3 +230,36 @@ def test_existing_retry_and_report_flow_not_broken(monkeypatch, tmp_path):
         assert key in rep
     assert rep["retry_stopped_same_cause"] is True
     assert rep["retry_stopped_max_retries"] is False
+
+
+def test_failed_flow_writes_normalized_session_report(monkeypatch, tmp_path):
+    """AC-09-05: 失敗フローでも同じキー集合の正規化済み session_report.json が出力される"""
+    sid = "session-09-failed-report"
+    _patch_main_fail(monkeypatch, tmp_path, sid, max_retries=1)
+    monkeypatch.setattr(sys, "argv", ["run_session.py", "--session-id", sid])
+    with patch("orchestration.providers.openai_client.OpenAIClientWrapper") as m:
+        m.return_value.request_retry_instruction.return_value = {}
+        assert main() == 1
+
+    rep = json.loads(
+        (tmp_path / "artifacts" / sid / "reports" / "session_report.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert rep["status"] == "failed"
+    assert rep["completion"] in ("review_required", "retry_required", "stopped")
+    for key in (
+        "session_id",
+        "status",
+        "completion",
+        "changed_files",
+        "test_result",
+        "lint_result",
+        "typecheck_result",
+        "build_result",
+        "acceptance_results",
+        "risks",
+        "open_issues",
+        "diff_summary",
+    ):
+        assert key in rep
