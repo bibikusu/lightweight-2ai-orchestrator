@@ -13,6 +13,7 @@ from orchestration.run_session import (
     call_chatgpt_for_retry_instruction,
     _compute_retry_cause_fingerprint,
     main,
+    retry_loop,
 )
 
 
@@ -265,6 +266,7 @@ def test_existing_retry_flow_not_broken(monkeypatch, tmp_path):
     assert rj.get("retry_skipped_same_cause") is True
     rep = json.loads((session_dir / "reports" / "session_report.json").read_text(encoding="utf-8"))
     assert rep.get("retry_stopped_same_cause") is True
+    assert rep.get("retry_stopped_max_retries") is False
 
 
 def test_retry_exhausted_skips_openai(monkeypatch, tmp_path):
@@ -303,3 +305,19 @@ def test_retry_count_resets_on_success(monkeypatch, tmp_path):
     monkeypatch.setattr(sys, "argv", ["run_session.py", "--session-id", sid])
     assert main() == 0
     assert _read_retry_count(tmp_path / "artifacts" / sid) == 0
+
+
+def test_same_cause_summary_is_not_retried_twice():
+    """AC-08-03: 同一 failure_type + 同一 cause_summary は再試行しない。"""
+    history = [
+        {"attempt": 1, "failure_type": "test_failure", "cause_summary": "AssertionError: x"},
+    ]
+    failure = {"failure_type": "test_failure", "cause_summary": "AssertionError: x"}
+    out = retry_loop(
+        retry_history=history,
+        failure=failure,
+        retry_count=1,
+        max_retries=3,
+    )
+    assert out["should_retry"] is False
+    assert out["stop_reason"] == "same_failure_and_cause"

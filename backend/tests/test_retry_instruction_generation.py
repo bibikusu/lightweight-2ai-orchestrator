@@ -25,7 +25,7 @@ CANONICAL_FAILURE_TYPES = frozenset(
         "type_mismatch",
         "test_failure",
         "scope_violation",
-        "regression",
+        "breaking_change",
         "spec_missing",
     }
 )

@@ -728,6 +728,158 @@ def normalize_check_results_for_retry(check_results: Dict[str, Any]) -> Dict[str
     return out
 
 
+FAILURE_TYPE_PRIORITY_ORDER: List[str] = [
+    "build_error",
+    "import_error",
+    "type_mismatch",
+    "test_failure",
+    "scope_violation",
+    "breaking_change",
+    "spec_missing",
+]
+
+
+def _extract_cause_summary(check_results: Dict[str, Any], channel: str) -> str:
+    channel_result = (check_results.get(channel) or {})
+    stderr = str(channel_result.get("stderr") or "").strip()
+    stdout = str(channel_result.get("stdout") or "").strip()
+    msg = stderr or stdout
+    if not msg:
+        return f"{channel} の失敗原因を特定できませんでした"
+    return msg.splitlines()[0][:200]
+
+
+def classify_failure(check_results: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    retry 用の failure_type を正規化して 1 つだけ返す。
+    優先順位:
+    build_error -> import_error -> type_mismatch -> test_failure -> scope_violation -> breaking_change -> spec_missing
+    """
+    cr = normalize_check_results_for_retry(check_results or {})
+    build = (cr.get("build") or {}).get("status")
+    test = (cr.get("test") or {}).get("status")
+    typecheck = (cr.get("typecheck") or {}).get("status")
+    lint = (cr.get("lint") or {}).get("status")
+
+    if build == "failed":
+        return {
+            "failure_type": "build_error",
+            "cause_summary": _extract_cause_summary(cr, "build"),
+        }
+
+    if test == "failed":
+        test_stderr = str((cr.get("test") or {}).get("stderr") or "")
+        if "ModuleNotFoundError" in test_stderr or "ImportError" in test_stderr:
+            return {
+                "failure_type": "import_error",
+                "cause_summary": _extract_cause_summary(cr, "test"),
+            }
+
+    if typecheck == "failed":
+        return {
+            "failure_type": "type_mismatch",
+            "cause_summary": _extract_cause_summary(cr, "typecheck"),
+        }
+
+    if lint == "failed" or test == "failed":
+        return {
+            "failure_type": "test_failure",
+            "cause_summary": _extract_cause_summary(cr, "test" if test == "failed" else "lint"),
+        }
+
+    if cr.get("scope_violation") is True:
+        return {"failure_type": "scope_violation", "cause_summary": "スコープ制約に違反しています"}
+
+    if cr.get("regression_detected") is True:
+        return {"failure_type": "breaking_change", "cause_summary": "既存の期待挙動を破壊しています"}
+
+    if cr.get("spec_missing_detected") is True:
+        return {"failure_type": "spec_missing", "cause_summary": "仕様情報が不足しています"}
+
+    return {"failure_type": "spec_missing", "cause_summary": "失敗原因を一意に特定できませんでした"}
+
+
+def build_retry_instruction(
+    *,
+    ctx: SessionContext,
+    prepared_spec: Dict[str, Any],
+    failure: Dict[str, Any],
+    stop_reason: str = "",
+) -> Dict[str, Any]:
+    """retry_instruction の必須キーを常に埋める。"""
+    failure_type = str(failure.get("failure_type") or "spec_missing")
+    cause_summary = str(failure.get("cause_summary") or "失敗原因を特定できませんでした")
+    try:
+        priority = FAILURE_TYPE_PRIORITY_ORDER.index(failure_type) + 1
+    except ValueError:
+        priority = len(FAILURE_TYPE_PRIORITY_ORDER)
+    fix_instructions = [
+        f"{failure_type} の原因 ({cause_summary}) に対する最小修正のみ実施すること。",
+        "変更は allowed_changes に限定し、副作用を増やさないこと。",
+    ]
+    dnc: List[str] = []
+    forbidden = prepared_spec.get("forbidden_changes", [])
+    if isinstance(forbidden, list):
+        dnc = [str(x).strip() for x in forbidden if isinstance(x, str) and str(x).strip()]
+    if not dnc:
+        dnc = ["out_of_scope と forbidden_changes を変更しないこと。"]
+    out: Dict[str, Any] = {
+        "session_id": ctx.session_id,
+        "failure_type": failure_type,
+        "priority": int(priority),
+        "cause_summary": cause_summary,
+        "fix_instructions": fix_instructions,
+        "do_not_change": dnc,
+    }
+    if stop_reason:
+        out["stop_reason"] = stop_reason
+    return out
+
+
+def retry_loop(
+    *,
+    retry_history: List[Dict[str, Any]],
+    failure: Dict[str, Any],
+    retry_count: int,
+    max_retries: int,
+) -> Dict[str, Any]:
+    """同一失敗の再試行抑止と上限判定を一元化する。"""
+    failure_type = str(failure.get("failure_type") or "spec_missing")
+    cause_summary = str(failure.get("cause_summary") or "").strip() or "原因不明"
+    for item in retry_history:
+        if item.get("failure_type") == failure_type and item.get("cause_summary") == cause_summary:
+            return {
+                "should_retry": False,
+                "failure_type": failure_type,
+                "cause_summary": cause_summary,
+                "retry_count": int(retry_count),
+                "stop_reason": "same_failure_and_cause",
+            }
+    if retry_count >= max_retries:
+        return {
+            "should_retry": False,
+            "failure_type": failure_type,
+            "cause_summary": cause_summary,
+            "retry_count": int(retry_count),
+            "stop_reason": "max_retries_reached",
+        }
+    if retry_history and retry_history[-1].get("failure_type") == failure_type:
+        return {
+            "should_retry": False,
+            "failure_type": failure_type,
+            "cause_summary": cause_summary,
+            "retry_count": int(retry_count),
+            "stop_reason": "failure_type_repeated",
+        }
+    return {
+        "should_retry": True,
+        "failure_type": failure_type,
+        "cause_summary": cause_summary,
+        "retry_count": int(retry_count),
+        "stop_reason": "",
+    }
+
+
 def resolve_canonical_failure_type(check_results: Dict[str, Any]) -> Dict[str, Any]:
     """
     正本7値＋ no_failure を返す。
@@ -738,7 +890,7 @@ def resolve_canonical_failure_type(check_results: Dict[str, Any]) -> Dict[str, A
     # フラグ系（テストが成功でも scope_violation 等が立つことがある）
     flag_map = [
         ("scope_violation", "scope_violation", 5),
-        ("regression_detected", "regression", 6),
+        ("regression_detected", "breaking_change", 6),
         ("spec_missing_detected", "spec_missing", 7),
     ]
     flagged: List[Tuple[str, int]] = []
@@ -816,13 +968,15 @@ def _merge_retry_instruction(
 ) -> Dict[str, Any]:
     """OpenAI からの出力を正規化し、必須キーを埋める。"""
     canonical = resolve_canonical_failure_type(check_results)
+    # cause_summary は classify_failure から取得（resolve_canonical_failure_type は持たない）
+    _cf = classify_failure(check_results)
     out: Dict[str, Any] = dict(raw or {})
     out["session_id"] = ctx.session_id
     out["failure_type"] = canonical["failure_type"]
     out["priority"] = canonical["priority"]
 
     if not isinstance(out.get("cause_summary"), str) or not str(out.get("cause_summary")).strip():
-        out["cause_summary"] = f"failure_type={canonical['failure_type']} priority={canonical['priority']}"
+        out["cause_summary"] = str(_cf.get("cause_summary") or "原因不明")
 
     fi = out.get("fix_instructions")
     if isinstance(fi, str):
@@ -1402,6 +1556,7 @@ def main() -> int:
         retry_instruction: Optional[Dict[str, Any]] = None
         retry_stopped_same_cause = False
         retry_stopped_max_retries = False
+        retry_history: List[Dict[str, Any]] = []
 
         # retry_count は永続化（成功時は 0 に戻す）
         retry_count = _read_retry_state_count(session_dir)
@@ -1412,7 +1567,7 @@ def main() -> int:
 
         # 失敗時はリトライループへ
         while not check_results.get("success"):
-            # 同一原因で打ち切り（retry_count 上限より優先）
+            # 同一原因チェック（max_retries 上限到達時は retry_exhausted より優先して打ち切る）
             fp = _compute_retry_cause_fingerprint(check_results)
             prev_retry_path = session_dir / "responses" / "retry_instruction.json"
             prev_fp = None
@@ -1423,15 +1578,39 @@ def main() -> int:
                     )
                 except json.JSONDecodeError:
                     prev_fp = None
-
-            # 上限到達で打ち切り（この場合 OpenAI は呼ばない）
-            if retry_count >= max_retries_effective and not (prev_fp and prev_fp == fp):
-                retry_stopped_max_retries = True
+            if prev_fp is not None and prev_fp == fp and retry_count >= max_retries_effective:
                 retry_instruction = _merge_retry_instruction(
                     {}, ctx, prepared_spec, impl_result, check_results
                 )
-                retry_instruction["retry_exhausted"] = True
                 retry_instruction["cause_fingerprint"] = fp
+                retry_instruction["retry_skipped_same_cause"] = True
+                retry_instruction["retry_count"] = retry_count
+                retry_instruction["max_retries"] = max_retries_config
+                retry_instruction["max_retries_effective"] = max_retries_effective
+                save_json(prev_retry_path, retry_instruction)
+                retry_stopped_same_cause = True
+                break
+
+            failure = classify_failure(check_results)
+            decision = retry_loop(
+                retry_history=retry_history,
+                failure=failure,
+                retry_count=retry_count,
+                max_retries=max_retries_effective,
+            )
+            if not decision.get("should_retry"):
+                reason = str(decision.get("stop_reason") or "retry_stopped")
+                retry_instruction = build_retry_instruction(
+                    ctx=ctx,
+                    prepared_spec=prepared_spec,
+                    failure=failure,
+                    stop_reason=reason,
+                )
+                if reason == "max_retries_reached":
+                    retry_stopped_max_retries = True
+                    retry_instruction["retry_exhausted"] = True
+                else:
+                    retry_stopped_same_cause = True
                 retry_instruction["retry_count"] = retry_count
                 retry_instruction["max_retries"] = max_retries_config
                 retry_instruction["max_retries_effective"] = max_retries_effective
@@ -1444,6 +1623,8 @@ def main() -> int:
             retry_instruction = call_chatgpt_for_retry_instruction(
                 ctx, prepared_spec, impl_result, check_results
             )
+            retry_instruction["failure_type"] = decision["failure_type"]
+            retry_instruction["cause_summary"] = decision["cause_summary"]
             # 同一原因抑止の場合は retry_count を増やさない
             did_new = not bool(retry_instruction.get("retry_skipped_same_cause"))
             if did_new:
@@ -1456,6 +1637,13 @@ def main() -> int:
             retry_instruction["retry_count"] = retry_count
             retry_instruction["max_retries"] = max_retries_config
             retry_instruction["max_retries_effective"] = max_retries_effective
+            retry_history.append(
+                {
+                    "attempt": retry_count,
+                    "failure_type": str(retry_instruction.get("failure_type") or ""),
+                    "cause_summary": str(retry_instruction.get("cause_summary") or ""),
+                }
+            )
             save_json(session_dir / "responses" / "retry_instruction.json", retry_instruction)
 
             if retry_stopped_same_cause:

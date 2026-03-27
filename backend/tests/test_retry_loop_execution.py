@@ -11,6 +11,7 @@ from orchestration.run_session import (
     SessionContext,
     build_implementation_prompts,
     main,
+    retry_loop,
 )
 
 
@@ -226,6 +227,7 @@ def test_retry_loop_stops_on_same_cause(monkeypatch, tmp_path):
         )
     )
     assert rep.get("retry_stopped_same_cause") is True
+    assert rep.get("retry_stopped_max_retries") is False
 
 
 def test_retry_loop_stops_on_max_retries(monkeypatch, tmp_path):
@@ -296,3 +298,39 @@ def test_existing_retry_and_report_flow_not_broken(monkeypatch, tmp_path):
         "retry_stopped_max_retries",
     ):
         assert key in rep
+
+
+def test_same_failure_not_retried():
+    """同一 failure_type + cause_summary は再試行しない。"""
+    decision = retry_loop(
+        retry_history=[{"attempt": 1, "failure_type": "test_failure", "cause_summary": "A"}],
+        failure={"failure_type": "test_failure", "cause_summary": "A"},
+        retry_count=1,
+        max_retries=3,
+    )
+    assert decision["should_retry"] is False
+    assert decision["stop_reason"] == "same_failure_and_cause"
+
+
+def test_retry_stops_when_failure_type_repeats():
+    """同一 failure_type が連続したら停止する。"""
+    decision = retry_loop(
+        retry_history=[{"attempt": 1, "failure_type": "type_mismatch", "cause_summary": "old"}],
+        failure={"failure_type": "type_mismatch", "cause_summary": "new"},
+        retry_count=1,
+        max_retries=3,
+    )
+    assert decision["should_retry"] is False
+    assert decision["stop_reason"] == "failure_type_repeated"
+
+
+def test_retry_stops_at_limit():
+    """上限回数到達時は停止する。"""
+    decision = retry_loop(
+        retry_history=[],
+        failure={"failure_type": "build_error", "cause_summary": "B"},
+        retry_count=2,
+        max_retries=2,
+    )
+    assert decision["should_retry"] is False
+    assert decision["stop_reason"] == "max_retries_reached"
