@@ -1062,16 +1062,20 @@ def build_session_report_record(
             continue
         tid = item.get("id")
         tn = item.get("test_name")
+        desc = item.get("description")
         if not isinstance(tn, str) or not tn:
             continue
         passed = fn_results.get(tn)
         if passed is True:
-            res = "pass"
+            res = "passed"
         elif passed is False:
-            res = "fail"
+            res = "failed"
         else:
-            res = "unknown"
-        acceptance_results.append({"id": tid, "test": tn, "result": res})
+            res = "not_applicable"
+        row: Dict[str, Any] = {"id": tid, "test": tn, "result": res}
+        if isinstance(desc, str) and desc:
+            row["description"] = desc
+        acceptance_results.append(row)
 
     def _to_pf(v: Any) -> str:
         s = str(v or "").strip().lower()
@@ -1134,7 +1138,7 @@ def build_acceptance_results_for_report_json(
 ) -> List[Dict[str, str]]:
     """
     report.json 用の acceptance_results を生成する。
-    形式は最小限（id, result）で、result は pass/fail/not_applicable の3値のみ。
+    形式は最小限（id, result）で、result は passed/failed/not_applicable の3値のみ。
     """
     if ctx is None:
         return []
@@ -1157,9 +1161,9 @@ def build_acceptance_results_for_report_json(
         else:
             passed = fn_results.get(tn)
             if passed is True:
-                result = "pass"
+                result = "passed"
             elif passed is False:
-                result = "fail"
+                result = "failed"
             else:
                 result = "not_applicable"
         out.append({"id": tid, "result": result})
@@ -1176,7 +1180,7 @@ def decide_completion_status(
     if status == "failed":
         return {"completion_status": "failed", "human_review_needed": False}
     has_fail = any(
-        isinstance(item, dict) and item.get("result") == "fail"
+        isinstance(item, dict) and item.get("result") == "failed"
         for item in (acceptance_results or [])
     )
     if has_fail:

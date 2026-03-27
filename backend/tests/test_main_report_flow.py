@@ -7,7 +7,7 @@ import pytest
 
 
 def test_success_flow_writes_normalized_session_report(monkeypatch, tmp_path):
-    """AC-09-04: 成功フローで正規化済み session_report.json が出力される"""
+    """AC-13-03: success フローで report 構造互換が維持される"""
     import orchestration.run_session as rs
 
     monkeypatch.setattr(rs, "ARTIFACTS_DIR", tmp_path / "artifacts")
@@ -44,3 +44,12 @@ def test_success_flow_writes_normalized_session_report(monkeypatch, tmp_path):
         "diff_summary",
     ):
         assert key in data
+<<<<<<< HEAD
+=======
+    assert isinstance(data["acceptance_results"], list)
+
+    normalized_report = json.loads(report_json_path.read_text(encoding="utf-8"))
+    assert normalized_report["status"] == "dry_run"
+    assert isinstance(normalized_report["duration_sec"], float)
+    assert normalized_report["duration_sec"] >= 0
+>>>>>>> 8317058 (session-13: auto-judge acceptance results from executed tests)

@@ -6,6 +6,7 @@ import pytest
 
 from orchestration.run_session import (
     SessionContext,
+    build_acceptance_results_for_report_json,
     build_session_report_record,
     decide_completion_status,
     generate_report,
@@ -182,8 +183,8 @@ def test_report_json_is_generated_on_failure(monkeypatch, tmp_path):
     assert obj["status"] == "failed"
     assert obj["dry_run"] is False
 
-def test_session_report_contains_acceptance_results():
-    """AC-09-03: acceptance_results が list[object] で出力される"""
+def test_acceptance_results_auto_judged():
+    """AC-13-01: acceptance_results が test_name と実行結果で passed/failed 判定される"""
     ctx = SessionContext(
         session_id="session-04",
         session_data={"phase_id": "phase-04", "title": "t", "goal": "g"},
@@ -191,8 +192,8 @@ def test_session_report_contains_acceptance_results():
             "raw_yaml": "",
             "parsed": {
                 "acceptance": [
-                    {"id": "AC-04-01", "test_name": "test_a"},
-                    {"id": "AC-04-02", "test_name": "test_b"},
+                    {"id": "AC-04-01", "description": "a", "test_name": "test_a"},
+                    {"id": "AC-04-02", "description": "b", "test_name": "test_b"},
                 ]
             },
         },
@@ -231,8 +232,53 @@ def test_session_report_contains_acceptance_results():
     acceptance_results = report_obj["acceptance_results"]
     assert len(acceptance_results) == 2
     assert {x["test"] for x in acceptance_results} == {"test_a", "test_b"}
-    assert next(x for x in acceptance_results if x["test"] == "test_a")["result"] == "pass"
-    assert next(x for x in acceptance_results if x["test"] == "test_b")["result"] == "fail"
+    assert next(x for x in acceptance_results if x["test"] == "test_a")["result"] == "passed"
+    assert next(x for x in acceptance_results if x["test"] == "test_b")["result"] == "failed"
+    assert next(x for x in acceptance_results if x["test"] == "test_a")["description"] == "a"
+    assert next(x for x in acceptance_results if x["test"] == "test_b")["description"] == "b"
+
+    normalized = build_acceptance_results_for_report_json(ctx, checks)
+    assert normalized == [
+        {"id": "AC-04-01", "result": "passed"},
+        {"id": "AC-04-02", "result": "failed"},
+    ]
+
+
+def test_acceptance_not_applicable_only_when_unmapped():
+    """AC-13-02: not_applicable は未実行または未対応 test_name のみ"""
+    ctx = SessionContext(
+        session_id="session-04",
+        session_data={"phase_id": "phase-04", "title": "t", "goal": "g"},
+        acceptance_data={
+            "raw_yaml": "",
+            "parsed": {
+                "acceptance": [
+                    {"id": "AC-04-01", "test_name": "test_mapped_pass"},
+                    {"id": "AC-04-02", "test_name": "test_mapped_fail"},
+                    {"id": "AC-04-03", "test_name": "test_unmapped"},
+                    {"id": "AC-04-04"},
+                ]
+            },
+        },
+        master_instruction="",
+        global_rules="",
+        roadmap_text="",
+        runtime_config={},
+    )
+    checks = {
+        "test_function_results": {
+            "test_mapped_pass": True,
+            "test_mapped_fail": False,
+        }
+    }
+
+    normalized = build_acceptance_results_for_report_json(ctx, checks)
+    assert normalized == [
+        {"id": "AC-04-01", "result": "passed"},
+        {"id": "AC-04-02", "result": "failed"},
+        {"id": "AC-04-03", "result": "not_applicable"},
+        {"id": "AC-04-04", "result": "not_applicable"},
+    ]
 
 
 def test_session_report_contains_required_fields():
