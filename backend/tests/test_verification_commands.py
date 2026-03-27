@@ -37,15 +37,15 @@ def _load_commands() -> dict:
 
 
 def _command_with_current_interpreter(cmd: str) -> str:
-    """config の先頭の python3 を pytest 実行インタープリタに置換（run_command が shell で別 python3 を拾わないようにする）。
-    .venv/bin/python3 のようにパス内に埋め込まれた python3 は置換しない。
-    """
     if not cmd.strip():
         return cmd
-    # コマンドが直接 python3 で始まる場合のみ置換（パス内の python3 は対象外）
+
     stripped = cmd.strip()
-    if stripped.startswith("python3"):
-        return stripped.replace("python3", sys.executable, 1)
+
+    for prefix in [".venv/bin/python3", ".venv/bin/python", "python3", "python"]:
+        if stripped.startswith(prefix):
+            return stripped.replace(prefix, sys.executable, 1)
+
     return cmd
 
 
