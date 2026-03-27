@@ -1,0 +1,13 @@
+session_id: session-11-duration
+acceptance:
+  - id: AC-11-01
+    description: report.json に duration_sec フィールドが存在する
+    test_name: test_report_contains_duration
+
+  - id: AC-11-02
+    description: duration_sec が float 型で 0 以上である
+    test_name: test_report_contains_duration
+
+  - id: AC-11-03
+    description: 既存 report フィールドが壊れていない
+    test_name: test_session_report_contains_required_fields

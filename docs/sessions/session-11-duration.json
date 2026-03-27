@@ -1,0 +1,34 @@
+{
+  "session_id": "session-11-duration",
+  "title": "Add duration_sec to session report",
+  "goal": "report.json に実行時間 duration_sec を追加し、セッション実行時間を記録可能にする",
+  "phase_id": "phase-03",
+  "scope": [
+    "run_session.py の report 生成に duration_sec を追加",
+    "test_report_generation.py に duration 検証テストを追加"
+  ],
+  "objective": "Add duration_sec to session report to measure execution time",
+  "out_of_scope": [
+    "retry ロジックの変更",
+    "run_command の変更",
+    "CI workflow の変更",
+    "config.yaml の変更"
+  ],
+  "constraints": [
+    "変更ファイルは2件以内",
+    "既存 report フィールドを壊さない"
+  ],
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "backend/tests/test_report_generation.py"
+  ],
+  "forbidden_changes": [
+    "orchestration/providers 配下",
+    "backend/tests/test_retry 系",
+    "backend/tests/test_failure 系",
+    "backend/tests/test_verification_commands.py",
+    ".github/workflows",
+    "orchestration/config.yaml"
+  ],
+  "acceptance_ref": "acceptance/session-11-duration.yaml"
+}
