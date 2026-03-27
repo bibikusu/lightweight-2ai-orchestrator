@@ -19,12 +19,10 @@
     "artifacts/phase2-real-02/report.json"
   ],
   "allowed_changes": [
-    "docs/phase2_operation_guide.md",
-    "artifacts/phase2-real-02/report.json"
+    "docs/phase2_operation_guide.md"
   ],
   "allowed_changes_detail": [
-    "docs/phase2_operation_guide.md の新規作成",
-    "artifacts/phase2-real-02/report.json の新規作成"
+    "docs/phase2_operation_guide.md の新規作成"
   ],
   "forbidden_changes": [
     "orchestration/run_session.py の変更",
