@@ -7,7 +7,7 @@ import pytest
 
 
 def test_success_flow_writes_normalized_session_report(monkeypatch, tmp_path):
-    """AC-13-03: success フローで report 構造互換が維持される"""
+    """AC-13-03 / AC-14-03: success フローで report 構造互換が維持される"""
     import orchestration.run_session as rs
 
     monkeypatch.setattr(rs, "ARTIFACTS_DIR", tmp_path / "artifacts")
@@ -19,9 +19,11 @@ def test_success_flow_writes_normalized_session_report(monkeypatch, tmp_path):
     reports = tmp_path / "artifacts" / "session-01" / "reports"
     md_path = reports / "session_report.md"
     json_path = reports / "session_report.json"
+    report_json_path = tmp_path / "artifacts" / "session-01" / "report.json"
 
     assert md_path.is_file()
     assert json_path.is_file()
+    assert report_json_path.is_file()
 
     md_text = md_path.read_text(encoding="utf-8")
     assert md_text.startswith("# Session Report:")
@@ -44,12 +46,14 @@ def test_success_flow_writes_normalized_session_report(monkeypatch, tmp_path):
         "diff_summary",
     ):
         assert key in data
-<<<<<<< HEAD
-=======
     assert isinstance(data["acceptance_results"], list)
 
     normalized_report = json.loads(report_json_path.read_text(encoding="utf-8"))
     assert normalized_report["status"] == "dry_run"
     assert isinstance(normalized_report["duration_sec"], float)
     assert normalized_report["duration_sec"] >= 0
->>>>>>> 8317058 (session-13: auto-judge acceptance results from executed tests)
+    assert isinstance(normalized_report["branch"], str)
+    assert isinstance(normalized_report["commit_sha"], str)
+    assert len(normalized_report["commit_sha"]) > 0
+    assert isinstance(normalized_report["source_branch"], str)
+    assert isinstance(normalized_report["merged_to_main"], bool)
