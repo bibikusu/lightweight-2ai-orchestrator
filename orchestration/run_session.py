@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -1107,7 +1108,7 @@ def call_claude_for_implementation(
     return client.request_implementation(system_prompt, user_prompt)
 
 
-def run_command(command: str) -> Dict[str, Any]:
+def run_command(command: str, timeout_sec: int = 300) -> Dict[str, Any]:
     if not command.strip():
         return {
             "status": "skipped",
@@ -1115,21 +1116,46 @@ def run_command(command: str) -> Dict[str, Any]:
             "returncode": None,
             "stdout": "",
             "stderr": "",
+            "timeout": False,
         }
 
-    proc = subprocess.run(
-        command,
-        shell=True,
-        cwd=ROOT_DIR,
-        text=True,
-        capture_output=True,
-    )
+    # pytest 実行中に pytest コマンドを再帰起動してハングするのを防ぐ。
+    if os.environ.get("PYTEST_CURRENT_TEST") and "pytest" in command.lower():
+        return {
+            "status": "skipped",
+            "command": command,
+            "returncode": None,
+            "stdout": "",
+            "stderr": "",
+            "timeout": False,
+        }
+
+    try:
+        proc = subprocess.run(
+            command,
+            shell=True,
+            cwd=ROOT_DIR,
+            text=True,
+            capture_output=True,
+            timeout=timeout_sec,
+        )
+    except subprocess.TimeoutExpired:
+        return {
+            "status": "failed",
+            "command": command,
+            "returncode": -1,
+            "stdout": "",
+            "stderr": "timeout exceeded",
+            "timeout": True,
+        }
+
     return {
         "status": "passed" if proc.returncode == 0 else "failed",
         "command": command,
         "returncode": proc.returncode,
         "stdout": proc.stdout,
         "stderr": proc.stderr,
+        "timeout": False,
     }
 
 
