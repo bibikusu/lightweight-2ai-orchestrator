@@ -23,7 +23,7 @@ ROOT_DIR = Path(__file__).resolve().parents[2]
 CONFIG_PATH = ROOT_DIR / "orchestration" / "config.yaml"
 PYPROJECT_PATH = ROOT_DIR / "pyproject.toml"
 
-EXPECTED_TYPECHECK = "python3 -m mypy orchestration --ignore-missing-imports"
+EXPECTED_TYPECHECK = "python3 -m mypy --explicit-package-bases orchestration --ignore-missing-imports --disable-error-code import-untyped"
 EXPECTED_BUILD = (
     'PYTHONPYCACHEPREFIX="./.pycache_compileall" '
     "python3 -m compileall -q -f orchestration backend"
