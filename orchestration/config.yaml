@@ -16,7 +16,7 @@ commands:
   # lint: 標準ライブラリのみ。PYTHONPYCACHEPREFIX で .pyc をリポジトリ配下に寄せ、権限の厳しい環境でも失敗しにくくする
   lint: 'PYTHONPYCACHEPREFIX="./.pycache_py_compile" python3 -m py_compile orchestration/run_session.py'
   # typecheck: session-07a 正本
-  typecheck: "python3 -m mypy orchestration --ignore-missing-imports"
+  typecheck: "PYTHONPATH=. .venv/bin/python -m mypy orchestration --ignore-missing-imports"
   # build: session-07a 正本
   build: 'PYTHONPYCACHEPREFIX="./.pycache_compileall" python3 -m compileall -q -f orchestration backend'
 
