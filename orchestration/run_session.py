@@ -168,12 +168,38 @@ def _iso_utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _duration_sec_from_iso(started_at: str, finished_at: str) -> float:
+    """started_at / finished_at（ISO8601）から経過秒を返す。解析不能時は 0.0。"""
+    try:
+        s = started_at.replace("Z", "+00:00")
+        f = finished_at.replace("Z", "+00:00")
+        t0 = datetime.fromisoformat(s)
+        t1 = datetime.fromisoformat(f)
+        return max(0.0, (t1 - t0).total_seconds())
+    except Exception:
+        return 0.0
+
+
 def _git_branch_safe() -> Optional[str]:
     """ブランチ名を返す。Git でない／取得失敗時は None。"""
     if not _is_git_repository():
         return None
     try:
         return get_current_git_branch()
+    except Exception:
+        return None
+
+
+def _git_commit_sha_safe() -> Optional[str]:
+    """HEAD のコミット SHA を返す。Git でない／取得失敗時は None。"""
+    if not _is_git_repository():
+        return None
+    try:
+        p = _git_run(["rev-parse", "HEAD"])
+        if p.returncode != 0:
+            return None
+        out = (p.stdout or "").strip()
+        return out if out else None
     except Exception:
         return None
 
@@ -1190,6 +1216,90 @@ def decide_completion_status(
     return {"completion_status": "usable_for_self", "human_review_needed": False}
 
 
+def _session_index_row_from_report_dict(
+    data: Dict[str, Any], fallback_dir_name: str
+) -> Dict[str, Any]:
+    """artifacts 配下の report.json 1件から index 行を作る（欠損は規格化、KeyError は出さない）。"""
+    sid_raw = data.get("session_id")
+    session_id = str(sid_raw) if sid_raw is not None else fallback_dir_name
+    status_raw = data.get("status")
+    status = str(status_raw) if status_raw is not None else "unknown"
+    cs_raw = data.get("completion_status")
+    completion_status = str(cs_raw) if cs_raw is not None else "unknown"
+    br = data.get("branch")
+    branch = br if isinstance(br, str) and br.strip() else "unavailable"
+    cmt = data.get("commit_sha")
+    commit_sha = cmt if isinstance(cmt, str) and cmt.strip() else "unavailable"
+    dur_raw = data.get("duration_sec")
+    try:
+        duration_sec = float(dur_raw) if dur_raw is not None else 0.0
+    except (TypeError, ValueError):
+        duration_sec = 0.0
+    ft = data.get("failure_type")
+    if ft is None or ft == "":
+        failure_type = "unknown"
+    else:
+        failure_type = str(ft)
+    return {
+        "session_id": session_id,
+        "status": status,
+        "completion_status": completion_status,
+        "branch": branch,
+        "commit_sha": commit_sha,
+        "duration_sec": duration_sec,
+        "failure_type": failure_type,
+    }
+
+
+def _build_artifacts_index_and_summary(
+    artifacts_dir: Path, current_payload: Dict[str, Any]
+) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    """
+    artifacts 配下の report.json を走査し sessions 一覧と summary を返す。
+    現在の実行分は current_payload で上書き（ディスク未反映でも集計に含める）。
+    """
+    current_id = str(current_payload.get("session_id") or "")
+    rows: Dict[str, Dict[str, Any]] = {}
+    if artifacts_dir.is_dir():
+        for child in sorted(artifacts_dir.iterdir()):
+            if not child.is_dir():
+                continue
+            rp = child / "report.json"
+            if not rp.is_file():
+                continue
+            try:
+                raw = json.loads(rp.read_text(encoding="utf-8"))
+            except (json.JSONDecodeError, OSError):
+                continue
+            if not isinstance(raw, dict):
+                continue
+            sid = str(raw.get("session_id") or child.name)
+            rows[sid] = _session_index_row_from_report_dict(raw, child.name)
+    rows[current_id] = _session_index_row_from_report_dict(
+        current_payload, current_id or "unknown"
+    )
+    sessions_sorted = sorted(rows.values(), key=lambda x: x["session_id"])
+    total = len(sessions_sorted)
+    success_count = sum(1 for s in sessions_sorted if s["status"] == "success")
+    failed_count = sum(1 for s in sessions_sorted if s["status"] == "failed")
+    success_rate = (float(success_count) / float(total)) if total else 0.0
+    failure_type_counts: Dict[str, int] = {}
+    for s in sessions_sorted:
+        fk = s["failure_type"]
+        failure_type_counts[fk] = failure_type_counts.get(fk, 0) + 1
+    duration_sum = sum(s["duration_sec"] for s in sessions_sorted)
+    duration_avg = (duration_sum / float(total)) if total else 0.0
+    summary: Dict[str, Any] = {
+        "total_sessions": total,
+        "success_count": success_count,
+        "failed_count": failed_count,
+        "success_rate": success_rate,
+        "failure_type_counts": failure_type_counts,
+        "duration_avg": duration_avg,
+    }
+    return sessions_sorted, summary
+
+
 def persist_session_reports(
     session_dir: Path,
     ctx: Optional[SessionContext],
@@ -1264,18 +1374,31 @@ def persist_session_reports(
         if failure_type == "no_failure":
             failure_type = None
 
+    git_branch = _git_branch_safe()
+    git_sha = _git_commit_sha_safe()
+    branch_out = git_branch if git_branch else "unavailable"
+    commit_out = git_sha if git_sha else "unavailable"
+    merged_to_main = bool(
+        git_branch and git_branch.strip().lower() in ("main", "master")
+    )
+
     payload: Dict[str, Any] = {
         "session_id": (ctx.session_id if ctx is not None else str(session_dir.name)),
         "status": status,
         "dry_run": bool(dry_run),
         "started_at": started_at,
         "finished_at": finished_at,
+        "duration_sec": _duration_sec_from_iso(started_at, finished_at),
         "changed_files": changed_files,
         "risks": list(impl_result.get("risks", []) or []),
         "open_issues": list(impl_result.get("open_issues", []) or []),
         "checks": checks if isinstance(checks, dict) else {},
         "failure_type": failure_type,
         "error_message": error_message if (status == "failed") else None,
+        "branch": branch_out,
+        "commit_sha": commit_out,
+        "source_branch": branch_out,
+        "merged_to_main": merged_to_main,
     }
     if "acceptance_results" not in payload:
         payload["acceptance_results"] = build_acceptance_results_for_report_json(ctx, checks)
@@ -1287,6 +1410,12 @@ def persist_session_reports(
     )
     payload["completion_status"] = completion["completion_status"]
     payload["human_review_needed"] = completion["human_review_needed"]
+    artifacts_root = session_dir.parent
+    sessions_index, summary_metrics = _build_artifacts_index_and_summary(
+        artifacts_root, payload
+    )
+    payload["sessions"] = sessions_index
+    payload["summary"] = summary_metrics
     save_json(session_dir / "report.json", payload)
 
 

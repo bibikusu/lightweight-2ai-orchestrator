@@ -21,10 +21,15 @@ def _assert_required_report_keys(obj: dict) -> None:
         "dry_run",
         "started_at",
         "finished_at",
+        "duration_sec",
         "changed_files",
         "checks",
         "failure_type",
         "error_message",
+        "branch",
+        "commit_sha",
+        "source_branch",
+        "merged_to_main",
     ):
         assert k in obj
 
@@ -458,6 +463,74 @@ def test_decide_completion_status_failed_status_is_prioritized():
     assert out["human_review_needed"] is False
 
 
+def test_report_contains_branch_and_commit_metadata(monkeypatch, tmp_path):
+    """AC-14-01: report.json に branch / commit_sha が存在し型が正しい"""
+    import orchestration.run_session as rs
+
+    session_dir = tmp_path / "artifacts" / "session-ac14-01"
+    monkeypatch.setattr(rs, "_git_branch_safe", lambda: "feature/ac-14-01")
+    monkeypatch.setattr(rs, "_git_commit_sha_safe", lambda: "a" * 40)
+
+    persist_session_reports(
+        session_dir=session_dir,
+        ctx=None,
+        prepared_spec={},
+        impl_result={"changed_files": [], "risks": [], "open_issues": []},
+        checks={"success": True},
+        status="success",
+        dry_run=False,
+        started_at="2026-01-01T00:00:00+00:00",
+        finished_at="2026-01-01T00:00:01+00:00",
+    )
+    report = json.loads((session_dir / "report.json").read_text(encoding="utf-8"))
+    assert isinstance(report["branch"], str)
+    assert report["branch"] == "feature/ac-14-01"
+    assert isinstance(report["commit_sha"], str)
+    assert len(report["commit_sha"]) > 0
+    assert report["commit_sha"] == "a" * 40
+
+
+def test_report_contains_merge_related_metadata(monkeypatch, tmp_path):
+    """AC-14-02: source_branch / merged_to_main が整合した値で出力される"""
+    import orchestration.run_session as rs
+
+    base = {
+        "prepared_spec": {},
+        "impl_result": {"changed_files": [], "risks": [], "open_issues": []},
+        "checks": {"success": True},
+        "status": "success",
+        "dry_run": False,
+        "started_at": "2026-01-01T00:00:00+00:00",
+        "finished_at": "2026-01-01T00:00:02+00:00",
+    }
+
+    session_dir = tmp_path / "artifacts" / "session-merge-f"
+    monkeypatch.setattr(rs, "_git_branch_safe", lambda: "feature/merge-test")
+    monkeypatch.setattr(rs, "_git_commit_sha_safe", lambda: "b" * 40)
+    persist_session_reports(session_dir=session_dir, ctx=None, **base)
+    r1 = json.loads((session_dir / "report.json").read_text(encoding="utf-8"))
+    assert r1["source_branch"] == r1["branch"] == "feature/merge-test"
+    assert r1["merged_to_main"] is False
+
+    session_dir_main = tmp_path / "artifacts" / "session-merge-m"
+    monkeypatch.setattr(rs, "_git_branch_safe", lambda: "main")
+    monkeypatch.setattr(rs, "_git_commit_sha_safe", lambda: "c" * 40)
+    persist_session_reports(session_dir=session_dir_main, ctx=None, **base)
+    r2 = json.loads((session_dir_main / "report.json").read_text(encoding="utf-8"))
+    assert r2["source_branch"] == "main"
+    assert r2["merged_to_main"] is True
+
+    session_dir_u = tmp_path / "artifacts" / "session-merge-u"
+    monkeypatch.setattr(rs, "_git_branch_safe", lambda: None)
+    monkeypatch.setattr(rs, "_git_commit_sha_safe", lambda: None)
+    persist_session_reports(session_dir=session_dir_u, ctx=None, **base)
+    r3 = json.loads((session_dir_u / "report.json").read_text(encoding="utf-8"))
+    assert r3["branch"] == "unavailable"
+    assert r3["commit_sha"] == "unavailable"
+    assert r3["source_branch"] == "unavailable"
+    assert r3["merged_to_main"] is False
+
+
 def test_report_json_contains_risks_and_open_issues(tmp_path):
     """report.json に risks/open_issues が常に含まれる"""
     session_dir = tmp_path / "artifacts" / "session-keys"
@@ -481,3 +554,126 @@ def test_report_json_contains_risks_and_open_issues(tmp_path):
     report = json.loads((session_dir / "report.json").read_text(encoding="utf-8"))
     assert report["risks"] == ["r1"]
     assert report["open_issues"] == ["i1"]
+
+
+def test_report_index_contains_session_metadata(tmp_path):
+    """AC-15-01: report index が session metadata を含む"""
+    artifacts = tmp_path / "artifacts"
+    pre1 = artifacts / "session-pre-1"
+    pre2 = artifacts / "session-pre-2"
+    pre1.mkdir(parents=True)
+    pre2.mkdir(parents=True)
+    (pre1 / "report.json").write_text(
+        json.dumps(
+            {
+                "session_id": "session-pre-1",
+                "status": "success",
+                "completion_status": "usable_for_self",
+                "branch": "main",
+                "commit_sha": "a" * 40,
+                "duration_sec": 1.0,
+                "failure_type": None,
+            }
+        ),
+        encoding="utf-8",
+    )
+    (pre2 / "report.json").write_text(
+        json.dumps(
+            {
+                "session_id": "session-pre-2",
+                "status": "failed",
+                "completion_status": "failed",
+                "branch": "feature/x",
+                "commit_sha": "b" * 40,
+                "duration_sec": 2.0,
+                "failure_type": "test",
+            }
+        ),
+        encoding="utf-8",
+    )
+    session_dir = artifacts / "session-cur"
+    persist_session_reports(
+        session_dir=session_dir,
+        ctx=None,
+        prepared_spec={},
+        impl_result={"changed_files": [], "risks": [], "open_issues": []},
+        checks={"success": True},
+        status="success",
+        dry_run=False,
+        started_at="2026-01-01T00:00:00+00:00",
+        finished_at="2026-01-01T00:00:03+00:00",
+    )
+    report = json.loads((session_dir / "report.json").read_text(encoding="utf-8"))
+    assert "sessions" in report
+    sess = report["sessions"]
+    assert isinstance(sess, list)
+    assert len(sess) == 3
+    required = (
+        "session_id",
+        "status",
+        "completion_status",
+        "branch",
+        "commit_sha",
+        "duration_sec",
+        "failure_type",
+    )
+    for row in sess:
+        for k in required:
+            assert k in row
+        assert isinstance(row["duration_sec"], float)
+
+
+def test_report_index_contains_summary_metrics(tmp_path):
+    """AC-15-02: summary が正しく集計される"""
+    artifacts = tmp_path / "artifacts"
+    pre1 = artifacts / "session-sum-1"
+    pre2 = artifacts / "session-sum-2"
+    pre1.mkdir(parents=True)
+    pre2.mkdir(parents=True)
+    (pre1 / "report.json").write_text(
+        json.dumps(
+            {
+                "session_id": "session-sum-1",
+                "status": "success",
+                "completion_status": "usable_for_self",
+                "duration_sec": 10.0,
+            }
+        ),
+        encoding="utf-8",
+    )
+    (pre2 / "report.json").write_text(
+        json.dumps(
+            {
+                "session_id": "session-sum-2",
+                "status": "failed",
+                "completion_status": "failed",
+                "duration_sec": 20.0,
+                "failure_type": "lint",
+            }
+        ),
+        encoding="utf-8",
+    )
+    session_dir = artifacts / "session-sum-cur"
+    persist_session_reports(
+        session_dir=session_dir,
+        ctx=None,
+        prepared_spec={},
+        impl_result={"changed_files": [], "risks": [], "open_issues": []},
+        checks={"success": True},
+        status="success",
+        dry_run=False,
+        started_at="2026-01-01T00:00:00+00:00",
+        finished_at="2026-01-01T00:00:05+00:00",
+    )
+    report = json.loads((session_dir / "report.json").read_text(encoding="utf-8"))
+    assert "summary" in report
+    sm = report["summary"]
+    assert sm["total_sessions"] == 3
+    assert sm["success_count"] == 2
+    assert sm["failed_count"] == 1
+    assert isinstance(sm["success_rate"], float)
+    assert isinstance(sm["duration_avg"], float)
+    assert abs(sm["success_rate"] - (2.0 / 3.0)) < 1e-9
+    assert abs(sm["duration_avg"] - (35.0 / 3.0)) < 1e-9
+    assert sm["failure_type_counts"].get("unknown") == 2
+    assert sm["failure_type_counts"].get("lint") == 1
