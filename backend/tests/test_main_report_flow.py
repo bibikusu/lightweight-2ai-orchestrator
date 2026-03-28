@@ -50,6 +50,8 @@ def test_success_flow_writes_normalized_session_report(monkeypatch, tmp_path):
 
     normalized_report = json.loads(report_json_path.read_text(encoding="utf-8"))
     assert normalized_report["status"] == "dry_run"
+    assert normalized_report["completion_status"] == "conditional_pass"
+    assert normalized_report["human_review_needed"] is False
     assert isinstance(normalized_report["duration_sec"], float)
     assert normalized_report["duration_sec"] >= 0
     assert isinstance(normalized_report["branch"], str)

@@ -1196,24 +1196,62 @@ def build_acceptance_results_for_report_json(
     return out
 
 
+def _any_check_skipped(checks: Optional[Dict[str, Any]]) -> bool:
+    """test/lint/typecheck/build のいずれかが skipped なら True（条件付き完了の判定用）。"""
+    if not checks or not isinstance(checks, dict):
+        return False
+    for name in ("test", "lint", "typecheck", "build"):
+        st = (checks.get(name) or {}).get("status")
+        if st == "skipped":
+            return True
+    return False
+
+
+def _any_acceptance_not_applicable(acceptance_results: List[Dict[str, Any]]) -> bool:
+    """受理基準の一部が not_applicable のとき True（条件付き完了の判定用）。"""
+    for item in acceptance_results or []:
+        if isinstance(item, dict) and item.get("result") == "not_applicable":
+            return True
+    return False
+
+
 def decide_completion_status(
     status: str,
     acceptance_results: List[Dict[str, Any]],
     risks: List[Any],
     open_issues: List[Any],
+    checks: Optional[Dict[str, Any]] = None,
+    *,
+    retry_control: Optional[Dict[str, Any]] = None,
+    aborted_stage: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """completion_status と human_review_needed を決定する。"""
-    if status == "failed":
-        return {"completion_status": "failed", "human_review_needed": False}
+    """
+    completion_status（実行完了時に確定するライフサイクル）と human_review_needed を決定する。
+    completion_status は review_required / passed / conditional_pass / failed / stopped のみ。
+    """
+    rc = retry_control or {}
+    if bool(rc.get("retry_stopped_same_cause")) or bool(rc.get("retry_stopped_max_retries")):
+        return {"completion_status": "stopped", "human_review_needed": False}
+    if aborted_stage is not None and str(aborted_stage).strip():
+        return {"completion_status": "stopped", "human_review_needed": False}
+
     has_fail = any(
         isinstance(item, dict) and item.get("result") == "failed"
         for item in (acceptance_results or [])
     )
-    if has_fail:
+    if status == "failed" or has_fail:
         return {"completion_status": "failed", "human_review_needed": False}
+
     if len(risks or []) > 0 or len(open_issues or []) > 0:
         return {"completion_status": "review_required", "human_review_needed": True}
-    return {"completion_status": "usable_for_self", "human_review_needed": False}
+
+    if status == "dry_run":
+        return {"completion_status": "conditional_pass", "human_review_needed": False}
+
+    if _any_check_skipped(checks) or _any_acceptance_not_applicable(acceptance_results):
+        return {"completion_status": "conditional_pass", "human_review_needed": False}
+
+    return {"completion_status": "passed", "human_review_needed": False}
 
 
 def _session_index_row_from_report_dict(
@@ -1407,6 +1445,9 @@ def persist_session_reports(
         payload.get("acceptance_results", []),
         payload.get("risks", []),
         payload.get("open_issues", []),
+        payload.get("checks") if isinstance(payload.get("checks"), dict) else {},
+        retry_control=retry_control,
+        aborted_stage=aborted_stage,
     )
     payload["completion_status"] = completion["completion_status"]
     payload["human_review_needed"] = completion["human_review_needed"]

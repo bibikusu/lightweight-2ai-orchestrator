@@ -13,6 +13,11 @@ from orchestration.run_session import (
     persist_session_reports,
 )
 
+# AC-16: report.json の completion_status 許容値（実行完了時ライフサイクル）
+COMPLETION_STATUS_ENUM = frozenset(
+    {"review_required", "passed", "conditional_pass", "failed", "stopped"}
+)
+
 
 def _assert_required_report_keys(obj: dict) -> None:
     for k in (
@@ -30,6 +35,8 @@ def _assert_required_report_keys(obj: dict) -> None:
         "commit_sha",
         "source_branch",
         "merged_to_main",
+        "completion_status",
+        "human_review_needed",
     ):
         assert k in obj
 
@@ -50,6 +57,7 @@ def test_report_json_is_generated_on_dry_run(monkeypatch, tmp_path):
     _assert_required_report_keys(obj)
     assert obj["status"] == "dry_run"
     assert obj["dry_run"] is True
+    assert obj["completion_status"] == "conditional_pass"
 
 
 def test_report_json_is_generated_on_success(monkeypatch, tmp_path):
@@ -118,6 +126,7 @@ def test_report_json_is_generated_on_success(monkeypatch, tmp_path):
     _assert_required_report_keys(obj)
     assert obj["status"] == "success"
     assert obj["dry_run"] is False
+    assert obj["completion_status"] == "conditional_pass"
     assert isinstance(obj["changed_files"], list)
 
 
@@ -187,6 +196,218 @@ def test_report_json_is_generated_on_failure(monkeypatch, tmp_path):
     _assert_required_report_keys(obj)
     assert obj["status"] == "failed"
     assert obj["dry_run"] is False
+    # チェック失敗後にリトライ指示 API で例外 → aborted_stage あり → stopped（純粋な checks のみの失敗は別経路で failed）
+    assert obj["completion_status"] == "stopped"
+
+
+def test_completion_status_enum():
+    """AC-16-01: completion_status は定義された enum のみ"""
+    samples = [
+        decide_completion_status("failed", [], [], []),
+        decide_completion_status(
+            "success",
+            [{"id": "x", "result": "failed"}],
+            [],
+            [],
+            {"test": {"status": "passed"}, "success": True},
+        ),
+        decide_completion_status(
+            "success",
+            [],
+            ["r"],
+            [],
+            {"test": {"status": "passed"}, "success": True},
+        ),
+        decide_completion_status(
+            "success",
+            [],
+            [],
+            [],
+            {
+                "test": {"status": "passed"},
+                "lint": {"status": "skipped"},
+                "typecheck": {"status": "passed"},
+                "build": {"status": "passed"},
+                "success": True,
+            },
+        ),
+        decide_completion_status(
+            "success",
+            [{"id": "a", "result": "passed"}],
+            [],
+            [],
+            {"test": {"status": "passed"}, "success": True},
+        ),
+        decide_completion_status("dry_run", [], [], [], {"success": True}),
+        decide_completion_status(
+            "failed",
+            [],
+            [],
+            [],
+            retry_control={"retry_stopped_max_retries": True},
+        ),
+        decide_completion_status(
+            "failed",
+            [],
+            [],
+            [],
+            aborted_stage="implementation",
+        ),
+    ]
+    for s in samples:
+        assert s["completion_status"] in COMPLETION_STATUS_ENUM
+
+
+def test_completion_status_success_cases():
+    """AC-16-02: 成功系に passed / conditional_pass / review_required が付与される"""
+    assert (
+        decide_completion_status(
+            "success",
+            [{"id": "1", "result": "passed"}],
+            [],
+            [],
+            {
+                "test": {"status": "passed"},
+                "lint": {"status": "passed"},
+                "typecheck": {"status": "passed"},
+                "build": {"status": "passed"},
+                "success": True,
+            },
+        )["completion_status"]
+        == "passed"
+    )
+    assert (
+        decide_completion_status(
+            "success",
+            [{"id": "1", "result": "not_applicable"}],
+            [],
+            [],
+            {
+                "test": {"status": "passed"},
+                "lint": {"status": "passed"},
+                "typecheck": {"status": "passed"},
+                "build": {"status": "passed"},
+                "success": True,
+            },
+        )["completion_status"]
+        == "conditional_pass"
+    )
+    assert (
+        decide_completion_status(
+            "success",
+            [],
+            [],
+            [],
+            {
+                "test": {"status": "passed"},
+                "lint": {"status": "skipped"},
+                "typecheck": {"status": "passed"},
+                "build": {"status": "passed"},
+                "success": True,
+            },
+        )["completion_status"]
+        == "conditional_pass"
+    )
+    assert (
+        decide_completion_status(
+            "success",
+            [{"id": "1", "result": "passed"}],
+            ["リスク"],
+            [],
+            {
+                "test": {"status": "passed"},
+                "lint": {"status": "passed"},
+                "typecheck": {"status": "passed"},
+                "build": {"status": "passed"},
+                "success": True,
+            },
+        )["completion_status"]
+        == "review_required"
+    )
+
+
+def test_completion_status_failure():
+    """AC-16-03: 失敗時は failed"""
+    assert (
+        decide_completion_status(
+            "failed",
+            [],
+            [],
+            [],
+            {"test": {"status": "failed"}, "success": False},
+        )["completion_status"]
+        == "failed"
+    )
+    assert (
+        decide_completion_status(
+            "success",
+            [{"id": "a", "result": "failed"}],
+            [],
+            [],
+            {"test": {"status": "passed"}, "success": True},
+        )["completion_status"]
+        == "failed"
+    )
+
+
+def test_completion_status_stopped():
+    """AC-16-04: 途中停止（リトライ打ち切り・異常終了ステージ）は stopped"""
+    assert (
+        decide_completion_status(
+            "failed",
+            [],
+            [],
+            [],
+            {"success": False},
+            retry_control={"retry_stopped_same_cause": True},
+        )["completion_status"]
+        == "stopped"
+    )
+    assert (
+        decide_completion_status(
+            "failed",
+            [],
+            [],
+            [],
+            {"success": False},
+            retry_control={"retry_stopped_max_retries": True},
+        )["completion_status"]
+        == "stopped"
+    )
+    assert (
+        decide_completion_status(
+            "failed",
+            [],
+            [],
+            [],
+            {"success": False},
+            aborted_stage="prepared_spec",
+        )["completion_status"]
+        == "stopped"
+    )
+
+
+def test_report_backward_compatibility(tmp_path):
+    """AC-16-05: report.json の既存キー構造を維持し completion_status が enum である"""
+    session_dir = tmp_path / "artifacts" / "session-bc"
+    persist_session_reports(
+        session_dir=session_dir,
+        ctx=None,
+        prepared_spec={},
+        impl_result={"changed_files": [], "risks": [], "open_issues": []},
+        checks={"success": True},
+        status="success",
+        dry_run=False,
+        started_at="2026-01-01T00:00:00+00:00",
+        finished_at="2026-01-01T00:00:01+00:00",
+    )
+    report = json.loads((session_dir / "report.json").read_text(encoding="utf-8"))
+    _assert_required_report_keys(report)
+    assert report["completion_status"] in COMPLETION_STATUS_ENUM
+    assert "risks" in report and "open_issues" in report
+    assert "acceptance_results" in report
+    assert "sessions" in report and "summary" in report
+
 
 def test_acceptance_results_auto_judged():
     """AC-13-01: acceptance_results が test_name と実行結果で passed/failed 判定される"""
@@ -568,7 +789,7 @@ def test_report_index_contains_session_metadata(tmp_path):
             {
                 "session_id": "session-pre-1",
                 "status": "success",
-                "completion_status": "usable_for_self",
+                "completion_status": "passed",
                 "branch": "main",
                 "commit_sha": "a" * 40,
                 "duration_sec": 1.0,
@@ -635,7 +856,7 @@ def test_report_index_contains_summary_metrics(tmp_path):
             {
                 "session_id": "session-sum-1",
                 "status": "success",
-                "completion_status": "usable_for_self",
+                "completion_status": "passed",
                 "duration_sec": 10.0,
             }
         ),
