@@ -1,0 +1,41 @@
+{
+  "phase": "Phase5",
+  "status": "completed",
+  "completed_sessions": [
+    "session-20",
+    "session-21",
+    "session-22",
+    "session-23",
+    "session-24",
+    "session-25"
+  ],
+  "capabilities": {
+    "enum_unification": true,
+    "verification_test_alignment_rule": true,
+    "ci_validation_pipeline": true,
+    "template_standardization": true,
+    "operational_playbook": true
+  },
+  "consistency_check": {
+    "config_alignment": "config.yaml の commands/checks と orchestration/run_session の検証フローは既存テスト（例: test_report_generation, test_main_report_flow）で global_rules.md の completion_status・acceptance_results 定義と整合している。session-20 の enum 統一方針が docs・実装・テストに反映されている。",
+    "docs_alignment": "docs/global_rules.md に verification_test_alignment_rule_update（config 変更時の検証テスト必須）および session_json_template_rule_update（session JSON 必須フィールド・allowed_changes_detail）が記載されている。README.md に validation ワークフローと canonical path の説明がある。git 履歴上 session-22a / session-25a のコミットで CI 正本と Phase5 補足ルールが追補されているが、本レポートの completed_sessions は Phase5 番号セッションのみ列挙する。",
+    "report_schema_integrity": "report.json / session_report の受理・completion_status・lint/typecheck 表現は Phase4-3 以降のスキーマを維持しており、backend/tests 内の enum 検証と docs/global_rules.md の記述が一致する。",
+    "ci_alignment": ".github/workflows/validation.yml は pytest → ruff → mypy → compileall の順で実行し、artifact 方針が README と docs/global_rules.md の「21. CI canonical path ルール（session-22a）」と一致する。ci.yml は canonical ではない旨が global_rules に明示されている。"
+  },
+  "test_results": {
+    "pytest": "pass: PYTHONPATH=. .venv/bin/pytest backend/tests/ -q（exit 0）",
+    "ruff": "pass: .venv/bin/ruff check .（All checks passed!, exit 0）",
+    "mypy": "pass: PYTHONPATH=. .venv/bin/python -m mypy --explicit-package-bases orchestration --ignore-missing-imports（Success: no issues found in 5 source files, exit 0）",
+    "build": "pass: PYTHONPYCACHEPREFIX=./.pycache_compileall python3 -m compileall -q -f orchestration backend（exit 0）"
+  },
+  "risks": [
+    "将来の config 変更時は verification_test_alignment_rule に従い対応テストと allowed_changes を必ず揃える必要がある",
+    "未追跡ファイル docs/spec_media_os_profile_capability.md が作業ツリーに存在する（Phase5 レポート対象外。取り込み可否は別途判断）"
+  ],
+  "open_issues": [],
+  "final_judgement": {
+    "result": "completed",
+    "reason": "5 capability を docs・CI・SOP・テストで確認し、pytest / ruff / mypy / compileall がいずれも成功した一方、重大な未解決事項は open_issues にないため",
+    "next_phase": "Phase6"
+  }
+}
