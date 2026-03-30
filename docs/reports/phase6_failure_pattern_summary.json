@@ -1,0 +1,93 @@
+{
+"phase": "Phase6",
+"sessions_reviewed": [
+"session-27",
+"session-27a"
+],
+"failure_patterns": [
+{
+"id": "FP-28-01",
+"session_id": "session-27",
+"failure_type": "scope_violation",
+"confirmed_facts": [
+"session-27 の allowed_changes は backend/tests/test_report_schema_validation.py のみだった",
+"sandbox 上では backend/tests/test_report_schema_validation.py の新規追加のみで検収合格だった",
+"main 統合時に docs/reports/phase5_completion_report.json が存在しないため pytest が失敗した",
+"main 上で docs/reports/phase5_completion_report.json を追加する追加コミットが発生した",
+"結果として session-27 の main 統合結果には allowed_changes 外の docs 変更が含まれた"
+],
+"interpretation": "session-27 の失敗はテスト実装不良ではなく、main 統合前提の未確認により scope 外修正が混入したことにある",
+"impact": "1セッション1目的と allowed_changes 厳守の運用が崩れ、session-27 単体では fail 判定が妥当になった"
+},
+{
+"id": "FP-28-02",
+"session_id": "session-27",
+"failure_type": "spec_missing",
+"confirmed_facts": [
+"session-27 の実行指示では docs/reports/phase5_completion_report.json は既存前提とされていた",
+"main 統合前にその既存前提が満たされているかの確認手順が不足していた",
+"前提未充足は cherry-pick 後の pytest 実行時に初めて露出した"
+],
+"interpretation": "実装仕様そのものよりも、main 側の前提成果物存在確認がセッション投入条件として明文化されていなかった",
+"impact": "sandbox 合格後に main で失敗する差分が発生し、検収の再現性が低下した"
+},
+{
+"id": "FP-28-03",
+"session_id": "session-27a",
+"failure_type": "not_applicable",
+"confirmed_facts": [
+"session-27a は docs/reports/phase5_completion_report.json の復元を独立セッションとして扱うために起票された",
+"main の確認時点で docs/reports/phase5_completion_report.json はすでに tracked file として存在していた",
+"そのため session-27a は追加変更なしで追認完了扱いが可能だった"
+],
+"interpretation": "session-27a は新たな失敗修正セッションではなく、session-27 で混入した復元行為を運用上切り分けるための整理セッションである",
+"impact": "追加変更を発生させずに履歴整理はできるが、session-27 の失敗原因自体は残るため failure pattern の記録が必要になった"
+}
+],
+"root_causes": [
+{
+"id": "RC-28-01",
+"description": "main 統合前に、セッションが前提とする tracked artifact の存在確認を必須チェックとして実施していなかった",
+"related_sessions": [
+"session-27",
+"session-27a"
+]
+},
+{
+"id": "RC-28-02",
+"description": "sandbox 検収結果をそのまま main へ持ち込めるとみなし、target branch 固有の前提差分を確認する運用が不足していた",
+"related_sessions": [
+"session-27"
+]
+}
+],
+"preventive_actions": [
+{
+"id": "PA-28-01",
+"description": "main 取り込み前チェックとして、session が前提とする file の existence と tracked status を明示確認する手順を追加する",
+"target_stage": "pre-merge verification",
+"related_root_cause_id": "RC-28-01"
+},
+{
+"id": "PA-28-02",
+"description": "Cursor 実行プロンプトまたは検収テンプレに、target branch 前提確認の項目を追加し、sandbox 合格と main 合格を分けて評価する",
+"target_stage": "review and merge gate",
+"related_root_cause_id": "RC-28-02"
+},
+{
+"id": "PA-28-03",
+"description": "前提成果物の不足が見つかった場合は、元セッションに混入させず独立セッションへ切り出す運用を明文化する",
+"target_stage": "session design",
+"related_root_cause_id": "RC-28-01"
+}
+],
+"open_issues": [
+"docs/reports/phase5_completion_report.json が main で欠けていた根本原因の履歴整理は未完了",
+"target branch 前提確認を global_rules または SOP に将来反映するかは未決定"
+],
+"final_judgement": {
+"result": "ready_for_session29",
+"reason": "session-27 / 27a で露出した failure pattern は scope violation と precondition check不足として十分に整理できており、次は可視化・集計フェーズへ進める",
+"next_phase": "session-29"
+}
+}
