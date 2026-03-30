@@ -1,0 +1,78 @@
+{
+    "phase": "Phase6",
+    "reviewed_sessions": [
+    {
+    "session_id": "session-25a",
+    "status": "completed",
+    "failure_type": "not_applicable",
+    "notes": "Phase5 review gaps were closed and the Phase5 completion report became commit-visible."
+    },
+    {
+    "session_id": "session-22a",
+    "status": "completed",
+    "failure_type": "not_applicable",
+    "notes": "Canonical CI validation path was fixed to validation.yml and duplicate CI ambiguity was removed."
+    },
+    {
+    "session_id": "session-26",
+    "status": "completed",
+    "failure_type": "not_applicable",
+    "notes": "Template gap analysis concluded that existing templates and SOP were sufficient; no additional template expansion was required."
+    },
+    {
+    "session_id": "session-27",
+    "status": "failed",
+    "failure_type": "scope_violation",
+    "notes": "Sandbox implementation was in scope, but main integration required an out-of-scope docs artifact addition."
+    },
+    {
+    "session_id": "session-27a",
+    "status": "completed",
+    "failure_type": "not_applicable",
+    "notes": "Handled as a no-op ratification because the required Phase5 report artifact was already tracked on main."
+    },
+    {
+    "session_id": "session-28",
+    "status": "completed",
+    "failure_type": "not_applicable",
+    "notes": "Phase6 failure patterns, root causes, and preventive actions were summarized in a docs-only report."
+    }
+    ],
+    "status_counts": {
+    "completed": 5,
+    "failed": 1,
+    "no_op_or_ratified": 1
+    },
+    "failure_type_counts": {
+    "scope_violation": 1,
+    "not_applicable": 5
+    },
+    "open_issues_summary": {
+    "blocking": [],
+    "non_blocking": [
+    "docs/spec_media_os_profile_capability.md remains untracked and is outside the current Phase6 scope.",
+    "The exact historical reason why docs/reports/phase5_completion_report.json was absent on main before session-27 integration is not fully reconstructed."
+    ]
+    },
+    "current_position": {
+    "phase_status": "in_progress",
+    "last_completed_session": "session-28",
+    "readiness_for_session_30": "ready_after_session_29_commit",
+    "summary": "Phase6 pilot execution, failure classification, and progress visibility are sufficiently organized to move to the final completion review after session-29 is committed."
+    },
+    "next_actions": [
+    {
+    "order": 1,
+    "action": "Save this file as docs/reports/phase6_progress_dashboard.json and commit it as session-29."
+    },
+    {
+    "order": 2,
+    "action": "Run session-30 as the Phase6 completion review based on the current dashboard and prior reports."
+    }
+    ],
+    "final_judgement": {
+    "result": "ready_for_session30",
+    "reason": "Phase6 now has a completed pilot record, a classified failure-pattern summary, and a progress dashboard that makes the current position reviewable.",
+    "next_phase": "session-30"
+    }
+    }
