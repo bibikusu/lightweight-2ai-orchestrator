@@ -1,0 +1,29 @@
+{
+  "session_id": "session-31a",
+  "phase_id": "phase-07",
+  "title": "未使用 pytest import（F401）の整理",
+  "goal": "ruff F401 対象のテストファイルから未使用の import pytest を削除する（pytest.raises / mark / fixture を使うファイルは対象外）",
+  "scope": [
+    "指定テストファイルの import のみ削除",
+    "テストロジック・データは変更しない"
+  ],
+  "out_of_scope": [
+    "orchestration 実装の変更",
+    "pytest を実際に参照しているテストの変更"
+  ],
+  "constraints": [
+    "1セッション1目的",
+    "import pytest の削除のみ"
+  ],
+  "allowed_changes": [
+    "backend/tests/test_failure_classification.py",
+    "backend/tests/test_import_structure.py",
+    "backend/tests/test_retry_cause_deduplication.py",
+    "backend/tests/test_retry_count_control.py",
+    "backend/tests/test_retry_instruction.py",
+    "backend/tests/test_retry_instruction_quality.py",
+    "backend/tests/test_retry_loop_execution.py",
+    "backend/tests/test_acceptance_mapping.py"
+  ],
+  "acceptance_ref": "acceptance/session-01.yaml"
+}

@@ -1,0 +1,66 @@
+{
+  "session_id": "session-31",
+  "status": "completed",
+  "changed_files": [
+    "backend/tests/test_report_schema_extension.py"
+  ],
+  "test_result": "pass: PYTHONPATH=. .venv/bin/pytest backend/tests/ -q",
+  "lint_result": "pass: .venv/bin/ruff check .",
+  "typecheck_result": "pass: PYTHONPATH=. .venv/bin/python -m mypy --explicit-package-bases orchestration --ignore-missing-imports",
+  "build_result": "pass: PYTHONPYCACHEPREFIX=\"./.pycache_compileall\" python3 -m compileall -q -f orchestration backend",
+  "acceptance_results": [
+    {
+      "id": "AC-31-01",
+      "result": "pass",
+      "test_function": "test_completed_sessions_is_list_of_strings",
+      "evidence": "completed_sessions is validated as list[str]"
+    },
+    {
+      "id": "AC-31-02",
+      "result": "pass",
+      "test_function": "test_risks_is_list",
+      "evidence": "risks is validated as list"
+    },
+    {
+      "id": "AC-31-03",
+      "result": "pass",
+      "test_function": "test_open_issues_is_list",
+      "evidence": "open_issues is validated as list"
+    },
+    {
+      "id": "AC-31-04",
+      "result": "pass",
+      "test_function": "test_consistency_check_has_required_keys",
+      "evidence": "consistency_check required keys are validated"
+    },
+    {
+      "id": "AC-31-05",
+      "result": "pass",
+      "test_function": "full_validation_sequence_pass",
+      "evidence": "ruff + pytest + mypy + compileall all pass after session-31a"
+    }
+  ],
+  "risks": [
+    "docs/sessions/session-31a.json remains untracked and should not be mixed into later commits",
+    "docs/spec_media_os_profile_capability.md remains untracked and outside current scope"
+  ],
+  "open_issues": [],
+  "diff_summary": "session-31 is reclassified from blocked to completed after repo-wide lint blockers were resolved by session-31a.",
+  "scope_check": {
+    "result": "pass",
+    "details": "session-31 change remains limited to backend/tests/test_report_schema_extension.py"
+  },
+  "side_effect_check": {
+    "result": "pass",
+    "details": "no runtime, docs, or workflow changes were introduced by session-31"
+  },
+  "implementation_sufficiency_check": {
+    "result": "pass",
+    "details": "all non-overlapping report validation tests are implemented and the full validation sequence now passes"
+  },
+  "final_judgement": {
+    "result": "completed",
+    "reason": "session-31 implementation was correct and the repo-wide lint blocker was removed by session-31a",
+    "next_action": "proceed to session-32"
+  }
+}
