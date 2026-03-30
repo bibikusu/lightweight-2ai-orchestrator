@@ -1,0 +1,14 @@
+{
+  "session_id": "",
+  "reviewer_version": "v1",
+  "checked_at": "",
+  "status": "reject",
+  "failure_type": "scope_violation",
+  "cause_summary": "",
+  "fix_instructions": [
+    ""
+  ],
+  "do_not_change": [
+    ""
+  ]
+}
