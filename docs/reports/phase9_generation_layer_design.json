@@ -1,0 +1,48 @@
+{
+  "phase": "Phase9",
+  "status": "in_progress",
+  "objective": "introduce a generation layer that converts minimal human input into structured spec artifacts without modifying runtime logic",
+  "design_scope": {
+    "included": [
+      "input template definition",
+      "spec builder prompt template",
+      "output contract definition"
+    ],
+    "excluded": [
+      "run_session integration",
+      "automatic execution",
+      "retry automation",
+      "spec reviewer implementation"
+    ]
+  },
+  "confirmed_facts": [
+    "manual creation of session JSON and acceptance YAML is a bottleneck",
+    "existing system already has strong execution and validation layers",
+    "spec creation is repetitive and structurally predictable"
+  ],
+  "interpretation": [
+    "introducing a generation layer reduces human workload",
+    "spec generation can be standardized via templates and constraints",
+    "runtime integration should be deferred to avoid scope expansion"
+  ],
+  "risks": [
+    "generated specs may include incorrect scope definitions",
+    "acceptance criteria may become invalid if constraints are not enforced",
+    "over-automation without review may introduce hidden defects"
+  ],
+  "open_issues": [
+    "spec reviewer layer is not yet implemented",
+    "no automated validation of generated specs",
+    "integration with run_session pipeline is not defined"
+  ],
+  "next_actions": [
+    "implement spec reviewer layer (session-38)",
+    "define validation rules for generated specs",
+    "evaluate integration strategy with orchestration pipeline"
+  ],
+  "final_judgement": {
+    "result": "completed",
+    "reason": "generation layer minimum design templates are established as docs-only artifacts, covering input sheet, builder prompt, and output contract",
+    "next_phase": "session-38"
+  }
+}

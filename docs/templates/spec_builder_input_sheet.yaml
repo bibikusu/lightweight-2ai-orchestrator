@@ -1,0 +1,40 @@
+project_name: str
+one_line_goal: str
+target_users: list[str]
+current_problem: str
+phase1_goal: str
+out_of_scope: list[str]
+tech_stack: list[str]
+existing_repo: str
+
+constraints:
+  - all fields must be non-empty except existing_repo
+  - target_users must contain at least 1 item
+  - out_of_scope must contain at least 1 item
+  - tech_stack must contain at least 1 item
+
+validation_rules:
+  project_name:
+    type: str
+    min_length: 3
+  one_line_goal:
+    type: str
+    min_length: 10
+  target_users:
+    type: list[str]
+    min_items: 1
+  current_problem:
+    type: str
+    min_length: 10
+  phase1_goal:
+    type: str
+    min_length: 10
+  out_of_scope:
+    type: list[str]
+    min_items: 1
+  tech_stack:
+    type: list[str]
+    min_items: 1
+  existing_repo:
+    type: str
+    allow_empty: true
