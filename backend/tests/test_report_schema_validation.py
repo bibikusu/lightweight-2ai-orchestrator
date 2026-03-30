@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """docs/reports/phase5_completion_report.json の構造・必須キー検証（session-27）。"""
 
-import json
-from pathlib import Path
-
-import pytest
+from backend.tests.report_json_test_helpers import (
+    assert_required_keys,
+    load_json_object,
+    repo_root,
+)
 
 # 実在する phase5_completion_report.json のトップレベルキー集合（仕様の正本）
 REQUIRED_TOP_LEVEL_KEYS = frozenset(
@@ -33,21 +34,18 @@ FINAL_JUDGEMENT_REQUIRED_KEYS = frozenset({"result", "reason", "next_phase"})
 
 def _load_phase5_completion_report() -> dict:
     """レポート JSON を読み込む（パスはリポジトリルート基準）。"""
-    root = Path(__file__).resolve().parents[2]
-    path = root / "docs" / "reports" / "phase5_completion_report.json"
-    if not path.is_file():
-        pytest.fail(f"phase5 レポートが見つかりません: {path}")
-    raw = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(raw, dict):
-        pytest.fail("phase5 レポートのルートは JSON でなければなりません")
-    return raw
+    path = repo_root() / "docs" / "reports" / "phase5_completion_report.json"
+    return load_json_object(
+        path,
+        missing_file_message=f"phase5 レポートが見つかりません: {path}",
+        root_not_dict_message="phase5 レポートのルートは JSON でなければなりません",
+    )
 
 
 def test_report_has_required_top_level_keys() -> None:
     """AC-27-01: 必須トップレベルキーがすべて存在する。"""
     data = _load_phase5_completion_report()
-    missing = REQUIRED_TOP_LEVEL_KEYS - data.keys()
-    assert not missing, f"不足キー: {sorted(missing)}"
+    assert_required_keys(data, REQUIRED_TOP_LEVEL_KEYS)
 
 
 def test_report_capabilities_all_boolean() -> None:
@@ -76,8 +74,7 @@ def test_report_test_results_keys_exist() -> None:
     data = _load_phase5_completion_report()
     tr = data.get("test_results")
     assert isinstance(tr, dict), "test_results は object である必要があります"
-    missing = TEST_RESULTS_REQUIRED_KEYS - tr.keys()
-    assert not missing, f"test_results の不足キー: {sorted(missing)}"
+    assert_required_keys(tr, TEST_RESULTS_REQUIRED_KEYS, label="test_results")
 
 
 def test_report_final_judgement_structure() -> None:
@@ -85,5 +82,4 @@ def test_report_final_judgement_structure() -> None:
     data = _load_phase5_completion_report()
     fj = data.get("final_judgement")
     assert isinstance(fj, dict), "final_judgement は object である必要があります"
-    missing = FINAL_JUDGEMENT_REQUIRED_KEYS - fj.keys()
-    assert not missing, f"final_judgement の不足キー: {sorted(missing)}"
+    assert_required_keys(fj, FINAL_JUDGEMENT_REQUIRED_KEYS, label="final_judgement")

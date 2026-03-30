@@ -7,10 +7,7 @@ Phase5 向けの test_report_schema_validation.py / test_report_schema_extension
 
 from __future__ import annotations
 
-import json
-from pathlib import Path
-
-import pytest
+from backend.tests.report_json_test_helpers import assert_required_keys, load_report_json
 
 # Phase6 failure pattern summary のトップレベル必須キー（現行 JSON に合わせる）
 PHASE6_FAILURE_PATTERN_SUMMARY_REQUIRED_KEYS = frozenset(
@@ -61,39 +58,22 @@ PHASE6_COMPLETION_FINAL_JUDGEMENT_RESULT_ENUM = frozenset(
 )
 
 
-def _repo_root() -> Path:
-    return Path(__file__).resolve().parents[2]
-
-
-def _load_json_object(path: Path) -> dict:
-    if not path.is_file():
-        pytest.fail(f"レポートが見つかりません: {path}")
-    raw = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(raw, dict):
-        pytest.fail(f"{path.name} のルートは JSON object である必要があります")
-    return raw
-
-
 def _load_phase6_failure_pattern_summary() -> dict:
-    path = _repo_root() / "docs" / "reports" / "phase6_failure_pattern_summary.json"
-    return _load_json_object(path)
+    return load_report_json("docs/reports/phase6_failure_pattern_summary.json")
 
 
 def _load_phase6_progress_dashboard() -> dict:
-    path = _repo_root() / "docs" / "reports" / "phase6_progress_dashboard.json"
-    return _load_json_object(path)
+    return load_report_json("docs/reports/phase6_progress_dashboard.json")
 
 
 def _load_phase6_completion_report() -> dict:
-    path = _repo_root() / "docs" / "reports" / "phase6_completion_report.json"
-    return _load_json_object(path)
+    return load_report_json("docs/reports/phase6_completion_report.json")
 
 
 def test_phase6_failure_pattern_summary_structure() -> None:
     """AC-32-01: phase6_failure_pattern_summary.json の必須トップレベル構造と型。"""
     data = _load_phase6_failure_pattern_summary()
-    missing = PHASE6_FAILURE_PATTERN_SUMMARY_REQUIRED_KEYS - data.keys()
-    assert not missing, f"不足キー: {sorted(missing)}"
+    assert_required_keys(data, PHASE6_FAILURE_PATTERN_SUMMARY_REQUIRED_KEYS)
 
     assert isinstance(data["phase"], str), "phase は str である必要があります"
     assert isinstance(data["sessions_reviewed"], list), (
@@ -115,8 +95,7 @@ def test_phase6_failure_pattern_summary_structure() -> None:
 def test_phase6_progress_dashboard_structure() -> None:
     """AC-32-02: phase6_progress_dashboard.json の必須トップレベル構造と型。"""
     data = _load_phase6_progress_dashboard()
-    missing = PHASE6_PROGRESS_DASHBOARD_REQUIRED_KEYS - data.keys()
-    assert not missing, f"不足キー: {sorted(missing)}"
+    assert_required_keys(data, PHASE6_PROGRESS_DASHBOARD_REQUIRED_KEYS)
 
     assert isinstance(data["phase"], str), "phase は str である必要があります"
     assert isinstance(data["reviewed_sessions"], list), (
@@ -143,8 +122,7 @@ def test_phase6_progress_dashboard_structure() -> None:
 def test_phase6_completion_report_structure() -> None:
     """AC-32-03: phase6_completion_report.json の必須トップレベル構造と型。"""
     data = _load_phase6_completion_report()
-    missing = PHASE6_COMPLETION_REPORT_REQUIRED_KEYS - data.keys()
-    assert not missing, f"不足キー: {sorted(missing)}"
+    assert_required_keys(data, PHASE6_COMPLETION_REPORT_REQUIRED_KEYS)
 
     assert isinstance(data["phase"], str), "phase は str である必要があります"
     assert isinstance(data["status"], str), "status は str である必要があります"
@@ -169,8 +147,7 @@ def test_phase6_completion_report_final_judgement_enum() -> None:
     data = _load_phase6_completion_report()
     fj = data["final_judgement"]
     assert isinstance(fj, dict), "final_judgement は object である必要があります"
-    missing = FINAL_JUDGEMENT_REQUIRED_KEYS - fj.keys()
-    assert not missing, f"final_judgement の不足キー: {sorted(missing)}"
+    assert_required_keys(fj, FINAL_JUDGEMENT_REQUIRED_KEYS, label="final_judgement")
 
     result = fj["result"]
     assert isinstance(result, str), "final_judgement.result は str である必要があります"

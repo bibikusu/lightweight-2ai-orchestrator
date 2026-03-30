@@ -4,10 +4,11 @@
 session-27（test_report_schema_validation.py）で既に検証している項目は含めない。
 """
 
-import json
-from pathlib import Path
-
-import pytest
+from backend.tests.report_json_test_helpers import (
+    assert_required_keys,
+    load_json_object,
+    repo_root,
+)
 
 # phase5 レポートの consistency_check に期待するキー（現行 JSON に合わせる）
 CONSISTENCY_CHECK_REQUIRED_KEYS = frozenset(
@@ -22,14 +23,12 @@ CONSISTENCY_CHECK_REQUIRED_KEYS = frozenset(
 
 def _load_phase5_completion_report() -> dict:
     """レポート JSON を読み込む（リポジトリルート基準）。"""
-    root = Path(__file__).resolve().parents[2]
-    path = root / "docs" / "reports" / "phase5_completion_report.json"
-    if not path.is_file():
-        pytest.fail(f"phase5 レポートが見つかりません: {path}")
-    raw = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(raw, dict):
-        pytest.fail("phase5 レポートのルートは JSON object である必要があります")
-    return raw
+    path = repo_root() / "docs" / "reports" / "phase5_completion_report.json"
+    return load_json_object(
+        path,
+        missing_file_message=f"phase5 レポートが見つかりません: {path}",
+        root_not_dict_message="phase5 レポートのルートは JSON object である必要があります",
+    )
 
 
 def test_completed_sessions_is_list_of_strings() -> None:
@@ -62,5 +61,4 @@ def test_consistency_check_has_required_keys() -> None:
     data = _load_phase5_completion_report()
     cc = data.get("consistency_check")
     assert isinstance(cc, dict), "consistency_check は object である必要があります"
-    missing = CONSISTENCY_CHECK_REQUIRED_KEYS - cc.keys()
-    assert not missing, f"consistency_check の不足キー: {sorted(missing)}"
+    assert_required_keys(cc, CONSISTENCY_CHECK_REQUIRED_KEYS, label="consistency_check")
