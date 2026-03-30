@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import pytest
-
 from orchestration.run_session import validate_acceptance_test_mapping
 
 

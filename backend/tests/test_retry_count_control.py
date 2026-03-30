@@ -5,8 +5,6 @@ import sys
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
-
 import orchestration.run_session as rs
 from orchestration.run_session import (
     SessionContext,
