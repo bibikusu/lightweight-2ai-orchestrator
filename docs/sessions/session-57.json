@@ -106,7 +106,7 @@
     "generated test validates patches/proposed.patch content for backend/tests/test_live_api_validation.py target",
     "no unintended side effects are introduced"
   ],
-  "acceptance_ref": "docs/acceptance/session-57.yaml",
+  "acceptance_ref": "acceptance/session-57.yaml",
   "acceptance_criteria": [
     {
       "id": "AC-57-01",
