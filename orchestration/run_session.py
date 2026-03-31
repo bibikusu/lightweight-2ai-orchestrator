@@ -658,6 +658,11 @@ Return only valid JSON.
 Do not add markdown fences.
 Do not change scope.
 Do not expand scope.
+failure_type must be exactly one value.
+Respect allowed_changes / forbidden_changes strictly.
+do_not_change must stay consistent with forbidden_changes.
+fix_instructions must be limited to the allowed change scope only.
+Do not guess missing facts.
 """
 
     canonical = resolve_canonical_failure_type(check_results)
@@ -674,6 +679,13 @@ session_id: {ctx.session_id}
 {json.dumps(check_results, ensure_ascii=False, indent=2)}
 
 Scope note: Do not expand scope. Respect allowed_changes / forbidden_changes described in prepared_spec.
+Reviewer contract:
+- fix_instructions must stay within allowed_changes only.
+- do_not_change must not conflict with forbidden_changes.
+- cause_summary must be concrete and specific. Do not use vague words.
+- Include failed_tests and error_summary.
+- changed_files must be within allowed_changes.
+- Keep existing JSON top-level keys exactly as listed.
 
 Return JSON with keys:
 session_id
@@ -1858,7 +1870,11 @@ def main() -> int:
 
             # retry 指示を生成（関数内で同一原因は抑止される）
             stage = "retry_instruction"
-            log_stage_progress(args.session_id, stage, "チェック失敗 → OpenAI でリトライ指示")
+            log_stage_progress(
+                args.session_id,
+                stage,
+                "チェック失敗 → OpenAI で Reviewer契約反映済みのリトライ指示を生成",
+            )
             retry_instruction = call_chatgpt_for_retry_instruction(
                 ctx, prepared_spec, impl_result, check_results
             )
