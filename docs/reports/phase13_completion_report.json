@@ -15,7 +15,7 @@
       "session_id": "session-56",
       "status": "completed",
       "summary": ".github/workflows/validation.yml をリポジトリ追跡下に置き CI 再現性を確保。test_ci_workflow_contract.py は変更不要のまま",
-      "evidence_commit": "2c96113"
+      "evidence_note": "本レポートと .github/workflows/validation.yml は同一コミットで main に取り込む想定。短縮ハッシュは git log -1 --oneline で確認。"
     }
   ],
   "validation_results": {
