@@ -134,7 +134,7 @@
     "compileall passes",
     "no unintended side effects are introduced"
   ],
-  "acceptance_ref": "docs/acceptance/session-57.yaml",
+  "acceptance_ref": "acceptance/session-57.yaml",
   "acceptance_criteria": [
     {
       "id": "AC-57-01",
