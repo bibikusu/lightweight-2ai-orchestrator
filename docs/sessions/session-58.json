@@ -1,0 +1,156 @@
+{
+  "session_id": "session-58",
+  "phase_id": "phase13",
+  "title": "patch application enforcement for implementation output",
+  "goal": "Claude implementation output を run_session.py が実ファイルへ確実に適用し、patch保存・diff反映・pytest検出まで成立するようにする",
+  "scope": [
+    "implementation output to filesystem application",
+    "patch artifact persistence",
+    "git diff based changed_files recalculation",
+    "file existence validation after apply",
+    "test coverage for patch application"
+  ],
+  "out_of_scope": [
+    "provider logic changes",
+    "retry algorithm changes",
+    "acceptance evaluation redesign",
+    "CI workflow changes",
+    "phase14 expansion",
+    "docs redesign",
+    "live API orchestration logic"
+  ],
+  "constraints": [
+    "one session one purpose",
+    "modify only run_session.py and one new test file",
+    "must not modify provider implementations",
+    "must not modify existing test files",
+    "must respect allowed_changes only",
+    "must fail when filesystem output is inconsistent",
+    "must not introduce side effects"
+  ],
+  "inputs": [
+    {
+      "name": "implementation_response",
+      "type": "object",
+      "schema": {
+        "session_id": "str",
+        "changed_files": "list[str]",
+        "implementation_summary": "list[str]",
+        "patch_status": "str",
+        "risks": "list[str]",
+        "open_issues": "list[str]"
+      }
+    },
+    {
+      "name": "allowed_changes",
+      "type": "list[str]"
+    },
+    {
+      "name": "repo_root",
+      "type": "str"
+    },
+    {
+      "name": "artifacts_dir",
+      "type": "str"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "written_files",
+      "type": "list[str]"
+    },
+    {
+      "name": "saved_patch_paths",
+      "type": "list[str]"
+    },
+    {
+      "name": "post_apply_changed_files",
+      "type": "list[str]"
+    },
+    {
+      "name": "patch_apply_result",
+      "type": "enum[success,failure]"
+    }
+  ],
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "backend/tests/test_run_session_patch_application.py"
+  ],
+  "allowed_changes_detail": [
+    {
+      "file": "orchestration/run_session.py",
+      "functions": [
+        "run_session",
+        "apply_implementation_result",
+        "save_patch_artifacts",
+        "collect_changed_files_after_apply",
+        "validate_written_files_exist"
+      ]
+    },
+    {
+      "file": "backend/tests/test_run_session_patch_application.py",
+      "functions": [
+        "test_apply_implementation_result_writes_new_file",
+        "test_apply_implementation_result_saves_patch_artifact",
+        "test_apply_implementation_result_updates_changed_files_from_git_diff",
+        "test_apply_implementation_result_fails_when_written_file_missing",
+        "test_apply_implementation_result_respects_allowed_changes_only"
+      ]
+    }
+  ],
+  "forbidden_changes": [
+    "orchestration/providers/openai_client.py",
+    "orchestration/providers/claude_client.py",
+    "docs/master_instruction.md",
+    "docs/global_rules.md",
+    "docs/roadmap.yaml",
+    "backend/tests/test_report_generation.py",
+    "backend/tests/test_main_report_flow.py",
+    "backend/tests/test_patch_validation.py",
+    "all existing files except allowed_changes"
+  ],
+  "completion_criteria": [
+    "implementation output is applied to filesystem",
+    "newly written files exist on disk",
+    "patch artifacts are saved under artifacts directory",
+    "changed_files is recalculated from git diff after apply",
+    "apply fails when declared files are not written",
+    "pytest detects newly created test file",
+    "existing validation flow remains intact",
+    "no unintended side effects are introduced"
+  ],
+  "acceptance_ref": "acceptance/session-58.yaml",
+  "acceptance_criteria": [
+    {
+      "id": "AC-58-01",
+      "description": "Claude が返した新規ファイルが filesystem 上に実在する",
+      "test_name": "test_apply_implementation_result_writes_new_file"
+    },
+    {
+      "id": "AC-58-02",
+      "description": "patches 配下に patch artifact が保存される",
+      "test_name": "test_apply_implementation_result_saves_patch_artifact"
+    },
+    {
+      "id": "AC-58-03",
+      "description": "apply 後の changed_files が git diff ベースで再取得される",
+      "test_name": "test_apply_implementation_result_updates_changed_files_from_git_diff"
+    },
+    {
+      "id": "AC-58-04",
+      "description": "宣言されたファイルが実際に書かれていない場合は apply を失敗扱いにする",
+      "test_name": "test_apply_implementation_result_fails_when_written_file_missing"
+    },
+    {
+      "id": "AC-58-05",
+      "description": "allowed_changes 外の書き込みを行わない",
+      "test_name": "test_apply_implementation_result_respects_allowed_changes_only"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "実装過不足なし"
+  ]
+}

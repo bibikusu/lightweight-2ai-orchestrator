@@ -1,0 +1,39 @@
+session_id: session-58
+phase_id: phase13
+title: patch application enforcement for implementation output
+
+acceptance:
+  - id: AC-58-01
+    description: Claude が返した新規ファイルが filesystem 上に実在する
+    test_name: test_apply_implementation_result_writes_new_file
+
+  - id: AC-58-02
+    description: patches 配下に patch artifact が保存される
+    test_name: test_apply_implementation_result_saves_patch_artifact
+
+  - id: AC-58-03
+    description: apply 後の changed_files が git diff ベースで再取得される
+    test_name: test_apply_implementation_result_updates_changed_files_from_git_diff
+
+  - id: AC-58-04
+    description: 宣言されたファイルが実際に書かれていない場合は apply を失敗扱いにする
+    test_name: test_apply_implementation_result_fails_when_written_file_missing
+
+  - id: AC-58-05
+    description: allowed_changes 外の書き込みを行わない
+    test_name: test_apply_implementation_result_respects_allowed_changes_only
+
+completion_criteria:
+  - requirement: implementation output is applied to filesystem
+  - requirement: newly written files exist on disk
+  - requirement: patch artifacts are saved
+  - requirement: changed_files is recalculated from git diff
+  - requirement: apply fails when files are missing
+  - requirement: pytest detects new test file
+  - requirement: no unintended side effects are introduced
+
+review_points:
+  - 仕様一致（AC達成）
+  - 変更範囲遵守
+  - 副作用なし（既存破壊なし）
+  - 実装過不足なし
