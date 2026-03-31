@@ -1,0 +1,85 @@
+project: lightweight-2ai-orchestrator
+
+phases:
+  - id: phase-01
+    name: Phase1
+    depends_on: []
+    goals:
+      - Phase1 の最小成果物を定義する
+
+  - id: phase-02
+    name: Phase2
+    depends_on:
+      - phase-01
+    goals:
+      - Phase2 の最小成果物を定義する
+
+  - id: phase-03
+    name: Phase3
+    depends_on:
+      - phase-02
+    goals:
+      - Phase3 の最小成果物を定義する
+
+  - id: phase-04
+    name: Phase4
+    depends_on:
+      - phase-03
+    goals:
+      - Phase4 の最小成果物を定義する
+
+  - id: phase-05
+    name: Phase5
+    depends_on:
+      - phase-04
+    goals:
+      - Phase5 の最小成果物を定義する
+
+  - id: phase-06
+    name: Phase6
+    depends_on:
+      - phase-05
+    goals:
+      - Phase6 の最小成果物を定義する
+
+  - id: phase-07
+    name: Phase7
+    depends_on:
+      - phase-06
+    goals:
+      - Phase7 の最小成果物を定義する
+
+  - id: phase-08
+    name: Phase8
+    depends_on:
+      - phase-07
+    goals:
+      - Phase8 の最小成果物を定義する
+
+  - id: phase-09
+    name: Phase9
+    depends_on:
+      - phase-08
+    goals:
+      - Phase9 の最小成果物を定義する
+
+  - id: phase-10
+    name: Phase10
+    depends_on:
+      - phase-09
+    goals:
+      - Phase10 の最小成果物を定義する
+
+  - id: phase-11
+    name: Phase11
+    depends_on:
+      - phase-10
+    goals:
+      - Phase11 の最小成果物を定義する
+
+  - id: phase-12
+    name: Phase12
+    depends_on:
+      - phase-11
+    goals:
+      - Phase12 の最小成果物を定義する
