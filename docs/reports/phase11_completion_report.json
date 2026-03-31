@@ -1,0 +1,191 @@
+{
+"phase": "Phase11",
+"phase_id": "phase11",
+"phase_name": "genericity validation",
+"objective": "Phase10 の実案件試行で成立した generation layer の設計が、別条件でも破綻しないかを docs-only で検証し、runtime 統合へ進む入口条件を定義する",
+"reviewed_sessions": [
+"session-43",
+"session-44",
+"session-45",
+"session-46",
+"session-47"
+],
+"scope": [
+"Phase10 レポート整合補正",
+"genericity validation plan の固定",
+"Spec Builder 汎用性検証",
+"Spec Reviewer 汎用性検証",
+"runtime 統合入口条件定義"
+],
+"completion_checks": [
+{
+"id": "CC-11-01",
+"title": "Phase10 レポート整合補正の完了",
+"facts": [
+"session-43 は Phase10 レポート整合補正として completed である",
+"対応コミットは 9c79fd7 である",
+"Phase10 completion_report / progress_dashboard / design_context の3ファイルが整合補正対象であった"
+],
+"interpretation": "Phase11 開始前提として必要だった Phase10 の現在地整合は完了しており、以降の検証は補正済み事実を基準に進められる",
+"status": "pass"
+},
+{
+"id": "CC-11-02",
+"title": "genericity validation plan の固定",
+"facts": [
+"session-44 は genericity validation plan として completed である",
+"対応コミットは ad5407d である",
+"成果物は docs/phase11_genericity_validation_plan.json である"
+],
+"interpretation": "Phase11 の前提条件、検証観点、入力契約、acceptance、session 分解は plan として固定されている",
+"status": "pass"
+},
+{
+"id": "CC-11-03",
+"title": "Spec Builder 汎用性検証の完了",
+"facts": [
+"session-45 は Builder 汎用性検証として completed である",
+"対応コミットは 5e6eeed である",
+"テーマは retry / failure classification 系 docs-only 設計である",
+"session-40〜42a の generation layer trial とは異なる条件である"
+],
+"interpretation": "Spec Builder は Phase10 の trial テーマ以外でも session / acceptance を構成できることが確認された",
+"status": "pass"
+},
+{
+"id": "CC-11-04",
+"title": "Spec Reviewer 汎用性検証の完了",
+"facts": [
+"session-46 は Reviewer 汎用性検証として completed である",
+"対応コミットは ae0002a である",
+"session-45 の Builder 出力を入力として Reviewer 側検証が行われた"
+],
+"interpretation": "Spec Reviewer は Builder の別テーマ出力に対しても、検収判定セッションを構成できることが確認された",
+"status": "pass"
+},
+{
+"id": "CC-11-05",
+"title": "runtime 統合入口条件定義の完了",
+"facts": [
+"session-47 は runtime 統合入口条件定義として completed である",
+"対応コミットは c54d5ca である",
+"session-47 は docs-only であり、runtime 統合の実装は行っていない",
+"Phase12 readiness decision を扱う設計が含まれている"
+],
+"interpretation": "Phase11 の責務である『runtime 統合へ進む前提条件の定義』は完了しており、次Phase判断に必要な設計基盤は揃っている",
+"status": "pass"
+},
+{
+"id": "CC-11-06",
+"title": "Phase11 全体のスコープ遵守",
+"facts": [
+"session-43〜47 は全て docs-only である",
+"全5セッションが completed である",
+"全5セッションが push 済みである",
+"Phase11 では runtime integration の実装は行っていない"
+],
+"interpretation": "Phase11 は genericity validation と入口条件定義に限定されており、scope 逸脱なく完了したと判断できる",
+"status": "pass"
+}
+],
+"evidence_summary": {
+"confirmed_facts": [
+{
+"id": "E-11-01",
+"summary": "session-43 は commit 9c79fd7 で Phase10 レポート整合補正を完了した"
+},
+{
+"id": "E-11-02",
+"summary": "session-44 は commit ad5407d で genericity validation plan を作成した"
+},
+{
+"id": "E-11-03",
+"summary": "session-45 は commit 5e6eeed で Builder 汎用性検証を完了した"
+},
+{
+"id": "E-11-04",
+"summary": "session-46 は commit ae0002a で Reviewer 汎用性検証を完了した"
+},
+{
+"id": "E-11-05",
+"summary": "session-47 は commit c54d5ca で runtime 統合入口条件定義を完了した"
+},
+{
+"id": "E-11-06",
+"summary": "Phase11 の全5セッションは docs-only、scope 遵守、completed、push 済みである"
+}
+],
+"derived_interpretations": [
+{
+"id": "I-11-01",
+"summary": "Phase11 は Phase10 の1案件試行を、Builder / Reviewer の別条件検証へ拡張し、genericity validation の目的を満たした"
+},
+{
+"id": "I-11-02",
+"summary": "Phase11 は runtime 統合を実装していないが、実装前に必要な入口条件定義までは完了している"
+},
+{
+"id": "I-11-03",
+"summary": "したがって Phase11 は conditional_completed ではなく completed と判定してよい"
+}
+],
+"insufficient_or_missing_evidence": [
+{
+"id": "M-11-01",
+"summary": "session-47 内で定義した Phase12 readiness decision の最終値そのものは、この依頼文では明示されていない"
+},
+{
+"id": "M-11-02",
+"summary": "runtime 統合実装後の実行ログ・build・test 結果は Phase11 の対象外であり、まだ存在しない"
+}
+]
+},
+"risks": [
+{
+"id": "R-11-01",
+"level": "medium",
+"summary": "Phase11 は docs-only 検証であり、runtime 統合後に新たな不整合が見つかる可能性がある",
+"impact": "Phase12 で run_session.py へ組み込む際に追加補正が必要になる可能性がある"
+},
+{
+"id": "R-11-02",
+"level": "medium",
+"summary": "session-45 / 46 / 47 の session JSON 構造は plan 由来の schema/value ネスト傾向を引き継いでいる可能性がある",
+"impact": "将来テストや走査処理でフラット構造との差異が問題になる可能性がある"
+},
+{
+"id": "R-11-03",
+"level": "low",
+"summary": "Phase12 readiness decision が ready 以外の場合、runtime 統合実装へ即着手できない可能性がある",
+"impact": "Phase12 の開始条件確認が追加で必要になる"
+}
+],
+"open_issues": [
+{
+"id": "O-11-01",
+"priority": "high",
+"summary": "session-47 で定義した Phase12 readiness decision の値を明示的に確認し、Phase12 着手可否を固定する必要がある"
+},
+{
+"id": "O-11-02",
+"priority": "medium",
+"summary": "Phase12 では runtime 統合入口条件を run_session.py 実装へどう落とし込むかをセッション単位で分解する必要がある"
+},
+{
+"id": "O-11-03",
+"priority": "medium",
+"summary": "Phase11 docs-only 成果物の構造が既存走査系テストと整合するかを、Phase12 開始前に再確認する必要がある"
+}
+],
+"final_judgement": {
+"result": "completed",
+"reason": "Phase11 は session-43〜47 の全セッションが completed かつ push 済みであり、Phase10 整合補正、genericity validation plan 固定、Builder 汎用性検証、Reviewer 汎用性検証、runtime 統合入口条件定義までを docs-only で完了している。runtime 統合の実装自体は未着手だが、それは Phase11 の scope 外であり、Phase11 の目的である『genericity validation と次段階入口条件の確定』は達成されているため completed が妥当である。",
+"required_follow_up": [
+"phase11_completion_report.json をリポジトリへ保存する",
+"session-47 の Phase12 readiness decision を確認して次Phase方針を固定する",
+"Phase12 を runtime 統合実装フェーズとして session 分解する"
+],
+"phase12_readiness_decision": "needs_more_validation",
+"next_phase": "Phase12"
+}
+}
