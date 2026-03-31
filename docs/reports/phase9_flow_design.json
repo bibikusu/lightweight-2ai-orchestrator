@@ -1,0 +1,47 @@
+{
+  "phase": "Phase9",
+  "status": "completed",
+  "objective": "connect the minimum builder layer and minimum reviewer layer into a single docs-only operational flow before implementation",
+  "design_scope": {
+    "included": [
+      "builder to reviewer ordered flow",
+      "pass format definition",
+      "human final approval placement"
+    ],
+    "excluded": [
+      "run_session integration",
+      "automatic execution",
+      "retry automation",
+      "runtime implementation"
+    ]
+  },
+  "confirmed_facts": [
+    "spec builder minimum templates are already defined",
+    "spec reviewer minimum templates are already defined",
+    "the missing piece was the operational connection between builder output and reviewer input"
+  ],
+  "interpretation": [
+    "a connected flow reduces repeated human judgement during spec preparation",
+    "human approval should remain the final gate after reviewer pass or reject",
+    "runtime integration should remain deferred until the manual flow is stable"
+  ],
+  "risks": [
+    "the builder and reviewer flow is still manual and depends on disciplined usage",
+    "real projects may expose additional rejection categories not yet represented",
+    "the pass format may need to expand once multi-session generation is attempted"
+  ],
+  "open_issues": [
+    "the builder and reviewer flow is not yet integrated into run_session",
+    "real project trial is still required to validate practical usability"
+  ],
+  "next_actions": [
+    "run one real project through the builder to reviewer flow in session-40",
+    "collect rejection patterns and refine reviewer categories",
+    "evaluate whether runtime integration is justified after manual validation"
+  ],
+  "final_judgement": {
+    "result": "completed",
+    "reason": "the minimum builder and reviewer components are now connected by a canonical docs-only flow with structured pass and reject paths",
+    "next_phase": "session-40"
+  }
+}
