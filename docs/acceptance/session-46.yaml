@@ -1,0 +1,31 @@
+session_id: session-46
+acceptance:
+  - id: AC-46-01
+    description: session-46.json が Reviewer 汎用性検証セッションとして定義され、goal が session-45 Builder 出力の検収判定に単一化されている
+    test_name: test_session_46_goal_is_single_reviewer_validation_purpose
+    test_action: create
+
+  - id: AC-46-02
+    description: session-46.json の scope が failure_type 単一選出、scope準拠、fix精度の検証に限定され、Builder 再生成や runtime integration を含まない
+    test_name: test_session_46_scope_is_limited_to_reviewer_validation
+    test_action: create
+
+  - id: AC-46-03
+    description: session-46.json の out_of_scope に session-45 成果物改変、runtime integration、provider変更、backend変更、frontend変更、session-47 の runtime 条件定義が明記されている
+    test_name: test_session_46_out_of_scope_blocks_mutation_and_runtime
+    test_action: create
+
+  - id: AC-46-04
+    description: session-46.json の constraints に docs-only、session-45 成果物参照のみ、failure_type 単一選出、推測禁止が含まれている
+    test_name: test_session_46_constraints_are_docs_only_and_single_failure_type
+    test_action: create
+
+  - id: AC-46-05
+    description: session-46.yaml の acceptance が正常系、異常系、既存成果物非破壊、副作用なしを含み、各項目が test_name と 1対1対応する
+    test_name: test_acceptance_46_has_complete_one_to_one_mapping
+    test_action: create
+
+  - id: AC-46-06
+    description: allowed_changes が docs/sessions/session-46.json と docs/acceptance/session-46.yaml の2ファイルのみに限定されている
+    test_name: test_session_46_allowed_changes_are_limited
+    test_action: create

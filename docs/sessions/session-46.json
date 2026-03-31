@@ -1,0 +1,227 @@
+{
+  "session_id": "session-46",
+  "objective": "Phase11 genericity_validation の一環として、session-45 で Builder が生成した retry / failure classification 系 docs-only 設計セッションに対して、Spec Reviewer が正しく検収判定できるかを検証する",
+  "inputs": [
+    {
+      "name": "phase11_genericity_validation_plan",
+      "type": "object",
+      "schema": {
+        "path": "str",
+        "required_fields": "list[str]"
+      },
+      "value": {
+        "path": "docs/phase11_genericity_validation_plan.json",
+        "required_fields": [
+          "prerequisites",
+          "insights_from_phase10",
+          "validation_scope",
+          "input_contracts",
+          "acceptance_criteria",
+          "session_plan",
+          "risks",
+          "out_of_scope"
+        ]
+      }
+    },
+    {
+      "name": "builder_generated_session_definition",
+      "type": "object",
+      "schema": {
+        "path": "str",
+        "required_fields": "list[str]"
+      },
+      "value": {
+        "path": "docs/sessions/session-45.json",
+        "required_fields": [
+          "session_id",
+          "objective",
+          "inputs",
+          "outputs",
+          "allowed_changes",
+          "allowed_changes_detail",
+          "forbidden_changes",
+          "completion_criteria",
+          "acceptance_criteria",
+          "review_points"
+        ]
+      }
+    },
+    {
+      "name": "builder_generated_acceptance_definition",
+      "type": "object",
+      "schema": {
+        "path": "str",
+        "required_fields": "list[str]"
+      },
+      "value": {
+        "path": "docs/acceptance/session-45.yaml",
+        "required_fields": [
+          "session_id",
+          "acceptance"
+        ]
+      }
+    },
+    {
+      "name": "review_target_theme",
+      "type": "enum[retry_failure_classification_docs_only]",
+      "value": "retry_failure_classification_docs_only"
+    },
+    {
+      "name": "execution_mode",
+      "type": "enum[docs_only]",
+      "value": "docs_only"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "session_definition",
+      "type": "object",
+      "schema": {
+        "path": "str",
+        "required_fields": "list[str]"
+      },
+      "value": {
+        "path": "docs/sessions/session-46.json",
+        "required_fields": [
+          "session_id",
+          "phase_id",
+          "title",
+          "goal",
+          "scope",
+          "out_of_scope",
+          "constraints",
+          "acceptance_ref"
+        ]
+      }
+    },
+    {
+      "name": "acceptance_definition",
+      "type": "object",
+      "schema": {
+        "path": "str",
+        "required_fields": "list[str]"
+      },
+      "value": {
+        "path": "docs/acceptance/session-46.yaml",
+        "required_fields": [
+          "session_id",
+          "acceptance"
+        ]
+      }
+    }
+  ],
+  "allowed_changes": [
+    "docs/sessions/session-46.json",
+    "docs/acceptance/session-46.yaml"
+  ],
+  "allowed_changes_detail": [
+    {
+      "path": "docs/sessions/session-46.json",
+      "type": "object",
+      "schema": {
+        "allowed_fields": "list[str]"
+      },
+      "value": {
+        "allowed_fields": [
+          "session_id",
+          "phase_id",
+          "title",
+          "goal",
+          "scope",
+          "out_of_scope",
+          "constraints",
+          "acceptance_ref"
+        ]
+      }
+    },
+    {
+      "path": "docs/acceptance/session-46.yaml",
+      "type": "object",
+      "schema": {
+        "allowed_fields": "list[str]"
+      },
+      "value": {
+        "allowed_fields": [
+          "session_id",
+          "acceptance"
+        ]
+      }
+    }
+  ],
+  "forbidden_changes": [
+    "docs/phase11_genericity_validation_plan.json",
+    "docs/reports/phase10_completion_report.json",
+    "docs/reports/phase10_progress_dashboard.json",
+    "docs/reports/phase10_design_context.json",
+    "docs/sessions/session-44.json",
+    "docs/sessions/session-45.json",
+    "docs/acceptance/session-45.yaml",
+    "docs/sessions/session-47.json",
+    "docs/acceptance/session-47.yaml",
+    "docs/master_instruction.md",
+    "docs/global_rules.md",
+    "docs/roadmap.yaml",
+    "orchestration/",
+    "backend/",
+    "frontend/",
+    "runtime integration",
+    "provider implementation",
+    "provider変更",
+    "backend変更",
+    "frontend変更",
+    "session-45 の成果物改変",
+    "session-47 の runtime 統合入口条件",
+    "複数 failure_type の同時採用"
+  ],
+  "completion_criteria": [
+    "docs/sessions/session-46.json が作成され、session-45 の Builder 出力に対する Reviewer 汎用性検証セッションとして 1セッション1目的を満たす",
+    "docs/sessions/session-46.json の scope が Reviewer の failure_type 単一選出、scope準拠、fix精度の検証に限定される",
+    "docs/acceptance/session-46.yaml が作成され、acceptance 項目が test_name と 1対1対応する",
+    "session-46 が docs-only と明記され、session-45 成果物参照のみを行い、改変しない",
+    "session-46 が session-47 の runtime 統合入口条件を先取りせず、Reviewer 判定品質のみを扱う"
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-46-01",
+      "description": "session-46.json が Reviewer 汎用性検証セッションとして定義され、goal が session-45 Builder 出力の検収判定に単一化されている",
+      "test_name": "test_session_46_goal_is_single_reviewer_validation_purpose",
+      "test_action": "create"
+    },
+    {
+      "id": "AC-46-02",
+      "description": "session-46.json の scope が failure_type 単一選出、scope準拠、fix精度の検証に限定され、Builder 再生成や runtime integration を含まない",
+      "test_name": "test_session_46_scope_is_limited_to_reviewer_validation",
+      "test_action": "create"
+    },
+    {
+      "id": "AC-46-03",
+      "description": "session-46.json の out_of_scope に session-45 成果物改変、runtime integration、provider変更、backend変更、frontend変更、session-47 の runtime 条件定義が明記されている",
+      "test_name": "test_session_46_out_of_scope_blocks_mutation_and_runtime",
+      "test_action": "create"
+    },
+    {
+      "id": "AC-46-04",
+      "description": "session-46.json の constraints に docs-only、session-45 成果物参照のみ、failure_type 単一選出、推測禁止が含まれている",
+      "test_name": "test_session_46_constraints_are_docs_only_and_single_failure_type",
+      "test_action": "create"
+    },
+    {
+      "id": "AC-46-05",
+      "description": "session-46.yaml の acceptance が正常系、異常系、既存成果物非破壊、副作用なしを含み、各項目が test_name と 1対1対応する",
+      "test_name": "test_acceptance_46_has_complete_one_to_one_mapping",
+      "test_action": "create"
+    },
+    {
+      "id": "AC-46-06",
+      "description": "allowed_changes が docs/sessions/session-46.json と docs/acceptance/session-46.yaml の2ファイルのみに限定されている",
+      "test_name": "test_session_46_allowed_changes_are_limited",
+      "test_action": "create"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "実装過不足なし"
+  ]
+}
