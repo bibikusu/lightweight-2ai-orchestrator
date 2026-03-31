@@ -1,0 +1,111 @@
+{
+  "session_id": "session-60",
+  "objective": "Fix post-apply changed_files recalculation so untracked files created by proposed_patch are detected and reflected in final status/reporting.",
+  "inputs": [
+    {
+      "name": "git_diff_name_only_output",
+      "type": "list[str]"
+    },
+    {
+      "name": "git_untracked_output",
+      "type": "list[str]"
+    },
+    {
+      "name": "impl_result",
+      "type": "object",
+      "schema": {
+        "proposed_patch": "str",
+        "changed_files": "list[str]",
+        "implementation_summary": "list[str]",
+        "patch_status": "str",
+        "risks": "list[str]",
+        "open_issues": "list[str]"
+      }
+    }
+  ],
+  "outputs": [
+    {
+      "name": "post_apply_changed_files",
+      "type": "list[str]"
+    },
+    {
+      "name": "final_success",
+      "type": "bool"
+    },
+    {
+      "name": "report_changed_files",
+      "type": "list[str]"
+    }
+  ],
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "backend/tests/test_run_session_patch_application.py"
+  ],
+  "allowed_changes_detail": [
+    {
+      "file": "orchestration/run_session.py",
+      "functions": [
+        "apply_proposed_patch_and_capture_artifacts",
+        "main"
+      ]
+    },
+    {
+      "file": "backend/tests/test_run_session_patch_application.py",
+      "functions": [
+        "test_apply_implementation_result_updates_changed_files_from_git_diff",
+        "test_apply_implementation_result_detects_untracked_files_after_apply",
+        "test_apply_implementation_result_reflects_untracked_files_in_report_success_path"
+      ]
+    }
+  ],
+  "forbidden_changes": [
+    "orchestration/providers/openai_client.py",
+    "orchestration/providers/claude_client.py",
+    "docs/master_instruction.md",
+    "docs/global_rules.md",
+    "docs/roadmap.yaml",
+    "docs/sessions/session-57.json",
+    "docs/acceptance/session-57.yaml",
+    "backend/tests/test_live_api_validation.py",
+    "all existing files except allowed_changes"
+  ],
+  "completion_criteria": [
+    "post-apply changed_files includes tracked diff files",
+    "post-apply changed_files includes untracked files created by proposed_patch",
+    "final report changed_files matches post-apply actual filesystem changes",
+    "new untracked file creation does not cause false empty changed_files",
+    "runtime behavior remains unchanged outside changed_files detection and final status reflection",
+    "pytest passes",
+    "lint passes",
+    "typecheck passes",
+    "build passes"
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-60-01",
+      "description": "tracked changes are still collected from git diff --name-only",
+      "test_name": "test_apply_implementation_result_updates_changed_files_from_git_diff"
+    },
+    {
+      "id": "AC-60-02",
+      "description": "untracked files created by proposed_patch are included in changed_files",
+      "test_name": "test_apply_implementation_result_detects_untracked_files_after_apply"
+    },
+    {
+      "id": "AC-60-03",
+      "description": "final success/report path reflects untracked file detection consistently",
+      "test_name": "test_apply_implementation_result_reflects_untracked_files_in_report_success_path"
+    },
+    {
+      "id": "AC-60-04",
+      "description": "no provider logic is modified",
+      "test_name": "test_apply_implementation_result_detects_untracked_files_after_apply"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "実装過不足なし"
+  ]
+}

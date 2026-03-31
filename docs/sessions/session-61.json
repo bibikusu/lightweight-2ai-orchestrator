@@ -1,0 +1,98 @@
+{
+  "session_id": "session-61",
+  "objective": "Redefine the live API validation session so generated tests do not recursively invoke the orchestrator or subprocess-run pytest targets in a way that breaks retry validation.",
+  "inputs": [
+    {
+      "name": "session_definition",
+      "type": "object",
+      "schema": {
+        "session_id": "str",
+        "goal": "str",
+        "scope": "list[str]",
+        "out_of_scope": "list[str]",
+        "constraints": "list[str]"
+      }
+    },
+    {
+      "name": "acceptance_definition",
+      "type": "object",
+      "schema": {
+        "acceptance": "list[object]"
+      }
+    }
+  ],
+  "outputs": [
+    {
+      "name": "updated_session_json",
+      "type": "object",
+      "schema": {
+        "constraints": "list[str]",
+        "completion_criteria": "list[str]",
+        "acceptance_criteria": "list[object]"
+      }
+    },
+    {
+      "name": "updated_acceptance_yaml",
+      "type": "object",
+      "schema": {
+        "acceptance": "list[object]",
+        "completion_criteria": "list[object]"
+      }
+    }
+  ],
+  "allowed_changes": [
+    "docs/sessions/session-57.json",
+    "docs/acceptance/session-57.yaml"
+  ],
+  "allowed_changes_detail": [
+    {
+      "file": "docs/sessions/session-57.json",
+      "functions": []
+    },
+    {
+      "file": "docs/acceptance/session-57.yaml",
+      "functions": []
+    }
+  ],
+  "forbidden_changes": [
+    "orchestration/run_session.py",
+    "orchestration/providers/openai_client.py",
+    "orchestration/providers/claude_client.py",
+    "backend/tests/test_run_session_patch_application.py",
+    "backend/tests/test_live_api_validation.py",
+    "docs/master_instruction.md",
+    "docs/global_rules.md",
+    "docs/roadmap.yaml",
+    "all existing files except allowed_changes"
+  ],
+  "completion_criteria": [
+    "session-57 explicitly forbids subprocess-based orchestrator re-entry",
+    "session-57 explicitly forbids recursive pytest invocation from generated test code",
+    "session-57 explicitly limits generated validation to static assertions on artifacts, file existence, and report fields",
+    "acceptance criteria are test-name mapped and unambiguous",
+    "no runtime code is changed"
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-61-01",
+      "description": "session-57 constraints explicitly prohibit subprocess invocation of orchestration/run_session.py",
+      "test_name": "manual_definition_review"
+    },
+    {
+      "id": "AC-61-02",
+      "description": "session-57 constraints explicitly prohibit recursive pytest execution from generated tests",
+      "test_name": "manual_definition_review"
+    },
+    {
+      "id": "AC-61-03",
+      "description": "session-57 acceptance is limited to artifact/report/file-level validation only",
+      "test_name": "manual_definition_review"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "実装過不足なし"
+  ]
+}

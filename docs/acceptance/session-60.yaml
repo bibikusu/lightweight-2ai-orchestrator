@@ -1,0 +1,29 @@
+session_id: session-60
+acceptance:
+  - id: AC-60-01
+    description: tracked changes are still collected from git diff --name-only
+    test_name: test_apply_implementation_result_updates_changed_files_from_git_diff
+  - id: AC-60-02
+    description: untracked files created by proposed_patch are included in changed_files
+    test_name: test_apply_implementation_result_detects_untracked_files_after_apply
+  - id: AC-60-03
+    description: final success/report path reflects untracked file detection consistently
+    test_name: test_apply_implementation_result_reflects_untracked_files_in_report_success_path
+  - id: AC-60-04
+    description: no provider logic is modified
+    test_name: scope_check_manual
+completion_criteria:
+  - requirement: post-apply changed_files includes tracked diff files
+  - requirement: post-apply changed_files includes untracked files created by proposed_patch
+  - requirement: final report changed_files matches post-apply actual filesystem changes
+  - requirement: new untracked file creation does not cause false empty changed_files
+  - requirement: runtime behavior remains unchanged outside changed_files detection and final status reflection
+  - requirement: pytest passes
+  - requirement: lint passes
+  - requirement: typecheck passes
+  - requirement: build passes
+review_points:
+  - 仕様一致（AC達成）
+  - 変更範囲遵守
+  - 副作用なし（既存破壊なし）
+  - 実装過不足なし
