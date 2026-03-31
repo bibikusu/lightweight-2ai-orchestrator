@@ -1,0 +1,46 @@
+session_id: session-57
+phase_id: phase13
+title: live api end-to-end validation with test-only scope
+execution_method: orchestrator_live_run
+
+acceptance:
+  - id: AC-57-01
+    description: session-57 の live run が開始から report 生成まで完走する
+    test_name: test_session_57_live_run_completes
+
+  - id: AC-57-02
+    description: prepared_spec artifact が保存される
+    test_name: test_session_57_prepared_spec_exists
+
+  - id: AC-57-03
+    description: checks artifact が保存される
+    test_name: test_session_57_checks_exists
+
+  - id: AC-57-04
+    description: report artifact が保存され、内容が review 可能である
+    test_name: test_session_57_report_exists
+
+  - id: AC-57-05
+    description: 変更ファイルが backend/tests/test_live_api_validation.py のみであり、既存 runtime / test ファイルに差分がない
+    test_name: test_session_57_changed_files_within_scope
+
+completion_criteria:
+  - requirement: run_session.py returns success state for session-57 live run
+  - requirement: prepared_spec artifact exists
+  - requirement: checks artifact exists
+  - requirement: report artifact exists
+  - requirement: report.json content is reviewable
+  - requirement: only backend/tests/test_live_api_validation.py is changed
+  - requirement: orchestration/run_session.py remains unchanged
+  - requirement: existing test files remain unchanged
+  - requirement: ruff check passes
+  - requirement: pytest passes
+  - requirement: mypy passes
+  - requirement: compileall passes
+  - requirement: no unintended side effects are observed
+
+review_points:
+  - 仕様一致（AC達成）
+  - 変更範囲遵守
+  - 副作用なし（既存破壊なし）
+  - 実装過不足なし

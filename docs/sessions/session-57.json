@@ -1,0 +1,166 @@
+{
+  "session_id": "session-57",
+  "phase_id": "phase13",
+  "title": "live api end-to-end validation with test-only scope",
+  "goal": "OpenAI API と Claude API を使った run_session.py の本番1本通しを、安全な test-only 範囲で完走検証する",
+  "execution_method": "orchestrator_live_run",
+  "scope": [
+    "live api orchestration validation",
+    "test-only file generation",
+    "artifact and report verification"
+  ],
+  "out_of_scope": [
+    "runtime logic changes",
+    "provider implementation changes",
+    "retry algorithm changes",
+    "git guard logic changes",
+    "existing test file modifications",
+    "docs redesign",
+    "phase14 expansion"
+  ],
+  "constraints": [
+    "one session one purpose",
+    "test-only scope",
+    "modify only one new test file",
+    "orchestration/run_session.py must not be changed",
+    "existing test files must not be changed",
+    "existing production logic must not be changed",
+    "artifacts and report output must remain reviewable"
+  ],
+  "inputs": [
+    {
+      "name": "session_id",
+      "type": "str",
+      "description": "session-57"
+    },
+    {
+      "name": "execution_mode",
+      "type": "enum[live_api]",
+      "description": "mock や dry-run ではなく実 API 接続で検証する"
+    },
+    {
+      "name": "execution_method",
+      "type": "enum[orchestrator_live_run]",
+      "description": "Cursor 実装セッションではなく run_session.py 自身が実行主体"
+    },
+    {
+      "name": "allowed_test_file",
+      "type": "str",
+      "description": "backend/tests/test_live_api_validation.py"
+    },
+    {
+      "name": "forbidden_runtime_file",
+      "type": "str",
+      "description": "orchestration/run_session.py"
+    },
+    {
+      "name": "sandbox_branch",
+      "type": "str",
+      "description": "sandbox/session-57"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "new_test_file",
+      "type": "str",
+      "description": "backend/tests/test_live_api_validation.py"
+    },
+    {
+      "name": "artifacts_written",
+      "type": "bool",
+      "description": "prepared_spec / responses / checks / report が保存されたか"
+    },
+    {
+      "name": "report_generated",
+      "type": "bool",
+      "description": "report.json が生成されたか"
+    },
+    {
+      "name": "live_run_completed",
+      "type": "bool",
+      "description": "run_session.py が全ステージ完走したか"
+    },
+    {
+      "name": "scope_preserved",
+      "type": "bool",
+      "description": "変更ファイルが allowed_changes のみであるか"
+    }
+  ],
+  "allowed_changes": [
+    "backend/tests/test_live_api_validation.py"
+  ],
+  "allowed_changes_detail": [
+    {
+      "file": "backend/tests/test_live_api_validation.py",
+      "reference_only": true,
+      "functions": [
+        "test_session_57_live_run_completes",
+        "test_session_57_prepared_spec_exists",
+        "test_session_57_checks_exists",
+        "test_session_57_report_exists",
+        "test_session_57_changed_files_within_scope"
+      ],
+      "change_type": "new_file_only",
+      "note": "functions は参考情報であり、patch_validation の強制判定基準は allowed_changes のファイルパスのみとする"
+    }
+  ],
+  "forbidden_changes": [
+    "orchestration/run_session.py",
+    "orchestration/providers/openai_client.py",
+    "orchestration/providers/claude_client.py",
+    "backend/tests/test_run_session.py",
+    "backend/tests/test_report_generation.py",
+    "backend/tests/test_main_report_flow.py",
+    "backend/tests/test_patch_validation.py",
+    "all existing test files except backend/tests/test_live_api_validation.py",
+    "docs/master_instruction.md",
+    "docs/global_rules.md",
+    "docs/roadmap.yaml",
+    "phase14 related files"
+  ],
+  "completion_criteria": [
+    "backend/tests/test_live_api_validation.py is newly created",
+    "run_session.py live execution completes end-to-end for session-57",
+    "prepared_spec artifact is generated",
+    "checks artifact is generated",
+    "report artifact is generated",
+    "report.json content is reviewable",
+    "changed files remain within allowed_changes",
+    "orchestration runtime files are unchanged",
+    "existing test files are unchanged",
+    "ruff check passes",
+    "pytest passes",
+    "mypy passes",
+    "compileall passes",
+    "no unintended side effects are introduced"
+  ],
+  "acceptance_ref": "docs/acceptance/session-57.yaml",
+  "acceptance_criteria": [
+    {
+      "id": "AC-57-01",
+      "description": "session-57 の live run が開始から report 生成まで完走する"
+    },
+    {
+      "id": "AC-57-02",
+      "description": "prepared_spec artifact が保存される"
+    },
+    {
+      "id": "AC-57-03",
+      "description": "checks artifact が保存される"
+    },
+    {
+      "id": "AC-57-04",
+      "description": "report artifact が保存され、内容が review 可能である"
+    },
+    {
+      "id": "AC-57-05",
+      "description": "変更ファイルが backend/tests/test_live_api_validation.py のみであり、既存 runtime / test ファイルに差分がない"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "実装過不足なし"
+  ]
+}
