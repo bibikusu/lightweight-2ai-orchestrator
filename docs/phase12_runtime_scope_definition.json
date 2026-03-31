@@ -100,24 +100,3 @@
     "retry / failure_type / report の正本化済みロジックを維持するため"
   ]
 }
-```
-
----
-
-## 次のステップ
-
-このドラフトを GPT に渡して仕様確定してもらうのが正しい流れです:
-```
-session-48: phase12_runtime_scope_definition.json のドラフトレビュー
-
-Claudeが run_session.py を分析し、以下のスコープ定義ドラフトを作成しました。
-確認・修正をお願いします。
-
-変更対象（3関数）:
-- build_prepared_spec_prompts
-- call_chatgpt_for_prepared_spec  
-- main
-
-変更禁止: 上記以外の全関数（約47関数）
-
-[ドラフト全文を添付]
