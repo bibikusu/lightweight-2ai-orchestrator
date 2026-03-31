@@ -1,164 +1,183 @@
 {
-    "phase_id": "phase10",
-    "phase_name": "generation layer validation through real project trial",
-    "objective": "generation layer が実案件試行で成立するかを検証する",
-    "scope": [
+  "phase": "Phase10",
+  "phase_id": "phase10",
+  "phase_name": "generation layer validation through real project trial",
+  "objective": "generation layer が実案件試行で成立するかを検証する",
+  "reviewed_sessions": [
+    "session-37",
+    "session-38",
+    "session-40",
+    "session-41",
+    "session-42a"
+  ],
+  "scope": [
     "Phase9 session-37 の成果確認",
     "Phase9 session-38 の成果確認",
     "Phase10 における実案件試行結果の検収判断"
-    ],
-    "completion_checks": [
+  ],
+  "completion_checks": [
     {
-    "id": "CC-01",
-    "title": "Spec Builder 最小実装の成立",
-    "facts": [
-    "Phase9 session-37 は Spec Builder 最小実装として扱われている",
-    "session-37 は docs-only である",
-    "対応コミットは f5737d4 である"
-    ],
-    "interpretation": "Spec Builder の最小単位はコード実装ではなく、文書成果物ベースで成立したと判断できる",
-    "status": "pass"
+      "id": "CC-01",
+      "title": "Spec Builder 最小実装の成立",
+      "facts": [
+        "Phase9 session-37 は Spec Builder 最小実装として扱われている",
+        "session-37 は docs-only である",
+        "対応コミットは f5737d4 である"
+      ],
+      "interpretation": "Spec Builder の最小単位はコード実装ではなく、文書成果物ベースで成立したと判断できる",
+      "status": "pass"
     },
     {
-    "id": "CC-02",
-    "title": "Spec Reviewer 最小実装の成立",
-    "facts": [
-    "Phase9 session-38 は Spec Reviewer 最小実装として扱われている",
-    "session-38 は docs-only である",
-    "対応コミットは 4259dd3 である"
-    ],
-    "interpretation": "Spec Reviewer の最小単位はコード実装ではなく、文書成果物ベースで成立したと判断できる",
-    "status": "pass"
+      "id": "CC-02",
+      "title": "Spec Reviewer 最小実装の成立",
+      "facts": [
+        "Phase9 session-38 は Spec Reviewer 最小実装として扱われている",
+        "session-38 は docs-only である",
+        "対応コミットは 4259dd3 である"
+      ],
+      "interpretation": "Spec Reviewer の最小単位はコード実装ではなく、文書成果物ベースで成立したと判断できる",
+      "status": "pass"
     },
     {
-    "id": "CC-03",
-    "title": "generation layer の前提部品充足",
-    "facts": [
-    "Phase10 の検証対象として session-37 と session-38 が指定されている",
-    "session-37 は Spec Builder、session-38 は Spec Reviewer の最小実装である"
-    ],
-    "interpretation": "generation layer を実案件試行するための前提部品は揃っていると判断できる",
-    "status": "pass"
+      "id": "CC-03",
+      "title": "generation layer の前提部品充足",
+      "facts": [
+        "Phase10 の検証対象として session-37 と session-38 が指定されている",
+        "session-37 は Spec Builder、session-38 は Spec Reviewer の最小実装である"
+      ],
+      "interpretation": "generation layer を実案件試行するための前提部品は揃っていると判断できる",
+      "status": "pass"
     },
     {
-    "id": "CC-04",
-    "title": "実案件試行ベースの成立判定",
-    "facts": [
-    "Phase10 の目的は generation layer が実案件試行で成立するかの検証である",
-    "本 completion_report 生成時点で提示されている直接証跡は session-37 と session-38 の docs-only 完了情報である",
-    "実案件試行の詳細ログ、入力、出力、差分、検証結果はこの依頼文には添付されていない"
-    ],
-    "interpretation": "generation layer が成立した可能性は高いが、実案件試行の一次証跡がこの JSON 単体では不足しているため、無条件 completed ではなく conditional_completed が妥当である",
-    "status": "conditional_pass"
+      "id": "CC-04",
+      "title": "実案件試行ベースの成立判定",
+      "facts": [
+        "Phase10 の目的は generation layer が実案件試行で成立するかの検証である",
+        "本 completion_report 生成時点で提示されている直接証跡は session-37 と session-38 の docs-only 完了情報である",
+        "実案件試行の詳細ログ、入力、出力、差分、検証結果はこの依頼文には添付されていない"
+      ],
+      "interpretation": "generation layer が成立した可能性は高いが、実案件試行の一次証跡がこの JSON 単体では不足しているため、無条件 completed ではなく conditional_completed が妥当である",
+      "status": "conditional_pass"
     },
     {
-    "id": "CC-05",
-    "title": "Phase10 完了根拠の履歴固定可能性",
-    "facts": [
-    "Phase10 の completion_report.json を生成する依頼が出ている",
-    "テンプレートは既存の phase6_completion_report.json 準拠である",
-    "final_judgement.result の enum は completed / conditional_completed / failed に限定されている"
-    ],
-    "interpretation": "Phase10 の判断内容を JSON で固定する準備は整っているが、リポジトリ保存・commit・push の完了まではこの JSON だけでは確認できない",
-    "status": "conditional_pass"
+      "id": "CC-05",
+      "title": "Phase10 完了根拠の履歴固定可能性",
+      "facts": [
+        "Phase10 の completion_report.json を生成する依頼が出ている",
+        "テンプレートは既存の phase6_completion_report.json 準拠である",
+        "final_judgement.result の enum は completed / conditional_completed / failed に限定されている"
+      ],
+      "interpretation": "Phase10 の判断内容を JSON で固定する準備は整っているが、リポジトリ保存・commit・push の完了まではこの JSON だけでは確認できない",
+      "status": "conditional_pass"
     }
-    ],
-    "evidence_summary": {
+  ],
+  "evidence_summary": {
     "confirmed_facts": [
-    {
-    "id": "E-01",
-    "summary": "Phase9 session-37 は Spec Builder 最小実装であり、docs-only、commit は f5737d4"
-    },
-    {
-    "id": "E-02",
-    "summary": "Phase9 session-38 は Spec Reviewer 最小実装であり、docs-only、commit は 4259dd3"
-    },
-    {
-    "id": "E-03",
-    "summary": "Phase10 の目的は generation layer が実案件試行で成立するかの検証"
-    },
-    {
-    "id": "E-04",
-    "summary": "本依頼時点で明示されている一次情報は session-37 / session-38 の成立情報であり、実案件試行ログ本文は未提示"
-    }
+      {
+        "id": "E-01",
+        "summary": "Phase9 session-37 は Spec Builder 最小実装であり、docs-only、commit は f5737d4"
+      },
+      {
+        "id": "E-02",
+        "summary": "Phase9 session-38 は Spec Reviewer 最小実装であり、docs-only、commit は 4259dd3"
+      },
+      {
+        "id": "E-03",
+        "summary": "Phase10 の目的は generation layer が実案件試行で成立するかの検証"
+      },
+      {
+        "id": "E-04",
+        "summary": "本依頼時点で明示されている一次情報は session-37 / session-38 の成立情報であり、実案件試行ログ本文は未提示"
+      }
     ],
     "derived_interpretations": [
-    {
-    "id": "I-01",
-    "summary": "Phase10 は Phase9 の2部品を前提に generation layer を検証する段階として整合している"
-    },
-    {
-    "id": "I-02",
-    "summary": "Phase9 の docs-only 成果は generation layer の前提成立を示すが、Phase10 の無条件完了を単独では証明しない"
-    },
-    {
-    "id": "I-03",
-    "summary": "したがって、現時点の最終判定は completed より conditional_completed の方が保守的かつ検収整合的である"
-    }
+      {
+        "id": "I-01",
+        "summary": "Phase10 は Phase9 の2部品を前提に generation layer を検証する段階として整合している"
+      },
+      {
+        "id": "I-02",
+        "summary": "Phase9 の docs-only 成果は generation layer の前提成立を示すが、Phase10 の無条件完了を単独では証明しない"
+      },
+      {
+        "id": "I-03",
+        "summary": "したがって、現時点の最終判定は completed より conditional_completed の方が保守的かつ検収整合的である"
+      }
     ],
     "insufficient_or_missing_evidence": [
-    {
-    "id": "M-01",
-    "summary": "実案件試行の具体的入力"
-    },
-    {
-    "id": "M-02",
-    "summary": "実案件試行で得られた generation layer の出力"
-    },
-    {
-    "id": "M-03",
-    "summary": "試行時の差分、レビュー結果、失敗有無"
-    },
-    {
-    "id": "M-04",
-    "summary": "completion_report 保存後の git add / commit / push の履歴"
-    }
+      {
+        "id": "M-01",
+        "summary": "実案件試行の具体的入力"
+      },
+      {
+        "id": "M-02",
+        "summary": "実案件試行で得られた generation layer の出力"
+      },
+      {
+        "id": "M-03",
+        "summary": "試行時の差分、レビュー結果、失敗有無"
+      },
+      {
+        "id": "M-04",
+        "summary": "completion_report 保存後の git add / commit / push の履歴"
+      }
     ]
-    },
-    "risks": [
+  },
+  "risks": [
     {
-    "id": "R-01",
-    "level": "high",
-    "summary": "Phase10 の成立判断が会話上の要約に依存しており、実案件試行の一次証跡がこの JSON に同梱されていない",
-    "impact": "後続 Phase で『何が成立したのか』の再確認コストが上がる"
-    },
-    {
-    "id": "R-02",
-    "level": "medium",
-    "summary": "session-37 / session-38 が docs-only のため、runtime 統合や自動検証の成立までを含むと誤解される可能性がある",
-    "impact": "Phase11 のスコープ設定を誤る可能性がある"
+      "id": "R-01",
+      "level": "high",
+      "summary": "Phase10 の成立判断が会話上の要約に依存しており、実案件試行の一次証跡がこの JSON に同梱されていない",
+      "impact": "後続 Phase で『何が成立したのか』の再確認コストが上がる"
     },
     {
-    "id": "R-03",
-    "level": "medium",
-    "summary": "実案件1件ベースで generation layer を成立扱いすると汎用性未検証のまま次段階へ進む可能性がある",
-    "impact": "別案件適用時に設計の手戻りが発生する可能性がある"
+      "id": "R-02",
+      "level": "medium",
+      "summary": "session-37 / session-38 が docs-only のため、runtime 統合や自動検証の成立までを含むと誤解される可能性がある",
+      "impact": "Phase11 のスコープ設定を誤る可能性がある"
+    },
+    {
+      "id": "R-03",
+      "level": "medium",
+      "summary": "実案件1件ベースで generation layer を成立扱いすると汎用性未検証のまま次段階へ進む可能性がある",
+      "impact": "別案件適用時に設計の手戻りが発生する可能性がある"
     }
-    ],
-    "open_issues": [
+  ],
+  "open_issues": [
     {
-    "id": "O-01",
-    "priority": "high",
-    "summary": "Phase10 実案件試行の具体的証跡を completion_report と紐づけて保存する必要がある"
+      "id": "O-01",
+      "priority": "high",
+      "summary": "Phase10 実案件試行の具体的証跡を completion_report と紐づけて保存する必要がある"
     },
     {
-    "id": "O-02",
-    "priority": "medium",
-    "summary": "Phase10 completion_report.json を保存後、git 履歴に固定する必要がある"
+      "id": "O-02",
+      "priority": "medium",
+      "summary": "Phase10 completion_report.json を保存後、git 履歴に固定する必要がある"
     },
     {
-    "id": "O-03",
-    "priority": "medium",
-    "summary": "Phase11 では汎用性検証を先に行うか、runtime 統合を先に行うかを明示的に確定する必要がある"
+      "id": "O-03",
+      "priority": "medium",
+      "summary": "Phase11 では汎用性検証を先に行うか、runtime 統合を先に行うかを明示的に確定する必要がある"
+    },
+    {
+      "id": "O-04",
+      "priority": "low",
+      "summary": "session-40〜42a の実績を踏まえると completed 再評価の余地がある"
+    },
+    {
+      "id": "O-05",
+      "priority": "low",
+      "summary": "completion_checks の status 値が既存テンプレートの enum と異なるため、関連テストが走査対象に含む場合は失敗リスクがある"
     }
-    ],
-    "final_judgement": {
+  ],
+  "final_judgement": {
     "result": "conditional_completed",
     "reason": "Phase9 session-37 と session-38 の最小実装成立は確認でき、Phase10 の前提部品は揃っている。一方で、generation layer の実案件試行そのものを無条件 completed と断定するための一次証跡は、この依頼文で与えられた情報だけでは不足している。そのため、Phase10 は『成立方向は確認できているが、証跡固定を条件に完了扱いする』という意味で conditional_completed が妥当である。",
     "required_follow_up": [
-    "phase10_completion_report.json をリポジトリへ保存する",
-    "必要なら実案件試行の入力・出力・差分・判定ログを別 evidence として保存する",
-    "git add / commit / push により Phase10 の完了根拠を履歴化する"
-    ]
-    }
-    }
+      "phase10_completion_report.json をリポジトリへ保存する",
+      "必要なら実案件試行の入力・出力・差分・判定ログを別 evidence として保存する",
+      "git add / commit / push により Phase10 の完了根拠を履歴化する"
+    ],
+    "next_phase": "Phase11"
+  }
+}

@@ -28,12 +28,13 @@
         "Phase8 は completed",
         "Phase9 session-37 は completed",
         "Phase9 session-38 は completed",
-        "Phase10 は completion_report 生成済みだが未保存"
+        "Phase10 は completion_report / progress_dashboard / design_context が保存・commit・push 済み"
       ],
       "phase10_state": [
-        "Phase10の完了判断自体は会話上で整理されている",
-        "ただし repository 上の保存・commit・push が未完了",
-        "したがって Phase10 は『完了判定済み・履歴固定待ち』と扱うのが妥当"
+        "Phase10の完了判断は JSON と Git 履歴に固定済み",
+        "commit 2c832fd により Phase10 レポート3点は履歴化済み",
+        "session-40〜42a により Builder→Reviewer の試行と改善サイクルが実施済み",
+        "したがって Phase10 は『履歴固定済みの conditional_completed』として扱うのが妥当"
       ]
     }
   },
@@ -55,6 +56,10 @@
       {
         "id": "I-04",
         "summary": "Phase11は runtime統合より先に汎用性検証を行う方が、誤った設計の自動化を避けやすい"
+      },
+      {
+        "id": "I-05",
+        "summary": "session-40〜42a の試行実績により、Phase10 は単なる前提部品確認ではなく、Builder→Reviewer 実案件試行と改善まで到達している"
       }
     ]
   },
@@ -62,24 +67,20 @@
     "type": "list[object]",
     "value": [
       {
-        "id": "U-01",
-        "summary": "phase10_completion_report.json の正式本文が未提示のため、dashboard/design_context はその本文を参照せずに作成している"
-      },
-      {
         "id": "U-02",
         "summary": "design_context を正式成果物として採用するか、内部補助資料として扱うかが未確定"
       },
       {
         "id": "U-03",
-        "summary": "Phase11 のセッション分割単位はまだ確定していない"
+        "summary": "Phase11 のセッション分割単位はまだ最終確定していない"
       }
     ]
   },
   "design_decisions": [
     {
       "id": "D-01",
-      "decision": "Phase10は『completed』ではなく『in_progress_pending_report_persistence』として管理する",
-      "reason": "完了根拠の保存が未了のため"
+      "decision": "Phase10は『conditional_completed』として管理する",
+      "reason": "completion_report の final_judgement.result と整合させるため"
     },
     {
       "id": "D-02",
@@ -110,24 +111,23 @@
   },
   "recommended_phase11_session_split": [
     {
-      "session_id": "session-39",
-      "objective": "Phase10成果物の命名規約と保存契約を固定する"
+      "session_id": "session-44",
+      "objective": "Phase10成果物の命名規約と保存契約を踏まえ、汎用性検証の前提条件を固定する"
     },
     {
-      "session_id": "session-40",
+      "session_id": "session-45",
       "objective": "別案件または別仕様条件に対して Spec Builder の出力整合性を検証する"
     },
     {
-      "session_id": "session-41",
+      "session_id": "session-46",
       "objective": "別案件または別仕様条件に対して Spec Reviewer の判定整合性を検証する"
     },
     {
-      "session_id": "session-42",
+      "session_id": "session-47",
       "objective": "genericity_validation の結果を踏まえて runtime 統合入口条件を定義する"
     }
   ],
   "do_not_assume": [
-    "Phase10 completion_report の本文詳細",
     "3ファイル構成が既に正式標準であること",
     "runtime統合が次Phaseで即着手可能であること"
   ]
