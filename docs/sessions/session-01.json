@@ -3,6 +3,7 @@
   "phase_id": "phase-01",
   "title": "最初の1セッション雛形",
   "goal": "まず1セッション分の実行フローを成立させる",
+  "objective": "automatically generate session-01 artifacts using builder-reviewer-human flow and output them in a review-ready state",
   "scope": [
     "run_session.py が session ファイルを読み込める",
     "acceptance ファイルを参照できる",
@@ -23,5 +24,13 @@
     "自由文ではなく構造化データを優先する",
     "ログと成果物は artifacts 配下に保存する"
   ],
-  "acceptance_ref": "acceptance/session-01.yaml"
+  "acceptance_ref": "acceptance/session-01.yaml",
+  "acceptance_criteria": [
+    {"id": "AC-01", "description": "master_instruction file exists", "test_function": "test_master_instruction_exists"},
+    {"id": "AC-02", "description": "roadmap file exists", "test_function": "test_roadmap_exists"},
+    {"id": "AC-03", "description": "session json exists", "test_function": "test_session_json_exists"},
+    {"id": "AC-SELF-01", "description": "acceptance file exists", "test_function": "test_acceptance_file_exists"},
+    {"id": "AC-SELF-02", "description": "yaml parse success", "test_function": "test_acceptance_yaml_parse"},
+    {"id": "AC-SELF-03", "description": "ac mapping is one-to-one", "test_function": "test_ac_mapping_integrity"}
+  ]
 }
