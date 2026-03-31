@@ -1,0 +1,61 @@
+{
+"phase": "Phase12",
+"target_file": "orchestration/run_session.py",
+"runtime_entry_conditions": {
+"scope_defined": true,
+"execution_contract_defined": true,
+"failure_handling_defined": true,
+"change_scope_fixed": true
+},
+"readiness_decision": "ready",
+"decision_reason": [
+"session-48（commit dc300a4）で docs/phase12_runtime_scope_definition.json が確定し、run_session.py に対する変更対象・非変更対象・allowed_changes・forbidden_changes が固定されている。",
+"session-49（commit 6f4e3c1）で docs/phase12_runtime_execution_contract.json が確定し、session JSON / acceptance YAML の主要フィールド使用箇所、prepared_spec / implementation / checks / retry / report の接続関係、failure_retry_contract が定義されている。",
+"session-49 の failure_retry_contract により、failure_type 判定と retry 適用ポイントが定義済みである。",
+"したがって、runtime 統合実装に入るための前提4条件（scope_defined / execution_contract_defined / failure_handling_defined / change_scope_fixed）はすべて true と判定できる。"
+],
+"remaining_gaps": [],
+"session_51_plus_plan": [
+{
+"session_id": "session-51",
+"objective": "run_session.py に対して、session-48 の runtime scope definition に従い、Builder 統合の最小実装を行う",
+"expected_changes": [
+"main",
+"call_chatgpt_for_prepared_spec",
+"build_prepared_spec_prompts"
+],
+"out_of_scope": [
+"Reviewer 統合",
+"retry ロジック変更",
+"report 構造変更"
+]
+},
+{
+"session_id": "session-52",
+"objective": "run_session.py に対して、session-49 の execution contract に従い、Reviewer / retry 連携の最小実装を行う",
+"expected_changes": [
+"main",
+"call_chatgpt_for_retry_instruction",
+"build_retry_prompts"
+],
+"out_of_scope": [
+"report 永続化変更",
+"Git 制御変更",
+"local checks 実装変更"
+]
+},
+{
+"session_id": "session-53",
+"objective": "runtime 統合後の end-to-end 検証を行い、acceptance / retry / report 反映が execution contract と一致するか確認する",
+"expected_changes": [
+"backend/tests/",
+"必要最小限の orchestration テスト"
+],
+"out_of_scope": [
+"新規 provider 実装",
+"frontend / backend 本体機能追加",
+"Phase13 以降の拡張設計"
+]
+}
+]
+}
