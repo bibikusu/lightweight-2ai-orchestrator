@@ -2015,8 +2015,8 @@ def main() -> int:
             max_changed_files,
         )
 
-        # 実差分ゼロかつ proposed_patch も空なら「実質的な変更なし」とみなす
-        if not real_changed_files and not str(impl_result.get("proposed_patch") or "").strip():
+        # proposed_patch はあるが実差分ゼロなら「実質的な変更なし」とみなす
+        if str(impl_result.get("proposed_patch") or "").strip() and not real_changed_files:
             no_effective_change = True
 
         stage = "checks"
