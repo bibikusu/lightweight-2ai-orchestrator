@@ -1,0 +1,686 @@
+{
+  "document_name": "phase12_runtime_execution_contract",
+  "document_path": "docs/phase12_runtime_execution_contract.json",
+  "target_file": "orchestration/run_session.py",
+  "contract_purpose": "docs-only 成果物（session JSON / acceptance YAML）と runtime 実行処理の入出力契約、および prepared_spec / implementation / checks / retry / report の接続関係を固定する",
+  "analysis_basis": {
+    "type": "object",
+    "schema": {
+      "session_48_commit": "str",
+      "runtime_target": "str",
+      "analysis_scope": "list[str]"
+    },
+    "value": {
+      "session_48_commit": "dc300a4",
+      "runtime_target": "orchestration/run_session.py",
+      "analysis_scope": [
+        "load_session_context",
+        "validate_session_context",
+        "build_prepared_spec_prompts",
+        "build_implementation_prompts",
+        "build_retry_prompts",
+        "validate_changed_files_before_patch",
+        "build_session_report_record",
+        "build_acceptance_results_for_report_json",
+        "generate_report",
+        "persist_session_reports",
+        "main"
+      ]
+    }
+  },
+  "session_json_contract": {
+    "type": "list[object]",
+    "value": [
+      {
+        "field": "session_id",
+        "type": "str",
+        "required": true,
+        "runtime_usage": [
+          {
+            "function": "validate_session_context",
+            "usage": "ファイル名と JSON 本文の一致検証"
+          },
+          {
+            "function": "build_prepared_spec_prompts",
+            "usage": "prepared_spec 用 prompt に埋め込む"
+          },
+          {
+            "function": "build_implementation_prompts",
+            "usage": "implementation 用 prompt に埋め込む"
+          },
+          {
+            "function": "build_retry_prompts",
+            "usage": "retry 用 prompt に埋め込む"
+          },
+          {
+            "function": "generate_report",
+            "usage": "session report 表示"
+          },
+          {
+            "function": "persist_session_reports",
+            "usage": "report.json / session_report.json の識別子"
+          }
+        ],
+        "status": "used"
+      },
+      {
+        "field": "phase_id",
+        "type": "str",
+        "required": true,
+        "runtime_usage": [
+          {
+            "function": "validate_session_context",
+            "usage": "必須キー検証"
+          },
+          {
+            "function": "generate_report",
+            "usage": "Markdown report の表示"
+          },
+          {
+            "function": "build_session_report_record",
+            "usage": "session_report.json へ保存"
+          }
+        ],
+        "status": "used"
+      },
+      {
+        "field": "title",
+        "type": "str",
+        "required": true,
+        "runtime_usage": [
+          {
+            "function": "validate_session_context",
+            "usage": "必須キー検証"
+          },
+          {
+            "function": "generate_report",
+            "usage": "Markdown report の表示"
+          },
+          {
+            "function": "build_session_report_record",
+            "usage": "session_report.json へ保存"
+          }
+        ],
+        "status": "used"
+      },
+      {
+        "field": "goal",
+        "type": "str",
+        "required": true,
+        "runtime_usage": [
+          {
+            "function": "validate_session_context",
+            "usage": "空文字禁止"
+          },
+          {
+            "function": "build_dry_run_prepared_spec",
+            "usage": "dry-run objective の元データ"
+          },
+          {
+            "function": "build_prepared_spec_prompts",
+            "usage": "prepared_spec 用 prompt に埋め込む session_json 内で使用"
+          },
+          {
+            "function": "generate_report",
+            "usage": "Markdown report の表示"
+          },
+          {
+            "function": "build_session_report_record",
+            "usage": "session_report.json へ保存"
+          }
+        ],
+        "status": "used"
+      },
+      {
+        "field": "scope",
+        "type": "list[str]",
+        "required": true,
+        "runtime_usage": [
+          {
+            "function": "validate_session_context",
+            "usage": "list 型検証"
+          },
+          {
+            "function": "build_prepared_spec_prompts",
+            "usage": "session_json 全体を prompt に埋め込むため間接利用"
+          }
+        ],
+        "status": "used_indirectly"
+      },
+      {
+        "field": "out_of_scope",
+        "type": "list[str]",
+        "required": true,
+        "runtime_usage": [
+          {
+            "function": "validate_session_context",
+            "usage": "list 型検証"
+          },
+          {
+            "function": "_collect_forbidden_phrases",
+            "usage": "changed_files 妥当性チェック用の禁止語句抽出"
+          },
+          {
+            "function": "validate_changed_files_before_patch",
+            "usage": "changed_files と禁止語句の衝突判定"
+          }
+        ],
+        "status": "used"
+      },
+      {
+        "field": "constraints",
+        "type": "list[str]",
+        "required": true,
+        "runtime_usage": [
+          {
+            "function": "validate_session_context",
+            "usage": "必須キー検証"
+          },
+          {
+            "function": "build_prepared_spec_prompts",
+            "usage": "session_json 全体を prompt に埋め込むため間接利用"
+          },
+          {
+            "function": "build_implementation_prompts",
+            "usage": "session_json 全体を prompt に埋め込むため間接利用"
+          }
+        ],
+        "status": "used_indirectly"
+      },
+      {
+        "field": "acceptance_ref",
+        "type": "str",
+        "required": true,
+        "runtime_usage": [
+          {
+            "function": "load_session_context",
+            "usage": "acceptance YAML のパス解決"
+          },
+          {
+            "function": "validate_session_context",
+            "usage": "必須キー検証"
+          }
+        ],
+        "status": "used"
+      }
+    ]
+  },
+  "acceptance_yaml_contract": {
+    "type": "object",
+    "schema": {
+      "raw_yaml_usage": "list[object]",
+      "parsed_acceptance_usage": "list[object]",
+      "field_contract": "list[object]"
+    },
+    "value": {
+      "raw_yaml_usage": [
+        {
+          "function": "load_session_context",
+          "usage": "acceptance YAML 本文を raw_yaml として保持"
+        },
+        {
+          "function": "build_prepared_spec_prompts",
+          "usage": "prepared_spec 用 prompt に acceptance_yaml 本文を埋め込む"
+        }
+      ],
+      "parsed_acceptance_usage": [
+        {
+          "function": "load_session_context",
+          "usage": "safe_load した acceptance YAML を parsed として保持"
+        },
+        {
+          "function": "build_session_report_record",
+          "usage": "acceptance[].test_name を test_function_results と照合して result を算出"
+        },
+        {
+          "function": "build_acceptance_results_for_report_json",
+          "usage": "report.json 用 acceptance_results を生成"
+        }
+      ],
+      "field_contract": [
+        {
+          "field": "session_id",
+          "type": "str",
+          "required": true,
+          "runtime_usage": "現在の main フローでは直接参照していない",
+          "status": "unused_directly"
+        },
+        {
+          "field": "acceptance",
+          "type": "list[object]",
+          "required": true,
+          "runtime_usage": "report 系生成時に反復対象として利用",
+          "status": "used"
+        },
+        {
+          "field": "acceptance[].id",
+          "type": "str",
+          "required": true,
+          "runtime_usage": "report.json / session_report.json の acceptance_results 出力",
+          "status": "used"
+        },
+        {
+          "field": "acceptance[].description",
+          "type": "str",
+          "required": false,
+          "runtime_usage": "session_report.json の acceptance_results に任意付与",
+          "status": "used_optional"
+        },
+        {
+          "field": "acceptance[].test_name",
+          "type": "str",
+          "required": true,
+          "runtime_usage": "test_function_results との1対1照合",
+          "status": "used"
+        },
+        {
+          "field": "acceptance[].test_action",
+          "type": "str",
+          "required": false,
+          "runtime_usage": "現在の main フローでは直接参照していない",
+          "status": "unused_directly"
+        }
+      ]
+    }
+  },
+  "runtime_flow_contract": {
+    "type": "list[object]",
+    "value": [
+      {
+        "order": 1,
+        "stage": "loading",
+        "functions": [
+          "load_session_context"
+        ],
+        "input": [
+          "docs/sessions/<session_id>.json",
+          "docs/acceptance/<acceptance_ref>.yaml",
+          "docs/master_instruction.md",
+          "docs/global_rules.md",
+          "docs/roadmap.yaml",
+          "orchestration/config.yaml"
+        ],
+        "output": [
+          "SessionContext"
+        ]
+      },
+      {
+        "order": 2,
+        "stage": "validating",
+        "functions": [
+          "validate_session_context"
+        ],
+        "input": [
+          "SessionContext.session_data"
+        ],
+        "output": [
+          "validated SessionContext"
+        ]
+      },
+      {
+        "order": 3,
+        "stage": "prepared_spec",
+        "functions": [
+          "build_prepared_spec_prompts",
+          "call_chatgpt_for_prepared_spec"
+        ],
+        "input": [
+          "SessionContext.master_instruction",
+          "SessionContext.global_rules",
+          "SessionContext.roadmap_text",
+          "SessionContext.session_data",
+          "SessionContext.acceptance_data.raw_yaml"
+        ],
+        "output": [
+          "prepared_spec.json"
+        ]
+      },
+      {
+        "order": 4,
+        "stage": "implementation",
+        "functions": [
+          "build_implementation_prompts",
+          "call_claude_for_implementation"
+        ],
+        "input": [
+          "prepared_spec",
+          "SessionContext.session_data",
+          "retry_instruction（任意）"
+        ],
+        "output": [
+          "implementation_result.json"
+        ]
+      },
+      {
+        "order": 5,
+        "stage": "patch_validation",
+        "functions": [
+          "validate_changed_files_before_patch"
+        ],
+        "input": [
+          "implementation_result.changed_files",
+          "prepared_spec.allowed_changes",
+          "prepared_spec.forbidden_changes",
+          "SessionContext.session_data.out_of_scope"
+        ],
+        "output": [
+          "validation pass/fail"
+        ]
+      },
+      {
+        "order": 6,
+        "stage": "checks",
+        "functions": [
+          "run_local_checks"
+        ],
+        "input": [
+          "runtime_config.commands"
+        ],
+        "output": [
+          "checks.json"
+        ]
+      },
+      {
+        "order": 7,
+        "stage": "retry_decision",
+        "functions": [
+          "classify_failure",
+          "resolve_canonical_failure_type",
+          "retry_loop",
+          "build_retry_prompts",
+          "call_chatgpt_for_retry_instruction"
+        ],
+        "input": [
+          "checks",
+          "prepared_spec",
+          "implementation_result",
+          "retry_history",
+          "retry_count"
+        ],
+        "output": [
+          "retry_instruction.json",
+          "updated retry_count"
+        ]
+      },
+      {
+        "order": 8,
+        "stage": "report",
+        "functions": [
+          "generate_report",
+          "build_session_report_record",
+          "build_acceptance_results_for_report_json",
+          "persist_session_reports"
+        ],
+        "input": [
+          "SessionContext",
+          "prepared_spec",
+          "implementation_result",
+          "checks",
+          "retry_instruction（任意）"
+        ],
+        "output": [
+          "reports/session_report.md",
+          "reports/session_report.json",
+          "report.json"
+        ]
+      }
+    ]
+  },
+  "failure_retry_contract": {
+    "type": "object",
+    "schema": {
+      "failure_type_source": "list[object]",
+      "retry_trigger_point": "list[object]",
+      "retry_stop_conditions": "list[object]",
+      "report_reflection": "list[object]"
+    },
+    "value": {
+      "failure_type_source": [
+        {
+          "function": "classify_failure",
+          "usage": "retry_loop 用の failure_type と cause_summary の生成"
+        },
+        {
+          "function": "resolve_canonical_failure_type",
+          "usage": "report.json / retry_instruction 正規化用の canonical failure_type 決定"
+        }
+      ],
+      "retry_trigger_point": [
+        {
+          "location": "main while not check_results.success",
+          "condition": "checks.success == false",
+          "effect": "retry_instruction を生成し Claude を再呼び出しする"
+        }
+      ],
+      "retry_stop_conditions": [
+        {
+          "condition": "same_failure_and_cause",
+          "source": "retry_loop / cause fingerprint comparison"
+        },
+        {
+          "condition": "max_retries_reached",
+          "source": "retry_loop / max_retries_effective"
+        },
+        {
+          "condition": "failure_type_repeated",
+          "source": "retry_loop / previous failure_type comparison"
+        }
+      ],
+      "report_reflection": [
+        {
+          "function": "persist_session_reports",
+          "usage": "failure_type, retry_count, retry_stopped_same_cause, retry_stopped_max_retries を report.json に反映"
+        }
+      ]
+    }
+  },
+  "input_contracts": {
+    "type": "object",
+    "schema": {
+      "prepared_spec_stage": "object",
+      "implementation_stage": "object",
+      "checks_stage": "object",
+      "retry_stage": "object",
+      "report_stage": "object"
+    },
+    "value": {
+      "prepared_spec_stage": {
+        "type": "object",
+        "schema": {
+          "required_inputs": "list[str]",
+          "output": "str"
+        },
+        "value": {
+          "required_inputs": [
+            "master_instruction.md",
+            "global_rules.md",
+            "roadmap.yaml",
+            "session JSON",
+            "acceptance YAML raw text"
+          ],
+          "output": "prepared_spec"
+        }
+      },
+      "implementation_stage": {
+        "type": "object",
+        "schema": {
+          "required_inputs": "list[str]",
+          "optional_inputs": "list[str]",
+          "output": "str"
+        },
+        "value": {
+          "required_inputs": [
+            "prepared_spec",
+            "session JSON"
+          ],
+          "optional_inputs": [
+            "retry_instruction"
+          ],
+          "output": "implementation_result"
+        }
+      },
+      "checks_stage": {
+        "type": "object",
+        "schema": {
+          "required_inputs": "list[str]",
+          "output": "str"
+        },
+        "value": {
+          "required_inputs": [
+            "runtime_config.commands"
+          ],
+          "output": "check_results"
+        }
+      },
+      "retry_stage": {
+        "type": "object",
+        "schema": {
+          "required_inputs": "list[str]",
+          "output": "str"
+        },
+        "value": {
+          "required_inputs": [
+            "check_results",
+            "prepared_spec",
+            "implementation_result"
+          ],
+          "output": "retry_instruction"
+        }
+      },
+      "report_stage": {
+        "type": "object",
+        "schema": {
+          "required_inputs": "list[str]",
+          "optional_inputs": "list[str]",
+          "output": "list[str]"
+        },
+        "value": {
+          "required_inputs": [
+            "SessionContext",
+            "prepared_spec",
+            "implementation_result",
+            "check_results"
+          ],
+          "optional_inputs": [
+            "retry_instruction",
+            "error_message",
+            "retry_control"
+          ],
+          "output": [
+            "session_report.md",
+            "session_report.json",
+            "report.json"
+          ]
+        }
+      }
+    }
+  },
+  "output_contracts": {
+    "type": "object",
+    "schema": {
+      "prepared_spec": "list[str]",
+      "implementation_result": "list[str]",
+      "checks": "list[str]",
+      "retry_instruction": "list[str]",
+      "report_json": "list[str]"
+    },
+    "value": {
+      "prepared_spec": [
+        "session_id",
+        "objective",
+        "allowed_changes",
+        "forbidden_changes",
+        "completion_criteria",
+        "acceptance_criteria",
+        "review_points",
+        "implementation_notes"
+      ],
+      "implementation_result": [
+        "session_id",
+        "changed_files",
+        "implementation_summary",
+        "patch_status",
+        "risks",
+        "open_issues",
+        "proposed_patch"
+      ],
+      "checks": [
+        "test",
+        "lint",
+        "typecheck",
+        "build",
+        "success"
+      ],
+      "retry_instruction": [
+        "session_id",
+        "failure_type",
+        "priority",
+        "cause_summary",
+        "fix_instructions",
+        "do_not_change"
+      ],
+      "report_json": [
+        "session_id",
+        "status",
+        "completion_status",
+        "changed_files",
+        "acceptance_results",
+        "checks",
+        "failure_type",
+        "branch",
+        "commit_sha",
+        "summary"
+      ]
+    }
+  },
+  "unused_fields": {
+    "type": "list[object]",
+    "value": [
+      {
+        "field": "acceptance_yaml.session_id",
+        "type": "str",
+        "reason": "main フローでは直接比較・検証していない"
+      },
+      {
+        "field": "acceptance_yaml.acceptance[].test_action",
+        "type": "str",
+        "reason": "report 生成や retry 判定では参照していない"
+      },
+      {
+        "field": "session_json.scope",
+        "type": "list[str]",
+        "reason": "型検証と prompt 埋め込みには使うが、runtime 分岐条件としては未使用"
+      },
+      {
+        "field": "session_json.constraints",
+        "type": "list[str]",
+        "reason": "型検証と prompt 埋め込みには使うが、runtime 分岐条件としては未使用"
+      }
+    ]
+  },
+  "integration_boundaries": {
+    "type": "object",
+    "schema": {
+      "docs_only_scope": "list[str]",
+      "runtime_implementation_scope": "list[str]",
+      "not_in_scope_for_session_49": "list[str]"
+    },
+    "value": {
+      "docs_only_scope": [
+        "run_session.py の既存フロー分析",
+        "session JSON / acceptance YAML の使用箇所定義",
+        "failure / retry / report 接続関係定義"
+      ],
+      "runtime_implementation_scope": [
+        "run_session.py の関数変更",
+        "Builder / Reviewer の接続実装",
+        "新規 runtime 分岐追加"
+      ],
+      "not_in_scope_for_session_49": [
+        "run_session.py の実装変更",
+        "session-50 の readiness 判定確定",
+        "Phase12 本体実装着手"
+      ]
+    }
+  }
+}
