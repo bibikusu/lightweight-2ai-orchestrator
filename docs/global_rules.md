@@ -200,48 +200,12 @@
 
 ## 7. Git運用ルール
 
-### 原則
-
-- 通常の実装セッションは `sandbox/session-XX` ブランチで実行する。
-- runtime 本体、provider、実行フロー、retry、classification、report generation に影響する変更は sandbox を必須とする（後述の sandbox 必須ケースと同趣旨）。
-- 通常実行は `sandbox/session-XX` を前提とする。
-- AI は原則として main/master へ直接 commit / push しない。例外は後述の「main 直 push の例外許容」をすべて満たし、人間が明示指示した場合に限る。
-- dirty state のまま通常実行しない。
-- 未コミット変更がある場合は通常実行を停止する。
-- merge は人間が判断する。
-- rollback は人間が判断する。
-
-### main 直 push の例外許容
-
-以下を**すべて**満たす場合に限り、main 直 push（main/master への直接 commit / push）を許容する。
-
-- `allowed_changes` が `docs` または `tests` のみに閉じている。
-- `orchestration/run_session.py` を変更しない。
-- 既存機能の動作変更を含まない。
-- 4コマンド（test / lint / typecheck / build）をセッション定義で求めている場合はその結果が完了していること、または docs-only 等セッション性質に応じた必要検証が完了していること。
-- 人間が commit / push を明示的に指示している。
-
-### main 直 push を許容できる代表例
-
-- docs-only セッション。
-- report 保存のみのセッション、または completion report 保存のみのセッション。
-- 既存 runtime を変更しない契約テスト追加のみのセッション（`tests` のみの変更で済む場合）。
-- 人間承認済みの軽微な文言修正（上記例外許容条件をすべて満たすものに限る）。
-
-### sandbox 必須ケース
-
-以下のいずれかに該当する場合は main 直 push を禁止し、`sandbox/session-XX` ブランチを必須とする。
-
-- runtime 本体変更。
-- provider 変更。
-- 実行フロー変更。
-- retry / classification / report generation への影響。
-- rollback リスクがある変更。
-- 複数ファイルにまたがるコード変更で既存動作に影響し得るもの。
-
-### 記録義務
-
-main 直 push を行った場合は、その理由（例外許容の根拠・セッション性質）を session report または completion report に記録する。
+- AIは main/master に直接書かない
+- 通常実行は `sandbox/session-XX` を前提とする
+- dirty state のまま通常実行しない
+- 未コミット変更がある場合は通常実行を停止する
+- merge は人間が判断する
+- rollback は人間が判断する
 
 ### git_guard の最低判定
 
