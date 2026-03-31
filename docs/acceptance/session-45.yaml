@@ -1,0 +1,31 @@
+session_id: session-45
+acceptance:
+  - id: AC-45-01
+    description: session-45.json が retry / failure classification 系の docs-only 設計セッションとして定義され、goal が単一目的に限定されている
+    test_name: test_session_45_goal_is_single_purpose
+    test_action: create
+
+  - id: AC-45-02
+    description: session-45.json の scope が retry / failure classification 系の設計に限定され、generation layer trial の再実行や runtime integration を含まない
+    test_name: test_session_45_scope_differs_from_phase10_trial
+    test_action: create
+
+  - id: AC-45-03
+    description: session-45.json の out_of_scope に runtime integration、provider変更、backend変更、frontend変更、session-46 の reviewer 検証、session-47 の runtime 条件定義が明記されている
+    test_name: test_session_45_out_of_scope_blocks_runtime_and_future_sessions
+    test_action: create
+
+  - id: AC-45-04
+    description: session-45.json の constraints に docs-only、既存 Phase10 / Phase11 成果物非改変、推測禁止が含まれている
+    test_name: test_session_45_constraints_are_docs_only_and_non_destructive
+    test_action: create
+
+  - id: AC-45-05
+    description: session-45.yaml の acceptance が正常系、異常系、既存成果物非破壊、副作用なしを含み、各項目が test_name と 1対1対応する
+    test_name: test_acceptance_45_has_complete_one_to_one_mapping
+    test_action: create
+
+  - id: AC-45-06
+    description: allowed_changes が docs/sessions/session-45.json と docs/acceptance/session-45.yaml の2ファイルのみに限定されている
+    test_name: test_session_45_allowed_changes_are_limited
+    test_action: create

@@ -1,0 +1,208 @@
+{
+"session_id": "session-45",
+"objective": "Phase11 genericity_validation の一環として、Spec Builder が『Phase10 generation layer trial とは異なる条件』でも、retry / failure classification 系の docs-only 設計セッションを正しく構成できるかを検証する",
+"inputs": [
+{
+"name": "phase11_genericity_validation_plan",
+"type": "object",
+"schema": {
+"path": "str",
+"required_fields": "list[str]"
+},
+"value": {
+"path": "docs/phase11_genericity_validation_plan.json",
+"required_fields": [
+"prerequisites",
+"insights_from_phase10",
+"validation_scope",
+"input_contracts",
+"acceptance_criteria",
+"session_plan",
+"risks",
+"out_of_scope"
+]
+}
+},
+{
+"name": "phase10_reports",
+"type": "list[object]",
+"value": [
+{
+"path": "docs/reports/phase10_completion_report.json",
+"type": "str"
+},
+{
+"path": "docs/reports/phase10_progress_dashboard.json",
+"type": "str"
+},
+{
+"path": "docs/reports/phase10_design_context.json",
+"type": "str"
+}
+]
+},
+{
+"name": "target_theme",
+"type": "enum[retry_failure_classification_docs_only]",
+"value": "retry_failure_classification_docs_only"
+},
+{
+"name": "execution_mode",
+"type": "enum[docs_only]",
+"value": "docs_only"
+}
+],
+"outputs": [
+{
+"name": "session_definition",
+"type": "object",
+"schema": {
+"path": "str",
+"required_fields": "list[str]"
+},
+"value": {
+"path": "docs/sessions/session-45.json",
+"required_fields": [
+"session_id",
+"phase_id",
+"title",
+"goal",
+"scope",
+"out_of_scope",
+"constraints",
+"acceptance_ref"
+]
+}
+},
+{
+"name": "acceptance_definition",
+"type": "object",
+"schema": {
+"path": "str",
+"required_fields": "list[str]"
+},
+"value": {
+"path": "docs/acceptance/session-45.yaml",
+"required_fields": [
+"session_id",
+"acceptance"
+]
+}
+}
+],
+"allowed_changes": [
+"docs/sessions/session-45.json",
+"docs/acceptance/session-45.yaml"
+],
+"allowed_changes_detail": [
+{
+"path": "docs/sessions/session-45.json",
+"type": "object",
+"schema": {
+"allowed_fields": "list[str]"
+},
+"value": {
+"allowed_fields": [
+"session_id",
+"phase_id",
+"title",
+"goal",
+"scope",
+"out_of_scope",
+"constraints",
+"acceptance_ref"
+]
+}
+},
+{
+"path": "docs/acceptance/session-45.yaml",
+"type": "object",
+"schema": {
+"allowed_fields": "list[str]"
+},
+"value": {
+"allowed_fields": [
+"session_id",
+"acceptance"
+]
+}
+}
+],
+"forbidden_changes": [
+"docs/phase11_genericity_validation_plan.json",
+"docs/reports/phase10_completion_report.json",
+"docs/reports/phase10_progress_dashboard.json",
+"docs/reports/phase10_design_context.json",
+"docs/sessions/session-44.json",
+"docs/acceptance/session-44.yaml",
+"docs/sessions/session-46.json",
+"docs/acceptance/session-46.yaml",
+"docs/sessions/session-47.json",
+"docs/acceptance/session-47.yaml",
+"docs/master_instruction.md",
+"docs/global_rules.md",
+"docs/roadmap.yaml",
+"orchestration/",
+"backend/",
+"frontend/",
+"runtime integration",
+"provider implementation",
+"provider変更",
+"backend変更",
+"frontend変更",
+"test command changes",
+"session-46 の reviewer 判定内容",
+"session-47 の runtime 統合入口条件"
+],
+"completion_criteria": [
+"docs/sessions/session-45.json が作成され、retry / failure classification 系の docs-only 設計セッションとして 1セッション1目的を満たす",
+"docs/sessions/session-45.json の scope が retry / failure classification 系の session 定義作成に限定され、runtime integration・provider変更・backend/frontend変更を out_of_scope に含む",
+"docs/acceptance/session-45.yaml が作成され、acceptance 項目が test_name と 1対1対応する",
+"session-45 が docs-only と明記され、コード実装・runtime統合・session-46 の reviewer 検証内容・session-47 の runtime 条件定義を含まない",
+"Phase10 generation layer trial とは異なる条件として、retry / failure classification 系テーマで Builder 出力の整合性を検証できる構成になっている"
+],
+"acceptance_criteria": [
+{
+"id": "AC-45-01",
+"description": "session-45.json が retry / failure classification 系の docs-only 設計セッションとして定義され、goal が単一目的に限定されている",
+"test_name": "test_session_45_goal_is_single_purpose",
+"test_action": "create"
+},
+{
+"id": "AC-45-02",
+"description": "session-45.json の scope が retry / failure classification 系の設計に限定され、generation layer trial の再実行や runtime integration を含まない",
+"test_name": "test_session_45_scope_differs_from_phase10_trial",
+"test_action": "create"
+},
+{
+"id": "AC-45-03",
+"description": "session-45.json の out_of_scope に runtime integration、provider変更、backend変更、frontend変更、session-46 の reviewer 検証、session-47 の runtime 条件定義が明記されている",
+"test_name": "test_session_45_out_of_scope_blocks_runtime_and_future_sessions",
+"test_action": "create"
+},
+{
+"id": "AC-45-04",
+"description": "session-45.json の constraints に docs-only、既存 Phase10 / Phase11 成果物非改変、推測禁止が含まれている",
+"test_name": "test_session_45_constraints_are_docs_only_and_non_destructive",
+"test_action": "create"
+},
+{
+"id": "AC-45-05",
+"description": "session-45.yaml の acceptance が正常系、異常系、既存成果物非破壊、副作用なしを含み、各項目が test_name と 1対1対応する",
+"test_name": "test_acceptance_45_has_complete_one_to_one_mapping",
+"test_action": "create"
+},
+{
+"id": "AC-45-06",
+"description": "allowed_changes が docs/sessions/session-45.json と docs/acceptance/session-45.yaml の2ファイルのみに限定されている",
+"test_name": "test_session_45_allowed_changes_are_limited",
+"test_action": "create"
+}
+],
+"review_points": [
+"仕様一致（AC達成）",
+"変更範囲遵守",
+"副作用なし（既存破壊なし）",
+"実装過不足なし"
+]
+}
