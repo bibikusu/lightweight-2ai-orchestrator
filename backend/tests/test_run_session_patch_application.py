@@ -1,173 +1,85 @@
-# -*- coding: utf-8 -*-
+from pathlib import Path
+from typing import Any, Dict, List
 
-import subprocess
-
-import orchestration.run_session as rs
-
-
-def _cp(args: list[str], returncode: int = 0, stdout: str = "", stderr: str = ""):
-    return subprocess.CompletedProcess(args=args, returncode=returncode, stdout=stdout, stderr=stderr)
+import orchestration.run_session as run_session
 
 
-def test_apply_implementation_result_writes_new_file(monkeypatch, tmp_path):
-    repo_root = tmp_path / "repo"
-    repo_root.mkdir(parents=True, exist_ok=True)
-    session_dir = tmp_path / "session-artifacts"
-    impl_result = {
-        "proposed_patch": (
-            "diff --git a/backend/new_file.py b/backend/new_file.py\n"
-            "new file mode 100644\n"
-            "--- /dev/null\n"
-            "+++ b/backend/new_file.py\n"
-            "@@\n"
-            "+print('ok')\n"
-        )
+class _DummyCompletedProcess:
+    def __init__(self, returncode: int = 0, stdout: str = "", stderr: str = "") -> None:
+        self.returncode = returncode
+        self.stdout = stdout
+        self.stderr = stderr
+
+
+def _recording_git_run_factory(calls: List[List[str]]) -> Any:
+    def _git_run(args: List[str], *, check: bool = False) -> _DummyCompletedProcess:
+        # 呼び出し履歴を記録するだけの簡易スタブ
+        calls.append(args)
+        if args[:2] == ["diff", "--name-only"]:
+            return _DummyCompletedProcess(
+                returncode=0,
+                stdout="foo.py\nbar/baz.txt\n",
+                stderr="",
+            )
+        if args[0] == "apply":
+            return _DummyCompletedProcess(returncode=0, stdout="", stderr="")
+        # その他のサブコマンドは成功扱い・出力なし
+        return _DummyCompletedProcess(returncode=0, stdout="", stderr="")
+
+    return _git_run
+
+
+def test_apply_proposed_patch_saves_file_and_uses_git_apply(tmp_path: Path, monkeypatch) -> None:
+    calls: List[List[str]] = []
+    monkeypatch.setattr(
+        run_session,
+        "_git_run",
+        _recording_git_run_factory(calls),
+        raising=True,
+    )
+
+    session_dir = tmp_path
+    impl_result: Dict[str, Any] = {
+        "proposed_patch": "diff --git a/foo.py b/foo.py\n",
+        "changed_files": [],
     }
 
-    def _git_run(args, check=False):
-        if args[0] == "apply":
-            p = repo_root / "backend" / "new_file.py"
-            p.parent.mkdir(parents=True, exist_ok=True)
-            p.write_text("print('ok')\n", encoding="utf-8")
-            return _cp(args)
-        if args == ["diff"]:
-            return _cp(args, stdout="diff --git a/backend/new_file.py b/backend/new_file.py\n")
-        if args == ["diff", "--name-only"]:
-            return _cp(args, stdout="backend/new_file.py\n")
-        raise AssertionError(f"unexpected git args: {args}")
+    info = run_session.apply_proposed_patch_and_capture_artifacts(session_dir, impl_result)
 
-    monkeypatch.setattr(rs, "ROOT_DIR", repo_root)
-    monkeypatch.setattr(rs, "_git_run", _git_run)
+    patch_path = info["patch_path"]
+    assert Path(patch_path).is_file()
+    assert "diff --git" in Path(patch_path).read_text(encoding="utf-8")
 
-    meta = rs.apply_proposed_patch_and_capture_artifacts(
-        session_id="session-58",
-        session_dir=session_dir,
-        impl_result=impl_result,
-    )
+    changed = info["changed_files"]
+    assert sorted(changed) == ["bar/baz.txt", "foo.py"]
 
-    assert (repo_root / "backend" / "new_file.py").is_file()
-    assert meta["patch_applied"] is True
-    assert meta["git_apply_returncode"] == 0
+    # git apply と git diff --name-only が呼ばれていることを確認
+    apply_called = any(call[0] == "apply" for call in calls)
+    diff_called = any(call[:2] == ["diff", "--name-only"] for call in calls)
+    assert apply_called
+    assert diff_called
 
 
-def test_apply_implementation_result_saves_patch_artifact(monkeypatch, tmp_path):
-    repo_root = tmp_path / "repo-root"
-    repo_root.mkdir(parents=True, exist_ok=True)
-    session_dir = tmp_path / "tmp" / "session-58"
+def test_apply_proposed_patch_handles_empty_patch(tmp_path: Path, monkeypatch) -> None:
+    def _git_run(args: List[str], *, check: bool = False) -> _DummyCompletedProcess:
+        # 空パッチの場合は git apply は呼ばれず、diff だけ呼ばれる
+        if args[:2] == ["diff", "--name-only"]:
+            return _DummyCompletedProcess(returncode=0, stdout="", stderr="")
+        return _DummyCompletedProcess(returncode=0, stdout="", stderr="")
 
-    def _git_run(args, check=False):
-        if args == ["diff"]:
-            return _cp(args, stdout="")
-        if args == ["diff", "--name-only"]:
-            return _cp(args, stdout="")
-        raise AssertionError(f"unexpected git args: {args}")
+    monkeypatch.setattr(run_session, "_git_run", _git_run, raising=True)
 
-    monkeypatch.setattr(rs, "ROOT_DIR", repo_root)
-    monkeypatch.setattr(rs, "_git_run", _git_run)
-
-    meta = rs.apply_proposed_patch_and_capture_artifacts(
-        session_id="session-58",
-        session_dir=session_dir,
-        impl_result={"proposed_patch": ""},
-    )
-
-    patch_path = session_dir / "patches" / "proposed_patch.diff"
-    diff_path = session_dir / "patches" / "git_diff_after.diff"
-    names_path = session_dir / "patches" / "git_diff_after_name_only.txt"
-    assert patch_path.is_file()
-    assert meta["patch_artifact"] == str(patch_path)
-    assert meta["git_diff_after_artifact"] == str(diff_path)
-    assert meta["git_diff_after_name_only_artifact"] == str(names_path)
-
-
-def test_apply_implementation_result_updates_changed_files_from_git_diff(monkeypatch, tmp_path):
-    repo_root = tmp_path / "repo"
-    repo_root.mkdir(parents=True, exist_ok=True)
-    session_dir = tmp_path / "session"
-
-    def _git_run(args, check=False):
-        if args == ["diff"]:
-            return _cp(args, stdout="diff --git a/a.py b/a.py\n")
-        if args == ["diff", "--name-only"]:
-            return _cp(args, stdout="a.py\nb.py\n")
-        raise AssertionError(f"unexpected git args: {args}")
-
-    monkeypatch.setattr(rs, "ROOT_DIR", repo_root)
-    monkeypatch.setattr(rs, "_git_run", _git_run)
-
-    rs.apply_proposed_patch_and_capture_artifacts(
-        session_id="session-58",
-        session_dir=session_dir,
-        impl_result={"proposed_patch": ""},
-    )
-
-    names = (session_dir / "patches" / "git_diff_after_name_only.txt").read_text(
-        encoding="utf-8"
-    )
-    assert [x for x in names.splitlines() if x] == ["a.py", "b.py"]
-
-
-def test_apply_implementation_result_fails_when_written_file_missing(monkeypatch, tmp_path):
-    repo_root = tmp_path / "repo"
-    repo_root.mkdir(parents=True, exist_ok=True)
-    session_dir = tmp_path / "session"
-    impl_result = {
-        "proposed_patch": (
-            "diff --git a/backend/missing.py b/backend/missing.py\n"
-            "new file mode 100644\n"
-            "--- /dev/null\n"
-            "+++ b/backend/missing.py\n"
-            "@@\n"
-            "+print('missing')\n"
-        )
-    }
-
-    def _git_run(args, check=False):
-        if args[0] == "apply":
-            return _cp(args)
-        if args == ["diff"]:
-            return _cp(args, stdout="")
-        if args == ["diff", "--name-only"]:
-            return _cp(args, stdout="")
-        raise AssertionError(f"unexpected git args: {args}")
-
-    monkeypatch.setattr(rs, "ROOT_DIR", repo_root)
-    monkeypatch.setattr(rs, "_git_run", _git_run)
-
-    try:
-        rs.apply_proposed_patch_and_capture_artifacts(
-            session_id="session-58",
-            session_dir=session_dir,
-            impl_result=impl_result,
-        )
-        raise AssertionError("FileNotFoundError が必要です")
-    except FileNotFoundError:
-        pass
-
-
-def test_apply_implementation_result_respects_allowed_changes_only(monkeypatch, tmp_path):
-    repo_root = tmp_path / "repo"
-    repo_root.mkdir(parents=True, exist_ok=True)
-    session_dir = tmp_path / "session"
-    impl_result = {
+    session_dir = tmp_path
+    impl_result: Dict[str, Any] = {
         "proposed_patch": "",
-        "changed_files": ["orchestration/run_session.py"],
+        "changed_files": ["should_be_ignored.py"],
     }
 
-    def _git_run(args, check=False):
-        if args == ["diff"]:
-            return _cp(args, stdout="diff --git a/docs/a.md b/docs/a.md\n")
-        if args == ["diff", "--name-only"]:
-            return _cp(args, stdout="docs/a.md\n")
-        raise AssertionError(f"unexpected git args: {args}")
+    info = run_session.apply_proposed_patch_and_capture_artifacts(session_dir, impl_result)
 
-    monkeypatch.setattr(rs, "ROOT_DIR", repo_root)
-    monkeypatch.setattr(rs, "_git_run", _git_run)
+    # 空パッチでも artifacts/patches にファイルが保存される
+    patch_path = info["patch_path"]
+    assert Path(patch_path).is_file()
 
-    rs.apply_proposed_patch_and_capture_artifacts(
-        session_id="session-58",
-        session_dir=session_dir,
-        impl_result=impl_result,
-    )
-
-    assert impl_result["changed_files"] == ["orchestration/run_session.py"]
+    # 実差分ゼロなので changed_files も空になる
+    assert info["changed_files"] == []

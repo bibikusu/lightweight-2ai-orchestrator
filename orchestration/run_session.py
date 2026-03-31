@@ -620,6 +620,59 @@ def validate_changed_files_before_patch(
                     )
 
 
+def apply_proposed_patch_and_capture_artifacts(
+    session_dir: Path,
+    impl_result: Dict[str, Any],
+) -> Dict[str, Any]:
+    """
+    Claude からの proposed_patch を artifacts/patches に保存し、
+    git apply で適用したうえで git diff --name-only による実差分を取得する。
+    """
+    patch_dir = session_dir / "patches"
+    patch_dir.mkdir(parents=True, exist_ok=True)
+
+    raw_patch = impl_result.get("proposed_patch", "")
+    if not isinstance(raw_patch, str):
+        raw_patch = str(raw_patch)
+    patch_text = raw_patch
+
+    patch_path = patch_dir / "proposed.patch"
+    save_text(patch_path, patch_text)
+
+    # 空パッチの場合は適用せず、現在の実差分のみを返す
+    if not patch_text.strip():
+        diff_proc = _git_run(["diff", "--name-only"])
+        changed = [
+            normalize_changed_file_path(line)
+            for line in (diff_proc.stdout or "").splitlines()
+            if line.strip()
+        ]
+        return {
+            "patch_path": patch_path,
+            "applied": False,
+            "changed_files": changed,
+        }
+
+    apply_proc = _git_run(["apply", str(patch_path)])
+    if apply_proc.returncode != 0:
+        raise RuntimeError(f"git apply に失敗しました: {apply_proc.stderr.strip()}")
+
+    diff_proc = _git_run(["diff", "--name-only"])
+    if diff_proc.returncode != 0:
+        raise RuntimeError(f"git diff --name-only に失敗しました: {diff_proc.stderr.strip()}")
+
+    changed_files = [
+        normalize_changed_file_path(line)
+        for line in (diff_proc.stdout or "").splitlines()
+        if line.strip()
+    ]
+
+    return {
+        "patch_path": patch_path,
+        "applied": True,
+        "changed_files": changed_files,
+    }
+
 def build_dry_run_prepared_spec(ctx: SessionContext) -> Dict[str, Any]:
     """dry-run 用のダミー prepared_spec（API 非呼び出し）。"""
     return {
@@ -1821,6 +1874,8 @@ def main() -> int:
     stage = "init"
     ctx: Optional[SessionContext] = None
 
+    no_effective_change = False
+
     try:
         stage = "loading"
         ctx = load_session_context(args.session_id)
@@ -1929,6 +1984,18 @@ def main() -> int:
             ctx.session_data,
             max_changed_files,
         )
+
+        stage = "patch_apply"
+        log_stage_progress(args.session_id, stage, "proposed_patch 適用と実差分取得")
+        patch_info = apply_proposed_patch_and_capture_artifacts(session_dir, impl_result)
+        real_changed_files = patch_info.get("changed_files", [])
+        if not isinstance(real_changed_files, list):
+            real_changed_files = []
+        impl_result["changed_files"] = real_changed_files
+
+        # 実差分ゼロかつ proposed_patch も空なら「実質的な変更なし」とみなす
+        if not real_changed_files and not str(impl_result.get("proposed_patch") or "").strip():
+            no_effective_change = True
 
         stage = "checks"
         log_stage_progress(args.session_id, stage, "ローカル test/lint/typecheck/build")
@@ -2074,13 +2141,16 @@ def main() -> int:
                 _write_retry_state_count(session_dir, retry_count)
                 break
 
+        overall_success = bool(check_results.get("success")) and not no_effective_change
+        check_results["success"] = overall_success
+
         persist_session_reports(
             session_dir,
             ctx,
             prepared_spec,
             impl_result,
             check_results,
-            status="success" if check_results.get("success") else "failed",
+            status="success" if overall_success else "failed",
             dry_run=False,
             started_at=started_at,
             finished_at=_iso_utc_now(),
@@ -2097,7 +2167,7 @@ def main() -> int:
         print(f"[OK] session processed: {args.session_id}")
         print(f"[INFO] artifacts saved under: {session_dir}")
 
-        return 0 if check_results.get("success") else 1
+        return 0 if overall_success else 1
 
     except Exception as e:
         br = _git_branch_safe()
