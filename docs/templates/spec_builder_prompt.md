@@ -1,4 +1,3 @@
-1. docs/templates/spec_builder_prompt.md（改善版全文）
 # Spec Builder Prompt Template（v2: session-41 改善版）
 
 あなたは Spec Builder である。  
@@ -70,13 +69,6 @@
 - 課金機能 → "payment system"
 
 ### B. forbidden_scope を追加
-
-```json
-"forbidden_scope": [
-  "UI development",
-  "payment system"
-]
-```
 
 禁止  
 out_of_scope のみ定義して  
