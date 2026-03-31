@@ -1,0 +1,31 @@
+session_id: session-47
+acceptance:
+  - id: AC-47-01
+    description: session-47.json が runtime 統合入口条件定義セッションとして定義され、goal が session-45/46 結果に基づく条件定義に単一化されている
+    test_name: test_session_47_goal_is_single_runtime_entry_definition_purpose
+    test_action: create
+
+  - id: AC-47-02
+    description: session-47.json の scope が runtime 統合入口条件、判定基準、Phase12 readiness decision の定義に限定され、runtime 実装を含まない
+    test_name: test_session_47_scope_is_limited_to_entry_conditions_definition
+    test_action: create
+
+  - id: AC-47-03
+    description: session-47.json の out_of_scope に run_session.py 変更、provider変更、backend変更、frontend変更、session-45/46 成果物改変、Phase12 実装着手が明記されている
+    test_name: test_session_47_out_of_scope_blocks_runtime_implementation
+    test_action: create
+
+  - id: AC-47-04
+    description: session-47.json の constraints に docs-only、session-45/46 成果物参照のみ、ready / not_ready / needs_more_validation の enum 使用、推測禁止が含まれている
+    test_name: test_session_47_constraints_are_docs_only_and_enum_fixed
+    test_action: create
+
+  - id: AC-47-05
+    description: session-47.yaml の acceptance が正常系、異常系、既存成果物非破壊、副作用なしを含み、各項目が test_name と 1対1対応する
+    test_name: test_acceptance_47_has_complete_one_to_one_mapping
+    test_action: create
+
+  - id: AC-47-06
+    description: allowed_changes が docs/sessions/session-47.json と docs/acceptance/session-47.yaml の2ファイルのみに限定されている
+    test_name: test_session_47_allowed_changes_are_limited
+    test_action: create

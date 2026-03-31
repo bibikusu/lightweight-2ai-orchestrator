@@ -1,0 +1,260 @@
+{
+  "session_id": "session-47",
+  "objective": "Phase11 genericity_validation の最終セッションとして、session-45（Builder）および session-46（Reviewer）の汎用性検証結果を踏まえ、runtime 統合（run_session.py への組み込み）に進めるための入口条件を docs-only で定義する",
+  "inputs": [
+    {
+      "name": "phase11_genericity_validation_plan",
+      "type": "object",
+      "schema": {
+        "path": "str",
+        "required_fields": "list[str]"
+      },
+      "value": {
+        "path": "docs/phase11_genericity_validation_plan.json",
+        "required_fields": [
+          "prerequisites",
+          "insights_from_phase10",
+          "validation_scope",
+          "input_contracts",
+          "acceptance_criteria",
+          "session_plan",
+          "risks",
+          "out_of_scope"
+        ]
+      }
+    },
+    {
+      "name": "builder_validation_result",
+      "type": "object",
+      "schema": {
+        "path": "str",
+        "required_fields": "list[str]"
+      },
+      "value": {
+        "path": "docs/sessions/session-45.json",
+        "required_fields": [
+          "session_id",
+          "objective",
+          "inputs",
+          "outputs",
+          "allowed_changes",
+          "allowed_changes_detail",
+          "forbidden_changes",
+          "completion_criteria",
+          "acceptance_criteria",
+          "review_points"
+        ]
+      }
+    },
+    {
+      "name": "reviewer_validation_result",
+      "type": "object",
+      "schema": {
+        "path": "str",
+        "required_fields": "list[str]"
+      },
+      "value": {
+        "path": "docs/sessions/session-46.json",
+        "required_fields": [
+          "session_id",
+          "objective",
+          "inputs",
+          "outputs",
+          "allowed_changes",
+          "allowed_changes_detail",
+          "forbidden_changes",
+          "completion_criteria",
+          "acceptance_criteria",
+          "review_points"
+        ]
+      }
+    },
+    {
+      "name": "builder_acceptance_definition",
+      "type": "object",
+      "schema": {
+        "path": "str",
+        "required_fields": "list[str]"
+      },
+      "value": {
+        "path": "docs/acceptance/session-45.yaml",
+        "required_fields": [
+          "session_id",
+          "acceptance"
+        ]
+      }
+    },
+    {
+      "name": "reviewer_acceptance_definition",
+      "type": "object",
+      "schema": {
+        "path": "str",
+        "required_fields": "list[str]"
+      },
+      "value": {
+        "path": "docs/acceptance/session-46.yaml",
+        "required_fields": [
+          "session_id",
+          "acceptance"
+        ]
+      }
+    },
+    {
+      "name": "execution_mode",
+      "type": "enum[docs_only]",
+      "value": "docs_only"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "session_definition",
+      "type": "object",
+      "schema": {
+        "path": "str",
+        "required_fields": "list[str]"
+      },
+      "value": {
+        "path": "docs/sessions/session-47.json",
+        "required_fields": [
+          "session_id",
+          "phase_id",
+          "title",
+          "goal",
+          "scope",
+          "out_of_scope",
+          "constraints",
+          "acceptance_ref"
+        ]
+      }
+    },
+    {
+      "name": "acceptance_definition",
+      "type": "object",
+      "schema": {
+        "path": "str",
+        "required_fields": "list[str]"
+      },
+      "value": {
+        "path": "docs/acceptance/session-47.yaml",
+        "required_fields": [
+          "session_id",
+          "acceptance"
+        ]
+      }
+    }
+  ],
+  "allowed_changes": [
+    "docs/sessions/session-47.json",
+    "docs/acceptance/session-47.yaml"
+  ],
+  "allowed_changes_detail": [
+    {
+      "path": "docs/sessions/session-47.json",
+      "type": "object",
+      "schema": {
+        "allowed_fields": "list[str]"
+      },
+      "value": {
+        "allowed_fields": [
+          "session_id",
+          "phase_id",
+          "title",
+          "goal",
+          "scope",
+          "out_of_scope",
+          "constraints",
+          "acceptance_ref"
+        ]
+      }
+    },
+    {
+      "path": "docs/acceptance/session-47.yaml",
+      "type": "object",
+      "schema": {
+        "allowed_fields": "list[str]"
+      },
+      "value": {
+        "allowed_fields": [
+          "session_id",
+          "acceptance"
+        ]
+      }
+    }
+  ],
+  "forbidden_changes": [
+    "docs/phase11_genericity_validation_plan.json",
+    "docs/reports/phase10_completion_report.json",
+    "docs/reports/phase10_progress_dashboard.json",
+    "docs/reports/phase10_design_context.json",
+    "docs/sessions/session-44.json",
+    "docs/sessions/session-45.json",
+    "docs/acceptance/session-45.yaml",
+    "docs/sessions/session-46.json",
+    "docs/acceptance/session-46.yaml",
+    "docs/master_instruction.md",
+    "docs/global_rules.md",
+    "docs/roadmap.yaml",
+    "orchestration/",
+    "backend/",
+    "frontend/",
+    "run_session.py",
+    "runtime integration implementation",
+    "provider implementation",
+    "provider変更",
+    "backend変更",
+    "frontend変更",
+    "session-45/46 成果物改変",
+    "Phase12 実装着手"
+  ],
+  "completion_criteria": [
+    "docs/sessions/session-47.json が作成され、session-45 と session-46 の汎用性検証結果を踏まえた runtime 統合入口条件定義セッションとして 1セッション1目的を満たす",
+    "docs/sessions/session-47.json の scope が runtime 統合へ進むための条件定義、判定基準、Phase12 readiness decision の定義に限定される",
+    "docs/acceptance/session-47.yaml が作成され、acceptance 項目が test_name と 1対1対応する",
+    "session-47 が docs-only と明記され、runtime 統合の実装を含まず、session-45/46 成果物を参照のみし改変しない",
+    "session-47 が Phase12 readiness decision として ready / not_ready / needs_more_validation の enum を扱い、曖昧語なしで条件を固定する"
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-47-01",
+      "description": "session-47.json が runtime 統合入口条件定義セッションとして定義され、goal が session-45/46 結果に基づく条件定義に単一化されている",
+      "test_name": "test_session_47_goal_is_single_runtime_entry_definition_purpose",
+      "test_action": "create"
+    },
+    {
+      "id": "AC-47-02",
+      "description": "session-47.json の scope が runtime 統合入口条件、判定基準、Phase12 readiness decision の定義に限定され、runtime 実装を含まない",
+      "test_name": "test_session_47_scope_is_limited_to_entry_conditions_definition",
+      "test_action": "create"
+    },
+    {
+      "id": "AC-47-03",
+      "description": "session-47.json の out_of_scope に run_session.py 変更、provider変更、backend変更、frontend変更、session-45/46 成果物改変、Phase12 実装着手が明記されている",
+      "test_name": "test_session_47_out_of_scope_blocks_runtime_implementation",
+      "test_action": "create"
+    },
+    {
+      "id": "AC-47-04",
+      "description": "session-47.json の constraints に docs-only、session-45/46 成果物参照のみ、ready / not_ready / needs_more_validation の enum 使用、推測禁止が含まれている",
+      "test_name": "test_session_47_constraints_are_docs_only_and_enum_fixed",
+      "test_action": "create"
+    },
+    {
+      "id": "AC-47-05",
+      "description": "session-47.yaml の acceptance が正常系、異常系、既存成果物非破壊、副作用なしを含み、各項目が test_name と 1対1対応する",
+      "test_name": "test_acceptance_47_has_complete_one_to_one_mapping",
+      "test_action": "create"
+    },
+    {
+      "id": "AC-47-06",
+      "description": "allowed_changes が docs/sessions/session-47.json と docs/acceptance/session-47.yaml の2ファイルのみに限定されている",
+      "test_name": "test_session_47_allowed_changes_are_limited",
+      "test_action": "create"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "実装過不足なし"
+  ]
+}
