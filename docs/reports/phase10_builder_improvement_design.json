@@ -1,0 +1,66 @@
+{
+  "phase": "Phase10",
+  "session": "session-41",
+  "status": "completed",
+  "objective": "strengthen builder prompt to pass reviewer validation by enforcing path convention, forbidden mapping, and acceptance self-validation",
+  "confirmed_facts": [
+    "session-40 reviewer identified five issues",
+    "all issues were caused by builder output misalignment, not structural failure",
+    "three root causes were identified: path convention, forbidden mapping, acceptance validation"
+  ],
+  "root_causes": [
+    {
+      "id": "RC-41-01",
+      "description": "builder prompt did not enforce repository path consistency"
+    },
+    {
+      "id": "RC-41-02",
+      "description": "builder prompt did not require out_of_scope to be mapped into forbidden_changes"
+    },
+    {
+      "id": "RC-41-03",
+      "description": "builder output contract did not require acceptance self-validation AC"
+    }
+  ],
+  "applied_fixes": [
+    {
+      "id": "FIX-41-01",
+      "description": "enforced docs/sessions and docs/acceptance path convention strictly"
+    },
+    {
+      "id": "FIX-41-02",
+      "description": "added mandatory mapping from out_of_scope to forbidden_changes or forbidden_scope"
+    },
+    {
+      "id": "FIX-41-03",
+      "description": "added mandatory acceptance self-validation AC requirements"
+    }
+  ],
+  "scope": {
+    "included": [
+      "builder prompt modification",
+      "design-level improvement documentation"
+    ],
+    "excluded": [
+      "runtime integration",
+      "reviewer modification",
+      "test modification"
+    ]
+  },
+  "risks": [
+    "new edge cases may appear in different projects",
+    "prompt strictness may require further tuning"
+  ],
+  "open_issues": [],
+  "next_actions": [
+    "re-run builder with identical input",
+    "submit output to reviewer",
+    "compare issue reduction with session-40",
+    "record results in session-42 trial report"
+  ],
+  "final_judgement": {
+    "result": "completed",
+    "reason": "builder weaknesses identified in session-40 have been explicitly addressed in the prompt",
+    "next_phase": "session-42"
+  }
+}
