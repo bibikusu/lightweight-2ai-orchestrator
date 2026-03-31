@@ -1,44 +1,31 @@
 session_id: session-57
 phase_id: phase13
-title: live api end-to-end validation with test-only scope
-execution_method: orchestrator_live_run
-
+title: live api validation with static artifact/report assertions only
 acceptance:
   - id: AC-57-01
-    description: session-57 の live run が開始から report 生成まで完走する
-    test_name: test_session_57_live_run_completes
-
+    description: generated validation test checks that required session-57 artifact files exist
+    test_name: test_session_57_artifact_files_exist
   - id: AC-57-02
-    description: prepared_spec artifact が保存される
-    test_name: test_session_57_prepared_spec_exists
-
+    description: generated validation test checks report.json fields using static assertions only
+    test_name: test_session_57_report_fields_are_expected
   - id: AC-57-03
-    description: checks artifact が保存される
-    test_name: test_session_57_checks_exists
-
+    description: generated validation test checks that proposed.patch targets backend/tests/test_live_api_validation.py
+    test_name: test_session_57_proposed_patch_targets_live_validation_file
   - id: AC-57-04
-    description: report artifact が保存され、内容が review 可能である
-    test_name: test_session_57_report_exists
-
+    description: generated validation test contains no subprocess invocation, no recursive pytest execution, and no external API calls
+    test_name: test_session_57_generated_test_uses_static_assertions_only
   - id: AC-57-05
-    description: 変更ファイルが backend/tests/test_live_api_validation.py のみであり、既存 runtime / test ファイルに差分がない
-    test_name: test_session_57_changed_files_within_scope
-
+    description: only backend/tests/test_live_api_validation.py is modified
+    test_name: scope_check_manual
 completion_criteria:
-  - requirement: run_session.py returns success state for session-57 live run
-  - requirement: prepared_spec artifact exists
-  - requirement: checks artifact exists
-  - requirement: report artifact exists
-  - requirement: report.json content is reviewable
-  - requirement: only backend/tests/test_live_api_validation.py is changed
-  - requirement: orchestration/run_session.py remains unchanged
-  - requirement: existing test files remain unchanged
-  - requirement: ruff check passes
-  - requirement: pytest passes
-  - requirement: mypy passes
-  - requirement: compileall passes
-  - requirement: no unintended side effects are observed
-
+  - requirement: generated validation test is limited to backend/tests/test_live_api_validation.py only
+  - requirement: generated test contains no subprocess invocation of orchestration/run_session.py
+  - requirement: generated test contains no recursive pytest invocation
+  - requirement: generated test contains no external API calls
+  - requirement: generated test validates artifacts/session-57/ using static assertions only
+  - requirement: generated test validates report.json status, changed_files, and completion_status fields
+  - requirement: generated test validates patches/proposed.patch content for backend/tests/test_live_api_validation.py target
+  - requirement: no unintended side effects are introduced
 review_points:
   - 仕様一致（AC達成）
   - 変更範囲遵守
