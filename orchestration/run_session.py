@@ -551,10 +551,16 @@ def build_skipped_checks_result() -> Dict[str, Any]:
 
 def build_prepared_spec_prompts(ctx: SessionContext) -> Tuple[str, str]:
     system_prompt = """You are a strict spec organizer.
+One session must have exactly one objective.
 Return only valid JSON.
 Do not add markdown fences.
 Do not expand scope.
+Respect allowed_changes / forbidden_changes.
 Respect out_of_scope and constraints.
+completion_criteria / acceptance_criteria / review_points are required.
+Acceptance must be test-mappable.
+Do not guess missing facts.
+Keep the existing top-level key structure exactly.
 """
 
     user_prompt = f"""
@@ -574,6 +580,19 @@ session_id: {ctx.session_id}
 
 [acceptance_yaml]
 {ctx.acceptance_data["raw_yaml"]}
+
+Constraints:
+- allowed_changes must be concrete and actionable.
+- forbidden_changes must not conflict with out_of_scope.
+- completion_criteria must include normal-path, error-path, and no-side-effect checks.
+- acceptance_criteria must remain test-mappable.
+- review_points must include exactly these 4 axes:
+  1) spec match (AC achieved)
+  2) scope adherence
+  3) no side effects (no regression)
+  4) no over/under implementation
+- Do not guess; use only the provided context.
+- Keep existing JSON top-level keys exactly as listed.
 
 Return JSON with keys:
 session_id
@@ -683,6 +702,7 @@ def call_chatgpt_for_prepared_spec(ctx: SessionContext) -> Dict[str, Any]:
             max_output_tokens=openai_cfg.get("max_output_tokens", 4000),
         )
     )
+    # prepared_spec は Builder 契約反映済み prompt を用いて生成する。
     system_prompt, user_prompt = build_prepared_spec_prompts(ctx)
     return client.request_prepared_spec(system_prompt, user_prompt)
 
@@ -1743,7 +1763,7 @@ def main() -> int:
 
         stage = "prepared_spec"
         log_stage_progress(
-            args.session_id, stage, "OpenAI（仕様整形）呼び出し開始"
+            args.session_id, stage, "OpenAI（Builder契約反映の仕様整形）呼び出し開始"
         )
         prepared_spec = call_chatgpt_for_prepared_spec(ctx)
         save_json(session_dir / "responses" / "prepared_spec.json", prepared_spec)
