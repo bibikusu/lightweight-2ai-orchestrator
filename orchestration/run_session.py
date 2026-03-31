@@ -655,10 +655,13 @@ def apply_proposed_patch_and_capture_artifacts(
 
         untracked_proc = _git_run(["ls-files", "--others", "--exclude-standard"])
         if untracked_proc.returncode != 0:
-            raise RuntimeError(
-                "git ls-files --others --exclude-standard に失敗しました: "
-                + untracked_proc.stderr.strip()
-            )
+            untracked_all = []
+        else:
+            untracked_all = [
+                normalize_changed_file_path(line)
+                for line in (untracked_proc.stdout or "").splitlines()
+                if line.strip()
+            ]
         untracked_all = [
             normalize_changed_file_path(line)
             for line in (untracked_proc.stdout or "").splitlines()
