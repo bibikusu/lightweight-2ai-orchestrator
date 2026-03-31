@@ -345,7 +345,7 @@ def _expected_existing_files_from_patch(patch_text: str) -> List[str]:
     return out
 
 
-def apply_proposed_patch_and_capture_artifacts(
+def _apply_proposed_patch_and_capture_artifacts_with_artifacts(
     *,
     session_id: str,
     session_dir: Path,
@@ -623,6 +623,8 @@ def validate_changed_files_before_patch(
 def apply_proposed_patch_and_capture_artifacts(
     session_dir: Path,
     impl_result: Dict[str, Any],
+    *,
+    session_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Claude からの proposed_patch を artifacts/patches に保存し、
@@ -639,14 +641,43 @@ def apply_proposed_patch_and_capture_artifacts(
     patch_path = patch_dir / "proposed.patch"
     save_text(patch_path, patch_text)
 
-    # 空パッチの場合は適用せず、現在の実差分のみを返す
-    if not patch_text.strip():
+    patch_targets = set(_expected_existing_files_from_patch(patch_text))
+
+    def _collect_changed_files() -> List[str]:
         diff_proc = _git_run(["diff", "--name-only"])
-        changed = [
+        if diff_proc.returncode != 0:
+            raise RuntimeError(f"git diff --name-only に失敗しました: {diff_proc.stderr.strip()}")
+        tracked_changed = [
             normalize_changed_file_path(line)
             for line in (diff_proc.stdout or "").splitlines()
             if line.strip()
         ]
+
+        untracked_proc = _git_run(["ls-files", "--others", "--exclude-standard"])
+        if untracked_proc.returncode != 0:
+            raise RuntimeError(
+                "git ls-files --others --exclude-standard に失敗しました: "
+                + untracked_proc.stderr.strip()
+            )
+        untracked_all = [
+            normalize_changed_file_path(line)
+            for line in (untracked_proc.stdout or "").splitlines()
+            if line.strip()
+        ]
+        # proposed_patch の +++ b/... に含まれる対象だけを untracked 収集対象にする
+        untracked_changed = [p for p in untracked_all if p in patch_targets]
+
+        merged: List[str] = []
+        seen: set[str] = set()
+        for path in [*tracked_changed, *untracked_changed]:
+            if path and path not in seen:
+                seen.add(path)
+                merged.append(path)
+        return merged
+
+    # 空パッチの場合は適用せず、現在の実差分のみを返す
+    if not patch_text.strip():
+        changed = _collect_changed_files()
         return {
             "patch_path": patch_path,
             "applied": False,
@@ -657,15 +688,7 @@ def apply_proposed_patch_and_capture_artifacts(
     if apply_proc.returncode != 0:
         raise RuntimeError(f"git apply に失敗しました: {apply_proc.stderr.strip()}")
 
-    diff_proc = _git_run(["diff", "--name-only"])
-    if diff_proc.returncode != 0:
-        raise RuntimeError(f"git diff --name-only に失敗しました: {diff_proc.stderr.strip()}")
-
-    changed_files = [
-        normalize_changed_file_path(line)
-        for line in (diff_proc.stdout or "").splitlines()
-        if line.strip()
-    ]
+    changed_files = _collect_changed_files()
 
     return {
         "patch_path": patch_path,
@@ -1967,13 +1990,17 @@ def main() -> int:
             stage,
             "patch 抽出→実ファイル適用→artifact 保存→実ファイル存在確認→git diff 再取得",
         )
-        patch_meta = apply_proposed_patch_and_capture_artifacts(
-            session_id=args.session_id,
+        patch_info = apply_proposed_patch_and_capture_artifacts(
             session_dir=session_dir,
             impl_result=impl_result,
+            session_id=args.session_id,
         )
-        if isinstance(patch_meta, dict) and isinstance(patch_meta.get("diff_summary"), str):
-            impl_result["diff_summary"] = patch_meta["diff_summary"]
+        real_changed_files = patch_info.get("changed_files", [])
+        if not isinstance(real_changed_files, list):
+            real_changed_files = []
+        impl_result["changed_files"] = real_changed_files
+        if isinstance(real_changed_files, list):
+            impl_result["diff_summary"] = f"changed_files: {len(real_changed_files)} files"
         save_json(session_dir / "responses" / "implementation_result.json", impl_result)
 
         stage = "patch_validation"
@@ -1984,14 +2011,6 @@ def main() -> int:
             ctx.session_data,
             max_changed_files,
         )
-
-        stage = "patch_apply"
-        log_stage_progress(args.session_id, stage, "proposed_patch 適用と実差分取得")
-        patch_info = apply_proposed_patch_and_capture_artifacts(session_dir, impl_result)
-        real_changed_files = patch_info.get("changed_files", [])
-        if not isinstance(real_changed_files, list):
-            real_changed_files = []
-        impl_result["changed_files"] = real_changed_files
 
         # 実差分ゼロかつ proposed_patch も空なら「実質的な変更なし」とみなす
         if not real_changed_files and not str(impl_result.get("proposed_patch") or "").strip():
@@ -2119,13 +2138,16 @@ def main() -> int:
                 stage,
                 "retry: patch 抽出→実ファイル適用→artifact 保存→実ファイル存在確認→git diff 再取得",
             )
-            patch_meta = apply_proposed_patch_and_capture_artifacts(
-                session_id=args.session_id,
+            patch_info = apply_proposed_patch_and_capture_artifacts(
                 session_dir=session_dir,
                 impl_result=impl_result,
+                session_id=args.session_id,
             )
-            if isinstance(patch_meta, dict) and isinstance(patch_meta.get("diff_summary"), str):
-                impl_result["diff_summary"] = patch_meta["diff_summary"]
+            real_changed_files = patch_info.get("changed_files", [])
+            if not isinstance(real_changed_files, list):
+                real_changed_files = []
+            impl_result["changed_files"] = real_changed_files
+            impl_result["diff_summary"] = f"changed_files: {len(real_changed_files)} files"
             save_json(
                 session_dir / "responses" / "implementation_result.json",
                 impl_result,
