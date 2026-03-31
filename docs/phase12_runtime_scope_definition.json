@@ -1,0 +1,123 @@
+{
+  "document_name": "phase12_runtime_scope_definition",
+  "target_file": "orchestration/run_session.py",
+  "analysis_basis": "run_session.py の全関数を分析し、generation layer（Spec Builder / Spec Reviewer）統合の観点で分類した",
+  "change_units": [
+    {
+      "function": "build_prepared_spec_prompts",
+      "change_type": "modify",
+      "reason": "Spec Builder のテンプレート・出力契約を prepared_spec の prompt 生成に組み込むため"
+    },
+    {
+      "function": "call_chatgpt_for_prepared_spec",
+      "change_type": "modify",
+      "reason": "Builder 出力を prepared_spec の入力として受け取るインターフェース変更の可能性"
+    },
+    {
+      "function": "main",
+      "change_type": "modify",
+      "reason": "パイプラインに Builder ステージ（prepared_spec 前）および Reviewer ステージ（checks 後）を追加するため"
+    }
+  ],
+  "non_change_units": [
+    {
+      "category": "file_io",
+      "functions": ["load_text", "load_json", "load_yaml", "load_yaml_as_text", "save_json", "save_text", "load_runtime_config"],
+      "reason": "汎用I/Oユーティリティ。generation layer と無関係"
+    },
+    {
+      "category": "session_management",
+      "functions": ["SessionContext", "load_session_context", "validate_session_context", "ensure_artifact_dirs"],
+      "reason": "セッション読込・検証の基盤。既存テストで検証済み"
+    },
+    {
+      "category": "git_control",
+      "functions": ["enforce_git_sandbox_branch", "_git_run", "_is_git_repository", "get_current_git_branch", "is_git_worktree_dirty"],
+      "reason": "Git安全弁。変更するとsandbox制御が崩れる"
+    },
+    {
+      "category": "patch_validation",
+      "functions": ["validate_patch_files", "check_file_count", "check_forbidden_paths", "validate_changed_files_before_patch", "normalize_changed_file_path", "_collect_forbidden_phrases"],
+      "reason": "パッチ適用前の scope 検証。Phase1から安定稼働中"
+    },
+    {
+      "category": "failure_classification",
+      "functions": ["classify_failure", "classify_failure_type", "resolve_canonical_failure_type", "normalize_check_results_for_retry", "FAILURE_TYPE_PRIORITY_ORDER", "_extract_cause_summary"],
+      "reason": "failure_type 判定ロジック。session-08〜09 で正本化済み"
+    },
+    {
+      "category": "retry_control",
+      "functions": ["retry_loop", "build_retry_instruction", "compute_next_retry_count", "_read_retry_state_count", "_write_retry_state_count", "_merge_retry_instruction", "_compute_retry_cause_fingerprint"],
+      "reason": "retry制御ループ。Phase1〜2 で安定化済み"
+    },
+    {
+      "category": "report_generation",
+      "functions": ["generate_report", "build_session_report_record", "persist_session_reports", "decide_completion_status", "build_acceptance_results_for_report_json", "_session_index_row_from_report_dict", "_build_artifacts_index_and_summary", "_any_check_skipped", "_any_acceptance_not_applicable"],
+      "reason": "レポート生成・保存。session-09/16 で正本化済み"
+    },
+    {
+      "category": "local_checks",
+      "functions": ["run_local_checks", "run_command"],
+      "reason": "ローカル検証実行。config.yaml のコマンド定義と結合"
+    },
+    {
+      "category": "dry_run",
+      "functions": ["build_dry_run_prepared_spec", "build_dry_run_implementation_result", "build_skipped_checks_result", "record_dry_run_git_warnings"],
+      "reason": "dry-run モード。本番パイプラインと独立"
+    },
+    {
+      "category": "implementation",
+      "functions": ["call_claude_for_implementation", "build_implementation_prompts"],
+      "reason": "Claude 実装呼び出し。generation layer とは別レイヤー"
+    },
+    {
+      "category": "retry_prompts",
+      "functions": ["build_retry_prompts", "call_chatgpt_for_retry_instruction"],
+      "reason": "retry 指示生成。generation layer とは別フロー"
+    },
+    {
+      "category": "utilities",
+      "functions": ["_ensure_repo_root_on_sys_path", "_utc_timestamp_compact", "_iso_utc_now", "_duration_sec_from_iso", "_git_branch_safe", "_git_commit_sha_safe", "parse_args", "_max_changed_files_from_config", "log_stage_progress", "save_error_log", "validate_acceptance_test_mapping"],
+      "reason": "汎用ユーティリティ・引数処理・ログ"
+    }
+  ],
+  "allowed_changes": {
+    "files": ["orchestration/run_session.py"],
+    "scope": "change_units に列挙された3関数のみ。新規関数追加は許可（ただしsession JSONで明示）"
+  },
+  "forbidden_changes": {
+    "files": ["orchestration/run_session.py 内の non_change_units に列挙された全関数"],
+    "scope": "non_change_units のシグネチャ・戻り値・副作用を変更しない"
+  },
+  "change_reasons": [
+    "generation layer（Spec Builder / Spec Reviewer）をパイプラインに統合するため",
+    "prepared_spec の生成フローに Builder 出力を組み込むため",
+    "checks 後に Reviewer による構造的検収を追加するため"
+  ],
+  "non_change_reasons": [
+    "既存テスト（104+ tests）で検証済みの関数を保護するため",
+    "Phase1〜8 で安定化した基盤を壊さないため",
+    "retry / failure_type / report の正本化済みロジックを維持するため"
+  ]
+}
+```
+
+---
+
+## 次のステップ
+
+このドラフトを GPT に渡して仕様確定してもらうのが正しい流れです:
+```
+session-48: phase12_runtime_scope_definition.json のドラフトレビュー
+
+Claudeが run_session.py を分析し、以下のスコープ定義ドラフトを作成しました。
+確認・修正をお願いします。
+
+変更対象（3関数）:
+- build_prepared_spec_prompts
+- call_chatgpt_for_prepared_spec  
+- main
+
+変更禁止: 上記以外の全関数（約47関数）
+
+[ドラフト全文を添付]
