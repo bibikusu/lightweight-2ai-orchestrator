@@ -1,0 +1,275 @@
+{
+  "phase_id": "phase10",
+  "phase_name": "generation layer validation through real project trial",
+  "status": "in_progress_pending_report_persistence",
+  "objective": "Phase10の実案件試行結果を、completion_report保存・進捗可視化・次Phase判断に耐える形で固定する",
+  "current_position": {
+    "type": "object",
+    "schema": {
+      "phase8_status": "enum[completed,not_completed,unknown]",
+      "phase9_session37_status": "enum[completed,not_completed,unknown]",
+      "phase9_session38_status": "enum[completed,not_completed,unknown]",
+      "phase10_completion_report_generated": "bool",
+      "phase10_completion_report_persisted": "bool",
+      "phase10_git_commit_done": "bool",
+      "phase10_git_push_done": "bool"
+    },
+    "value": {
+      "phase8_status": "completed",
+      "phase9_session37_status": "completed",
+      "phase9_session38_status": "completed",
+      "phase10_completion_report_generated": true,
+      "phase10_completion_report_persisted": false,
+      "phase10_git_commit_done": false,
+      "phase10_git_push_done": false
+    }
+  },
+  "milestones": [
+    {
+      "id": "M-01",
+      "name": "Phase8 completed",
+      "status": "completed",
+      "evidence": "session-34, session-35, session-35a, session-36 completed"
+    },
+    {
+      "id": "M-02",
+      "name": "Phase9 session-37 completed",
+      "status": "completed",
+      "evidence": "Spec Builder minimum implementation completed; commit=f5737d4"
+    },
+    {
+      "id": "M-03",
+      "name": "Phase9 session-38 completed",
+      "status": "completed",
+      "evidence": "Spec Reviewer minimum implementation completed; commit=4259dd3"
+    },
+    {
+      "id": "M-04",
+      "name": "Phase10 completion report drafted",
+      "status": "completed",
+      "evidence": "completion_report.json text exists in conversation context"
+    },
+    {
+      "id": "M-05",
+      "name": "Phase10 completion report persisted to repository",
+      "status": "pending",
+      "evidence": "target file not yet saved/committed"
+    },
+    {
+      "id": "M-06",
+      "name": "Phase10 git add / commit / push completed",
+      "status": "pending",
+      "evidence": "blocked until report file exists"
+    }
+  ],
+  "required_artifacts": [
+    {
+      "path": "docs/reports/phase10_completion_report.json",
+      "type": "json",
+      "status": "missing_or_unsaved",
+      "purpose": "Phase10完了根拠の正本"
+    },
+    {
+      "path": "docs/reports/phase10_progress_dashboard.json",
+      "type": "json",
+      "status": "ready_to_create",
+      "purpose": "進捗・未完了項目・次アクション可視化"
+    },
+    {
+      "path": "docs/reports/phase10_design_context.json",
+      "type": "json",
+      "status": "ready_to_create",
+      "purpose": "Phase11以降へ渡す設計判断の前提整理"
+    }
+  ],
+  "decision_gates": [
+    {
+      "id": "G-01",
+      "name": "Phase10 report persistence gate",
+      "status": "open",
+      "condition": "phase10_completion_report.json が保存されていること"
+    },
+    {
+      "id": "G-02",
+      "name": "Phase10 traceability gate",
+      "status": "open",
+      "condition": "git add / commit / push / log により履歴化されていること"
+    },
+    {
+      "id": "G-03",
+      "name": "Phase11 entry gate",
+      "status": "blocked",
+      "condition": "Phase10の保存済み根拠と次方針が揃っていること"
+    }
+  ],
+  "next_options": [
+    {
+      "id": "OPT-A",
+      "name": "genericity_validation",
+      "priority": 1,
+      "status": "recommended",
+      "reason": "1案件のみで成立した設計を別案件/別条件へ適用し、Spec Builder/Reviewerの汎用性を先に検証する"
+    },
+    {
+      "id": "OPT-B",
+      "name": "runtime_integration",
+      "priority": 2,
+      "status": "deferred",
+      "reason": "汎用性未検証のまま runtime 統合へ進むと、誤った設計を自動化するリスクがある"
+    }
+  ],
+  "risks": [
+    {
+      "id": "R-01",
+      "level": "high",
+      "summary": "Phase10完了根拠が会話上のみで、リポジトリ履歴に固定されていない",
+      "impact": "後続Phaseのレビュー可能性と再現性が落ちる"
+    },
+    {
+      "id": "R-02",
+      "level": "medium",
+      "summary": "3ファイル構成テンプレートが既存レポート契約と完全整合しているか未確認",
+      "impact": "Phase5/6系の成果物命名・参照ルールとずれる可能性がある"
+    },
+    {
+      "id": "R-03",
+      "level": "medium",
+      "summary": "Phase11を runtime 統合から始めると、実案件1件依存の設計が固定化される",
+      "impact": "後戻りコストが上がる"
+    }
+  ],
+  "recommended_next_actions": [
+    {
+      "order": 1,
+      "action": "phase10_completion_report.json の本文を docs/reports/phase10_completion_report.json に保存する"
+    },
+    {
+      "order": 2,
+      "action": "本dashboardとdesign_contextを docs/reports/ に保存する"
+    },
+    {
+      "order": 3,
+      "action": "git add docs/reports/phase10_completion_report.json docs/reports/phase10_progress_dashboard.json docs/reports/phase10_design_context.json"
+    },
+    {
+      "order": 4,
+      "action": "git commit -m \"Phase10 completed: generation layer validated through real project trial\""
+    },
+    {
+      "order": 5,
+      "action": "git push origin main && git log --oneline -5"
+    },
+    {
+      "order": 6,
+      "action": "Phase11 は genericity_validation を session 分解して開始する"
+    }
+  ],
+  "unknowns": [
+    {
+      "id": "U-01",
+      "summary": "phase10_completion_report.json の最終本文がこのスレッドでは未提示"
+    },
+    {
+      "id": "U-02",
+      "summary": "既存の Phase5/6 のレポート命名規約と design_context の位置づけが未確定"
+    }
+  ]
+}
+{
+  "phase": "Phase10",
+  "status": "completed",
+  "reviewed_sessions": [
+    "session-40",
+    "session-41",
+    "session-41-fix",
+    "session-42",
+    "session-42a"
+  ],
+  "completion_checks": [
+    {
+      "id": "CC-10-01",
+      "name": "initial_real_project_trial",
+      "result": "passed",
+      "confirmed_facts": [
+        "session-40 executed the builder-to-reviewer flow on a real project input",
+        "the builder generated four artifacts",
+        "the reviewer returned reject with five issues",
+        "all five issues were treated as valid and actionable"
+      ],
+      "interpretation": "The generation layer was operationally usable enough to expose concrete builder weaknesses through a real trial."
+    },
+    {
+      "id": "CC-10-02",
+      "name": "builder_prompt_strengthening",
+      "result": "passed",
+      "confirmed_facts": [
+        "session-41 strengthened the builder prompt in three areas",
+        "the three areas were repository path convention, out_of_scope to forbidden mapping, and acceptance self-validation",
+        "the improvement design was recorded as Phase10 builder improvement design"
+      ],
+      "interpretation": "The main structural weaknesses found in session-40 were translated into explicit builder rules."
+    },
+    {
+      "id": "CC-10-03",
+      "name": "prompt_content_cleanup",
+      "result": "passed",
+      "confirmed_facts": [
+        "session-41-fix removed non-prompt content from the builder template",
+        "the builder prompt was restored to prompt-only content",
+        "this prevented session-42 from being distorted by prompt contamination"
+      ],
+      "interpretation": "The builder revalidation used a clean prompt source instead of a mixed prompt-plus-notes artifact."
+    },
+    {
+      "id": "CC-10-04",
+      "name": "revalidation_cycle_execution",
+      "result": "passed",
+      "confirmed_facts": [
+        "session-42 reran the builder-to-reviewer flow with the improved builder prompt",
+        "the main three weaknesses from session-40 were resolved",
+        "the session outcome moved from reject to conditional_pass"
+      ],
+      "interpretation": "The builder improvement materially improved output quality and reduced the number of blocking issues."
+    },
+    {
+      "id": "CC-10-05",
+      "name": "remaining_issue_resolution",
+      "result": "passed",
+      "confirmed_facts": [
+        "session-42a corrected the objective wording to include review-ready output",
+        "session-42a converted acceptance_criteria into an object array with id, description, and test_function",
+        "session-42a created the session-42 trial report with remaining issue tracking",
+        "session-42a was committed as 31862bd"
+      ],
+      "interpretation": "The residual OS-convention misalignments from session-42 were resolved without expanding scope."
+    }
+  ],
+  "evidence_summary": {
+    "trial_outcome": "Phase10 ran one real-project builder-to-reviewer trial and exposed five concrete weaknesses in the initial builder output.",
+    "improvement_outcome": "Phase10 converted those weaknesses into explicit builder rules and cleaned the prompt source before revalidation.",
+    "revalidation_outcome": "The revalidation cycle improved the result from reject to conditional pass, and the remaining two structural issues were then corrected in session-42a.",
+    "overall_assessment": "Phase10 successfully demonstrated that the generation layer can be improved through a closed feedback loop and can reach an OS-consistent output after one refinement cycle."
+  },
+  "risks": [
+    "The validated trial subject was self-referential and may not expose all issue patterns that appear in unrelated external projects.",
+    "Reviewer strictness may still need tuning if future projects introduce more complex acceptance structures.",
+    "The builder-to-reviewer flow is still manual and not integrated into runtime execution."
+  ],
+  "open_issues": [],
+  "current_position": {
+    "phase_status": "completed",
+    "last_completed_session": "session-42a",
+    "summary": "Phase10 successfully demonstrated that the generation layer can be improved through a closed feedback loop and can reach an OS-consistent output after one refinement cycle."
+  },
+  "next_actions": [
+    {
+      "order": 1,
+      "action": "Start Phase11 using the Phase10 trial report and improved builder prompt as the baseline generation layer."
+    }
+  ],
+  "final_judgement": {
+    "result": "completed",
+    "reason": "Phase10 achieved its purpose by executing a real builder-to-reviewer trial, identifying concrete builder weaknesses, applying targeted prompt improvements, and resolving the remaining structural issues through session-42a.",
+    "next_phase": "Phase11"
+  }
+}

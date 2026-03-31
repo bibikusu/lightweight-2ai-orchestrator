@@ -1,0 +1,134 @@
+{
+  "phase_id": "phase10",
+  "document_name": "phase10_design_context",
+  "purpose": "Phase10時点の設計判断・現状認識・次Phase判断基準を固定し、Phase11以降の仕様ブレを防ぐ",
+  "facts": {
+    "type": "object",
+    "schema": {
+      "architecture_basis": "list[str]",
+      "operating_principles": "list[str]",
+      "phase8_to_phase10_status": "list[str]",
+      "phase10_state": "list[str]"
+    },
+    "value": {
+      "architecture_basis": [
+        "ChatGPT API は仕様整理・レビュー補助を担当する",
+        "Claude API は実装・修正を担当する",
+        "Pythonオーケストレーターは入力読込・API呼び出し・差分適用・検証・保存・再試行制御を担当する",
+        "完了判定は受入条件ベースで行う"
+      ],
+      "operating_principles": [
+        "1セッション1目的",
+        "出力は構造化JSONを基本とする",
+        "session report を保存対象に含める",
+        "受入条件未達なら完了扱いしない",
+        "同一原因の再試行を繰り返さない"
+      ],
+      "phase8_to_phase10_status": [
+        "Phase8 は completed",
+        "Phase9 session-37 は completed",
+        "Phase9 session-38 は completed",
+        "Phase10 は completion_report 生成済みだが未保存"
+      ],
+      "phase10_state": [
+        "Phase10の完了判断自体は会話上で整理されている",
+        "ただし repository 上の保存・commit・push が未完了",
+        "したがって Phase10 は『完了判定済み・履歴固定待ち』と扱うのが妥当"
+      ]
+    }
+  },
+  "interpretations": {
+    "type": "list[object]",
+    "value": [
+      {
+        "id": "I-01",
+        "summary": "Phase10の本質は、generation layer の成立そのものより、実案件試行の結果を検収可能な証跡に落とし込めるかにある"
+      },
+      {
+        "id": "I-02",
+        "summary": "completion_report だけでは『履歴』『現状』『次判断』が分離されないため、dashboard と design_context を分ける構成は運用上合理的"
+      },
+      {
+        "id": "I-03",
+        "summary": "ただし 3ファイル構成は既存の Phase5/6 契約との差分になるため、標準化するなら別Phaseまたはルール更新で確定すべき"
+      },
+      {
+        "id": "I-04",
+        "summary": "Phase11は runtime統合より先に汎用性検証を行う方が、誤った設計の自動化を避けやすい"
+      }
+    ]
+  },
+  "uncertainties": {
+    "type": "list[object]",
+    "value": [
+      {
+        "id": "U-01",
+        "summary": "phase10_completion_report.json の正式本文が未提示のため、dashboard/design_context はその本文を参照せずに作成している"
+      },
+      {
+        "id": "U-02",
+        "summary": "design_context を正式成果物として採用するか、内部補助資料として扱うかが未確定"
+      },
+      {
+        "id": "U-03",
+        "summary": "Phase11 のセッション分割単位はまだ確定していない"
+      }
+    ]
+  },
+  "design_decisions": [
+    {
+      "id": "D-01",
+      "decision": "Phase10は『completed』ではなく『in_progress_pending_report_persistence』として管理する",
+      "reason": "完了根拠の保存が未了のため"
+    },
+    {
+      "id": "D-02",
+      "decision": "phase10_progress_dashboard.json は実務上の現在地確認用に採用する",
+      "reason": "完了/未完了/次アクションを分離して見られるため"
+    },
+    {
+      "id": "D-03",
+      "decision": "phase10_design_context.json は Phase11着手前の前提固定用として採用する",
+      "reason": "判断の背景を別ファイル化し、completion_report の肥大化を防ぐため"
+    },
+    {
+      "id": "D-04",
+      "decision": "Phase11の優先順位は genericity_validation を先、runtime_integration を後とする",
+      "reason": "1案件依存の設計固定化リスクを下げるため"
+    }
+  ],
+  "phase11_entry_recommendation": {
+    "recommended_track": "genericity_validation",
+    "not_recommended_first_track": "runtime_integration",
+    "entry_conditions": [
+      "docs/reports/phase10_completion_report.json が保存済み",
+      "docs/reports/phase10_progress_dashboard.json が保存済み",
+      "docs/reports/phase10_design_context.json が保存済み",
+      "git commit / push により履歴固定済み"
+    ],
+    "expected_goal": "Spec Builder / Spec Reviewer が単一案件依存ではなく、別案件条件でも破綻しないことを確認する"
+  },
+  "recommended_phase11_session_split": [
+    {
+      "session_id": "session-39",
+      "objective": "Phase10成果物の命名規約と保存契約を固定する"
+    },
+    {
+      "session_id": "session-40",
+      "objective": "別案件または別仕様条件に対して Spec Builder の出力整合性を検証する"
+    },
+    {
+      "session_id": "session-41",
+      "objective": "別案件または別仕様条件に対して Spec Reviewer の判定整合性を検証する"
+    },
+    {
+      "session_id": "session-42",
+      "objective": "genericity_validation の結果を踏まえて runtime 統合入口条件を定義する"
+    }
+  ],
+  "do_not_assume": [
+    "Phase10 completion_report の本文詳細",
+    "3ファイル構成が既に正式標準であること",
+    "runtime統合が次Phaseで即着手可能であること"
+  ]
+}
