@@ -1,0 +1,168 @@
+{
+  "phase": "Phase12",
+  "phase_id": "phase12",
+  "phase_name": "runtime integration",
+  "status": "completed",
+  "completion_basis": "session-50（docs/phase12_runtime_readiness_decision.json）で readiness_decision=ready と判定されたうえで、session-51 / session-52 で orchestration/run_session.py に Builder・Reviewer 契約を最小統合し、session-53 で orchestration 無変更のまま backend/tests/test_run_session_phase12_e2e.py を追加して E2E 検証した。session-51 は conditional_pass、session-52 / session-53 は completed。",
+  "completed_sessions": [
+    {
+      "session_id": "session-48",
+      "status": "completed",
+      "summary": "docs/phase12_runtime_scope_definition.json により変更対象関数と non_change 保護範囲を確定",
+      "evidence_commit": "dc300a4"
+    },
+    {
+      "session_id": "session-49",
+      "status": "completed",
+      "summary": "docs/phase12_runtime_execution_contract.json により session JSON / acceptance YAML の実行契約を確定",
+      "evidence_commit": "6f4e3c1"
+    },
+    {
+      "session_id": "session-50",
+      "status": "completed",
+      "summary": "docs/phase12_runtime_readiness_decision.json で readiness_decision=ready とし session-51 以降の実装計画を固定",
+      "evidence_commit": "59564a7"
+    },
+    {
+      "session_id": "session-51",
+      "status": "conditional_pass",
+      "summary": "build_prepared_spec_prompts / call_chatgpt_for_prepared_spec（コメント）/ main（ログ文言）を改修し、Builder 契約を prepared_spec 経路に反映。テストは backend/tests/test_run_session_builder_integration.py を追加",
+      "evidence_commit": "0772f35"
+    },
+    {
+      "session_id": "session-51a",
+      "status": "completed",
+      "summary": "docs/roadmap.yaml を復元し pytest 前提を回復（session-51 直後のフォロー）",
+      "evidence_commit": "64280f1"
+    },
+    {
+      "session_id": "session-52",
+      "status": "completed",
+      "summary": "build_retry_prompts と main（ログ文言）を改修し、Reviewer 契約を retry 指示生成に反映。テストは backend/tests/test_run_session_reviewer_retry_integration.py を追加",
+      "evidence_commit": "62a6038"
+    },
+    {
+      "session_id": "session-53",
+      "status": "completed",
+      "summary": "orchestration への変更は行わず、backend/tests/test_run_session_phase12_e2e.py による E2E 検証のみ追加",
+      "evidence_commit": "5fcd04b"
+    }
+  ],
+  "validation_results": {
+    "checks": [
+      {
+        "name": "pytest",
+        "result": "pass",
+        "scope": "backend/tests/test_run_session_builder_integration.py, backend/tests/test_run_session_reviewer_retry_integration.py, backend/tests/test_run_session_phase12_e2e.py",
+        "note": "2026-03-31 時点で該当3ファイルを対象に 12 件すべて成功"
+      },
+      {
+        "name": "compileall",
+        "result": "pass",
+        "scope": "orchestration/run_session.py, backend/tests/test_run_session_phase12_e2e.py",
+        "note": "SyntaxError なしを確認"
+      },
+      {
+        "name": "ruff",
+        "result": "skipped",
+        "note": "本レポート作成フローでは未実行"
+      },
+      {
+        "name": "mypy",
+        "result": "skipped",
+        "note": "本レポート作成フローでは未実行"
+      }
+    ]
+  },
+  "artifacts": [
+    {
+      "path": "docs/phase12_runtime_scope_definition.json",
+      "role": "Phase12 変更スコープ・保護単位の正本（session-48）"
+    },
+    {
+      "path": "docs/phase12_runtime_execution_contract.json",
+      "role": "runtime 実行フロー・契約の正本（session-49）"
+    },
+    {
+      "path": "docs/phase12_runtime_readiness_decision.json",
+      "role": "実装準備完了判定と session-51〜53 計画の正本（session-50）"
+    },
+    {
+      "path": "docs/phase12_readiness_mini_roadmap.json",
+      "role": "session-48〜50 までの準備ロードマップ（Phase12 入口の文脈）"
+    },
+    {
+      "path": "docs/roadmap.yaml",
+      "role": "session-51a で復元された pytest 前提ファイル"
+    },
+    {
+      "path": "backend/tests/test_run_session_builder_integration.py",
+      "role": "Builder 統合の単体寄り検証（session-51）"
+    },
+    {
+      "path": "backend/tests/test_run_session_reviewer_retry_integration.py",
+      "role": "Reviewer/retry 統合の単体寄り検証（session-52）"
+    },
+    {
+      "path": "backend/tests/test_run_session_phase12_e2e.py",
+      "role": "session-53 の main() 経路 E2E 検証"
+    }
+  ],
+  "changed_runtime_functions_in_phase12": [
+    {
+      "function": "build_prepared_spec_prompts",
+      "sessions": ["session-51"],
+      "change_summary": "Builder 契約（allowed/forbidden、review 4 軸、キー構造維持など）を system / user プロンプトに埋め込み"
+    },
+    {
+      "function": "call_chatgpt_for_prepared_spec",
+      "sessions": ["session-51"],
+      "change_summary": "Builder 契約反映済みである旨の日本語コメントを追記（呼び出しは既存の build 結果利用）"
+    },
+    {
+      "function": "main",
+      "sessions": ["session-51", "session-52"],
+      "change_summary": "prepared_spec / retry_instruction ステージのログ文言を契約反映後の説明に更新"
+    },
+    {
+      "function": "build_retry_prompts",
+      "sessions": ["session-52"],
+      "change_summary": "Reviewer 契約（failure_type 一意、fix/do_not_change スコープ、具体性など）を retry 用プロンプトに埋め込み"
+    }
+  ],
+  "non_changed_protected_units": [
+    {
+      "unit": "retry_loop",
+      "reason": "docs/phase12_runtime_scope_definition.json の retry_control 非変更区分に該当し、session-51〜52 の差分にも含まれない"
+    },
+    {
+      "unit": "classify_failure",
+      "reason": "failure_classification 非変更区分。プロンプト側で canonical 参照は継続するのみ"
+    },
+    {
+      "unit": "resolve_canonical_failure_type",
+      "reason": "failure_classification 非変更区分。session-52 の build_retry_prompts から呼び出しは従来どおり"
+    },
+    {
+      "unit": "build_session_report_record",
+      "reason": "report_generation 非変更区分。Phase12 の runtime 差分対象外"
+    },
+    {
+      "unit": "call_chatgpt_for_retry_instruction",
+      "reason": "実行フローは維持。契約文言は build_retry_prompts 側へ集約"
+    }
+  ],
+  "risks": [
+    {
+      "id": "R-P12-01",
+      "level": "medium",
+      "summary": "契約はプロンプト埋め込み中心であり、モデル出力が常に契約どおりになる保証はない",
+      "mitigation": "acceptance / テストで main() 経路を継続監視し、逸脱時はプロンプトまたは検証を補強する"
+    }
+  ],
+  "open_issues": [],
+  "next_phase": {
+    "phase_id": "phase13",
+    "note": "docs/phase12_runtime_readiness_decision.json の session-53 の out_of_scope に Phase13 以降の拡張設計が列挙されている。"
+  }
+}
