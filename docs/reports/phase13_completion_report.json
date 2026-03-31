@@ -1,0 +1,88 @@
+{
+  "phase": "Phase13",
+  "phase_id": "phase13",
+  "phase_name": "CI validation workflow canonicalization",
+  "status": "completed",
+  "completion_basis": "session-54 で backend/tests/test_ci_workflow_contract.py により validation workflow と標準4コマンド・トリガーの契約を固定し、session-56 で未追跡だった .github/workflows/validation.yml を Git 正本として追跡した。orchestration/run_session.py は未変更。",
+  "completed_sessions": [
+    {
+      "session_id": "session-54",
+      "status": "completed",
+      "summary": "標準4コマンド（ruff / pytest / mypy / compileall）と push・pull_request トリガーを validation.yml 定義・契約テストで固定",
+      "evidence_commit": "5b858b2"
+    },
+    {
+      "session_id": "session-56",
+      "status": "completed",
+      "summary": ".github/workflows/validation.yml をリポジトリ追跡下に置き CI 再現性を確保。test_ci_workflow_contract.py は変更不要のまま",
+      "evidence_commit": "2c96113"
+    }
+  ],
+  "validation_results": {
+    "checks": [
+      {
+        "name": "ruff",
+        "result": "pass",
+        "command": ".venv/bin/ruff check .",
+        "note": "2026-03-31 session-56 クローズ時に実行"
+      },
+      {
+        "name": "pytest",
+        "result": "pass",
+        "command": "PYTHONPATH=. .venv/bin/pytest backend/tests/ -q",
+        "note": "backend/tests 全件"
+      },
+      {
+        "name": "mypy",
+        "result": "pass",
+        "command": "PYTHONPATH=. .venv/bin/python -m mypy --explicit-package-bases orchestration --ignore-missing-imports",
+        "note": "orchestration 5 ソースファイルで Success"
+      },
+      {
+        "name": "compileall",
+        "result": "pass",
+        "command": "PYTHONPYCACHEPREFIX=\"./.pycache_compileall\" python3 -m compileall -q -f orchestration backend",
+        "note": "SyntaxError なし"
+      }
+    ]
+  },
+  "ci_workflow_normalization_result": {
+    "validation_workflow_tracked": true,
+    "workflow_commands_preserved": true,
+    "workflow_triggers_preserved": true,
+    "runtime_unchanged": true
+  },
+  "changed_files_session_56": [
+    ".github/workflows/validation.yml",
+    "docs/reports/phase13_completion_report.json"
+  ],
+  "artifacts": [
+    {
+      "path": ".github/workflows/validation.yml",
+      "role": "GitHub Actions 上で標準4コマンドを再現する validation の正本（session-54 定義・session-56 追跡）"
+    },
+    {
+      "path": "backend/tests/test_ci_workflow_contract.py",
+      "role": "validation.yml のトリガーと run コマンドの契約テスト（session-54）"
+    }
+  ],
+  "non_changed_protected": [
+    {
+      "path": "orchestration/run_session.py",
+      "note": "session-56 で差分なし（明示的変更禁止に従う）"
+    }
+  ],
+  "risks": [
+    {
+      "id": "R-P13-01",
+      "level": "low",
+      "summary": "Actions ランナーとローカルの Python マイナー差で挙動がわずかに異なる可能性",
+      "mitigation": "workflow で venv と requirements を明示し、標準4コマンドをローカルと同一文字列に維持する"
+    }
+  ],
+  "open_issues": [],
+  "next_phase": {
+    "phase_id": "phase14",
+    "note": "未指定。runtime 拡張や別系統の自動化は Phase12/13 の成果を前提に別途計画する。"
+  }
+}

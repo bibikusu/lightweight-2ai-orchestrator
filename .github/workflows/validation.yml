@@ -1,0 +1,36 @@
+# session-54: 標準4コマンド（ruff / pytest / mypy / compileall）の検証
+name: validation
+
+"on":
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Create venv and install dependencies
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install --upgrade pip
+          .venv/bin/pip install -r requirements.txt
+          .venv/bin/pip install ruff mypy
+
+      - name: Ruff
+        run: .venv/bin/ruff check .
+
+      - name: Pytest
+        run: PYTHONPATH=. .venv/bin/pytest backend/tests/ -q
+
+      - name: Mypy
+        run: PYTHONPATH=. .venv/bin/python -m mypy --explicit-package-bases orchestration --ignore-missing-imports
+
+      - name: Compileall
+        run: PYTHONPYCACHEPREFIX="./.pycache_compileall" python3 -m compileall -q -f orchestration backend
