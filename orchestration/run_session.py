@@ -307,6 +307,122 @@ def _git_run(args: List[str], *, check: bool = False) -> subprocess.CompletedPro
     )
 
 
+def _extract_proposed_patch_text(impl_result: Dict[str, Any]) -> str:
+    """
+    Claude の implementation_result から proposed_patch を文字列として抽出する。
+    想定外型は空文字へフォールバック（後段で「適用なし」扱い）。
+    """
+    raw = impl_result.get("proposed_patch")
+    if raw is None:
+        return ""
+    if isinstance(raw, str):
+        return raw
+    # 互換: 配列や辞書で返ってきた場合も落ちずに記録できるようにする
+    try:
+        return json.dumps(raw, ensure_ascii=False, indent=2)
+    except Exception:
+        return str(raw)
+
+
+def _expected_existing_files_from_patch(patch_text: str) -> List[str]:
+    """
+    proposed_patch（unified diff 想定）から「適用後に存在すべきファイル」を推定する。
+    - 追加/変更: +++ b/<path> を採用
+    - 削除: +++ /dev/null は除外（存在チェック対象外）
+    """
+    out: List[str] = []
+    for line in (patch_text or "").splitlines():
+        if not line.startswith("+++ "):
+            continue
+        rhs = line[4:].strip()
+        if rhs == "/dev/null":
+            continue
+        if rhs.startswith("b/"):
+            rhs = rhs[2:]
+        rhs = normalize_changed_file_path(rhs)
+        if rhs and rhs not in out:
+            out.append(rhs)
+    return out
+
+
+def apply_proposed_patch_and_capture_artifacts(
+    *,
+    session_id: str,
+    session_dir: Path,
+    impl_result: Dict[str, Any],
+) -> Dict[str, Any]:
+    """
+    implementation_result.proposed_patch を実ファイルへ適用し、artifact を保存する。
+    返り値は impl_result へ追記可能なメタ情報（diff_summary 等）を返す。
+    """
+    patch_text = _extract_proposed_patch_text(impl_result)
+    patches_dir = session_dir / "patches"
+    patch_path = patches_dir / "proposed_patch.diff"
+    save_text(patch_path, patch_text)
+
+    def _artifact_path_str(path: Path) -> str:
+        try:
+            return str(path.relative_to(ROOT_DIR))
+        except ValueError:
+            return str(path)
+
+    meta: Dict[str, Any] = {
+        "patch_artifact": _artifact_path_str(patch_path),
+        "patch_applied": False,
+        "git_apply_returncode": None,
+        "git_apply_stderr": "",
+    }
+
+    if not patch_text.strip():
+        diff = _git_run(["diff"])
+        save_text(patches_dir / "git_diff_after.diff", diff.stdout or "")
+        names = _git_run(["diff", "--name-only"])
+        save_text(patches_dir / "git_diff_after_name_only.txt", names.stdout or "")
+        meta["diff_summary"] = (
+            f"patch empty; git diff lines={len((diff.stdout or '').splitlines())}"
+        )
+        meta["git_diff_after_artifact"] = _artifact_path_str(
+            patches_dir / "git_diff_after.diff"
+        )
+        meta["git_diff_after_name_only_artifact"] = _artifact_path_str(
+            patches_dir / "git_diff_after_name_only.txt"
+        )
+        return meta
+
+    p = _git_run(["apply", "--whitespace=nowarn", str(patch_path)])
+    meta["git_apply_returncode"] = int(p.returncode)
+    meta["git_apply_stderr"] = (p.stderr or "").strip()
+    if p.returncode != 0:
+        raise RuntimeError(
+            "proposed_patch の適用に失敗しました: " + (p.stderr or "").strip()
+        )
+    meta["patch_applied"] = True
+
+    expected = _expected_existing_files_from_patch(patch_text)
+    missing: List[str] = []
+    for rel in expected:
+        fp = ROOT_DIR / rel
+        if not fp.exists():
+            missing.append(rel)
+    if missing:
+        raise FileNotFoundError(
+            "patch 適用後に存在すべきファイルが見つかりません: " + ", ".join(missing)
+        )
+
+    diff = _git_run(["diff"])
+    save_text(patches_dir / "git_diff_after.diff", diff.stdout or "")
+    names = _git_run(["diff", "--name-only"])
+    save_text(patches_dir / "git_diff_after_name_only.txt", names.stdout or "")
+    meta["diff_summary"] = f"git diff lines={len((diff.stdout or '').splitlines())}"
+    meta["git_diff_after_artifact"] = _artifact_path_str(
+        patches_dir / "git_diff_after.diff"
+    )
+    meta["git_diff_after_name_only_artifact"] = _artifact_path_str(
+        patches_dir / "git_diff_after_name_only.txt"
+    )
+    return meta
+
+
 def _is_git_repository() -> bool:
     p = _git_run(["rev-parse", "--git-dir"])
     return p.returncode == 0
@@ -1790,6 +1906,21 @@ def main() -> int:
         impl_result = call_claude_for_implementation(prepared_spec, ctx, None)
         save_json(session_dir / "responses" / "implementation_result.json", impl_result)
 
+        stage = "patch_apply"
+        log_stage_progress(
+            args.session_id,
+            stage,
+            "patch 抽出→実ファイル適用→artifact 保存→実ファイル存在確認→git diff 再取得",
+        )
+        patch_meta = apply_proposed_patch_and_capture_artifacts(
+            session_id=args.session_id,
+            session_dir=session_dir,
+            impl_result=impl_result,
+        )
+        if isinstance(patch_meta, dict) and isinstance(patch_meta.get("diff_summary"), str):
+            impl_result["diff_summary"] = patch_meta["diff_summary"]
+        save_json(session_dir / "responses" / "implementation_result.json", impl_result)
+
         stage = "patch_validation"
         log_stage_progress(args.session_id, stage, "changed_files 妥当性チェック")
         validate_changed_files_before_patch(
@@ -1910,6 +2041,24 @@ def main() -> int:
             impl_result = call_claude_for_implementation(
                 prepared_spec, ctx, retry_instruction
             )
+            save_json(
+                session_dir / "responses" / "implementation_result.json",
+                impl_result,
+            )
+
+            stage = "patch_apply"
+            log_stage_progress(
+                args.session_id,
+                stage,
+                "retry: patch 抽出→実ファイル適用→artifact 保存→実ファイル存在確認→git diff 再取得",
+            )
+            patch_meta = apply_proposed_patch_and_capture_artifacts(
+                session_id=args.session_id,
+                session_dir=session_dir,
+                impl_result=impl_result,
+            )
+            if isinstance(patch_meta, dict) and isinstance(patch_meta.get("diff_summary"), str):
+                impl_result["diff_summary"] = patch_meta["diff_summary"]
             save_json(
                 session_dir / "responses" / "implementation_result.json",
                 impl_result,
