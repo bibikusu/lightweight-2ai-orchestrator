@@ -1,0 +1,695 @@
+{
+    "document_name": "phase11_genericity_validation_plan",
+    "document_path": "docs/phase11_genericity_validation_plan.json",
+    "type": "object",
+    "phase": {
+    "type": "str",
+    "value": "Phase11"
+    },
+    "plan_id": {
+    "type": "str",
+    "value": "phase11_genericity_validation_plan"
+    },
+    "objective": {
+    "type": "str",
+    "value": "genericity_validation の前提条件・検証観点・入力契約・受入条件を固定し、session-45〜47 を実行可能な状態にする"
+    },
+    "source_basis": {
+    "type": "object",
+    "schema": {
+    "phase10_commit": "str",
+    "phase10_status": "enum[completed,conditional_completed,failed]",
+    "phase10_reports_aligned_commit": "str",
+    "reviewed_sessions": "list[str]"
+    },
+    "value": {
+    "phase10_commit": "2c832fd",
+    "phase10_status": "conditional_completed",
+    "phase10_reports_aligned_commit": "9c79fd7",
+    "reviewed_sessions": [
+    "session-37",
+    "session-38",
+    "session-40",
+    "session-41",
+    "session-41-fix",
+    "session-42a"
+    ]
+    }
+    },
+    "prerequisites": {
+    "type": "object",
+    "schema": {
+    "required_documents": "list[object]",
+    "required_statuses": "list[object]",
+    "numbering_constraints": "list[object]",
+    "execution_mode": "enum[docs_only_manual,orchestrated_code_session]",
+    "assumption_policy": "enum[no_inference,limited_inference]"
+    },
+    "value": {
+    "required_documents": [
+    {
+    "name": "phase10_completion_report",
+    "type": "str",
+    "path": "docs/reports/phase10_completion_report.json",
+    "status_required": "enum[present,missing]",
+    "status_value": "present"
+    },
+    {
+    "name": "phase10_progress_dashboard",
+    "type": "str",
+    "path": "docs/reports/phase10_progress_dashboard.json",
+    "status_required": "enum[present,missing]",
+    "status_value": "present"
+    },
+    {
+    "name": "phase10_design_context",
+    "type": "str",
+    "path": "docs/reports/phase10_design_context.json",
+    "status_required": "enum[present,missing]",
+    "status_value": "present"
+    }
+    ],
+    "required_statuses": [
+    {
+    "name": "phase10_entry_gate",
+    "type": "enum[open,closed,blocked]",
+    "value": "open"
+    },
+    {
+    "name": "phase10_report_alignment",
+    "type": "enum[done,not_done]",
+    "value": "done"
+    },
+    {
+    "name": "phase11_track",
+    "type": "enum[genericity_validation,runtime_integration]",
+    "value": "genericity_validation"
+    }
+    ],
+    "numbering_constraints": [
+    {
+    "name": "session_44_role",
+    "type": "str",
+    "value": "Phase11 設計固定専用"
+    },
+    {
+    "name": "session_45_to_47_reserved",
+    "type": "str",
+    "value": "genericity_validation 実行用"
+    }
+    ],
+    "execution_mode": "docs_only_manual",
+    "assumption_policy": "no_inference"
+    }
+    },
+    "insights_from_phase10": {
+    "type": "list[object]",
+    "value": [
+    {
+    "id": {
+    "type": "str",
+    "value": "INS-01"
+    },
+    "source_sessions": {
+    "type": "list[str]",
+    "value": [
+    "session-40",
+    "session-41",
+    "session-41-fix",
+    "session-42a"
+    ]
+    },
+    "fact": {
+    "type": "str",
+    "value": "Builder→Reviewer の1案件目試行と、その結果に基づく改善サイクルが実施済みである"
+    },
+    "interpretation": {
+    "type": "str",
+    "value": "Phase11 では“成立するか”ではなく、“別条件でも破綻しないか”を検証すべき段階に入っている"
+    }
+    },
+    {
+    "id": {
+    "type": "str",
+    "value": "INS-02"
+    },
+    "source_sessions": {
+    "type": "list[str]",
+    "value": [
+    "session-41",
+    "session-41-fix",
+    "session-42a"
+    ]
+    },
+    "fact": {
+    "type": "str",
+    "value": "Builder prompt、acceptance format、objective alignment に改善が入っている"
+    },
+    "interpretation": {
+    "type": "str",
+    "value": "Phase11 では prompt品質だけでなく、入力契約・受入形式・整合チェックを検証対象に含める必要がある"
+    }
+    },
+    {
+    "id": {
+    "type": "str",
+    "value": "INS-03"
+    },
+    "source_sessions": {
+    "type": "list[str]",
+    "value": [
+    "session-43"
+    ]
+    },
+    "fact": {
+    "type": "str",
+    "value": "Phase10 レポート3点は事実整合補正済みである"
+    },
+    "interpretation": {
+    "type": "str",
+    "value": "Phase11 は Phase10 の現在地を前提事実として固定してよい"
+    }
+    },
+    {
+    "id": {
+    "type": "str",
+    "value": "INS-04"
+    },
+    "source_sessions": {
+    "type": "list[str]",
+    "value": [
+    "session-37",
+    "session-38"
+    ]
+    },
+    "fact": {
+    "type": "str",
+    "value": "Spec Builder と Spec Reviewer の最小実装は docs-only で成立している"
+    },
+    "interpretation": {
+    "type": "str",
+    "value": "Phase11 でもまず docs-only の genericity 検証を優先し、runtime 統合は次段階に残すのが妥当である"
+    }
+    }
+    ]
+    },
+    "validation_scope": {
+    "type": "list[str]",
+    "value": [
+    "別案件または別仕様条件に対する Spec Builder 出力の整合性検証",
+    "別案件または別仕様条件に対する Spec Reviewer 判定の整合性検証",
+    "Builder 出力と Reviewer 入力の契約整合性検証",
+    "acceptance_criteria と test_name の 1対1対応検証",
+    "scope / out_of_scope / constraints の境界明確性検証",
+    "既存 Phase10 成果物へ副作用がないことの確認"
+    ]
+    },
+    "validation_targets": {
+    "type": "list[object]",
+    "value": [
+    {
+    "name": {
+    "type": "str",
+    "value": "spec_builder_output"
+    },
+    "target_type": {
+    "type": "enum[prompt,document,json,review_output]",
+    "value": "json"
+    },
+    "must_validate": {
+    "type": "list[str]",
+    "value": [
+    "objective の単一性",
+    "allowed_changes の限定性",
+    "forbidden_changes の明確性",
+    "acceptance_criteria のテスト対応",
+    "型付き入出力定義"
+    ]
+    }
+    },
+    {
+    "name": {
+    "type": "str",
+    "value": "spec_reviewer_output"
+    },
+    "target_type": {
+    "type": "enum[prompt,document,json,review_output]",
+    "value": "json"
+    },
+    "must_validate": {
+    "type": "list[str]",
+    "value": [
+    "failure_type の単一選出",
+    "cause_summary の具体性",
+    "fix_instructions の変更範囲準拠",
+    "do_not_change の保全性"
+    ]
+    }
+    },
+    {
+    "name": {
+    "type": "str",
+    "value": "builder_to_reviewer_contract"
+    },
+    "target_type": {
+    "type": "enum[prompt,document,json,review_output]",
+    "value": "document"
+    },
+    "must_validate": {
+    "type": "list[str]",
+    "value": [
+    "Builder 出力が Reviewer の入力前提を満たす",
+    "acceptance_criteria の粒度が Reviewer 判定に十分である",
+    "曖昧語が排除されている"
+    ]
+    }
+    }
+    ]
+    },
+    "input_contracts": {
+    "type": "object",
+    "schema": {
+    "session_45": "object",
+    "session_46": "object",
+    "session_47": "object"
+    },
+    "value": {
+    "session_45": {
+    "type": "object",
+    "schema": {
+    "session_id": "str",
+    "purpose": "str",
+    "inputs": "list[object]",
+    "expected_outputs": "list[object]",
+    "success_condition": "str"
+    },
+    "value": {
+    "session_id": "session-45",
+    "purpose": "別案件または別仕様条件に対して Spec Builder の出力整合性を検証する",
+    "inputs": [
+    {
+    "name": "reference_spec_set",
+    "type": "list[str]",
+    "required": true,
+    "description": "比較対象となる既存の親仕様・共通ルール・Phase10成果物"
+    },
+    {
+    "name": "secondary_project_or_scenario",
+    "type": "object",
+    "required": true,
+    "description": "2案件目または別条件の仕様断片"
+    },
+    {
+    "name": "builder_prompt_contract",
+    "type": "object",
+    "required": true,
+    "description": "Builder が守るべき出力契約"
+    }
+    ],
+    "expected_outputs": [
+    {
+    "name": "builder_generated_session_spec",
+    "type": "object"
+    },
+    {
+    "name": "builder_validation_notes",
+    "type": "list[str]"
+    }
+    ],
+    "success_condition": "Builder 出力が型・scope・acceptance mapping の全要件を満たす"
+    }
+    },
+    "session_46": {
+    "type": "object",
+    "schema": {
+    "session_id": "str",
+    "purpose": "str",
+    "inputs": "list[object]",
+    "expected_outputs": "list[object]",
+    "success_condition": "str"
+    },
+    "value": {
+    "session_id": "session-46",
+    "purpose": "別案件または別仕様条件に対して Spec Reviewer の判定整合性を検証する",
+    "inputs": [
+    {
+    "name": "builder_generated_session_spec",
+    "type": "object",
+    "required": true,
+    "description": "session-45 の Builder 出力"
+    },
+    {
+    "name": "review_target_response",
+    "type": "object",
+    "required": true,
+    "description": "検収対象となる出力または試行結果"
+    },
+    {
+    "name": "reviewer_policy_contract",
+    "type": "object",
+    "required": true,
+    "description": "Reviewer の failure_type / fix_instructions / do_not_change 契約"
+    }
+    ],
+    "expected_outputs": [
+    {
+    "name": "reviewer_assessment",
+    "type": "object"
+    },
+    {
+    "name": "reviewer_contract_check",
+    "type": "list[str]"
+    }
+    ],
+    "success_condition": "Reviewer 判定が failure_type 単一選出・scope準拠・fix精度を満たす"
+    }
+    },
+    "session_47": {
+    "type": "object",
+    "schema": {
+    "session_id": "str",
+    "purpose": "str",
+    "inputs": "list[object]",
+    "expected_outputs": "list[object]",
+    "success_condition": "str"
+    },
+    "value": {
+    "session_id": "session-47",
+    "purpose": "genericity_validation の結果を踏まえて runtime 統合入口条件を定義する",
+    "inputs": [
+    {
+    "name": "session_45_result",
+    "type": "object",
+    "required": true,
+    "description": "Builder 汎用性検証結果"
+    },
+    {
+    "name": "session_46_result",
+    "type": "object",
+    "required": true,
+    "description": "Reviewer 汎用性検証結果"
+    },
+    {
+    "name": "phase10_design_context",
+    "type": "object",
+    "required": true,
+    "description": "Phase10 の判断背景"
+    }
+    ],
+    "expected_outputs": [
+    {
+    "name": "runtime_entry_conditions",
+    "type": "list[str]"
+    },
+    {
+    "name": "phase12_readiness_decision",
+    "type": "enum[ready,not_ready,needs_more_validation]"
+    }
+    ],
+    "success_condition": "runtime 統合へ進める条件が曖昧語なしで定義される"
+    }
+    }
+    }
+    },
+    "acceptance_criteria": {
+    "type": "list[object]",
+    "value": [
+    {
+    "id": {
+    "type": "str",
+    "value": "AC-44-01"
+    },
+    "description": {
+    "type": "str",
+    "value": "Phase11 genericity_validation の prerequisites が Phase10成果物と session-40〜42a の学びに基づいて固定されている"
+    },
+    "test_name": {
+    "type": "str",
+    "value": "test_phase11_plan_prerequisites_are_defined"
+    },
+    "test_action": {
+    "type": "enum[create,update,reuse]",
+    "value": "create"
+    }
+    },
+    {
+    "id": {
+    "type": "str",
+    "value": "AC-44-02"
+    },
+    "description": {
+    "type": "str",
+    "value": "validation_scope が Builder・Reviewer・入出力契約・副作用なしを含み、runtime integration を含まない"
+    },
+    "test_name": {
+    "type": "str",
+    "value": "test_phase11_plan_scope_excludes_runtime_integration"
+    },
+    "test_action": {
+    "type": "enum[create,update,reuse]",
+    "value": "create"
+    }
+    },
+    {
+    "id": {
+    "type": "str",
+    "value": "AC-44-03"
+    },
+    "description": {
+    "type": "str",
+    "value": "session-45〜47 の input_contracts が型付きで定義され、必須入力と期待出力が明記されている"
+    },
+    "test_name": {
+    "type": "str",
+    "value": "test_phase11_plan_input_contracts_are_typed"
+    },
+    "test_action": {
+    "type": "enum[create,update,reuse]",
+    "value": "create"
+    }
+    },
+    {
+    "id": {
+    "type": "str",
+    "value": "AC-44-04"
+    },
+    "description": {
+    "type": "str",
+    "value": "acceptance_criteria が test_name と 1対1対応し、各 test_action が create / update / reuse のいずれかで固定されている"
+    },
+    "test_name": {
+    "type": "str",
+    "value": "test_phase11_plan_acceptance_has_one_to_one_test_mapping"
+    },
+    "test_action": {
+    "type": "enum[create,update,reuse]",
+    "value": "create"
+    }
+    },
+    {
+    "id": {
+    "type": "str",
+    "value": "AC-44-05"
+    },
+    "description": {
+    "type": "str",
+    "value": "session_plan が session-45〜47 に限定され、各セッションの目的と成果物が衝突なく定義されている"
+    },
+    "test_name": {
+    "type": "str",
+    "value": "test_phase11_plan_session_plan_is_consistent"
+    },
+    "test_action": {
+    "type": "enum[create,update,reuse]",
+    "value": "create"
+    }
+    },
+    {
+    "id": {
+    "type": "str",
+    "value": "AC-44-06"
+    },
+    "description": {
+    "type": "str",
+    "value": "out_of_scope にコード実装、runtime integration、Phase10成果物改変、推測による仕様補完が含まれる"
+    },
+    "test_name": {
+    "type": "str",
+    "value": "test_phase11_plan_out_of_scope_is_explicit"
+    },
+    "test_action": {
+    "type": "enum[create,update,reuse]",
+    "value": "create"
+    }
+    }
+    ]
+    },
+    "session_plan": {
+    "type": "list[object]",
+    "value": [
+    {
+    "session_id": {
+    "type": "str",
+    "value": "session-45"
+    },
+    "objective": {
+    "type": "str",
+    "value": "別案件または別仕様条件に対する Spec Builder の出力整合性を検証する"
+    },
+    "artifact_type": {
+    "type": "enum[session_json,acceptance_yaml,report_json,design_json]",
+    "value": "session_json"
+    },
+    "expected_artifacts": {
+    "type": "list[str]",
+    "value": [
+    "docs/sessions/session-45.json",
+    "docs/acceptance/session-45.yaml"
+    ]
+    }
+    },
+    {
+    "session_id": {
+    "type": "str",
+    "value": "session-46"
+    },
+    "objective": {
+    "type": "str",
+    "value": "別案件または別仕様条件に対する Spec Reviewer の判定整合性を検証する"
+    },
+    "artifact_type": {
+    "type": "enum[session_json,acceptance_yaml,report_json,design_json]",
+    "value": "session_json"
+    },
+    "expected_artifacts": {
+    "type": "list[str]",
+    "value": [
+    "docs/sessions/session-46.json",
+    "docs/acceptance/session-46.yaml"
+    ]
+    }
+    },
+    {
+    "session_id": {
+    "type": "str",
+    "value": "session-47"
+    },
+    "objective": {
+    "type": "str",
+    "value": "genericity_validation の結果を踏まえて runtime 統合入口条件を定義する"
+    },
+    "artifact_type": {
+    "type": "enum[session_json,acceptance_yaml,report_json,design_json]",
+    "value": "session_json"
+    },
+    "expected_artifacts": {
+    "type": "list[str]",
+    "value": [
+    "docs/sessions/session-47.json",
+    "docs/acceptance/session-47.yaml"
+    ]
+    }
+    }
+    ]
+    },
+    "risks": {
+    "type": "list[object]",
+    "value": [
+    {
+    "id": {
+    "type": "str",
+    "value": "R-44-01"
+    },
+    "level": {
+    "type": "enum[low,medium,high]",
+    "value": "high"
+    },
+    "summary": {
+    "type": "str",
+    "value": "session-40〜42a の詳細証跡が不足している場合、Phase11 設計に推測が混入するリスクがある"
+    },
+    "mitigation": {
+    "type": "str",
+    "value": "既知の事実だけを plan に含め、不明点は uncertainties として残す"
+    }
+    },
+    {
+    "id": {
+    "type": "str",
+    "value": "R-44-02"
+    },
+    "level": {
+    "type": "enum[low,medium,high]",
+    "value": "medium"
+    },
+    "summary": {
+    "type": "str",
+    "value": "Phase10 が conditional_completed のため、Phase11 の入口判断に慎重さが必要である"
+    },
+    "mitigation": {
+    "type": "str",
+    "value": "runtime integration には進まず、genericity_validation のみを扱う"
+    }
+    },
+    {
+    "id": {
+    "type": "str",
+    "value": "R-44-03"
+    },
+    "level": {
+    "type": "enum[low,medium,high]",
+    "value": "medium"
+    },
+    "summary": {
+    "type": "str",
+    "value": "Builder と Reviewer の検証観点が曖昧だと session-45〜47 の境界が崩れる"
+    },
+    "mitigation": {
+    "type": "str",
+    "value": "input_contracts と acceptance_criteria を先に固定する"
+    }
+    }
+    ]
+    },
+    "out_of_scope": {
+    "type": "list[str]",
+    "value": [
+    "runtime integration の実装",
+    "Python オーケストレーター本体の変更",
+    "provider 実装変更",
+    "backend/frontend のコード変更",
+    "Phase10 レポート3点の再編集",
+    "session-48 以降の詳細設計",
+    "未確認事実に基づく仕様補完"
+    ]
+    },
+    "uncertainties": {
+    "type": "list[object]",
+    "value": [
+    {
+    "id": {
+    "type": "str",
+    "value": "U-44-01"
+    },
+    "summary": {
+    "type": "str",
+    "value": "2案件目として何を使うかはこの plan では未確定である"
+    }
+    },
+    {
+    "id": {
+    "type": "str",
+    "value": "U-44-02"
+    },
+    "summary": {
+    "type": "str",
+    "value": "session-45〜47 の具体的 test 実装ファイル名はこの plan では未確定である"
+    }
+    }
+    ]
+    },
+    "completion_rule": {
+    "type": "str",
+    "value": "この plan は session-45〜47 の前提条件・入力契約・受入条件を曖昧語なしで固定した時点で completed とする"
+    }
+    }
