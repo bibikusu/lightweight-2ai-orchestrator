@@ -1,0 +1,128 @@
+{
+  "plan_type": "phase12_readiness_mini_roadmap",
+  "phase": "Phase12_preparation",
+  "current_state": {
+    "phase11_status": "completed",
+    "phase12_readiness_decision": "needs_more_validation",
+    "reviewed_sessions": [
+      "session-43",
+      "session-44",
+      "session-45",
+      "session-46",
+      "session-47"
+    ]
+  },
+  "missing_requirements": [
+    {
+      "id": "MR-01",
+      "type": "str",
+      "summary": "runtime 統合対象の最小スコープ（どの関数・どの処理を run_session.py に組み込むか）が未定義"
+    },
+    {
+      "id": "MR-02",
+      "type": "str",
+      "summary": "docs-only 成果物（session JSON / acceptance YAML）と runtime 実行処理の対応関係が未定義"
+    },
+    {
+      "id": "MR-03",
+      "type": "str",
+      "summary": "runtime 統合時の failure_type / retry 制御の適用ポイントが未定義"
+    },
+    {
+      "id": "MR-04",
+      "type": "str",
+      "summary": "既存 run_session.py に対する allowed_changes / forbidden_changes の粒度が未定義"
+    },
+    {
+      "id": "MR-05",
+      "type": "str",
+      "summary": "runtime 統合後の completion 判定（acceptance 実行と結果反映）の具体的フローが未定義"
+    }
+  ],
+  "decision": {
+    "need_additional_sessions": "bool",
+    "value": true,
+    "reason": "runtime 実装に入る前に、対象範囲・入出力契約・変更範囲を固定しないと scope 逸脱リスクが高い"
+  },
+  "session_plan": [
+    {
+      "session_id": "session-48",
+      "type": "docs_only",
+      "objective": "Phase12 runtime 統合の最小スコープ・対象関数・変更範囲（allowed_changes / forbidden_changes）を固定する",
+      "inputs": [
+        "docs/phase11_genericity_validation_plan.json",
+        "docs/sessions/session-47.json",
+        "orchestration/run_session.py"
+      ],
+      "outputs": [
+        "docs/phase12_runtime_scope_definition.json"
+      ],
+      "completion_criteria": [
+        "run_session.py に対する変更対象関数が列挙されている",
+        "allowed_changes / forbidden_changes がファイル・関数単位で固定されている",
+        "runtime 実装範囲が曖昧語なしで定義されている"
+      ]
+    },
+    {
+      "session_id": "session-49",
+      "type": "docs_only",
+      "objective": "docs-only 成果物（session JSON / acceptance YAML）と runtime 実行処理の入出力契約および実行フローを固定する",
+      "inputs": [
+        "docs/phase12_runtime_scope_definition.json",
+        "docs/sessions/session-45.json",
+        "docs/sessions/session-46.json",
+        "docs/sessions/session-47.json"
+      ],
+      "outputs": [
+        "docs/phase12_runtime_execution_contract.json"
+      ],
+      "completion_criteria": [
+        "session JSON の各フィールドが runtime 処理のどこで使用されるか定義されている",
+        "acceptance YAML の実行タイミングと評価方法が定義されている",
+        "failure_type / retry 制御の適用フローが定義されている"
+      ]
+    },
+    {
+      "session_id": "session-50",
+      "type": "docs_only",
+      "objective": "Phase12 runtime 統合実装の入口条件を確定し、実装セッション（session-51 以降）を開始可能な状態にする",
+      "inputs": [
+        "docs/phase12_runtime_scope_definition.json",
+        "docs/phase12_runtime_execution_contract.json"
+      ],
+      "outputs": [
+        "docs/phase12_runtime_readiness_decision.json"
+      ],
+      "completion_criteria": [
+        "runtime 実装に進むための条件が enum[ready,not_ready] で定義されている",
+        "未解決事項が存在する場合は not_ready として明示されている",
+        "session-51 以降の実装開始条件が曖昧語なしで定義されている"
+      ]
+    }
+  ],
+  "runtime_entry_conditions": {
+    "type": "object",
+    "schema": {
+      "scope_defined": "bool",
+      "execution_contract_defined": "bool",
+      "failure_handling_defined": "bool",
+      "change_scope_fixed": "bool"
+    },
+    "value": {
+      "scope_defined": false,
+      "execution_contract_defined": false,
+      "failure_handling_defined": false,
+      "change_scope_fixed": false
+    }
+  },
+  "minimum_requirements_for_phase12": [
+    "run_session.py に対する変更対象関数が明確であること",
+    "session JSON / acceptance YAML の runtime 使用方法が定義されていること",
+    "failure_type / retry の適用箇所が明確であること",
+    "変更範囲が allowed_changes / forbidden_changes として固定されていること"
+  ],
+  "next_action": {
+    "type": "str",
+    "value": "session-48 を実行し、runtime 統合のスコープ定義を確定する"
+  }
+}
