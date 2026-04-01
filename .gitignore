@@ -8,3 +8,4 @@ artifacts/
 .pycache_compileall/
 __pycache__/
 *.pyc
+backend/tests/test_live_api_validation.py
