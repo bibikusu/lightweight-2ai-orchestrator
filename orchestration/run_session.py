@@ -666,7 +666,7 @@ def _normalize_hunk_line_prefixes(text: str) -> str:
     hunk 内で +/-/スペース/\\ で始まらない行に + を補完する。
     Claude が def/class 等の行で + を省略した corrupt patch を修正する。
     """
-    _header = (
+    _HEADER = (
         "diff --git",
         "--- ",
         "+++ ",
@@ -679,7 +679,7 @@ def _normalize_hunk_line_prefixes(text: str) -> str:
     fixed: List[str] = []
     in_hunk = False
     for line in text.split("\n"):
-        if line.startswith(_header):
+        if line.startswith(_HEADER):
             in_hunk = False
             fixed.append(line)
         elif line.startswith("@@"):
