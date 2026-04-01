@@ -937,6 +937,46 @@ def build_skipped_checks_result() -> Dict[str, Any]:
     }
 
 
+def _is_read_only_live_run_outcome(ctx: SessionContext, impl_result: Dict[str, Any]) -> bool:
+    """
+    read-only live-run（変更対象が session 上も実装結果上も無い）かを判定する。
+    allowed_changes が空のセッションに限定し、code-fix での「実装不能」と read-only 成功を混同しない。
+    """
+    allowed = ctx.session_data.get("allowed_changes", [])
+    return bool(
+        impl_result.get("patch_status") == "not_applicable"
+        and impl_result.get("changed_files") == []
+        and not impl_result.get("proposed_patch")
+        and allowed == []
+    )
+
+
+def _build_check_results_for_read_only_live_run() -> Dict[str, Any]:
+    """read-only live-run: patch_apply は適用対象なしとして success、ローカル checks はすべて skipped。"""
+    sk: Dict[str, Any] = {
+        "status": "skipped",
+        "command": "",
+        "returncode": None,
+        "stdout": "",
+        "stderr": "",
+    }
+    return {
+        "patch_apply": {
+            "status": "not_applicable",
+            "command": "",
+            "returncode": None,
+            "stdout": "",
+            "stderr": "read-only live-run: proposed_patch なし・変更対象なしのため patch 適用をスキップ",
+        },
+        "test": dict(sk),
+        "lint": dict(sk),
+        "typecheck": dict(sk),
+        "build": dict(sk),
+        "success": True,
+        "patch_apply_failed": False,
+    }
+
+
 def _build_check_results_for_patch_apply_failure(patch_apply_message: str) -> Dict[str, Any]:
     """proposed_patch があるが git apply 相当で実差分が得られなかった場合の checks（以降の pytest 等は実行しない）。"""
     sk: Dict[str, Any] = {
@@ -978,6 +1018,20 @@ def _apply_patch_validate_and_run_local_checks(
     patch 適用 → changed_files 反映 → 妥当性検証 → ローカル checks。
     patch 未適用が明白な場合は checks をスキップし patch_apply_failure 用の結果を返す。
     """
+    if _is_read_only_live_run_outcome(ctx, impl_result):
+        impl_result["changed_files"] = []
+        impl_result["diff_summary"] = "changed_files: 0 files (read-only live-run)"
+        save_json(session_dir / "responses" / "implementation_result.json", impl_result)
+        check_results = _build_check_results_for_read_only_live_run()
+        save_json(session_dir / "test_results" / "checks.json", check_results)
+        log_stage_progress(
+            session_id,
+            "patch_apply",
+            (retry_label + " " if retry_label else "")
+            + "read-only live-run: patch 適用スキップ",
+        )
+        return check_results
+
     patch_info = apply_proposed_patch_and_capture_artifacts(
         session_dir=session_dir,
         impl_result=impl_result,
