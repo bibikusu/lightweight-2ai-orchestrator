@@ -1,0 +1,24 @@
+{
+  "session_id": "session-75",
+  "status": "completed_with_process_note",
+  "changed_files": [
+    "docs/sessions/session-75.json",
+    "docs/sessions/live-run-safe-04.json",
+    "docs/acceptance/live-run-safe-04.yaml"
+  ],
+  "test_result": "not_applicable_docs_only",
+  "lint_result": "not_applicable_docs_only",
+  "typecheck_result": "not_applicable_docs_only",
+  "build_result": "not_applicable_docs_only",
+  "acceptance_results": [
+    "AC-75-01 passed",
+    "AC-75-02 passed",
+    "AC-75-03 passed",
+    "AC-75-04 passed"
+  ],
+  "risks": [
+    "session-75 docs were committed directly on main before sandbox merge flow"
+  ],
+  "open_issues": [],
+  "diff_summary": "safe live-run spec set added and syntax-validated"
+}
