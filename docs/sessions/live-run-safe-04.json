@@ -1,0 +1,70 @@
+{
+  "session_id": "live-run-safe-04",
+  "phase_id": "phase-success-reproduction",
+  "title": "safe live-run再現実行テンプレ",
+  "goal": "session-71〜74の正規化後に、安全な条件下でlive-run再現を行う",
+  "objective": "live-run reproducibility verification",
+  "scope": [
+    "run_session.py execution",
+    "Claude implementation call",
+    "patch validation",
+    "test execution verification"
+  ],
+  "out_of_scope": [
+    "code modification",
+    "test modification",
+    "retry redesign",
+    "provider changes"
+  ],
+  "constraints": [
+    "read-only execution",
+    "no code changes allowed",
+    "no test changes allowed",
+    "must run in sandbox branch",
+    "failure must not auto-retry",
+    "human approval required before execution"
+  ],
+  "allowed_changes": [],
+  "allowed_changes_detail": [],
+  "forbidden_changes": [
+    "orchestration/",
+    "backend/tests/",
+    "docs/",
+    ".gitignore",
+    "config.yaml"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-LR-01",
+      "type": "execution",
+      "condition": "run_session executes without crash"
+    },
+    {
+      "id": "CC-LR-02",
+      "type": "validation",
+      "condition": "Claude response is validated by guard"
+    },
+    {
+      "id": "CC-LR-03",
+      "type": "validation",
+      "condition": "patch validation completes"
+    },
+    {
+      "id": "CC-LR-04",
+      "type": "verification",
+      "condition": "pytest runs and outputs result"
+    }
+  ],
+  "acceptance_criteria": [
+    "AC-75-01",
+    "AC-75-02",
+    "AC-75-03",
+    "AC-75-04"
+  ],
+  "review_points": [
+    "再現性",
+    "安全性",
+    "副作用なし",
+    "仕様一致"
+  ]
+}

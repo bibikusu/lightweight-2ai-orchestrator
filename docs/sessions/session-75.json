@@ -1,0 +1,90 @@
+{
+  "session_id": "session-75",
+  "phase_id": "phase-success-reproduction",
+  "title": "safe live-run再現仕様の固定",
+  "goal": "session-71からsession-74までの正規化後に、限定条件付き live-run 再現手順を docs-only で固定し、安全に再実行できる状態を作る",
+  "objective": "safe live-run specification freeze",
+  "scope": [
+    "safe live-run session spec",
+    "success and failure path definition",
+    "manual verification procedure",
+    "docs-only reproducibility"
+  ],
+  "out_of_scope": [
+    "run_session.py changes",
+    "patch_apply logic",
+    "system prompt changes",
+    "test implementation changes",
+    "Claude API guard changes",
+    "retry logic changes",
+    "actual live-run execution"
+  ],
+  "constraints": [
+    "one session one purpose",
+    "docs-only session",
+    "no code changes allowed",
+    "no test changes allowed",
+    "live-run must not be executed in this session",
+    "must remain consistent with existing session schema",
+    "human merge decision required"
+  ],
+  "allowed_changes": [
+    "docs/sessions/live-run-safe-04.json",
+    "docs/acceptance/live-run-safe-04.yaml"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/live-run-safe-04.json: add safe live-run reproduction spec only",
+    "docs/acceptance/live-run-safe-04.yaml: add acceptance and manual verification procedure only"
+  ],
+  "forbidden_changes": [
+    "orchestration/",
+    "backend/tests/",
+    ".gitignore",
+    "config.yaml",
+    "provider implementation changes",
+    "actual live-run execution"
+  ],
+  "implementation_notes": [
+    "■ 最重要禁止事項",
+    "この session は docs-only である。",
+    "コード変更・テスト変更は一切行わない。",
+    "actual live-run execution はこの session では実行しない。",
+    "provider 実装変更が必要なら停止して別 session に分離する。",
+    "run_session.py の変更が必要なら停止して別 session に分離する。"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-75-01",
+      "type": "consistency",
+      "condition": "safe live-run reproduction spec is fixed as docs and remains schema-consistent"
+    },
+    {
+      "id": "CC-75-02",
+      "type": "consistency",
+      "condition": "acceptance defines both success and failure verification paths explicitly"
+    },
+    {
+      "id": "CC-75-03",
+      "type": "side_effect_free",
+      "condition": "no code or test files are changed"
+    },
+    {
+      "id": "CC-75-04",
+      "type": "side_effect_free",
+      "condition": "changed_files are limited to allowed_changes only"
+    }
+  ],
+  "acceptance_criteria": [
+    "AC-75-01",
+    "AC-75-02",
+    "AC-75-03",
+    "AC-75-04"
+  ],
+  "review_points": [
+    "仕様一致",
+    "変更範囲遵守",
+    "副作用なし",
+    "実装過不足なし"
+  ],
+  "acceptance_ref": "docs/acceptance/live-run-safe-04.yaml"
+}

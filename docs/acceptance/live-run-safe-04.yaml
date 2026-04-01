@@ -1,0 +1,52 @@
+session_id: session-75
+
+acceptance:
+  - id: AC-75-01
+    description: live-run specに対象sessionと停止条件が明記されている
+    test_name: manual_check_live_run_spec_scope_and_stop_conditions
+
+  - id: AC-75-02
+    description: acceptanceにsuccess pathとfailure pathの両方が明記されている
+    test_name: manual_check_live_run_acceptance_success_and_failure_paths
+
+  - id: AC-75-03
+    description: このsessionではactual live-run executionを行わないことが明記されている
+    test_name: manual_check_no_live_run_execution_clause
+
+  - id: AC-75-04
+    description: changed_filesがallowed_changes内のみ
+    test_name: manual_check_changed_files_docs_only
+
+required_checks:
+  - name: json_valid
+    command: python3 -m json.tool docs/sessions/live-run-safe-04.json > /dev/null
+    expected: pass
+
+  - name: yaml_structure
+    command: |
+      python3 - <<'PY'
+      import yaml
+      with open('docs/acceptance/live-run-safe-04.yaml', 'r', encoding='utf-8') as f:
+          yaml.safe_load(f)
+      print('YAML OK')
+      PY
+    expected: pass
+
+changed_files_rule:
+  allowed_only:
+    - docs/sessions/live-run-safe-04.json
+    - docs/acceptance/live-run-safe-04.yaml
+
+manual_verification:
+  success_path:
+    - session-71 completed and approved
+    - session-72 completed and approved
+    - session-73 completed and approved
+    - session-74 completed and approved
+    - safe live-run spec reviewed by human before any execution
+
+  failure_path:
+    - if scope ambiguity remains, stop and report
+    - if live-run requires code changes, stop and split into another session
+    - if provider changes are needed, stop and report
+    - if actual execution is attempted in this session, treat as scope violation
