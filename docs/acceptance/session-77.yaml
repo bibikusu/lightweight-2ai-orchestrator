@@ -1,0 +1,44 @@
+session_id: session-77
+
+acceptance:
+  - id: AC-77-01
+    description: patch_status=not_applicable かつ changed_files=[] かつ proposed_patch=null の read-only outcome が patch_apply_failure にならない
+    test_name: test_read_only_live_run_not_marked_as_patch_apply_failure
+
+  - id: AC-77-02
+    description: valid read-only live-run outcome では retry_instruction が生成されず implementation_retry に進まない
+    test_name: test_read_only_live_run_does_not_trigger_retry
+
+  - id: AC-77-03
+    description: report.json と session_report.json が read-only live-run outcome を failed ではなく整合した完了状態で出力する
+    test_name: test_read_only_live_run_reports_consistent_non_failed_status
+
+  - id: AC-77-04
+    description: 通常の code-fix session の patch_apply 挙動は既存どおり維持される
+    test_name: test_normal_code_fix_sessions_still_require_patch_apply
+
+  - id: AC-77-05
+    description: changed_files が allowed_changes 内のみ
+    test_name: manual_check_changed_files
+
+required_checks:
+  - name: ruff
+    command: .venv/bin/ruff check .
+    expected: pass
+
+  - name: pytest
+    command: PYTHONPATH=. .venv/bin/pytest backend/tests/ -q
+    expected: pass
+
+  - name: mypy
+    command: PYTHONPATH=. .venv/bin/python -m mypy --explicit-package-bases orchestration --ignore-missing-imports
+    expected: pass
+
+  - name: compileall
+    command: PYTHONPYCACHEPREFIX=./.pycache_compileall python3 -m compileall -q -f orchestration backend
+    expected: pass
+
+changed_files_rule:
+  allowed_only:
+    - orchestration/run_session.py
+    - backend/tests/test_read_only_live_run_handling.py
