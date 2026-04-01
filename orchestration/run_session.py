@@ -2178,6 +2178,14 @@ _IMPL_BLOCKING_KEYS = (
     "implementation_summary",
     "proposed_patch",
 )
+_PATCH_STATUS_ALIASES: dict[str, str] = {
+    "no_patch_required": "not_applicable",
+    "none": "not_applicable",
+    "no_changes": "not_applicable",
+    "skip": "not_applicable",
+    "skipped": "not_applicable",
+}
+
 _VALID_PATCH_STATUSES = frozenset(
     {"applied", "partial", "not_applicable", "dry_run"}
 )
@@ -2206,6 +2214,13 @@ def validate_impl_result(result: dict) -> None:
         logger.warning(
             "validate_impl_result: session_id is missing from implementation result"
         )
+
+    # patch_status 正規化（非正規値を正規値へ変換）
+    raw_status = result.get("patch_status", "")
+    normalized = _PATCH_STATUS_ALIASES.get(raw_status, raw_status)
+    if normalized != raw_status:
+        logger.info("patch_status normalized: '%s' -> '%s'", raw_status, normalized)
+        result["patch_status"] = normalized
 
     # patch_status 検証（warning のみ）
     if "patch_status" not in result:
