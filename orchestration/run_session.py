@@ -2096,6 +2096,69 @@ def persist_session_reports(
     save_json(session_dir / "report.json", payload)
 
 
+_IMPL_BLOCKING_KEYS = (
+    "changed_files",
+    "implementation_summary",
+    "proposed_patch",
+)
+_VALID_PATCH_STATUSES = frozenset(
+    {"applied", "partial", "not_applicable", "dry_run"}
+)
+
+
+def validate_impl_result(result: dict) -> None:
+    """Claude 実装応答の必須キー存在を検証する。
+
+    blocking（ValueError）:
+        - changed_files / implementation_summary / proposed_patch が欠落の場合
+    warning のみ（raise しない）:
+        - session_id が欠落の場合
+        - patch_status が欠落または有効値以外の場合
+        - changed_files が list でない場合
+        - implementation_summary が list でも str でもない場合
+    """
+    # blocking 必須キー存在確認
+    for key in _IMPL_BLOCKING_KEYS:
+        if key not in result:
+            raise ValueError(
+                f"Claude implementation result missing required key: '{key}'"
+            )
+
+    # session_id 欠落（warning のみ）
+    if "session_id" not in result:
+        logger.warning(
+            "validate_impl_result: session_id is missing from implementation result"
+        )
+
+    # patch_status 検証（warning のみ）
+    if "patch_status" not in result:
+        logger.warning(
+            "validate_impl_result: patch_status is missing from implementation result"
+        )
+    elif result["patch_status"] not in _VALID_PATCH_STATUSES:
+        logger.warning(
+            "validate_impl_result: invalid patch_status '%s'. "
+            "Expected one of: %s",
+            result["patch_status"],
+            sorted(_VALID_PATCH_STATUSES),
+        )
+
+    # 型チェック（warning のみ）
+    changed_files = result["changed_files"]
+    if not isinstance(changed_files, list):
+        logger.warning(
+            "validate_impl_result: changed_files is not a list (got %s)",
+            type(changed_files).__name__,
+        )
+
+    impl_summary = result["implementation_summary"]
+    if not isinstance(impl_summary, (list, str)):
+        logger.warning(
+            "validate_impl_result: implementation_summary is not list or str (got %s)",
+            type(impl_summary).__name__,
+        )
+
+
 def call_claude_for_implementation(
     prepared_spec: Dict[str, Any],
     ctx: SessionContext,
@@ -2392,6 +2455,7 @@ def main() -> int:
         stage = "implementation"
         log_stage_progress(args.session_id, stage, "Claude（実装案）呼び出し開始")
         impl_result = call_claude_for_implementation(prepared_spec, ctx, None)
+        validate_impl_result(impl_result)
         save_json(session_dir / "responses" / "implementation_result.json", impl_result)
 
         stage = "patch_apply"
@@ -2516,6 +2580,7 @@ def main() -> int:
             impl_result = call_claude_for_implementation(
                 prepared_spec, ctx, retry_instruction
             )
+            validate_impl_result(impl_result)
             save_json(
                 session_dir / "responses" / "implementation_result.json",
                 impl_result,
