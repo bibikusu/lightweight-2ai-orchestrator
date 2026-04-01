@@ -1,0 +1,94 @@
+{
+  "session_id": "session-67",
+  "phase_id": "phase-runtime-stabilization",
+  "title": "session-57 の live-run を検証し failure metadata と既知リスクを切り分ける",
+  "goal": "session-57 を live-run で再実行し、report.json に failure_type と failure metadata が正しく出力されることを確認し、失敗時は session-66 起因か既知リスク起因かを分類できるようにする",
+  "objective": "live-run 完走確認と failure metadata 検証",
+  "scope": [
+    "session-57 live-run execution",
+    "artifacts/session-57/report.json verification",
+    "failure metadata presence verification",
+    "live-run failure cause triage"
+  ],
+  "out_of_scope": [
+    "runtime code changes",
+    "provider changes",
+    "retry loop redesign",
+    "report schema redesign",
+    "patch application format redesign",
+    "session-66 implementation changes",
+    "docs/global_rules.md changes",
+    "docs/master_instruction.md changes"
+  ],
+  "constraints": [
+    "one session one purpose",
+    "this session is verification-only unless a separate repair session is explicitly created",
+    "no source code changes are allowed in this session",
+    "live-run must be executed on sandbox/session-67-liverun",
+    "existing untracked file backend/tests/test_live_api_validation.py must not be treated as a session-67 change",
+    "human merge decision remains required"
+  ],
+  "inputs": [
+    "merged main including session-66",
+    "session-57 execution target",
+    "artifacts/session-57/report.json",
+    "known live-run risks list"
+  ],
+  "outputs": [
+    "live-run result for session-57",
+    "report.json verification result",
+    "failure cause classification as A/B/C",
+    "session-67 verification summary"
+  ],
+  "allowed_changes": [],
+  "allowed_changes_detail": [],
+  "forbidden_changes": [
+    "orchestration/run_session.py",
+    "orchestration/providers/",
+    "backend/tests/",
+    "docs/master_instruction.md",
+    "docs/global_rules.md",
+    "config.yaml",
+    "any source code modification"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-67-01",
+      "type": "artifact",
+      "condition": "session-57 live-run is executed and artifacts/session-57/report.json is generated"
+    },
+    {
+      "id": "CC-67-02",
+      "type": "artifact",
+      "condition": "report.json is checked for failure_layer, stop_stage, retryable, cause_summary, and top-level failure_type"
+    },
+    {
+      "id": "CC-67-03",
+      "type": "document_rule",
+      "condition": "if live-run fails, the cause is classified as A session-66 origin, B known-risk origin, or C new cause"
+    },
+    {
+      "id": "CC-67-04",
+      "type": "side_effect_free",
+      "condition": "no source code files are changed in this session"
+    }
+  ],
+  "acceptance_criteria": [
+    "AC-67-01",
+    "AC-67-02",
+    "AC-67-03",
+    "AC-67-04"
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "実装過不足なし"
+  ],
+  "acceptance_ref": "docs/acceptance/session-67.yaml",
+  "merge_requirements": [
+    "git diff --name-only must be empty for tracked source files",
+    "report.json must exist",
+    "verification summary must include A/B/C classification when live-run fails"
+  ]
+}

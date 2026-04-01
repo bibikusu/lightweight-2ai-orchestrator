@@ -1,0 +1,52 @@
+session_id: session-67
+
+acceptance:
+  - id: AC-67-01
+    description: session-57 の live-run を実行し report.json が生成される
+    test_name: manual_check_live_run_generated_report_json
+
+  - id: AC-67-02
+    description: report.json に failure_layer / stop_stage / retryable / cause_summary / failure_type が確認できる
+    test_name: manual_check_report_contains_failure_metadata
+
+  - id: AC-67-03
+    description: live-run 失敗時に原因を A/B/C のいずれかへ分類できる
+    test_name: manual_check_live_run_failure_is_triaged
+
+  - id: AC-67-04
+    description: このセッションで source code 変更がない
+    test_name: manual_check_no_source_code_changed
+
+required_checks:
+  - name: live_run
+    command: PYTHONPATH=. .venv/bin/python orchestration/run_session.py --session-id session-57
+    expected: executed
+
+  - name: report_json_exists
+    command: test -f artifacts/session-57/report.json
+    expected: pass
+
+  - name: report_json_preview
+    command: cat artifacts/session-57/report.json | python3 -m json.tool | head -120
+    expected: pass
+
+changed_files_rule:
+  allowed_only: []
+
+non_functional_requirements:
+  - no source code modification is allowed
+  - existing untracked file backend/tests/test_live_api_validation.py must remain untouched
+  - verification must be executed on sandbox/session-67-liverun
+  - failure triage must use A/B/C categories only
+
+completion_judgement:
+  pass_conditions:
+    - all acceptance items pass
+    - all required_checks pass
+    - no source code files are changed
+
+  fail_conditions:
+    - report.json is not generated
+    - required failure metadata is missing from report.json
+    - live-run failure is not classified as A or B or C
+    - any source code file is changed
