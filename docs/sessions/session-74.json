@@ -1,0 +1,103 @@
+{
+  "session_id": "session-74",
+  "phase_id": "phase-success-reproduction",
+  "title": "失敗証跡保存の正規取り込み",
+  "goal": "Claude応答ガード失敗時の raw response と failure reason を標準保存し、失敗runの原因追跡を main 上で再現可能にする",
+  "objective": "failure artifact persistence normalization",
+  "scope": [
+    "guard failure artifact persistence",
+    "raw implementation response persistence",
+    "machine-readable failure reason persistence",
+    "failure path observability only"
+  ],
+  "out_of_scope": [
+    "prompt generation changes",
+    "session-57 spec changes",
+    "retry redesign",
+    "patch_apply logic changes",
+    "provider implementation changes",
+    ".gitignore changes",
+    "live-run execution"
+  ],
+  "constraints": [
+    "one session one purpose",
+    "artifact persistence logic must be contained in orchestration/run_session.py",
+    "claude_client.py must not be modified",
+    "existing successful flow must remain backward compatible",
+    "failure artifacts must be machine-readable",
+    "human merge decision required"
+  ],
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "backend/tests/test_failure_artifact_persistence.py"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/run_session.py: persist guard failure artifacts only",
+    "backend/tests/test_failure_artifact_persistence.py: add regression tests for failure artifact persistence"
+  ],
+  "forbidden_changes": [
+    "docs/",
+    ".gitignore",
+    "config.yaml",
+    "orchestration/providers/",
+    "backend/tests/test_live_api_validation.py",
+    "backend/tests/test_report_generation.py",
+    "backend/tests/test_retry_cause_deduplication.py",
+    "backend/tests/test_retry_count_control.py",
+    "backend/tests/test_retry_loop_execution.py",
+    "backend/tests/test_run_session_builder_integration.py",
+    "backend/tests/test_run_session_phase12_e2e.py",
+    "backend/tests/test_run_session_reviewer_retry_integration.py",
+    "backend/tests/test_single_retry_limit.py",
+    "backend/tests/test_run_session_patch_apply.py",
+    "backend/tests/test_run_session_patch_apply_failures.py",
+    "backend/tests/test_run_session_patch_apply_validation.py",
+    "retry redesign",
+    "patch_apply redesign",
+    "unrelated test fixes"
+  ],
+  "implementation_notes": [
+    "■ 最重要禁止事項",
+    "既存テストファイルは一切変更しない。",
+    "session-74 用の新規テストは backend/tests/test_failure_artifact_persistence.py のみに書く。",
+    "raw implementation response と failure reason の保存のみを対象にする。",
+    "成功時フローの挙動変更は禁止。",
+    "retry ロジックの変更は禁止。",
+    "patch_apply ロジックの変更は禁止。"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-74-01",
+      "type": "observability",
+      "condition": "raw Claude implementation response is persisted when guard validation fails"
+    },
+    {
+      "id": "CC-74-02",
+      "type": "observability",
+      "condition": "failure reason is persisted in machine-readable form when guard validation fails"
+    },
+    {
+      "id": "CC-74-03",
+      "type": "non_regression",
+      "condition": "successful runs remain unchanged by failure artifact persistence logic"
+    },
+    {
+      "id": "CC-74-04",
+      "type": "side_effect_free",
+      "condition": "changed_files are limited to allowed_changes only"
+    }
+  ],
+  "acceptance_criteria": [
+    "AC-74-01",
+    "AC-74-02",
+    "AC-74-03",
+    "AC-74-04"
+  ],
+  "review_points": [
+    "仕様一致",
+    "変更範囲遵守",
+    "副作用なし",
+    "実装過不足なし"
+  ],
+  "acceptance_ref": "docs/acceptance/session-74.yaml"
+}

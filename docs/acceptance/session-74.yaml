@@ -1,0 +1,40 @@
+session_id: session-74
+
+acceptance:
+  - id: AC-74-01
+    description: Claude応答ガード失敗時にraw implementation responseが保存される
+    test_name: test_guard_failure_persists_raw_impl_response
+
+  - id: AC-74-02
+    description: Claude応答ガード失敗時にfailure reasonがJSONで保存される
+    test_name: test_guard_failure_persists_failure_reason_json
+
+  - id: AC-74-03
+    description: 成功時フローは既存挙動を壊さない
+    test_name: test_success_flow_unchanged_with_failure_artifact_logic
+
+  - id: AC-74-04
+    description: changed_filesがallowed_changes内のみ
+    test_name: manual_check_changed_files
+
+required_checks:
+  - name: ruff
+    command: .venv/bin/ruff check .
+    expected: pass
+
+  - name: pytest
+    command: PYTHONPATH=. .venv/bin/pytest backend/tests/ -q
+    expected: pass
+
+  - name: mypy
+    command: PYTHONPATH=. .venv/bin/python -m mypy --explicit-package-bases orchestration --ignore-missing-imports
+    expected: pass
+
+  - name: compileall
+    command: PYTHONPYCACHEPREFIX=./.pycache_compileall python3 -m compileall -q -f orchestration backend
+    expected: pass
+
+changed_files_rule:
+  allowed_only:
+    - orchestration/run_session.py
+    - backend/tests/test_failure_artifact_persistence.py
