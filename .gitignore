@@ -2,3 +2,9 @@
 lightweight_2ai_orchestrator.egg-info/
 *.code-workspace
 docs/files.zip
+.DS_Store
+.venv/
+artifacts/
+.pycache_compileall/
+__pycache__/
+*.pyc
