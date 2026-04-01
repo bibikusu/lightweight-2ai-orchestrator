@@ -1,0 +1,20 @@
+{
+  "session_id": "session-65",
+  "phase_id": "phase-runtime-improvement",
+  "title": "failure classification refinement",
+  "goal": "failure を orchestrator と generated artifact に分離する",
+  "scope": [
+    "failure classification",
+    "report metadata improvement"
+  ],
+  "out_of_scope": [
+    "patch 修復機能追加",
+    "batch 承認",
+    "queue 制御"
+  ],
+  "constraints": [
+    "v1 の挙動を壊さない",
+    "run_session.py 内に限定"
+  ],
+  "acceptance_ref": "docs/acceptance/session-65.yaml"
+}

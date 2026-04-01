@@ -1,0 +1,21 @@
+session_id: session-65
+acceptance:
+  - id: AC-65-01
+    description: git apply --check または git apply の失敗が patch_apply_failure として分類される
+    test_name: test_patch_apply_failure_classification
+
+  - id: AC-65-02
+    description: 生成された Python ファイルまたはテストファイルの SyntaxError が generated_artifact_invalid として分類される
+    test_name: test_generated_artifact_invalid_classification
+
+  - id: AC-65-03
+    description: 純粋な pytest assertion failure は test_failure として維持される
+    test_name: test_pytest_failure_classification
+
+  - id: AC-65-04
+    description: report.json に failure_layer, stop_stage, retryable, cause_summary が含まれる
+    test_name: test_report_contains_failure_metadata
+
+  - id: AC-65-05
+    description: patch 未適用が明白な場合に不要な後続処理を継続しない
+    test_name: test_run_stops_after_patch_apply_failure
