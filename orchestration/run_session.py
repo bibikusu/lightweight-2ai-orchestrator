@@ -2096,6 +2096,29 @@ def persist_session_reports(
     save_json(session_dir / "report.json", payload)
 
 
+def _persist_guard_failure_artifacts(
+    session_dir: Path,
+    impl_result: Dict[str, Any],
+    error: Exception,
+    stage: str,
+) -> None:
+    """validate_impl_result 失敗時に raw response と failure reason を保存する。"""
+    responses_dir = session_dir / "responses"
+    try:
+        save_json(responses_dir / "guard_failure_raw_response.json", impl_result)
+        save_json(
+            responses_dir / "guard_failure_reason.json",
+            {
+                "error_type": type(error).__name__,
+                "message": str(error),
+                "stage": stage,
+            },
+        )
+        logger.info("Guard failure artifacts persisted under: %s", responses_dir)
+    except Exception as persist_err:
+        logger.warning("Failed to persist guard failure artifacts: %s", persist_err)
+
+
 _IMPL_BLOCKING_KEYS = (
     "changed_files",
     "implementation_summary",
@@ -2455,7 +2478,11 @@ def main() -> int:
         stage = "implementation"
         log_stage_progress(args.session_id, stage, "Claude（実装案）呼び出し開始")
         impl_result = call_claude_for_implementation(prepared_spec, ctx, None)
-        validate_impl_result(impl_result)
+        try:
+            validate_impl_result(impl_result)
+        except ValueError as guard_err:
+            _persist_guard_failure_artifacts(session_dir, impl_result, guard_err, stage)
+            raise
         save_json(session_dir / "responses" / "implementation_result.json", impl_result)
 
         stage = "patch_apply"
@@ -2580,7 +2607,11 @@ def main() -> int:
             impl_result = call_claude_for_implementation(
                 prepared_spec, ctx, retry_instruction
             )
-            validate_impl_result(impl_result)
+            try:
+                validate_impl_result(impl_result)
+            except ValueError as guard_err:
+                _persist_guard_failure_artifacts(session_dir, impl_result, guard_err, stage)
+                raise
             save_json(
                 session_dir / "responses" / "implementation_result.json",
                 impl_result,
