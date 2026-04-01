@@ -7,6 +7,7 @@ import argparse
 import json
 import logging
 import os
+import re
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -327,6 +328,43 @@ def _extract_proposed_patch_text(impl_result: Dict[str, Any]) -> str:
         return str(raw)
 
 
+def normalize_patch_for_git_apply(raw_patch: str) -> str:
+    """
+    git apply 前に patch 文字列を正規化する。
+    - ```diff / ```patch フェンスを除去
+    - CRLF/CR を LF に統一
+    - ---/+++ があるのに diff --git が無い塊へヘッダ補完
+    - 末尾改行を保証
+    """
+    text = str(raw_patch or "")
+    fenced = re.search(r"```(?:diff|patch)?\s*(.*?)```", text, flags=re.DOTALL)
+    if fenced:
+        text = fenced.group(1)
+    text = text.replace("\r\n", "\n").replace("\r", "\n").strip("\n")
+    if not text:
+        return ""
+
+    lines = text.split("\n")
+    out: List[str] = []
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        if line.startswith("--- ") and i + 1 < len(lines) and lines[i + 1].startswith("+++ "):
+            old_file = line.split(maxsplit=1)[1].strip()
+            new_file = lines[i + 1].split(maxsplit=1)[1].strip()
+            if not out or not out[-1].startswith("diff --git "):
+                old_git = old_file if old_file.startswith(("a/", "b/", "/dev/null")) else f"a/{old_file}"
+                new_git = new_file if new_file.startswith(("a/", "b/", "/dev/null")) else f"b/{new_file}"
+                out.append(f"diff --git {old_git} {new_git}")
+            out.append(line)
+            out.append(lines[i + 1])
+            i += 2
+            continue
+        out.append(line)
+        i += 1
+    return "\n".join(out).strip() + "\n"
+
+
 def _expected_existing_files_from_patch(patch_text: str) -> List[str]:
     """
     proposed_patch（unified diff 想定）から「適用後に存在すべきファイル」を推定する。
@@ -358,7 +396,7 @@ def _apply_proposed_patch_and_capture_artifacts_with_artifacts(
     implementation_result.proposed_patch を実ファイルへ適用し、artifact を保存する。
     返り値は impl_result へ追記可能なメタ情報（diff_summary 等）を返す。
     """
-    patch_text = _extract_proposed_patch_text(impl_result)
+    patch_text = normalize_patch_for_git_apply(_extract_proposed_patch_text(impl_result))
     patches_dir = session_dir / "patches"
     patch_path = patches_dir / "proposed_patch.diff"
     save_text(patch_path, patch_text)
@@ -736,7 +774,7 @@ def apply_proposed_patch_and_capture_artifacts(
     raw_patch = impl_result.get("proposed_patch", "")
     if not isinstance(raw_patch, str):
         raw_patch = str(raw_patch)
-    patch_text = raw_patch
+    patch_text = normalize_patch_for_git_apply(raw_patch)
 
     patch_path = patch_dir / "proposed.patch"
     save_text(patch_path, patch_text)

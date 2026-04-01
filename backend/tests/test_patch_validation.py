@@ -3,6 +3,7 @@
 import pytest
 
 from orchestration.run_session import (
+    normalize_patch_for_git_apply,
     validate_changed_files_before_patch,
     validate_patch_files,
 )
@@ -58,3 +59,42 @@ def test_patch_validation_blocks_artifacts_path_without_explicit_allow():
             session_data=session_data,
             max_changed_files=5,
         )
+
+
+def test_patch_normalization_handles_malformed_patch_structure():
+    """AC-68-01: markdown フェンス付き patch を git apply 互換に整える。"""
+    malformed = """```diff
+--- a/sample.txt
++++ b/sample.txt
+@@ -1 +1 @@
+-old
++new
+```"""
+    normalized = normalize_patch_for_git_apply(malformed)
+    assert normalized.startswith("diff --git a/sample.txt b/sample.txt\n")
+    assert "--- a/sample.txt\n+++ b/sample.txt\n" in normalized
+    assert normalized.endswith("\n")
+
+
+def test_retry_patch_uses_same_normalization_rules():
+    """AC-68-02: 初回/リトライで同じ正規化結果になる。"""
+    raw = "--- a/a.txt\r\n+++ b/a.txt\r\n@@ -1 +1 @@\r\n-a\r\n+b\r\n"
+    first = normalize_patch_for_git_apply(raw)
+    retry = normalize_patch_for_git_apply(raw)
+    assert first == retry
+    assert first.startswith("diff --git a/a.txt b/a.txt\n")
+
+
+def test_patch_normalization_handles_missing_diff_header():
+    """AC-68-03: diff ヘッダ不足時に補完される。"""
+    raw = "--- old.py\n+++ new.py\n@@ -1 +1 @@\n-print('x')\n+print('y')\n"
+    normalized = normalize_patch_for_git_apply(raw)
+    assert normalized.startswith("diff --git a/old.py b/new.py\n")
+    assert "@@ -1 +1 @@" in normalized
+
+
+def test_existing_patch_validation_behavior_remains_unchanged_after_normalization():
+    """AC-68-04: 既存の changed_files バリデーション挙動は維持。"""
+    result = validate_patch_files(["docs/sessions/test.json"])
+    assert result["status"] == "error"
+    assert result["error_type"] == "scope_violation"
