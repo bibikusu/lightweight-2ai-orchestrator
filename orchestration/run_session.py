@@ -7,6 +7,7 @@ import argparse
 import json
 import logging
 import os
+import re
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -623,6 +624,33 @@ def validate_changed_files_before_patch(
                     )
 
 
+def _fix_patch_for_new_files(patch_path: Path, repo_root: Path) -> None:
+    """Rewrite patch hunks that target non-existent files to use /dev/null format."""
+    text = patch_path.read_text(encoding="utf-8", errors="replace")
+    lines = text.split("\n")
+    fixed: list[str] = []
+    i = 0
+    while i < len(lines):
+        # Detect "--- a/some/path" line
+        if lines[i].startswith("--- a/") and i + 1 < len(lines) and lines[i + 1].startswith("+++ b/"):
+            old_path = lines[i][len("--- a/") :]
+            full_path = repo_root / old_path
+            if not full_path.exists():
+                # File doesn't exist: rewrite to new-file format
+                fixed.append("--- /dev/null")
+                fixed.append(lines[i + 1])  # keep +++ b/path as-is
+                i += 2
+                # Fix the hunk header: change @@ -X,Y to @@ -0,0
+                if i < len(lines) and lines[i].startswith("@@"):
+                    hunk = re.sub(r"@@ -\d+,\d+", "@@ -0,0", lines[i])
+                    fixed.append(hunk)
+                    i += 1
+                continue
+        fixed.append(lines[i])
+        i += 1
+    patch_path.write_text("\n".join(fixed), encoding="utf-8")
+
+
 def apply_proposed_patch_and_capture_artifacts(
     session_dir: Path,
     impl_result: Dict[str, Any],
@@ -690,7 +718,10 @@ def apply_proposed_patch_and_capture_artifacts(
             "changed_files": changed,
         }
 
-    check_proc = _git_run(["apply", "--check", str(patch_path)])
+    # パッチ前処理: 存在しないファイルへの diff を新規ファイル形式に変換
+    _fix_patch_for_new_files(patch_path, ROOT_DIR)
+
+    check_proc = _git_run(["apply", "--check", "--whitespace=fix", str(patch_path)])
     if check_proc.returncode != 0:
         patch_check_warning = (check_proc.stderr or "").strip()
         logger.warning(
@@ -698,7 +729,7 @@ def apply_proposed_patch_and_capture_artifacts(
             patch_check_warning,
         )
 
-    apply_proc = _git_run(["apply", str(patch_path)])
+    apply_proc = _git_run(["apply", "--whitespace=fix", str(patch_path)])
     if apply_proc.returncode != 0:
         raise RuntimeError(f"git apply に失敗しました: {apply_proc.stderr.strip()}")
 
