@@ -116,3 +116,19 @@ def test_hunk_line_prefixes_are_completed_for_unprefixed_added_lines():
     assert "+def added():" in normalized
     assert "-old" in normalized
     assert "+    return 1" in normalized
+
+
+def test_hunk_line_prefix_normalization_preserves_valid_lines():
+    """AC-69-02: 既存の有効行はそのまま維持する。"""
+    raw = (
+        "diff --git a/a.py b/a.py\n"
+        "--- a/a.py\n"
+        "+++ b/a.py\n"
+        "@@ -1,2 +1,2 @@\n"
+        " context\n"
+        "-old\n"
+        "+new\n"
+        "\\ No newline at end of file\n"
+    )
+    normalized = _normalize_hunk_line_prefixes(raw)
+    assert normalized == raw
