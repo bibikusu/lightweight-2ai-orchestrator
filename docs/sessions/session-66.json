@@ -1,0 +1,99 @@
+{
+  "session_id": "session-66",
+  "phase_id": "phase-runtime-stabilization",
+  "title": "IndentationError を generated_artifact_invalid として正しく分類する",
+  "goal": "generated test file などの構文不正、とくに IndentationError を test_failure ではなく generated_artifact_invalid として分類し、report.json に正しく反映されるようにする",
+  "objective": "SyntaxError 系分類の網羅改善（IndentationError 含む）",
+  "scope": [
+    "failure_type classification logic for generated artifact syntax errors",
+    "IndentationError detection and canonical mapping",
+    "report.json classification result verification",
+    "unit tests for syntax error classification"
+  ],
+  "out_of_scope": [
+    "retry policy redesign",
+    "provider implementation changes",
+    "git operation changes",
+    "session report schema redesign",
+    "live API behavior changes unrelated to syntax error classification",
+    "patch application flow redesign"
+  ],
+  "constraints": [
+    "one session one purpose",
+    "existing failure classification behavior outside SyntaxError family must not break",
+    "report.json existing required keys must remain backward compatible",
+    "no provider files may be changed",
+    "no global_rules or master_instruction changes in this session",
+    "human merge decision remains required"
+  ],
+  "inputs": [
+    "artifacts/session-57/report.json observed behavior",
+    "current orchestration/run_session.py classification logic",
+    "existing backend/tests/test_run_session_failure_classification.py coverage"
+  ],
+  "outputs": [
+    "correct canonical classification for IndentationError as generated_artifact_invalid",
+    "tests proving SyntaxError family classification behavior",
+    "report.json containing corrected failure_type and failure metadata"
+  ],
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "backend/tests/test_run_session_failure_classification.py"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/run_session.py: syntax error family classification logic, canonical failure mapping, report payload wiring limited to this classification purpose",
+    "backend/tests/test_run_session_failure_classification.py: add or update tests only for AC-66-01 to AC-66-04 coverage"
+  ],
+  "forbidden_changes": [
+    "orchestration/providers/",
+    "docs/master_instruction.md",
+    "docs/global_rules.md",
+    "config.yaml",
+    "retry loop redesign",
+    "completion_status logic",
+    "Git workflow behavior",
+    "unrelated test fixes"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-66-01",
+      "type": "non_regression",
+      "condition": "IndentationError produced from generated artifact is classified as generated_artifact_invalid instead of test_failure"
+    },
+    {
+      "id": "CC-66-02",
+      "type": "non_regression",
+      "condition": "SyntaxError family classification does not change unrelated failure_type behavior"
+    },
+    {
+      "id": "CC-66-03",
+      "type": "artifact",
+      "condition": "report.json retains top-level failure_type and includes failure metadata after corrected classification"
+    },
+    {
+      "id": "CC-66-04",
+      "type": "side_effect_free",
+      "condition": "changed_files remain within allowed_changes only"
+    }
+  ],
+  "acceptance_criteria": [
+    "AC-66-01",
+    "AC-66-02",
+    "AC-66-03",
+    "AC-66-04"
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "実装過不足なし"
+  ],
+  "acceptance_ref": "docs/acceptance/session-66.yaml",
+  "merge_requirements": [
+    "git diff --name-only must contain only allowed_changes files",
+    "ruff check must pass",
+    "pytest backend/tests/ must pass",
+    "mypy on orchestration must pass",
+    "compileall on orchestration and backend must pass"
+  ]
+}
