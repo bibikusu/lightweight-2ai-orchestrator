@@ -1,0 +1,128 @@
+{
+  "session_id": "session-73",
+  "phase_id": "phase-success-reproduction",
+  "title": "Claude実装応答ガードの最小正規取り込み",
+  "goal": "Claude implementation result の必須キー存在を main() 内で検証し、壊れた返却を patch 適用前に停止できるようにする",
+  "objective": "minimal claude response guard normalization",
+  "scope": [
+    "Claude implementation result required key presence check",
+    "main() scoped validation call only",
+    "pre-patch guard only",
+    "warning-only type diagnostics for non-blocking fields"
+  ],
+  "out_of_scope": [
+    "strict type enforcement",
+    "prompt generation changes",
+    "session-57 spec changes",
+    "retry redesign",
+    "patch_apply logic changes",
+    "provider implementation changes",
+    ".gitignore changes",
+    "live-run execution",
+    "existing test file modifications"
+  ],
+  "constraints": [
+    "one session one purpose",
+    "guard logic must be contained in orchestration/run_session.py",
+    "validate_impl_result must be called only inside main()",
+    "claude_client.py must not be modified",
+    "existing test files must not be modified",
+    "validation must run before patch application",
+    "required key presence check is blocking",
+    "strict type mismatches must be warning-only where needed to preserve existing tests",
+    "human merge decision required"
+  ],
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "backend/tests/test_claude_response_guard.py"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/run_session.py: add validate_impl_result and call it only inside main() before patch application",
+    "backend/tests/test_claude_response_guard.py: add regression tests for minimal guard behavior only"
+  ],
+  "forbidden_changes": [
+    "docs/",
+    ".gitignore",
+    "config.yaml",
+    "orchestration/providers/",
+    "backend/tests/test_live_api_validation.py",
+    "backend/tests/test_report_generation.py",
+    "backend/tests/test_retry_cause_deduplication.py",
+    "backend/tests/test_retry_count_control.py",
+    "backend/tests/test_retry_loop_execution.py",
+    "backend/tests/test_run_session_builder_integration.py",
+    "backend/tests/test_run_session_phase12_e2e.py",
+    "backend/tests/test_run_session_reviewer_retry_integration.py",
+    "backend/tests/test_single_retry_limit.py",
+    "backend/tests/test_run_session_patch_apply.py",
+    "backend/tests/test_run_session_patch_apply_failures.py",
+    "backend/tests/test_run_session_patch_apply_validation.py",
+    "prompt template logic",
+    "retry redesign",
+    "patch_apply redesign",
+    "unrelated test fixes"
+  ],
+  "implementation_notes": [
+    "■ 最重要禁止事項",
+    "既存テストファイルは一切変更しない。",
+    "以下のファイルは forbidden_changes であり、1行たりとも変更禁止：",
+    "- backend/tests/test_report_generation.py",
+    "- backend/tests/test_retry_cause_deduplication.py",
+    "- backend/tests/test_retry_count_control.py",
+    "- backend/tests/test_retry_loop_execution.py",
+    "- backend/tests/test_run_session_builder_integration.py",
+    "- backend/tests/test_run_session_phase12_e2e.py",
+    "- backend/tests/test_run_session_reviewer_retry_integration.py",
+    "- backend/tests/test_single_retry_limit.py",
+    "- backend/tests/test_run_session_patch_apply.py",
+    "- backend/tests/test_run_session_patch_apply_failures.py",
+    "- backend/tests/test_run_session_patch_apply_validation.py",
+    "■ 既存テストが落ちる場合の対処",
+    "validate_impl_result は main() 内でのみ呼ぶ",
+    "既存スタブを壊さないため、検証は必須キー存在確認に限定する",
+    "型の厳密チェックは warning にとどめる",
+    "■ テストファイル",
+    "新規作成: backend/tests/test_claude_response_guard.py"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-73-01",
+      "type": "validation",
+      "condition": "missing required keys in Claude implementation result are rejected before patch apply"
+    },
+    {
+      "id": "CC-73-02",
+      "type": "non_regression",
+      "condition": "validate_impl_result is called only inside main()"
+    },
+    {
+      "id": "CC-73-03",
+      "type": "non_regression",
+      "condition": "existing monkeypatched implementation stubs are not broken by strict blocking type checks"
+    },
+    {
+      "id": "CC-73-04",
+      "type": "validation",
+      "condition": "type inconsistencies outside required key presence are surfaced as warnings and do not block existing tests"
+    },
+    {
+      "id": "CC-73-05",
+      "type": "side_effect_free",
+      "condition": "changed_files are limited to allowed_changes only"
+    }
+  ],
+  "acceptance_criteria": [
+    "AC-73-01",
+    "AC-73-02",
+    "AC-73-03",
+    "AC-73-04",
+    "AC-73-05"
+  ],
+  "review_points": [
+    "仕様一致",
+    "変更範囲遵守",
+    "副作用なし",
+    "実装過不足なし"
+  ],
+  "acceptance_ref": "docs/acceptance/session-73.yaml"
+}

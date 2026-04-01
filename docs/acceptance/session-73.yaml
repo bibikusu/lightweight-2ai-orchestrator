@@ -1,0 +1,44 @@
+session_id: session-73
+
+acceptance:
+  - id: AC-73-01
+    description: 必須キー欠落のClaude implementation resultがpatch適用前に停止される
+    test_name: test_impl_result_missing_required_key_stops_before_patch
+
+  - id: AC-73-02
+    description: validate_impl_resultはmain()内でのみ呼ばれる
+    test_name: test_validate_impl_result_called_only_from_main_flow
+
+  - id: AC-73-03
+    description: 必須キーが存在する既存互換payloadは厳密型チェックで停止されない
+    test_name: test_impl_result_with_required_keys_does_not_hard_fail_on_noncritical_type_mismatch
+
+  - id: AC-73-04
+    description: 非必須の型不整合はwarning扱いに留まり既存互換性を壊さない
+    test_name: test_impl_result_noncritical_type_issue_is_warning_only
+
+  - id: AC-73-05
+    description: changed_filesがallowed_changes内のみ
+    test_name: manual_check_changed_files
+
+required_checks:
+  - name: ruff
+    command: .venv/bin/ruff check .
+    expected: pass
+
+  - name: pytest
+    command: PYTHONPATH=. .venv/bin/pytest backend/tests/ -q
+    expected: pass
+
+  - name: mypy
+    command: PYTHONPATH=. .venv/bin/python -m mypy --explicit-package-bases orchestration --ignore-missing-imports
+    expected: pass
+
+  - name: compileall
+    command: PYTHONPYCACHEPREFIX=./.pycache_compileall python3 -m compileall -q -f orchestration backend
+    expected: pass
+
+changed_files_rule:
+  allowed_only:
+    - orchestration/run_session.py
+    - backend/tests/test_claude_response_guard.py
