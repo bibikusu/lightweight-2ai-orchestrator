@@ -3,6 +3,7 @@
 import pytest
 
 from orchestration.run_session import (
+    _normalize_hunk_line_prefixes,
     normalize_patch_for_git_apply,
     validate_changed_files_before_patch,
     validate_patch_files,
@@ -98,3 +99,20 @@ def test_existing_patch_validation_behavior_remains_unchanged_after_normalizatio
     result = validate_patch_files(["docs/sessions/test.json"])
     assert result["status"] == "error"
     assert result["error_type"] == "scope_violation"
+
+
+def test_hunk_line_prefixes_are_completed_for_unprefixed_added_lines():
+    """AC-69-01: hunk 内で接頭辞欠落行に + を補完する。"""
+    raw = (
+        "diff --git a/a.py b/a.py\n"
+        "--- a/a.py\n"
+        "+++ b/a.py\n"
+        "@@ -1 +1,2 @@\n"
+        "-old\n"
+        "def added():\n"
+        "+    return 1\n"
+    )
+    normalized = _normalize_hunk_line_prefixes(raw)
+    assert "+def added():" in normalized
+    assert "-old" in normalized
+    assert "+    return 1" in normalized

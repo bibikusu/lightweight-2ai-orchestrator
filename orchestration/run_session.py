@@ -661,6 +661,37 @@ def validate_changed_files_before_patch(
                     )
 
 
+def _normalize_hunk_line_prefixes(text: str) -> str:
+    """
+    hunk 内で +/-/スペース/\\ で始まらない行に + を補完する。
+    Claude が def/class 等の行で + を省略した corrupt patch を修正する。
+    """
+    _header = (
+        "diff --git",
+        "--- ",
+        "+++ ",
+        "index ",
+        "new file",
+        "deleted file",
+        "old mode",
+        "new mode",
+    )
+    fixed: List[str] = []
+    in_hunk = False
+    for line in text.split("\n"):
+        if line.startswith(_header):
+            in_hunk = False
+            fixed.append(line)
+        elif line.startswith("@@"):
+            in_hunk = True
+            fixed.append(line)
+        elif in_hunk and line and not line.startswith(("+", "-", " ", "\\")):
+            fixed.append("+" + line)
+        else:
+            fixed.append(line)
+    return "\n".join(fixed)
+
+
 def _apply_patch_smart(patch_path: Path, repo_root: Path) -> bool:
     """Apply a unified diff patch, handling new files by direct write.
 
@@ -671,7 +702,11 @@ def _apply_patch_smart(patch_path: Path, repo_root: Path) -> bool:
 
     Returns True if at least one change was made, False otherwise.
     """
-    text = patch_path.read_text(encoding="utf-8", errors="replace")
+    raw_text = patch_path.read_text(encoding="utf-8", errors="replace")
+    # hunk 内で + が抜けた行を補完してから処理する
+    text = _normalize_hunk_line_prefixes(raw_text)
+    if text != raw_text:
+        patch_path.write_text(text, encoding="utf-8")
     lines = text.split("\n")
 
     # Parse patch into per-file sections (--- ... until next --- or EOF)
