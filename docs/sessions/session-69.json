@@ -1,0 +1,105 @@
+{
+  "session_id": "session-69",
+  "phase_id": "phase-runtime-stabilization",
+  "title": "非正規 hunk 行補完修正を正規セッションとして main に取り込む",
+  "goal": "sandbox/session-67-liverun で有効だった _normalize_hunk_line_prefixes 相当の修正を正規セッションとして main に取り込み、patch_apply 到達改善を正規系統に反映する",
+  "objective": "hunk 行補完修正の正規取り込み",
+  "scope": [
+    "hunk line prefix normalization logic in _apply_patch_smart",
+    "regression test for hunk line prefix normalization",
+    "patch_apply improvement regularization"
+  ],
+  "out_of_scope": [
+    "session-57 generated test quality fixes",
+    "test_live_api_validation.py content changes",
+    ".gitignore changes",
+    "git_guard classification fixes",
+    "persist_session_reports duplication issue",
+    "retry loop redesign",
+    "provider implementation changes",
+    "report schema redesign",
+    "docs/global_rules.md changes",
+    "docs/master_instruction.md changes"
+  ],
+  "constraints": [
+    "one session one purpose",
+    "session-68 patch normalization must remain unchanged",
+    "session-66 SyntaxError family classification must remain unchanged",
+    "no provider files may be changed",
+    "no .gitignore changes in this session",
+    "human merge decision remains required"
+  ],
+  "inputs": [
+    "sandbox/session-67-liverun commit 9384f20 (_normalize_hunk_line_prefixes)",
+    "current orchestration/run_session.py on main",
+    "existing backend/tests/test_patch_validation.py coverage"
+  ],
+  "outputs": [
+    "hunk line prefix normalization integrated into main",
+    "regression test for hunk line normalization",
+    "main-based patch_apply improvement"
+  ],
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "backend/tests/test_patch_validation.py"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/run_session.py: add _normalize_hunk_line_prefixes function and call it in _apply_patch_smart before processing patch text",
+    "backend/tests/test_patch_validation.py: add regression test for hunk line prefix normalization only"
+  ],
+  "forbidden_changes": [
+    "orchestration/providers/",
+    "docs/master_instruction.md",
+    "docs/global_rules.md",
+    "config.yaml",
+    ".gitignore",
+    "retry loop redesign",
+    "completion_status logic",
+    "Git workflow behavior",
+    "report schema changes",
+    "backend/tests/test_live_api_validation.py",
+    "unrelated test fixes"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-69-01",
+      "type": "non_regression",
+      "condition": "_normalize_hunk_line_prefixes is present in main and called before patch processing in _apply_patch_smart"
+    },
+    {
+      "id": "CC-69-02",
+      "type": "artifact",
+      "condition": "regression test confirms hunk lines missing +/- prefix are normalized correctly"
+    },
+    {
+      "id": "CC-69-03",
+      "type": "side_effect_free",
+      "condition": "session-68 normalize_patch_for_git_apply and session-66 SyntaxError classification remain unchanged"
+    },
+    {
+      "id": "CC-69-04",
+      "type": "side_effect_free",
+      "condition": "changed_files remain within allowed_changes only"
+    }
+  ],
+  "acceptance_criteria": [
+    "AC-69-01",
+    "AC-69-02",
+    "AC-69-03",
+    "AC-69-04"
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "実装過不足なし"
+  ],
+  "acceptance_ref": "docs/acceptance/session-69.yaml",
+  "merge_requirements": [
+    "git diff --name-only must contain only allowed_changes files",
+    "ruff check must pass",
+    "pytest backend/tests/ must pass",
+    "mypy on orchestration must pass",
+    "compileall on orchestration and backend must pass"
+  ]
+}
