@@ -752,7 +752,15 @@ def _apply_patch_smart(patch_path: Path, repo_root: Path) -> bool:
 
         full_path = repo_root / target
 
-        if not full_path.exists():
+        # @@ -0,0 ハンクは新規ファイル作成を意図しているため、既存ファイルでも上書きする
+        is_new_file_hunk = any(
+            sline.startswith("@@ -0,0 ") or sline.startswith("@@ -0 +")
+            for sline in section["lines"]
+        )
+
+        if not full_path.exists() or is_new_file_hunk:
+            if full_path.exists() and is_new_file_hunk:
+                logger.info("Overwriting existing file via new-file patch: %s", target)
             # NEW FILE: extract content from '+' lines
             content_lines: list[str] = []
             for sline in section["lines"]:
@@ -779,7 +787,8 @@ def _apply_patch_smart(patch_path: Path, repo_root: Path) -> bool:
     applied_existing = False
     if existing_file_lines:
         remaining_patch = patch_path.parent / "remaining.patch"
-        remaining_patch.write_text("\n".join(existing_file_lines), encoding="utf-8")
+        remaining_text = _normalize_hunk_line_prefixes("\n".join(existing_file_lines))
+        remaining_patch.write_text(remaining_text, encoding="utf-8")
         proc = _git_run(["apply", "--whitespace=fix", str(remaining_patch)])
         if proc.returncode != 0:
             logger.warning(
