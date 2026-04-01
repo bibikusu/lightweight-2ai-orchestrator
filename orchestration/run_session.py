@@ -785,6 +785,8 @@ def apply_proposed_patch_and_capture_artifacts(
             "patch_path": patch_path,
             "applied": False,
             "changed_files": changed,
+            "patch_apply_failed": False,
+            "patch_apply_message": "",
         }
 
     patch_applied = _apply_patch_smart(patch_path, ROOT_DIR)
@@ -793,10 +795,19 @@ def apply_proposed_patch_and_capture_artifacts(
 
     changed_files = _collect_changed_files()
 
+    patch_apply_failed = bool(patch_text.strip()) and len(changed_files) == 0
+    patch_apply_message = ""
+    if patch_apply_failed:
+        patch_apply_message = (
+            "git apply 相当の処理後も実差分が得られませんでした（パッチ形式の不整合または適用失敗の可能性）"
+        )
+
     return {
         "patch_path": patch_path,
-        "applied": True,
+        "applied": not patch_apply_failed,
         "changed_files": changed_files,
+        "patch_apply_failed": patch_apply_failed,
+        "patch_apply_message": patch_apply_message,
     }
 
 def build_dry_run_prepared_spec(ctx: SessionContext) -> Dict[str, Any]:
@@ -842,6 +853,99 @@ def build_skipped_checks_result() -> Dict[str, Any]:
         "build": dict(skipped),
         "success": True,
     }
+
+
+def _build_check_results_for_patch_apply_failure(patch_apply_message: str) -> Dict[str, Any]:
+    """proposed_patch があるが git apply 相当で実差分が得られなかった場合の checks（以降の pytest 等は実行しない）。"""
+    sk: Dict[str, Any] = {
+        "status": "skipped",
+        "command": "",
+        "returncode": None,
+        "stdout": "",
+        "stderr": "",
+    }
+    return {
+        "patch_apply": {
+            "status": "failed",
+            "command": "git apply",
+            "returncode": 1,
+            "stdout": "",
+            "stderr": patch_apply_message,
+        },
+        "test": dict(sk),
+        "lint": dict(sk),
+        "typecheck": dict(sk),
+        "build": dict(sk),
+        "success": False,
+        "patch_apply_failed": True,
+    }
+
+
+def _apply_patch_validate_and_run_local_checks(
+    *,
+    session_dir: Path,
+    ctx: SessionContext,
+    impl_result: Dict[str, Any],
+    prepared_spec: Dict[str, Any],
+    max_changed_files: int,
+    skip_build: bool,
+    session_id: str,
+    retry_label: str = "",
+) -> Dict[str, Any]:
+    """
+    patch 適用 → changed_files 反映 → 妥当性検証 → ローカル checks。
+    patch 未適用が明白な場合は checks をスキップし patch_apply_failure 用の結果を返す。
+    """
+    patch_info = apply_proposed_patch_and_capture_artifacts(
+        session_dir=session_dir,
+        impl_result=impl_result,
+        session_id=session_id,
+    )
+    real_changed_files = patch_info.get("changed_files", [])
+    if not isinstance(real_changed_files, list):
+        real_changed_files = []
+    impl_result["changed_files"] = real_changed_files
+    impl_result["diff_summary"] = f"changed_files: {len(real_changed_files)} files"
+    save_json(session_dir / "responses" / "implementation_result.json", impl_result)
+
+    if patch_info.get("patch_apply_failed"):
+        detail = str(patch_info.get("patch_apply_message") or "").strip()
+        if not detail:
+            detail = (
+                "git apply 相当の処理後も実差分が得られませんでした（パッチ形式の不整合または適用失敗の可能性）"
+            )
+        log_stage_progress(
+            session_id,
+            "patch_apply",
+            (retry_label + " " if retry_label else "")
+            + "patch 未適用のためローカル checks（pytest 等）をスキップ",
+        )
+        check_results = _build_check_results_for_patch_apply_failure(detail)
+        save_json(session_dir / "test_results" / "checks.json", check_results)
+        return check_results
+
+    stage_val = "patch_validation"
+    log_stage_progress(
+        session_id,
+        stage_val,
+        (retry_label + " " if retry_label else "") + "changed_files 妥当性チェック",
+    )
+    validate_changed_files_before_patch(
+        impl_result,
+        prepared_spec,
+        ctx.session_data,
+        max_changed_files,
+    )
+
+    stage_chk = "checks"
+    log_stage_progress(
+        session_id,
+        stage_chk,
+        (retry_label + " " if retry_label else "") + "ローカル test/lint/typecheck/build",
+    )
+    check_results = run_local_checks(ctx, skip_build=skip_build)
+    save_json(session_dir / "test_results" / "checks.json", check_results)
+    return check_results
 
 
 def build_prepared_spec_prompts(ctx: SessionContext) -> Tuple[str, str]:
@@ -1078,10 +1182,13 @@ def normalize_check_results_for_retry(check_results: Dict[str, Any]) -> Dict[str
     out.setdefault("regression_detected", False)
     out.setdefault("spec_missing_detected", False)
     out.setdefault("error_messages", [])
+    out.setdefault("patch_apply_failed", False)
     return out
 
 
 FAILURE_TYPE_PRIORITY_ORDER: List[str] = [
+    "patch_apply_failure",
+    "generated_artifact_invalid",
     "build_error",
     "import_error",
     "type_mismatch",
@@ -1102,17 +1209,113 @@ def _extract_cause_summary(check_results: Dict[str, Any], channel: str) -> str:
     return msg.splitlines()[0][:200]
 
 
+def _test_stderr_indicates_generated_syntax_error(check_results: Dict[str, Any]) -> bool:
+    """pytest 出力に生成物（実装・テスト）の SyntaxError が含まれるか。"""
+    stderr = str((check_results.get("test") or {}).get("stderr") or "")
+    stdout = str((check_results.get("test") or {}).get("stdout") or "")
+    blob = f"{stderr}\n{stdout}"
+    return "SyntaxError" in blob
+
+
+def _failure_layer_for_failure_type(failure_type: str) -> str:
+    """failure_type を failure_layer（4分類）へ写す。"""
+    if failure_type in ("patch_apply_failure", "generated_artifact_invalid", "type_mismatch"):
+        return "generated_artifact"
+    if failure_type in ("import_error", "build_error"):
+        return "environment"
+    if failure_type in (
+        "test_failure",
+        "scope_violation",
+        "breaking_change",
+        "spec_missing",
+    ):
+        return "specification"
+    return "orchestrator"
+
+
+def _retryable_for_failure_type(failure_type: str) -> bool:
+    """人間／モデル側の再試行が合理的か（スコープ違反は原則不可）。"""
+    if failure_type == "scope_violation":
+        return False
+    return True
+
+
+def _infer_stop_stage(
+    checks: Dict[str, Any],
+    failure_type: str,
+    aborted_stage: Optional[str],
+) -> str:
+    if aborted_stage and str(aborted_stage).strip():
+        return str(aborted_stage).strip()
+    if checks.get("patch_apply_failed") is True:
+        return "patch_apply"
+    pa = checks.get("patch_apply") or {}
+    if isinstance(pa, dict) and pa.get("status") == "failed":
+        return "patch_apply"
+    return "checks"
+
+
+def build_failure_record_for_report(
+    checks: Dict[str, Any],
+    status: str,
+    *,
+    error_message: Optional[str],
+    aborted_stage: Optional[str],
+) -> Dict[str, Any]:
+    """
+    report.json 用の failure メタデータ（failure_layer / stop_stage / retryable / cause_summary）。
+    成功時は failure_type を除き null で揃える。
+    """
+    if status != "failed":
+        return {
+            "failure_type": None,
+            "failure_layer": None,
+            "stop_stage": None,
+            "retryable": None,
+            "cause_summary": None,
+        }
+
+    canonical = resolve_canonical_failure_type(checks)
+    cf = classify_failure(checks)
+    ft = str(canonical.get("failure_type") or cf.get("failure_type") or "spec_missing")
+    if ft == "no_failure":
+        ft = "spec_missing"
+    cause = str(cf.get("cause_summary") or "").strip()
+    if not cause and error_message:
+        cause = str(error_message).strip()[:500]
+    if not cause:
+        cause = "失敗原因を特定できませんでした"
+
+    return {
+        "failure_type": ft,
+        "failure_layer": _failure_layer_for_failure_type(ft),
+        "stop_stage": _infer_stop_stage(checks, ft, aborted_stage),
+        "retryable": _retryable_for_failure_type(ft),
+        "cause_summary": cause[:2000],
+    }
+
+
 def classify_failure(check_results: Dict[str, Any]) -> Dict[str, Any]:
     """
     retry 用の failure_type を正規化して 1 つだけ返す。
     優先順位:
-    build_error -> import_error -> type_mismatch -> test_failure -> scope_violation -> breaking_change -> spec_missing
+    patch_apply_failure -> build_error -> generated_artifact_invalid(SyntaxError) ->
+    import_error -> type_mismatch -> test_failure -> scope_violation -> breaking_change -> spec_missing
     """
     cr = normalize_check_results_for_retry(check_results or {})
     build = (cr.get("build") or {}).get("status")
     test = (cr.get("test") or {}).get("status")
     typecheck = (cr.get("typecheck") or {}).get("status")
     lint = (cr.get("lint") or {}).get("status")
+
+    if cr.get("patch_apply_failed") is True:
+        detail = str((cr.get("patch_apply") or {}).get("stderr") or "").strip()
+        if not detail:
+            detail = "proposed_patch が適用されず実差分がありません"
+        return {
+            "failure_type": "patch_apply_failure",
+            "cause_summary": detail[:2000],
+        }
 
     if build == "failed":
         return {
@@ -1121,6 +1324,11 @@ def classify_failure(check_results: Dict[str, Any]) -> Dict[str, Any]:
         }
 
     if test == "failed":
+        if _test_stderr_indicates_generated_syntax_error(cr):
+            return {
+                "failure_type": "generated_artifact_invalid",
+                "cause_summary": _extract_cause_summary(cr, "test"),
+            }
         test_stderr = str((cr.get("test") or {}).get("stderr") or "")
         if "ModuleNotFoundError" in test_stderr or "ImportError" in test_stderr:
             return {
@@ -1235,10 +1443,14 @@ def retry_loop(
 
 def resolve_canonical_failure_type(check_results: Dict[str, Any]) -> Dict[str, Any]:
     """
-    正本7値＋ no_failure を返す。
+    正本の failure_type ＋ no_failure を返す。
     priority は小さいほど高優先（0 は no_failure）。
+    既存テスト互換のため build_error=1, import_error=2, type_mismatch=3, test_failure=4 は維持する。
     """
     cr = normalize_check_results_for_retry(check_results or {})
+
+    if cr.get("patch_apply_failed") is True:
+        return {"failure_type": "patch_apply_failure", "priority": 1}
 
     # フラグ系（テストが成功でも scope_violation 等が立つことがある）
     flag_map = [
@@ -1264,6 +1476,10 @@ def resolve_canonical_failure_type(check_results: Dict[str, Any]) -> Dict[str, A
 
     if build == "failed":
         return {"failure_type": "build_error", "priority": 1}
+
+    # 生成された Python / テストの SyntaxError（pytest 収集・実行時）
+    if test == "failed" and _test_stderr_indicates_generated_syntax_error(cr):
+        return {"failure_type": "generated_artifact_invalid", "priority": 2}
 
     # import_error は test の stderr から推定（ModuleNotFoundError 等）
     if test == "failed":
@@ -1298,6 +1514,8 @@ def _compute_retry_cause_fingerprint(check_results: Dict[str, Any]) -> str:
     parts = {
         "failure_type": canonical.get("failure_type"),
         "priority": canonical.get("priority"),
+        "patch_apply_failed": bool(cr.get("patch_apply_failed")),
+        "patch_apply_stderr": (str((cr.get("patch_apply") or {}).get("stderr") or ""))[:500],
         "test_stderr": ((cr.get("test") or {}).get("stderr") or "")[:500],
         "build_stderr": ((cr.get("build") or {}).get("stderr") or "")[:500],
         "typecheck_stderr": ((cr.get("typecheck") or {}).get("stderr") or "")[:500],
@@ -1729,15 +1947,17 @@ def persist_session_reports(
     if not isinstance(changed_files, list):
         changed_files = []
 
+    fr = build_failure_record_for_report(
+        checks if isinstance(checks, dict) else {},
+        status,
+        error_message=error_message,
+        aborted_stage=aborted_stage,
+    )
     failure_type: Optional[str] = None
     if status == "failed":
-        try:
-            failure_type = resolve_canonical_failure_type(checks).get("failure_type")
-        except Exception:
-            failure_type = None
-        # no_failure は失敗時の failure_type としては意味が薄いので null 扱い
-        if failure_type == "no_failure":
-            failure_type = None
+        raw_ft = fr.get("failure_type")
+        if isinstance(raw_ft, str) and raw_ft and raw_ft != "no_failure":
+            failure_type = raw_ft
 
     git_branch = _git_branch_safe()
     git_sha = _git_commit_sha_safe()
@@ -1759,6 +1979,10 @@ def persist_session_reports(
         "open_issues": list(impl_result.get("open_issues", []) or []),
         "checks": checks if isinstance(checks, dict) else {},
         "failure_type": failure_type,
+        "failure_layer": fr.get("failure_layer"),
+        "stop_stage": fr.get("stop_stage"),
+        "retryable": fr.get("retryable"),
+        "cause_summary": fr.get("cause_summary"),
         "error_message": error_message if (status == "failed") else None,
         "branch": branch_out,
         "commit_sha": commit_out,
@@ -2000,8 +2224,6 @@ def main() -> int:
     stage = "init"
     ctx: Optional[SessionContext] = None
 
-    no_effective_change = False
-
     try:
         stage = "loading"
         ctx = load_session_context(args.session_id)
@@ -2093,36 +2315,15 @@ def main() -> int:
             stage,
             "patch 抽出→実ファイル適用→artifact 保存→実ファイル存在確認→git diff 再取得",
         )
-        patch_info = apply_proposed_patch_and_capture_artifacts(
+        check_results = _apply_patch_validate_and_run_local_checks(
             session_dir=session_dir,
+            ctx=ctx,
             impl_result=impl_result,
+            prepared_spec=prepared_spec,
+            max_changed_files=max_changed_files,
+            skip_build=args.skip_build,
             session_id=args.session_id,
         )
-        real_changed_files = patch_info.get("changed_files", [])
-        if not isinstance(real_changed_files, list):
-            real_changed_files = []
-        impl_result["changed_files"] = real_changed_files
-        if isinstance(real_changed_files, list):
-            impl_result["diff_summary"] = f"changed_files: {len(real_changed_files)} files"
-        save_json(session_dir / "responses" / "implementation_result.json", impl_result)
-
-        stage = "patch_validation"
-        log_stage_progress(args.session_id, stage, "changed_files 妥当性チェック")
-        validate_changed_files_before_patch(
-            impl_result,
-            prepared_spec,
-            ctx.session_data,
-            max_changed_files,
-        )
-
-        # proposed_patch はあるが実差分ゼロなら「実質的な変更なし」とみなす
-        if str(impl_result.get("proposed_patch") or "").strip() and not real_changed_files:
-            no_effective_change = True
-
-        stage = "checks"
-        log_stage_progress(args.session_id, stage, "ローカル test/lint/typecheck/build")
-        check_results = run_local_checks(ctx, skip_build=args.skip_build)
-        save_json(session_dir / "test_results" / "checks.json", check_results)
 
         retry_instruction: Optional[Dict[str, Any]] = None
         retry_stopped_same_cause = False
@@ -2241,32 +2442,23 @@ def main() -> int:
                 stage,
                 "retry: patch 抽出→実ファイル適用→artifact 保存→実ファイル存在確認→git diff 再取得",
             )
-            patch_info = apply_proposed_patch_and_capture_artifacts(
+            check_results = _apply_patch_validate_and_run_local_checks(
                 session_dir=session_dir,
+                ctx=ctx,
                 impl_result=impl_result,
+                prepared_spec=prepared_spec,
+                max_changed_files=max_changed_files,
+                skip_build=args.skip_build,
                 session_id=args.session_id,
+                retry_label="retry:",
             )
-            real_changed_files = patch_info.get("changed_files", [])
-            if not isinstance(real_changed_files, list):
-                real_changed_files = []
-            impl_result["changed_files"] = real_changed_files
-            impl_result["diff_summary"] = f"changed_files: {len(real_changed_files)} files"
-            save_json(
-                session_dir / "responses" / "implementation_result.json",
-                impl_result,
-            )
-
-            stage = "checks"
-            log_stage_progress(args.session_id, stage, "ローカル checks 再実行")
-            check_results = run_local_checks(ctx, skip_build=args.skip_build)
-            save_json(session_dir / "test_results" / "checks.json", check_results)
 
             if check_results.get("success"):
                 retry_count = 0
                 _write_retry_state_count(session_dir, retry_count)
                 break
 
-        overall_success = bool(check_results.get("success")) and not no_effective_change
+        overall_success = bool(check_results.get("success"))
         check_results["success"] = overall_success
 
         persist_session_reports(
