@@ -67,5 +67,5 @@
     "副作用なし",
     "仕様一致"
   ],
-  "acceptance_ref": "docs/acceptance/live-run-safe-04.yaml"
+  "acceptance_ref": "acceptance/live-run-safe-04.yaml"
 }
