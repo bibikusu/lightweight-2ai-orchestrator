@@ -1,0 +1,33 @@
+session_id: session-70
+
+acceptance:
+  - id: AC-70-01
+    description: "@@ -0,0 ハンクを新規ファイルとして扱う"
+    test_name: test_is_new_file_hunk_detects_zero_start
+
+  - id: AC-70-02
+    description: "remaining.patch に正規化処理が適用される"
+    test_name: test_remaining_patch_is_normalized_before_apply
+
+  - id: AC-70-03
+    description: "既存 patch normalization / classification を壊さない"
+    test_name: test_existing_behavior_unchanged
+
+required_checks:
+  - name: ruff
+    command: .venv/bin/ruff check .
+    expected: pass
+  - name: pytest
+    command: PYTHONPATH=. .venv/bin/pytest backend/tests/ -q
+    expected: pass
+  - name: mypy
+    command: PYTHONPATH=. .venv/bin/python -m mypy --explicit-package-bases orchestration --ignore-missing-imports
+    expected: pass
+  - name: compileall
+    command: PYTHONPYCACHEPREFIX=./.pycache_compileall python3 -m compileall -q -f orchestration backend
+    expected: pass
+
+changed_files_rule:
+  allowed_only:
+    - orchestration/run_session.py
+    - backend/tests/test_patch_validation.py

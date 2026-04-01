@@ -1,0 +1,39 @@
+{
+  "session_id": "session-70",
+  "phase_id": "phase-runtime-stabilization",
+  "title": "patch_apply 共通改善の正規取り込み（is_new_file_hunk + remaining.patch 正規化）",
+  "goal": "非正規ブランチで有効だった patch_apply 共通改善を main に正規取り込みする",
+  "objective": "patch_apply 共通改善の正規化",
+  "scope": [
+    "is_new_file_hunk detection logic",
+    "remaining.patch normalization",
+    "patch_apply regression tests"
+  ],
+  "out_of_scope": [
+    "system prompt changes",
+    "template expansion logic",
+    "session-57.json",
+    "test_live_api_validation.py",
+    ".gitignore",
+    "provider",
+    "retry redesign"
+  ],
+  "constraints": [
+    "one session one purpose",
+    "session-69/68/66 must remain unchanged",
+    "no docs changes in code-fix step"
+  ],
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "backend/tests/test_patch_validation.py"
+  ],
+  "forbidden_changes": [
+    "docs/",
+    ".gitignore",
+    "providers",
+    "config.yaml",
+    "system prompt",
+    "session-57.json"
+  ],
+  "acceptance_ref": "docs/acceptance/session-70.yaml"
+}
