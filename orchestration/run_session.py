@@ -7,7 +7,6 @@ import argparse
 import json
 import logging
 import os
-import re
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -624,31 +623,101 @@ def validate_changed_files_before_patch(
                     )
 
 
-def _fix_patch_for_new_files(patch_path: Path, repo_root: Path) -> None:
-    """Rewrite patch hunks that target non-existent files to use /dev/null format."""
+def _apply_patch_smart(patch_path: Path, repo_root: Path) -> bool:
+    """Apply a unified diff patch, handling new files by direct write.
+
+    For files that don't exist in the repo:
+      - Extract '+' lines and write the file directly
+    For files that already exist:
+      - Use git apply --whitespace=fix
+
+    Returns True if at least one change was made, False otherwise.
+    """
     text = patch_path.read_text(encoding="utf-8", errors="replace")
     lines = text.split("\n")
-    fixed: list[str] = []
-    i = 0
-    while i < len(lines):
-        # Detect "--- a/some/path" line
-        if lines[i].startswith("--- a/") and i + 1 < len(lines) and lines[i + 1].startswith("+++ b/"):
-            old_path = lines[i][len("--- a/") :]
-            full_path = repo_root / old_path
-            if not full_path.exists():
-                # File doesn't exist: rewrite to new-file format
-                fixed.append("--- /dev/null")
-                fixed.append(lines[i + 1])  # keep +++ b/path as-is
-                i += 2
-                # Fix the hunk header: change @@ -X,Y to @@ -0,0
-                if i < len(lines) and lines[i].startswith("@@"):
-                    hunk = re.sub(r"@@ -\d+,\d+", "@@ -0,0", lines[i])
-                    fixed.append(hunk)
-                    i += 1
-                continue
-        fixed.append(lines[i])
-        i += 1
-    patch_path.write_text("\n".join(fixed), encoding="utf-8")
+
+    # Parse patch into per-file sections (--- ... until next --- or EOF)
+    file_sections: list[dict[str, Any]] = []
+    header_buf: list[str] = []
+    current: dict[str, Any] | None = None
+
+    for line in lines:
+        if line.startswith("--- "):
+            if current is not None:
+                file_sections.append(current)
+            current = {
+                "source": line,
+                "target": None,
+                "lines": list(header_buf) + [line],
+            }
+            header_buf.clear()
+        elif current is not None:
+            if line.startswith("+++ "):
+                if line.startswith("+++ b/"):
+                    current["target"] = line[len("+++ b/") :]
+                current["lines"].append(line)
+            else:
+                current["lines"].append(line)
+        else:
+            # diff --git など、最初の --- より前の行
+            header_buf.append(line)
+
+    if current is not None:
+        file_sections.append(current)
+
+    if not file_sections and lines:
+        file_sections = [{"source": "", "target": None, "lines": lines}]
+
+    new_file_targets: list[str] = []
+    existing_file_lines: list[str] = []
+
+    for section in file_sections:
+        target = section.get("target")
+        if target is None:
+            existing_file_lines.extend(section["lines"])
+            continue
+
+        full_path = repo_root / target
+
+        if not full_path.exists():
+            # NEW FILE: extract content from '+' lines
+            content_lines: list[str] = []
+            for sline in section["lines"]:
+                if sline.startswith("@@"):
+                    continue  # skip hunk headers
+                if sline.startswith("--- ") or sline.startswith("+++ "):
+                    continue  # skip file headers
+                if sline.startswith("+"):
+                    content_lines.append(sline[1:])  # strip leading '+'
+                elif sline.startswith("-"):
+                    continue  # skip removal lines (shouldn't exist for new files)
+                elif sline.startswith(" "):
+                    content_lines.append(sline[1:])  # context line
+
+            if content_lines:
+                full_path.parent.mkdir(parents=True, exist_ok=True)
+                full_path.write_text("\n".join(content_lines), encoding="utf-8")
+                new_file_targets.append(target)
+                logger.info("Wrote new file directly: %s", target)
+        else:
+            # EXISTING FILE: keep in patch for git apply
+            existing_file_lines.extend(section["lines"])
+
+    applied_existing = False
+    if existing_file_lines:
+        remaining_patch = patch_path.parent / "remaining.patch"
+        remaining_patch.write_text("\n".join(existing_file_lines), encoding="utf-8")
+        proc = _git_run(["apply", "--whitespace=fix", str(remaining_patch)])
+        if proc.returncode != 0:
+            logger.warning(
+                "git apply for existing files failed: %s",
+                (proc.stderr or "").strip(),
+            )
+        else:
+            applied_existing = True
+        remaining_patch.unlink(missing_ok=True)
+
+    return bool(new_file_targets) or applied_existing
 
 
 def apply_proposed_patch_and_capture_artifacts(
@@ -718,20 +787,9 @@ def apply_proposed_patch_and_capture_artifacts(
             "changed_files": changed,
         }
 
-    # パッチ前処理: 存在しないファイルへの diff を新規ファイル形式に変換
-    _fix_patch_for_new_files(patch_path, ROOT_DIR)
-
-    check_proc = _git_run(["apply", "--check", "--whitespace=fix", str(patch_path)])
-    if check_proc.returncode != 0:
-        patch_check_warning = (check_proc.stderr or "").strip()
-        logger.warning(
-            "git apply --check failed (will attempt apply anyway): %s",
-            patch_check_warning,
-        )
-
-    apply_proc = _git_run(["apply", "--whitespace=fix", str(patch_path)])
-    if apply_proc.returncode != 0:
-        raise RuntimeError(f"git apply に失敗しました: {apply_proc.stderr.strip()}")
+    patch_applied = _apply_patch_smart(patch_path, ROOT_DIR)
+    if not patch_applied:
+        logger.warning("No changes were applied from the patch")
 
     changed_files = _collect_changed_files()
 
