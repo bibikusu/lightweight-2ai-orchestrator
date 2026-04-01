@@ -1,0 +1,10 @@
+session_id: session-80
+
+acceptance:
+  - id: AC-80-01
+    description: "Phase1 completion report が生成される"
+    test_name: manual_check_report_exists
+
+  - id: AC-80-02
+    description: "コード変更が発生しない"
+    test_name: manual_check_no_code_changes

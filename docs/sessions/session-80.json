@@ -1,0 +1,44 @@
+{
+  "session_id": "session-80",
+  "phase_id": "phase1",
+  "title": "Phase1 completion report",
+  "objective": "finalize Phase1 and lock system baseline",
+  "scope": [
+    "Phase1 completion report generation",
+    "system state finalization",
+    "baseline definition"
+  ],
+  "out_of_scope": [
+    "code changes",
+    "runtime logic",
+    "test changes"
+  ],
+  "allowed_changes": [
+    "docs/reports/phase1_completion_report.json"
+  ],
+  "allowed_changes_detail": [
+    "docs/reports/phase1_completion_report.json: create completion report"
+  ],
+  "forbidden_changes": [
+    "orchestration/",
+    "backend/",
+    "config.yaml",
+    ".gitignore"
+  ],
+  "completion_criteria": [
+    "completion report created",
+    "system baseline documented",
+    "no code changes"
+  ],
+  "acceptance_criteria": [
+    "AC-80-01",
+    "AC-80-02"
+  ],
+  "review_points": [
+    "仕様一致",
+    "変更範囲遵守",
+    "副作用なし",
+    "実装過不足なし"
+  ],
+  "acceptance_ref": "docs/acceptance/session-80.yaml"
+}
