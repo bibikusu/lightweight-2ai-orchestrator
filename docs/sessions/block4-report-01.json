@@ -1,0 +1,33 @@
+{
+  "session_id": "block4-report-01",
+  "title": "report完全自動化",
+  "goal": "run_session.py の実行結果を既存 report 関数を活用して標準化し、成功・失敗・dry-run の全ケースで検収可能な report.json を自動出力する。",
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "docs/global_rules.md",
+    "docs/sessions/block4-report-01.json",
+    "backend/tests/test_report_generation.py",
+    "backend/tests/test_retry_loop_execution.py"
+  ],
+  "report_spec": {
+    "path": "artifacts/<session_id>/report.json",
+    "required_keys": [
+      "session_id",
+      "status",
+      "dry_run",
+      "started_at",
+      "finished_at",
+      "changed_files",
+      "checks",
+      "failure_type",
+      "error_message"
+    ],
+    "status_enum": ["success", "failed", "dry_run"]
+  },
+  "notes": [
+    "generate_report / build_session_report_record を必ず活用する",
+    "persist_session_reports が無い場合のみ最小追加を許可",
+    "report.json は各実行で必ず 1 つだけ生成（上書き）する"
+  ]
+}
+

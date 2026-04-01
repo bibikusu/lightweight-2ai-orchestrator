@@ -1,0 +1,47 @@
+{
+  "session_id": "block3-retry-01a",
+  "objective": "block3-retry-01 の変更範囲違反を解消し、既存テストを無変更に戻したうえで、retry JSON 生成の最小実装だけを成立させる",
+  "inputs": [
+    "orchestration/run_session.py",
+    "orchestration/providers/openai_client.py"
+  ],
+  "outputs": [
+    "orchestration/run_session.py",
+    "orchestration/providers/openai_client.py",
+    "docs/sessions/block3-retry-01a.json",
+    "backend/tests/test_retry_instruction_generation.py",
+    "backend/tests/test_failure_type_priority.py"
+  ],
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "orchestration/providers/openai_client.py",
+    "docs/sessions/block3-retry-01a.json",
+    "backend/tests/test_retry_instruction_generation.py",
+    "backend/tests/test_failure_type_priority.py"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/run_session.py: call_chatgpt_for_retry_instruction は request_retry_instruction を呼ぶ。_merge_retry_instruction の failure_type は classify_failure_type に合わせ既存契約を維持。resolve_canonical_failure_type は変更しない",
+    "orchestration/providers/openai_client.py: request_retry_json は従来どおり request_retry_instruction への委譲のみ",
+    "backend/tests/test_retry_instruction_generation.py: retry JSON 必須キー検証の新規テストのみ",
+    "backend/tests/test_failure_type_priority.py: 正本 failure_type 優先順位の新規テストのみ",
+    "docs/sessions/block3-retry-01a.json: 新規のみ"
+  ],
+  "forbidden_changes": [
+    "既存テストファイルの変更",
+    "config.yaml",
+    "roadmap.yaml",
+    "docs/global_rules.md",
+    "docs/master_instruction.md",
+    "providers/claude_client.py"
+  ],
+  "completion_criteria": [
+    "CC-B3A-01〜07 を満たす"
+  ],
+  "acceptance_criteria": [],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "実装過不足なし"
+  ]
+}

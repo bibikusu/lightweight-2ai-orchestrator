@@ -1,0 +1,17 @@
+session_id: session-03
+
+acceptance:
+  - id: AC-03-01
+    description: orchestration.providers から OpenAI / Claude の Config・Wrapper および parse_json_object を import できる
+    test_name: test_providers_import_surface
+
+  - id: AC-03-02
+    description: OPENAI_API_KEY / ANTHROPIC_API_KEY 名を維持し、既存の responses.create / messages.create 呼び出し形式を維持する
+    test_name: test_provider_env_names_and_api_calls
+
+  - id: AC-03-03
+    description: 実装結果の changed_files が orchestration/providers 配下4ファイルのみに収まる
+    test_name: test_changed_files_limited_to_providers
+
+notes:
+  - session-04（セッションレポート自動生成）および session-05（retry 最小実装）は roadmap 上の後続であり、本 session-03 のスコープ外とする。

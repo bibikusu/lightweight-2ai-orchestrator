@@ -1,0 +1,17 @@
+{
+  "session_id": "block4-completion-01",
+  "title": "completion_status 機械判定の追加",
+  "goal": "report.json と verification 結果から session の最終状態を usable_for_self / review_required / failed の3値で機械判定できるようにする。",
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "docs/global_rules.md",
+    "docs/sessions/block4-completion-01.json",
+    "backend/tests/test_completion_status_mapping.py",
+    "backend/tests/test_completion_status_report_integration.py"
+  ],
+  "notes": [
+    "既存 report.json 構造は維持し、completion_status と human_review_needed のみ追加する。",
+    "acceptance_results が report.json に未存在の場合のみ最小追加する。",
+    "判定ロジックは fail 優先、次に risks/open_issues、最後に usable_for_self とする。"
+  ]
+}

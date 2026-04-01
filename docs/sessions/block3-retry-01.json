@@ -1,0 +1,51 @@
+{
+  "session_id": "block3-retry-01",
+  "objective": "検証失敗時に failure_type を正本の優先順位で1つに確定し、retry JSON（必須キー付き）を生成する最小実装を追加する。自動再実行ループは追加しない。",
+  "inputs": [
+    "docs/global_rules.md",
+    "orchestration/run_session.py",
+    "orchestration/providers/openai_client.py"
+  ],
+  "outputs": [
+    "orchestration/run_session.py",
+    "orchestration/providers/openai_client.py",
+    "docs/sessions/block3-retry-01.json",
+    "backend/tests/test_block3_retry_canonical_failure_type.py",
+    "backend/tests/test_block3_retry_json_contract.py"
+  ],
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "orchestration/providers/openai_client.py",
+    "docs/sessions/block3-retry-01.json",
+    "backend/tests/test_block3_retry_canonical_failure_type.py",
+    "backend/tests/test_block3_retry_json_contract.py"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/run_session.py: normalize_check_results_for_retry / resolve_canonical_failure_type の追加、_merge_retry_instruction で正本 failure_type を反映、call_chatgpt_for_retry_instruction で request_retry_json 呼び出し",
+    "orchestration/providers/openai_client.py: request_retry_json メソッドの追加（Responses API 方式は現行と同一）",
+    "docs/sessions/block3-retry-01.json: 新規のみ",
+    "backend/tests/test_block3_retry_*.py: 新規テスト2ファイルのみ"
+  ],
+  "forbidden_changes": [
+    "orchestration/config.yaml",
+    "docs/roadmap.yaml",
+    "docs/global_rules.md",
+    "docs/master_instruction.md",
+    "orchestration/providers/claude_client.py",
+    "session-09 以前の既存 session JSON の変更"
+  ],
+  "completion_criteria": [
+    "検証失敗時のみ retry JSON が failure_type 正本に沿って保存される",
+    "成功時は retry_instruction 生成経路に入らない（既存分岐）",
+    "OpenAI は Responses API のまま request_retry_json で拡張",
+    "checks 未存在フィールドは normalize でデフォルト化",
+    "backend/tests に新規テスト2ファイル"
+  ],
+  "acceptance_criteria": [],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "実装過不足なし"
+  ]
+}

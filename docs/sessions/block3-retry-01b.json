@@ -1,0 +1,44 @@
+{
+  "session_id": "block3-retry-01b",
+  "objective": "既存テストを一切変更せずに、retry JSON生成の最小実装を成立させ、changed_files を scope 内に限定する",
+  "inputs": [
+    "orchestration/run_session.py",
+    "orchestration/providers/openai_client.py"
+  ],
+  "outputs": [
+    "orchestration/run_session.py",
+    "orchestration/providers/openai_client.py",
+    "docs/sessions/block3-retry-01b.json",
+    "backend/tests/test_retry_instruction_generation.py",
+    "backend/tests/test_failure_type_priority.py"
+  ],
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "orchestration/providers/openai_client.py",
+    "docs/sessions/block3-retry-01b.json",
+    "backend/tests/test_retry_instruction_generation.py",
+    "backend/tests/test_failure_type_priority.py"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/run_session.py: 既存テスト無変更で通るよう retry 接続のみ最小調整",
+    "orchestration/providers/openai_client.py: Responses API 維持、request_retry_json の意味は不変",
+    "新規テスト2本: 必須キー検証・正本優先順位検証のみ",
+    "docs/sessions/block3-retry-01b.json: 新規のみ"
+  ],
+  "forbidden_changes": [
+    "既存テストファイルの変更・削除",
+    "config.yaml",
+    "roadmap.yaml",
+    "docs/global_rules.md",
+    "docs/master_instruction.md",
+    "providers/claude_client.py"
+  ],
+  "completion_criteria": ["CC-B3B-01〜07"],
+  "acceptance_criteria": [],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "実装過不足なし"
+  ]
+}

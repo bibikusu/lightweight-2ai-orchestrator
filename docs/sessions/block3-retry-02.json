@@ -1,0 +1,48 @@
+{
+  "session_id": "block3-retry-02",
+  "objective": "retry_instruction の failure_type を session-09 で固定した正本7値へ統一し、既存テストと実装契約を新仕様へ揃える",
+  "inputs": [
+    "docs/global_rules.md",
+    "orchestration/run_session.py"
+  ],
+  "outputs": [
+    "orchestration/run_session.py",
+    "orchestration/providers/openai_client.py",
+    "docs/sessions/block3-retry-02.json",
+    "backend/tests/test_retry_instruction_generation.py",
+    "backend/tests/test_failure_type_priority.py",
+    "backend/tests/test_retry_cause_deduplication.py",
+    "backend/tests/test_retry_count_control.py",
+    "backend/tests/test_retry_loop_execution.py",
+    "backend/tests/test_retry_instruction_quality.py",
+    "backend/tests/test_retry_instruction.py"
+  ],
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "orchestration/providers/openai_client.py",
+    "backend/tests/test_retry_instruction_generation.py",
+    "backend/tests/test_failure_type_priority.py",
+    "backend/tests/test_retry_cause_deduplication.py",
+    "backend/tests/test_retry_count_control.py",
+    "backend/tests/test_retry_loop_execution.py",
+    "backend/tests/test_retry_instruction_quality.py",
+    "backend/tests/test_retry_instruction.py",
+    "docs/sessions/block3-retry-02.json"
+  ],
+  "forbidden_changes": [
+    "config.yaml",
+    "roadmap.yaml",
+    "docs/global_rules.md",
+    "docs/master_instruction.md",
+    "providers/claude_client.py"
+  ],
+  "completion_criteria": ["CC-B3R2-01〜07"],
+  "acceptance_criteria": [],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "実装過不足なし"
+  ],
+  "note": "test_retry_instruction.py を build_error 期待へ更新済み"
+}

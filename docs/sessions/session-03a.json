@@ -1,0 +1,53 @@
+{
+  "session_id": "session-03a",
+  "objective": "session-03 の仕様を一意化する。session-04/05 に影響する境界ルールを固定する。実装は行わない。",
+  "inputs": [
+    "docs/master_instruction.md",
+    "docs/roadmap.yaml",
+    "docs/session_post_process.md",
+    "docs/sessions/session-03.json",
+    "docs/acceptance/session-03.yaml"
+  ],
+  "outputs": [
+    "artifacts/reports/session-03a-report.json"
+  ],
+  "allowed_changes": [
+    "docs/sessions/session-03.json",
+    "docs/acceptance/session-03.yaml",
+    "docs/templates/cursor_run_session-03.md"
+  ],
+  "allowed_changes_detail": [
+    "session-03 の objective / allowed_changes / forbidden から report 自動生成・retry ループ・session-04/05 の実ファイル作成を除外した定義に揃える",
+    "保存契約を artifacts/reports/session-XX-report.json に統一して session-03 系に明示する",
+    "session-04 はセッションレポート自動生成、session-05 は retry 最小実装である境界を session-03 文書に文章で固定する（session-04/05 のセッションファイルは作成しない）"
+  ],
+  "forbidden_changes": [
+    "orchestration/**/*.py の実装変更",
+    "docs/master_instruction.md",
+    "docs/roadmap.yaml",
+    "docs/session_post_process.md",
+    "docs/sessions/session-04.json",
+    "docs/sessions/session-05.json",
+    "docs/acceptance/session-04.yaml",
+    "docs/acceptance/session-05.yaml",
+    "docs/sessions/session-03a.json",
+    "docs/acceptance/session-03a.yaml",
+    "docs/templates/cursor_run_session-03a.md"
+  ],
+  "completion_criteria": [
+    "session-03.json / session-03.yaml が provider 最小実装のみをスコープとし report 自動生成・retry を含まない",
+    "session-04 / session-05 の役割が境界説明として文書化され、該当セッションファイルはリポジトリに存在しない",
+    "artifacts/reports/session-03a-report.json が保存契約に従い生成される"
+  ],
+  "acceptance_criteria": [
+    "AC-03a-01",
+    "AC-03a-02",
+    "AC-03a-03",
+    "AC-03a-04"
+  ],
+  "review_points": [
+    "session-03 が provider のみに限定されているか",
+    "session-03a → session-03 の順序が文書上一意か",
+    "正本（master_instruction / roadmap / session_post_process）を変更していないか"
+  ]
+}

@@ -1,0 +1,18 @@
+session_id: session-03a
+
+acceptance:
+  - id: AC-03a-01
+    description: session-03.json が必須キーと保存契約（artifacts/reports/session-XX-report.json）を満たす
+    test_name: test_session_03_json_required_keys_and_report_path
+
+  - id: AC-03a-02
+    description: session-03.yaml の各 AC に test_name が1件ずつ対応している
+    test_name: test_session_03_acceptance_test_name_pairs
+
+  - id: AC-03a-03
+    description: docs/sessions/session-04.json / session-05.json および対応 acceptance がリポジトリに存在しない
+    test_name: test_no_session_04_05_spec_files
+
+  - id: AC-03a-04
+    description: session-03 文書上で session-04＝レポート自動生成・session-05＝retry 最小実装の境界が明示されている
+    test_name: test_session_03_boundary_text_for_phase4_and_5
