@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import os
 import subprocess
 import sys
@@ -15,6 +16,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import yaml
+
+logger = logging.getLogger(__name__)
 
 # providers は通常実行時のみ遅延インポート（dry-run では不要）
 
@@ -686,6 +689,14 @@ def apply_proposed_patch_and_capture_artifacts(
             "applied": False,
             "changed_files": changed,
         }
+
+    check_proc = _git_run(["apply", "--check", str(patch_path)])
+    if check_proc.returncode != 0:
+        patch_check_warning = (check_proc.stderr or "").strip()
+        logger.warning(
+            "git apply --check failed (will attempt apply anyway): %s",
+            patch_check_warning,
+        )
 
     apply_proc = _git_run(["apply", str(patch_path)])
     if apply_proc.returncode != 0:
