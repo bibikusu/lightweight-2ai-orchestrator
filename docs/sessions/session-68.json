@@ -1,0 +1,107 @@
+{
+  "session_id": "session-68",
+  "phase_id": "phase-runtime-stabilization",
+  "title": "patch_apply 失敗を防ぐため patch 形式を正規化する",
+  "goal": "Claude が返す patch を git apply 可能な形式へ正規化し、corrupt patch / patch does not apply による patch_apply 失敗を減らし、retry 時も適用可能性を保てるようにする",
+  "objective": "patch 形式正規化",
+  "scope": [
+    "patch extraction and normalization logic",
+    "git apply compatible patch formatting",
+    "retry patch formatting consistency",
+    "unit tests for patch normalization and validation"
+  ],
+  "out_of_scope": [
+    "git_guard classification fixes",
+    "persist_session_reports 周辺の重複行問題",
+    "retry loop redesign",
+    "provider implementation changes",
+    "report schema redesign",
+    "session-66 SyntaxError family logic redesign",
+    "live-run flow redesign",
+    "docs/global_rules.md changes",
+    "docs/master_instruction.md changes"
+  ],
+  "constraints": [
+    "one session one purpose",
+    "existing patch validation behavior outside patch formatting must not break",
+    "session-66 で修正した SyntaxError family classification must remain unchanged",
+    "report.json existing required keys must remain backward compatible",
+    "no provider files may be changed",
+    "human merge decision remains required"
+  ],
+  "inputs": [
+    "artifacts/session-57/patches/proposed.patch",
+    "artifacts/session-57/patches/remaining.patch",
+    "current orchestration/run_session.py patch apply logic",
+    "existing backend/tests/test_patch_validation.py coverage"
+  ],
+  "outputs": [
+    "normalized patch content compatible with git apply",
+    "retry patch formatting consistency",
+    "tests proving patch normalization behavior",
+    "reduced patch_apply failure for corrupt patch / patch does not apply patterns"
+  ],
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "backend/tests/test_patch_validation.py",
+    ".gitignore"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/run_session.py: patch extraction, normalization, patch apply preparation, retry patch formatting only",
+    "backend/tests/test_patch_validation.py: add or update tests only for AC-68-01 to AC-68-04 coverage",
+    ".gitignore: add backend/tests/test_live_api_validation.py if not already present, for clean worktree and stable verification"
+  ],
+  "forbidden_changes": [
+    "orchestration/providers/",
+    "docs/master_instruction.md",
+    "docs/global_rules.md",
+    "config.yaml",
+    "retry loop redesign",
+    "completion_status logic",
+    "Git workflow behavior",
+    "report schema全面変更",
+    "unrelated test fixes"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-68-01",
+      "type": "non_regression",
+      "condition": "patch content is normalized into a git apply compatible form and no longer fails immediately as corrupt patch for the covered cases"
+    },
+    {
+      "id": "CC-68-02",
+      "type": "non_regression",
+      "condition": "retry patch formatting remains consistent with initial patch formatting rules"
+    },
+    {
+      "id": "CC-68-03",
+      "type": "artifact",
+      "condition": "tests cover missing diff header or malformed patch structure cases and assert normalization behavior"
+    },
+    {
+      "id": "CC-68-04",
+      "type": "side_effect_free",
+      "condition": "changed_files remain within allowed_changes only and unrelated classification behavior remains unchanged"
+    }
+  ],
+  "acceptance_criteria": [
+    "AC-68-01",
+    "AC-68-02",
+    "AC-68-03",
+    "AC-68-04"
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "実装過不足なし"
+  ],
+  "acceptance_ref": "docs/acceptance/session-68.yaml",
+  "merge_requirements": [
+    "git diff --name-only must contain only allowed_changes files",
+    "ruff check must pass",
+    "pytest backend/tests/ must pass",
+    "mypy on orchestration must pass",
+    "compileall on orchestration and backend must pass"
+  ]
+}

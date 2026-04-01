@@ -1,0 +1,60 @@
+session_id: session-68
+
+acceptance:
+  - id: AC-68-01
+    description: malformed patch が git apply 直前に正規化され、covered case で corrupt patch に直行しない
+    test_name: test_patch_normalization_handles_malformed_patch_structure
+
+  - id: AC-68-02
+    description: retry patch でも初回と同じ正規化ルールが適用される
+    test_name: test_retry_patch_uses_same_normalization_rules
+
+  - id: AC-68-03
+    description: diff header 不足や構造不正を検出し、正規化または明確な扱いができる
+    test_name: test_patch_normalization_handles_missing_diff_header
+
+  - id: AC-68-04
+    description: 既存の patch validation と他の failure classification 挙動を壊さない
+    test_name: test_existing_patch_validation_behavior_remains_unchanged_after_normalization
+
+required_checks:
+  - name: ruff
+    command: .venv/bin/ruff check .
+    expected: pass
+
+  - name: pytest
+    command: PYTHONPATH=. .venv/bin/pytest backend/tests/ -q
+    expected: pass
+
+  - name: mypy
+    command: PYTHONPATH=. .venv/bin/python -m mypy --explicit-package-bases orchestration --ignore-missing-imports
+    expected: pass
+
+  - name: compileall
+    command: PYTHONPYCACHEPREFIX=./.pycache_compileall python3 -m compileall -q -f orchestration backend
+    expected: pass
+
+changed_files_rule:
+  allowed_only:
+    - orchestration/run_session.py
+    - backend/tests/test_patch_validation.py
+    - .gitignore
+
+non_functional_requirements:
+  - report.json existing required keys must remain present
+  - no provider file changes
+  - no docs changes in this session
+  - backend/tests/test_live_api_validation.py must be removed before pytest execution in this sandbox only
+
+completion_judgement:
+  pass_conditions:
+    - all acceptance items pass
+    - all required_checks pass
+    - changed files are limited to allowed_only
+    - no out_of_scope change is detected
+
+  fail_conditions:
+    - any acceptance item fails
+    - any required_check fails
+    - any changed file is outside allowed_only
+    - any unrelated behavior is broken
