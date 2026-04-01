@@ -1210,11 +1210,12 @@ def _extract_cause_summary(check_results: Dict[str, Any], channel: str) -> str:
 
 
 def _test_stderr_indicates_generated_syntax_error(check_results: Dict[str, Any]) -> bool:
-    """pytest 出力に生成物（実装・テスト）の SyntaxError が含まれるか。"""
+    """pytest 出力に生成物の SyntaxError 系（IndentationError 含む）が含まれるか。"""
     stderr = str((check_results.get("test") or {}).get("stderr") or "")
     stdout = str((check_results.get("test") or {}).get("stdout") or "")
     blob = f"{stderr}\n{stdout}"
-    return "SyntaxError" in blob
+    syntax_error_family = ("SyntaxError", "IndentationError", "TabError")
+    return any(token in blob for token in syntax_error_family)
 
 
 def _failure_layer_for_failure_type(failure_type: str) -> str:
