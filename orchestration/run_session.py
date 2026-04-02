@@ -1635,6 +1635,31 @@ def classify_failure(check_results: Dict[str, Any]) -> Dict[str, Any]:
     return {"failure_type": _default_ft, "cause_summary": "失敗原因を一意に特定できませんでした"}
 
 
+def validate_retry_instruction_schema(instruction: dict) -> None:
+    """retry_instruction の必須キー・型を検証する。不正なら ValueError を raise する。"""
+    # cause_summary: 非空文字列
+    cs = instruction.get("cause_summary")
+    if not isinstance(cs, str) or not cs.strip():
+        raise ValueError("retry_instruction.cause_summary は空でない文字列である必要があります")
+    # fix_instructions: 非空リスト
+    fi = instruction.get("fix_instructions")
+    if not isinstance(fi, list) or len(fi) == 0:
+        raise ValueError("retry_instruction.fix_instructions は空でないリストである必要があります")
+    # do_not_change: 非空リスト
+    dnc = instruction.get("do_not_change")
+    if not isinstance(dnc, list) or len(dnc) == 0:
+        raise ValueError("retry_instruction.do_not_change は空でないリストである必要があります")
+    # session_id: 文字列
+    if "session_id" not in instruction:
+        raise ValueError("retry_instruction.session_id が存在しません")
+    # failure_type: 文字列
+    if "failure_type" not in instruction:
+        raise ValueError("retry_instruction.failure_type が存在しません")
+    # priority: int
+    if "priority" not in instruction:
+        raise ValueError("retry_instruction.priority が存在しません")
+
+
 def build_retry_instruction(
     *,
     ctx: SessionContext,
@@ -1669,6 +1694,7 @@ def build_retry_instruction(
     }
     if stop_reason:
         out["stop_reason"] = stop_reason
+    validate_retry_instruction_schema(out)  # スキーマ検証（末尾に1行追加）
     return out
 
 
