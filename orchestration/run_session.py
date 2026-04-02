@@ -1364,6 +1364,9 @@ If implementation is not possible, explain in JSON.
         if full_path.exists() and full_path.is_file():
             try:
                 content = full_path.read_text(encoding="utf-8")
+                # 大きすぎるファイルはパッチ生成精度が下がるため除外（300行超）
+                if content.count("\n") > 300:
+                    continue
                 current_files_block += f"\n\n[current file: {path_str}]\n{content}"
             except Exception:
                 pass
