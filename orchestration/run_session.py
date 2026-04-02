@@ -342,6 +342,83 @@ def log_stage_progress(session_id: str, stage: str, detail: str = "") -> None:
         f"[INFO] stage={stage} session_id={session_id} branch={br!r}{suffix}",
         flush=True,
     )
+    _emit_structured_log(
+        stage=stage,
+        session_id=session_id,
+        message=f"stage={stage} session_id={session_id} branch={br!r}{suffix}",
+        branch=br,
+        stream=sys.stdout,
+    )
+
+
+def _emit_structured_log(
+    *,
+    stage: str,
+    session_id: str,
+    message: str,
+    branch: Optional[str],
+    stream: Any = None,
+) -> None:
+    """[INFO]/[ERROR] 直後に追記する 1 行 JSON ログ（既存ログは消さない）。"""
+    try:
+        payload = {
+            "stage": str(stage),
+            "session_id": str(session_id),
+            "timestamp": _iso_utc_now(),
+            "message": str(message),
+            "branch": branch,
+        }
+        out = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+        print(out, file=stream or sys.stdout, flush=True)
+    except Exception:
+        # 構造化ログは補助。ここで落ちてメイン処理を止めない。
+        return
+
+
+def log_stage_event(
+    *,
+    session_id: str,
+    stage: str,
+    event: str,
+    branch: Optional[str] = None,
+) -> None:
+    """stage の開始・終了イベントを structured log で記録する。"""
+    ev = str(event).strip().lower()
+    if ev not in {"start", "end"}:
+        ev = "start"
+    br = branch if branch is not None else _git_branch_safe()
+    _emit_structured_log(
+        stage=stage,
+        session_id=session_id,
+        message=f"stage_{ev}",
+        branch=br,
+        stream=sys.stdout,
+    )
+
+
+def save_error_snapshot(
+    *,
+    session_dir: Path,
+    stage: str,
+    session_id: str,
+    error: BaseException,
+    branch: Optional[str],
+) -> Optional[Path]:
+    """失敗時の error snapshot を artifacts/session-XXX/error_snapshot.json として保存する。"""
+    try:
+        snapshot_path = session_dir / "error_snapshot.json"
+        snapshot = {
+            "stage": str(stage),
+            "session_id": str(session_id),
+            "timestamp": _iso_utc_now(),
+            "branch": branch,
+            "error_type": type(error).__name__,
+            "message": str(error),
+        }
+        save_json(snapshot_path, snapshot)
+        return snapshot_path
+    except Exception:
+        return None
 
 
 def _git_run(args: List[str], *, check: bool = False) -> subprocess.CompletedProcess[str]:
@@ -1351,6 +1428,7 @@ def _apply_patch_validate_and_run_local_checks(
     patch 未適用が明白な場合は checks をスキップし patch_apply_failure 用の結果を返す。
     """
     if _is_read_only_live_run_outcome(ctx, impl_result):
+        log_stage_event(session_id=session_id, stage="patch_apply", event="start")
         impl_result["changed_files"] = []
         impl_result["diff_summary"] = "changed_files: 0 files (read-only live-run)"
         save_json(session_dir / "responses" / "implementation_result.json", impl_result)
@@ -1362,6 +1440,7 @@ def _apply_patch_validate_and_run_local_checks(
             (retry_label + " " if retry_label else "")
             + "read-only live-run: patch 適用スキップ",
         )
+        log_stage_event(session_id=session_id, stage="patch_apply", event="end")
         return check_results
 
     patch_info = apply_proposed_patch_and_capture_artifacts(
@@ -1377,6 +1456,7 @@ def _apply_patch_validate_and_run_local_checks(
     save_json(session_dir / "responses" / "implementation_result.json", impl_result)
 
     if patch_info.get("patch_apply_failed"):
+        log_stage_event(session_id=session_id, stage="patch_apply", event="start")
         detail = str(patch_info.get("patch_apply_message") or "").strip()
         if not detail:
             detail = (
@@ -1390,9 +1470,11 @@ def _apply_patch_validate_and_run_local_checks(
         )
         check_results = _build_check_results_for_patch_apply_failure(detail)
         save_json(session_dir / "test_results" / "checks.json", check_results)
+        log_stage_event(session_id=session_id, stage="patch_apply", event="end")
         return check_results
 
     stage_val = "patch_validation"
+    log_stage_event(session_id=session_id, stage=stage_val, event="start")
     log_stage_progress(
         session_id,
         stage_val,
@@ -1404,8 +1486,10 @@ def _apply_patch_validate_and_run_local_checks(
         ctx.session_data,
         max_changed_files,
     )
+    log_stage_event(session_id=session_id, stage=stage_val, event="end")
 
     stage_chk = "checks"
+    log_stage_event(session_id=session_id, stage=stage_chk, event="start")
     log_stage_progress(
         session_id,
         stage_chk,
@@ -1413,6 +1497,7 @@ def _apply_patch_validate_and_run_local_checks(
     )
     check_results = run_local_checks(ctx, skip_build=skip_build)
     save_json(session_dir / "test_results" / "checks.json", check_results)
+    log_stage_event(session_id=session_id, stage=stage_chk, event="end")
     return check_results
 
 
@@ -3149,9 +3234,13 @@ def main() -> int:
 
     try:
         stage = "loading"
+        log_stage_event(session_id=args.session_id, stage=stage, event="start")
         ctx = load_session_context(args.session_id)
+        log_stage_event(session_id=args.session_id, stage=stage, event="end")
         stage = "validating"
+        log_stage_event(session_id=args.session_id, stage=stage, event="start")
         validate_session_context(ctx)
+        log_stage_event(session_id=args.session_id, stage=stage, event="end")
 
         max_retries = (
             args.max_retries
@@ -3169,9 +3258,11 @@ def main() -> int:
             record_dry_run_git_warnings(session_dir, args.session_id)
         else:
             stage = "git_guard"
+            log_stage_event(session_id=args.session_id, stage=stage, event="start")
             log_stage_progress(args.session_id, stage, "ブランチ検証・sandbox へ切替")
             enforce_git_sandbox_branch(args.session_id)
             log_stage_progress(args.session_id, "git_guard", "完了 → 以降は API 呼び出し")
+            log_stage_event(session_id=args.session_id, stage=stage, event="end")
 
         spec_system, spec_user = build_prepared_spec_prompts(ctx)
         save_text(session_dir / "prompts" / "prepared_spec_system.txt", spec_system)
@@ -3213,15 +3304,24 @@ def main() -> int:
             )
             print(f"[OK] dry-run completed: {args.session_id}")
             print(f"[INFO] artifacts saved under: {session_dir}")
+            _emit_structured_log(
+                stage="dry_run",
+                session_id=args.session_id,
+                message=f"artifacts saved under: {session_dir}",
+                branch=_git_branch_safe(),
+                stream=sys.stdout,
+            )
             return 0
 
         stage = "prepared_spec"
+        log_stage_event(session_id=args.session_id, stage=stage, event="start")
         log_stage_progress(
             args.session_id, stage, "OpenAI（Builder契約反映の仕様整形）呼び出し開始"
         )
         prepared_spec = call_chatgpt_for_prepared_spec(ctx)
         save_json(session_dir / "responses" / "prepared_spec.json", prepared_spec)
         openai_usage = extract_api_usage(prepared_spec)  # usage 抽出（なければ空辞書）
+        log_stage_event(session_id=args.session_id, stage=stage, event="end")
 
         impl_system, impl_user = build_implementation_prompts(prepared_spec, ctx, None)
         save_text(session_dir / "prompts" / "implementation_system.txt", impl_system)
@@ -3229,6 +3329,7 @@ def main() -> int:
 
         # 実装＋チェック（初回）
         stage = "implementation"
+        log_stage_event(session_id=args.session_id, stage=stage, event="start")
         log_stage_progress(args.session_id, stage, "Claude（実装案）呼び出し開始")
         impl_result = call_claude_for_implementation(prepared_spec, ctx, None)
         claude_usage = extract_api_usage(impl_result)  # usage 抽出（なければ空辞書）
@@ -3239,8 +3340,10 @@ def main() -> int:
             _persist_guard_failure_artifacts(session_dir, impl_result, guard_err, stage)
             raise
         save_json(session_dir / "responses" / "implementation_result.json", impl_result)
+        log_stage_event(session_id=args.session_id, stage=stage, event="end")
 
         stage = "patch_apply"
+        log_stage_event(session_id=args.session_id, stage=stage, event="start")
         log_stage_progress(
             args.session_id,
             stage,
@@ -3255,6 +3358,7 @@ def main() -> int:
             skip_build=args.skip_build,
             session_id=args.session_id,
         )
+        log_stage_event(session_id=args.session_id, stage=stage, event="end")
 
         retry_instruction: Optional[Dict[str, Any]] = None
         retry_stopped_same_cause = False
@@ -3322,6 +3426,7 @@ def main() -> int:
 
             # retry 指示を生成（関数内で同一原因は抑止される）
             stage = "retry_instruction"
+            log_stage_event(session_id=args.session_id, stage=stage, event="start")
             log_stage_progress(
                 args.session_id,
                 stage,
@@ -3330,6 +3435,7 @@ def main() -> int:
             retry_instruction = call_chatgpt_for_retry_instruction(
                 ctx, prepared_spec, impl_result, check_results
             )
+            log_stage_event(session_id=args.session_id, stage=stage, event="end")
             retry_instruction["failure_type"] = decision["failure_type"]
             retry_instruction["cause_summary"] = decision["cause_summary"]
             # 同一原因抑止の場合は retry_count を増やさない
@@ -3359,6 +3465,7 @@ def main() -> int:
 
             # Claude retry を実行
             stage = "implementation_retry"
+            log_stage_event(session_id=args.session_id, stage=stage, event="start")
             log_stage_progress(args.session_id, stage, f"retry_count={retry_count}")
             impl_result = call_claude_for_implementation(
                 prepared_spec, ctx, retry_instruction
@@ -3374,8 +3481,10 @@ def main() -> int:
                 session_dir / "responses" / "implementation_result.json",
                 impl_result,
             )
+            log_stage_event(session_id=args.session_id, stage=stage, event="end")
 
             stage = "patch_apply"
+            log_stage_event(session_id=args.session_id, stage=stage, event="start")
             log_stage_progress(
                 args.session_id,
                 stage,
@@ -3391,6 +3500,7 @@ def main() -> int:
                 session_id=args.session_id,
                 retry_label="retry:",
             )
+            log_stage_event(session_id=args.session_id, stage=stage, event="end")
 
             if check_results.get("success"):
                 retry_count = 0
@@ -3424,6 +3534,13 @@ def main() -> int:
 
         print(f"[OK] session processed: {args.session_id}")
         print(f"[INFO] artifacts saved under: {session_dir}")
+        _emit_structured_log(
+            stage="completed",
+            session_id=args.session_id,
+            message=f"artifacts saved under: {session_dir}",
+            branch=_git_branch_safe(),
+            stream=sys.stdout,
+        )
 
         return 0 if overall_success else 1
 
@@ -3440,6 +3557,20 @@ def main() -> int:
             f"[ERROR] stage={stage} session_id={args.session_id} branch={br!r} "
             f"error_type={type(e).__name__} message={e}",
             file=sys.stderr,
+        )
+        _emit_structured_log(
+            stage=stage,
+            session_id=args.session_id,
+            message=f"error_type={type(e).__name__} message={e}",
+            branch=br,
+            stream=sys.stderr,
+        )
+        save_error_snapshot(
+            session_dir=session_dir,
+            stage=stage,
+            session_id=args.session_id,
+            error=e,
+            branch=br,
         )
         # 可能なら途中までのレポートを残す
         try:
