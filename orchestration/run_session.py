@@ -1661,6 +1661,79 @@ def _test_stderr_indicates_generated_syntax_error(check_results: Dict[str, Any])
     return any(token in blob for token in syntax_error_family)
 
 
+def _detect_failure_signals(check_results: Dict[str, Any]) -> Dict[str, Any]:
+    """check_results から failure 判定に必要な信号だけを抽出する（分類ロジックの共通化）。"""
+    cr = normalize_check_results_for_retry(check_results or {})
+    build = (cr.get("build") or {}).get("status")
+    test = (cr.get("test") or {}).get("status")
+    typecheck = (cr.get("typecheck") or {}).get("status")
+    lint = (cr.get("lint") or {}).get("status")
+    test_stderr = str((cr.get("test") or {}).get("stderr") or "")
+    return {
+        "cr": cr,
+        "patch_apply_failed": cr.get("patch_apply_failed") is True,
+        "build_failed": build == "failed",
+        "test_failed": test == "failed",
+        "typecheck_failed": typecheck == "failed",
+        "lint_failed": lint == "failed",
+        "syntax_error_in_test": (test == "failed") and _test_stderr_indicates_generated_syntax_error(cr),
+        "import_error_in_test": (test == "failed")
+        and ("ModuleNotFoundError" in test_stderr or "ImportError" in test_stderr),
+        "scope_violation": cr.get("scope_violation") is True,
+        "regression_detected": cr.get("regression_detected") is True,
+        "spec_missing_detected": cr.get("spec_missing_detected") is True,
+        "success": cr.get("success") is True,
+    }
+
+
+_ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")
+_HEX_RE = re.compile(r"\b0x[0-9a-fA-F]+\b")
+_INT_RE = re.compile(r"\b\d+\b")
+_LINE_RE = re.compile(r"\bline\s+\d+\b", re.IGNORECASE)
+_FILELINE_RE = re.compile(r'File\s+"[^"]+",\s+line\s+\d+', re.IGNORECASE)
+_PATHLIKE_RE = re.compile(r"(/[^ \n\t:]+)+|([A-Za-z]:\\\\[^ \n\t:]+)")
+
+
+def _normalize_text_for_fingerprint(text: str) -> str:
+    """ログ断片を fingerprint 用に正規化する（同一原因の安定検出を優先）。"""
+    s = str(text or "")
+    if not s:
+        return ""
+    s = _ANSI_ESCAPE_RE.sub("", s)
+    s = _FILELINE_RE.sub('File "<path>", line <num>', s)
+    s = _LINE_RE.sub("line <num>", s)
+    s = _HEX_RE.sub("<hex>", s)
+    s = _PATHLIKE_RE.sub("<path>", s)
+    s = _INT_RE.sub("<num>", s)
+    s = s.replace("\r\n", "\n").replace("\r", "\n")
+    # 余計な空白の揺れを潰す（ただし情報を落としすぎない）
+    s = "\n".join(line.strip() for line in s.splitlines() if line.strip())
+    return s[:2000]
+
+
+def _extract_fingerprint_material(cr: Dict[str, Any], failure_type: str) -> Dict[str, Any]:
+    """failure_type に応じて fingerprint に入れる情報を最小限に絞る。"""
+    if failure_type == "patch_apply_failure":
+        return {
+            "stderr": _normalize_text_for_fingerprint(
+                str((cr.get("patch_apply") or {}).get("stderr") or "")
+            )
+        }
+    if failure_type == "build_error":
+        return {"stderr": _normalize_text_for_fingerprint(str((cr.get("build") or {}).get("stderr") or ""))}
+    if failure_type in ("generated_artifact_invalid", "import_error", "test_failure"):
+        return {"stderr": _normalize_text_for_fingerprint(str((cr.get("test") or {}).get("stderr") or ""))}
+    if failure_type == "type_mismatch":
+        return {
+            "stderr": _normalize_text_for_fingerprint(
+                str((cr.get("typecheck") or {}).get("stderr") or "")
+            )
+        }
+    if failure_type in ("scope_violation", "breaking_change", "spec_missing"):
+        return {"flags": True}
+    return {"stderr": _normalize_text_for_fingerprint(str((cr.get("test") or {}).get("stderr") or ""))}
+
+
 def _failure_layer_for_failure_type(failure_type: str) -> str:
     """failure_type を failure_layer（4分類）へ写す。"""
     if failure_type in ("patch_apply_failure", "generated_artifact_invalid", "type_mismatch"):
@@ -1746,63 +1819,85 @@ def classify_failure(check_results: Dict[str, Any]) -> Dict[str, Any]:
     patch_apply_failure -> build_error -> generated_artifact_invalid(SyntaxError) ->
     import_error -> type_mismatch -> test_failure -> scope_violation -> breaking_change -> spec_missing
     """
-    cr = normalize_check_results_for_retry(check_results or {})
-    build = (cr.get("build") or {}).get("status")
-    test = (cr.get("test") or {}).get("status")
-    typecheck = (cr.get("typecheck") or {}).get("status")
-    lint = (cr.get("lint") or {}).get("status")
+    sig = _detect_failure_signals(check_results or {})
+    cr = sig["cr"]
+    canonical = resolve_canonical_failure_type(cr)
+    failure_type = str(canonical.get("failure_type") or "spec_missing")
+    if failure_type == "no_failure":
+        failure_type = "spec_missing"
 
-    if cr.get("patch_apply_failed") is True:
+    if sig["patch_apply_failed"]:
         detail = str((cr.get("patch_apply") or {}).get("stderr") or "").strip()
         if not detail:
             detail = "proposed_patch が適用されず実差分がありません"
         return {
-            "failure_type": "patch_apply_failure",
+            "failure_type": validate_failure_type(failure_type),
             "cause_summary": detail[:2000],
+            "cause_fingerprint": _compute_retry_cause_fingerprint(cr),
         }
 
-    if build == "failed":
+    if sig["build_failed"]:
         return {
-            "failure_type": "build_error",
+            "failure_type": validate_failure_type(failure_type),
             "cause_summary": _extract_cause_summary(cr, "build"),
+            "cause_fingerprint": _compute_retry_cause_fingerprint(cr),
         }
 
-    if test == "failed":
-        if _test_stderr_indicates_generated_syntax_error(cr):
+    if sig["test_failed"]:
+        if sig["syntax_error_in_test"]:
             return {
-                "failure_type": "generated_artifact_invalid",
+                "failure_type": validate_failure_type(failure_type),
                 "cause_summary": _extract_cause_summary(cr, "test"),
+                "cause_fingerprint": _compute_retry_cause_fingerprint(cr),
             }
-        test_stderr = str((cr.get("test") or {}).get("stderr") or "")
-        if "ModuleNotFoundError" in test_stderr or "ImportError" in test_stderr:
+        if sig["import_error_in_test"]:
             return {
-                "failure_type": "import_error",
+                "failure_type": validate_failure_type(failure_type),
                 "cause_summary": _extract_cause_summary(cr, "test"),
+                "cause_fingerprint": _compute_retry_cause_fingerprint(cr),
             }
 
-    if typecheck == "failed":
+    if sig["typecheck_failed"]:
         return {
-            "failure_type": "type_mismatch",
+            "failure_type": validate_failure_type(failure_type),
             "cause_summary": _extract_cause_summary(cr, "typecheck"),
+            "cause_fingerprint": _compute_retry_cause_fingerprint(cr),
         }
 
-    if lint == "failed" or test == "failed":
+    if sig["lint_failed"] or sig["test_failed"]:
         return {
-            "failure_type": "test_failure",
-            "cause_summary": _extract_cause_summary(cr, "test" if test == "failed" else "lint"),
+            "failure_type": validate_failure_type(failure_type),
+            "cause_summary": _extract_cause_summary(cr, "test" if sig["test_failed"] else "lint"),
+            "cause_fingerprint": _compute_retry_cause_fingerprint(cr),
         }
 
-    if cr.get("scope_violation") is True:
-        return {"failure_type": "scope_violation", "cause_summary": "スコープ制約に違反しています"}
+    if sig["scope_violation"]:
+        return {
+            "failure_type": validate_failure_type(failure_type),
+            "cause_summary": "スコープ制約に違反しています",
+            "cause_fingerprint": _compute_retry_cause_fingerprint(cr),
+        }
 
-    if cr.get("regression_detected") is True:
-        return {"failure_type": "breaking_change", "cause_summary": "既存の期待挙動を破壊しています"}
+    if sig["regression_detected"]:
+        return {
+            "failure_type": validate_failure_type(failure_type),
+            "cause_summary": "既存の期待挙動を破壊しています",
+            "cause_fingerprint": _compute_retry_cause_fingerprint(cr),
+        }
 
-    if cr.get("spec_missing_detected") is True:
-        return {"failure_type": "spec_missing", "cause_summary": "仕様情報が不足しています"}
+    if sig["spec_missing_detected"]:
+        return {
+            "failure_type": validate_failure_type(failure_type),
+            "cause_summary": "仕様情報が不足しています",
+            "cause_fingerprint": _compute_retry_cause_fingerprint(cr),
+        }
 
     _default_ft = validate_failure_type("spec_missing")  # 戻り値 failure_type の enum 検証
-    return {"failure_type": _default_ft, "cause_summary": "失敗原因を一意に特定できませんでした"}
+    return {
+        "failure_type": _default_ft,
+        "cause_summary": "失敗原因を一意に特定できませんでした",
+        "cause_fingerprint": _compute_retry_cause_fingerprint(cr),
+    }
 
 
 def validate_retry_instruction_schema(instruction: dict) -> None:
@@ -1878,6 +1973,7 @@ def retry_loop(
     """同一失敗の再試行抑止と上限判定を一元化する。"""
     failure_type = str(failure.get("failure_type") or "spec_missing")
     cause_summary = str(failure.get("cause_summary") or "").strip() or "原因不明"
+    cause_fp = str(failure.get("cause_fingerprint") or "").strip()
     for item in retry_history:
         if item.get("failure_type") == failure_type and item.get("cause_summary") == cause_summary:
             return {
@@ -1887,6 +1983,18 @@ def retry_loop(
                 "retry_count": int(retry_count),
                 "stop_reason": "same_failure_and_cause",
             }
+    if (
+        cause_fp
+        and retry_history
+        and str(retry_history[-1].get("cause_fingerprint") or "").strip() == cause_fp
+    ):
+        return {
+            "should_retry": False,
+            "failure_type": failure_type,
+            "cause_summary": cause_summary,
+            "retry_count": int(retry_count),
+            "stop_reason": "cause_fingerprint_repeated",
+        }
     if retry_count >= max_retries:
         return {
             "should_retry": False,
@@ -1918,9 +2026,10 @@ def resolve_canonical_failure_type(check_results: Dict[str, Any]) -> Dict[str, A
     priority は小さいほど高優先（0 は no_failure）。
     既存テスト互換のため build_error=1, import_error=2, type_mismatch=3, test_failure=4 は維持する。
     """
-    cr = normalize_check_results_for_retry(check_results or {})
+    sig = _detect_failure_signals(check_results or {})
+    cr = sig["cr"]
 
-    if cr.get("patch_apply_failed") is True:
+    if sig["patch_apply_failed"]:
         return {"failure_type": "patch_apply_failure", "priority": 1}
 
     # フラグ系（テストが成功でも scope_violation 等が立つことがある）
@@ -1937,31 +2046,24 @@ def resolve_canonical_failure_type(check_results: Dict[str, Any]) -> Dict[str, A
         ft, pri = sorted(flagged, key=lambda x: x[1])[0]
         return {"failure_type": ft, "priority": pri}
 
-    if cr.get("success") is True:
+    if sig["success"]:
         return {"failure_type": "no_failure", "priority": 0}
 
-    build = (cr.get("build") or {}).get("status")
-    typecheck = (cr.get("typecheck") or {}).get("status")
-    lint = (cr.get("lint") or {}).get("status")
-    test = (cr.get("test") or {}).get("status")
-
-    if build == "failed":
+    if sig["build_failed"]:
         return {"failure_type": "build_error", "priority": 1}
 
     # 生成された Python / テストの SyntaxError（pytest 収集・実行時）
-    if test == "failed" and _test_stderr_indicates_generated_syntax_error(cr):
+    if sig["syntax_error_in_test"]:
         return {"failure_type": "generated_artifact_invalid", "priority": 2}
 
     # import_error は test の stderr から推定（ModuleNotFoundError 等）
-    if test == "failed":
-        stderr = str((cr.get("test") or {}).get("stderr") or "")
-        if "ModuleNotFoundError" in stderr or "ImportError" in stderr:
-            return {"failure_type": "import_error", "priority": 2}
+    if sig["import_error_in_test"]:
+        return {"failure_type": "import_error", "priority": 2}
 
-    if typecheck == "failed":
+    if sig["typecheck_failed"]:
         return {"failure_type": "type_mismatch", "priority": 3}
 
-    if lint == "failed" or test == "failed":
+    if sig["lint_failed"] or sig["test_failed"]:
         return {"failure_type": "test_failure", "priority": 4}
 
     # ここまで来たら「失敗だが特定できない」扱い。最小限で test_failure に寄せる。
@@ -1982,15 +2084,13 @@ def _compute_retry_cause_fingerprint(check_results: Dict[str, Any]) -> str:
     """同一原因判定用のフィンガープリント（安定・短縮）。"""
     cr = normalize_check_results_for_retry(check_results or {})
     canonical = resolve_canonical_failure_type(cr)
+    ft = str(canonical.get("failure_type") or "spec_missing")
+    if ft == "no_failure":
+        ft = "spec_missing"
     parts = {
-        "failure_type": canonical.get("failure_type"),
-        "priority": canonical.get("priority"),
+        "failure_type": ft,
         "patch_apply_failed": bool(cr.get("patch_apply_failed")),
-        "patch_apply_stderr": (str((cr.get("patch_apply") or {}).get("stderr") or ""))[:500],
-        "test_stderr": ((cr.get("test") or {}).get("stderr") or "")[:500],
-        "build_stderr": ((cr.get("build") or {}).get("stderr") or "")[:500],
-        "typecheck_stderr": ((cr.get("typecheck") or {}).get("stderr") or "")[:500],
-        "lint_stderr": ((cr.get("lint") or {}).get("stderr") or "")[:500],
+        "material": _extract_fingerprint_material(cr, ft),
         "flags": {
             "scope_violation": bool(cr.get("scope_violation")),
             "regression_detected": bool(cr.get("regression_detected")),
@@ -3142,6 +3242,7 @@ def main() -> int:
                     "attempt": retry_count,
                     "failure_type": str(retry_instruction.get("failure_type") or ""),
                     "cause_summary": str(retry_instruction.get("cause_summary") or ""),
+                    "cause_fingerprint": str(retry_instruction.get("cause_fingerprint") or ""),
                 }
             )
             save_json(session_dir / "responses" / "retry_instruction.json", retry_instruction)
