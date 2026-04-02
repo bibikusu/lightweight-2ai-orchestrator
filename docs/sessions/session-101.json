@@ -1,0 +1,43 @@
+{
+  "session_id": "session-101",
+  "objective": "preflight guard: auto-clean previous session residue and validate before run",
+  "inputs": [
+    "git working tree state",
+    "session definition"
+  ],
+  "outputs": [
+    "clean execution environment",
+    "stable run start"
+  ],
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "backend/tests/test_preflight_guard.py"
+  ],
+  "allowed_changes_detail": [
+    "run_session.py::preflight_cleanup",
+    "run_session.py::validate_before_run"
+  ],
+  "forbidden_changes": [
+    "docs/",
+    "providers/",
+    "backend/models"
+  ],
+  "completion_criteria": [
+    "previous session residue in worktree is auto-cleaned before sandbox branch creation",
+    "dirty worktree from unknown cause stops with clear error message",
+    "no unintended side effects on existing flows",
+    "existing tests pass"
+  ],
+  "acceptance_criteria": [
+    "AC-101-01:test_preflight_cleans_known_residue",
+    "AC-101-02:test_preflight_stops_on_unknown_dirty",
+    "AC-101-03:test_run_session_completes",
+    "AC-101-04:test_no_regression"
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし",
+    "実装過不足なし"
+  ]
+}

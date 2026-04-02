@@ -1,0 +1,14 @@
+session_id: session-101
+
+acceptance:
+  - id: AC-101-01
+    description: known residue (previous session sandbox leftovers) is auto-cleaned
+
+  - id: AC-101-02
+    description: unknown dirty worktree stops execution with clear error and recovery steps
+
+  - id: AC-101-03
+    description: run_session completes without interruption after preflight
+
+  - id: AC-101-04
+    description: all existing tests pass (no regression)
