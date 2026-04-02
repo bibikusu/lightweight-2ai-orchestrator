@@ -2241,6 +2241,17 @@ def _build_artifacts_index_and_summary(
     return sessions_sorted, summary
 
 
+def extract_api_usage(response: dict) -> dict:
+    """API レスポンスから usage 情報を抽出する。
+    usage が存在しない場合は空辞書を返す（エラーにしない）。"""
+    if not isinstance(response, dict):
+        return {}
+    usage = response.get("usage")
+    if isinstance(usage, dict):
+        return usage
+    return {}
+
+
 def persist_session_reports(
     session_dir: Path,
     ctx: Optional[SessionContext],
@@ -2256,6 +2267,8 @@ def persist_session_reports(
     error_message: Optional[str] = None,
     retry_control: Optional[Dict[str, Any]] = None,
     aborted_stage: Optional[str] = None,
+    api_usage: Optional[Dict[str, Any]] = None,
+    api_call_count: Optional[Dict[str, Any]] = None,
 ) -> None:
     """
     既存 report 関数を活用しつつ、検収用 report.json を標準出力する。
@@ -2362,6 +2375,9 @@ def persist_session_reports(
     )
     payload["completion_status"] = completion["completion_status"]
     payload["human_review_needed"] = completion["human_review_needed"]
+    # API usage 情報（存在する場合のみ記録する）
+    payload["api_usage"] = api_usage if isinstance(api_usage, dict) else {}
+    payload["api_call_count"] = api_call_count if isinstance(api_call_count, dict) else {}
     artifacts_root = session_dir.parent
     sessions_index, summary_metrics = _build_artifacts_index_and_summary(
         artifacts_root, payload
