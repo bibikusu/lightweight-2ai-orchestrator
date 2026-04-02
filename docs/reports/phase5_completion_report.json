@@ -12,7 +12,8 @@
     "session-102",
     "session-103",
     "session-104",
-    "session-105"
+    "session-105",
+    "session-106"
   ],
   "capabilities": {
     "enum_unification": true,
@@ -31,7 +32,8 @@
     "docs_alignment": "docs/global_rules.md に verification_test_alignment_rule_update（config 変更時の検証テスト必須）および session_json_template_rule_update（session JSON 必須フィールド・allowed_changes_detail）が記載されている。README.md に validation ワークフローと canonical path の説明がある。git 履歴上 session-22a / session-25a のコミットで CI 正本と Phase5 補足ルールが追補されている。",
     "report_schema_integrity": "report.json / session_report の受理・completion_status・lint/typecheck 表現は Phase4-3 以降のスキーマを維持しており、backend/tests 内の enum 検証と docs/global_rules.md の記述が一致する。",
     "ci_alignment": ".github/workflows/validation.yml は pytest → ruff → mypy → compileall の順で実行し、artifact 方針が README と docs/global_rules.md の「21. CI canonical path ルール（session-22a）」と一致する。ci.yml は canonical ではない旨が global_rules に明示されている。",
-    "stability_layer_alignment": "session-101〜105 で追加された preflight_guard / retry_optimization / patch_safety / forbidden_consistency / structured_logging は run_session.py 内に実装され、各セッションの専用テストで検証済み。ruff / pytest / mypy / compileall 全 PASS（commit fe85a74）。"
+    "stability_layer_alignment": "session-101〜105 で追加された preflight_guard / retry_optimization / patch_safety / forbidden_consistency / structured_logging は run_session.py 内に実装され、各セッションの専用テストで検証済み。session-106 の live-run で実 API 環境での動作を確認。ruff / pytest / mypy / compileall 全 PASS。",
+    "live_run_validation": "session-106 で実 API live-run を実施。status: success, completion: review_required, 検証4項目 pass, changed_files: []。preflight guard が constraints 不足を検出して正しく停止（修正後に成功）。structured logging が logs/error_*.json として保存。artifacts/session-106/ に全証跡保存。"
   },
   "test_results": {
     "pytest": "pass: PYTHONPATH=. .venv/bin/pytest backend/tests/ -q（exit 0）",
@@ -41,17 +43,17 @@
   },
   "risks": [
     "将来の config 変更時は verification_test_alignment_rule に従い対応テストと allowed_changes を必ず揃える必要がある",
-    "Live-run validation not executed yet — session-101〜105 の改善はユニットテストのみで検証済み",
     "run_session.py の肥大化が進行中。将来的なモジュール分割が必要になる可能性がある",
-    "Patch normalization は既知の corrupt パターンに対応済みだが、新規 LLM 出力形式で失敗する可能性がある"
+    "Patch normalization は既知の corrupt パターンに対応済みだが、新規 LLM 出力形式で失敗する可能性がある",
+    "session-106 の session定義に constraints キーが欠落していた。テンプレートに必須キーチェックリストを追加すべき"
   ],
   "open_issues": [
-    "Live-run validation pending (session-106)",
-    "run_session.py module split not yet planned"
+    "run_session.py module split not yet planned",
+    "session JSON テンプレートの必須キー一覧を明文化すべき（constraints 欠落の再発防止）"
   ],
   "final_judgement": {
     "result": "completed",
-    "reason": "session-20〜25 の capability 群と session-101〜105 の stability 層をすべて docs・CI・テストで確認し、pytest / ruff / mypy / compileall が全成功。Live-run 検証が残るが、ユニットテストレベルでの Phase5 目標は達成済み。",
+    "reason": "session-20〜25 の capability 群と session-101〜105 の stability 層を docs・CI・テストで確認済み。session-106 の live-run で実 API 環境での有効性を検証し、preflight guard / structured logging / retry 記録 / forbidden consistency が正常動作。pytest / ruff / mypy / compileall 全成功。",
     "next_phase": "Phase6"
   }
 }
