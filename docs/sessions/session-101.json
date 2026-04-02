@@ -1,5 +1,6 @@
 {
   "session_id": "session-101",
+  "phase_id": "phase5",
   "objective": "preflight guard: auto-clean previous session residue and validate before run",
   "inputs": [
     "git working tree state",
