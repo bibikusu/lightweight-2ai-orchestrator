@@ -429,7 +429,48 @@ def normalize_patch_for_git_apply(raw_patch: str) -> str:
             continue
         out.append(line)
         i += 1
-    return "\n".join(out).strip() + "\n"
+
+    # hunk ヘッダー（@@ -X,Y +X,Z @@）の行カウントを実際の内容で再計算する
+    # LLM が生成するカウント値は誤りが多く git apply が "corrupt patch" で失敗するため。
+    recounted = _recount_hunk_headers("\n".join(out))
+    return recounted.strip() + "\n"
+
+
+def _recount_hunk_headers(patch_text: str) -> str:
+    """unified diff の @@ 行カウントを実際の hunk 内容で再計算する。"""
+    lines = patch_text.split("\n")
+    result: List[str] = []
+    i = 0
+    hunk_header_re = re.compile(r"^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@(.*)")
+    while i < len(lines):
+        m = hunk_header_re.match(lines[i])
+        if m:
+            old_start = int(m.group(1))
+            new_start = int(m.group(2))
+            suffix = m.group(3)
+            # hunk 本体を収集（次の @@ または diff --git まで）
+            j = i + 1
+            old_count = 0
+            new_count = 0
+            while j < len(lines):
+                l = lines[j]
+                if l.startswith("@@") or l.startswith("diff --git "):
+                    break
+                if l.startswith("-"):
+                    old_count += 1
+                elif l.startswith("+"):
+                    new_count += 1
+                else:
+                    # context line (空行含む)
+                    old_count += 1
+                    new_count += 1
+                j += 1
+            result.append(f"@@ -{old_start},{old_count} +{new_start},{new_count} @@{suffix}")
+            i += 1
+            continue
+        result.append(lines[i])
+        i += 1
+    return "\n".join(result)
 
 
 def _expected_existing_files_from_patch(patch_text: str) -> List[str]:
