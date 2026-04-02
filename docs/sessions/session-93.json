@@ -22,13 +22,11 @@
   ],
   "allowed_changes": [
     "orchestration/providers/",
-    "orchestration/run_session.py",
     "backend/tests/"
   ],
   "allowed_changes_detail": [
     "orchestration/providers/openai_client.py: expose usage metadata in returned structure if available from provider response",
     "orchestration/providers/claude_client.py: expose usage metadata in returned structure if available from provider response",
-    "orchestration/run_session.py: compatibility adjustment only if required by provider return structure",
     "backend/tests/*: provider usage extraction coverage only"
   ],
   "forbidden_changes": [
