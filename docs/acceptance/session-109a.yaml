@@ -1,0 +1,22 @@
+session_id: session-109a
+acceptance:
+  - id: AC-109a-01
+    description: preflight success path behaves the same after extraction
+    type: automated
+    test: test_preflight_success_behavior_unchanged
+  - id: AC-109a-02
+    description: missing required session keys still fail with the same message after extraction
+    type: automated
+    test: test_preflight_missing_keys_behavior_unchanged
+  - id: AC-109a-03
+    description: dirty worktree guard behavior remains unchanged after extraction
+    type: automated
+    test: test_preflight_dirty_worktree_behavior_unchanged
+  - id: AC-109a-04
+    description: run_session imports and uses orchestration.preflight without changing provider flow
+    type: automated
+    test: test_run_session_delegates_to_preflight_module
+  - id: AC-109a-05
+    description: local validation suite still passes after extraction
+    type: manual_check
+    test: manual_4_command_verification

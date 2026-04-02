@@ -1,0 +1,22 @@
+session_id: session-108
+acceptance:
+  - id: AC-108-01
+    description: validation.yml contains pytest, ruff, mypy, compileall in canonical order
+    type: automated
+    test: test_validation_workflow_uses_canonical_command_order
+  - id: AC-108-02
+    description: workflow commands match documented canonical commands
+    type: automated
+    test: test_validation_workflow_matches_documented_commands
+  - id: AC-108-03
+    description: validation.yml remains the canonical workflow path
+    type: automated
+    test: test_validation_workflow_is_canonical_path
+  - id: AC-108-04
+    description: runtime code is unchanged in this session
+    type: manual_check
+    test: manual_changed_files_check
+  - id: AC-108-05
+    description: local 4-command verification still passes after workflow changes
+    type: manual_check
+    test: manual_4_command_verification

@@ -1,0 +1,52 @@
+{
+  "session_id": "session-108",
+  "phase_id": "phase6",
+  "title": "Canonical CI validation workflow hardening",
+  "goal": "Ensure the canonical CI workflow always runs the same four validation commands in the same order as local verification",
+  "scope": [
+    "Harden canonical GitHub Actions validation workflow",
+    "Assert exact command order for pytest, ruff, mypy, compileall",
+    "Add focused tests or fixtures for workflow contract if test coverage exists for CI docs alignment"
+  ],
+  "out_of_scope": [
+    "E2E live-run in CI",
+    "provider API execution in CI",
+    "runtime code changes",
+    "report schema changes",
+    "new deployment workflows"
+  ],
+  "constraints": [
+    "one session one purpose",
+    "canonical workflow remains validation.yml",
+    "do not add external secrets requirements",
+    "do not change local command semantics",
+    "maximum 4 changed files"
+  ],
+  "allowed_changes": [
+    ".github/workflows/validation.yml",
+    "backend/tests/test_validation_workflow_contract.py",
+    "README.md",
+    "docs/global_rules.md"
+  ],
+  "allowed_changes_detail": [
+    ".github/workflows/validation.yml::validation job commands and order",
+    "backend/tests/test_validation_workflow_contract.py::*",
+    "README.md::validation workflow canonical section",
+    "docs/global_rules.md::CI canonical path rule section only (do not modify session JSON required keys rule added by session-107)"
+  ],
+  "forbidden_changes": [
+    "orchestration/run_session.py",
+    "orchestration/providers/",
+    "docs/reports/",
+    "non-canonical workflows except references needed to clarify canonical status",
+    "application runtime code"
+  ],
+  "acceptance_criteria": [
+    "AC-108-01: validation.yml contains pytest, ruff, mypy, compileall in canonical order [test_validation_workflow_uses_canonical_command_order]",
+    "AC-108-02: workflow commands match documented canonical commands [test_validation_workflow_matches_documented_commands]",
+    "AC-108-03: validation.yml remains the canonical workflow path [test_validation_workflow_is_canonical_path]",
+    "AC-108-04: runtime code is unchanged in this session [manual_changed_files_check]",
+    "AC-108-05: local 4-command verification still passes after workflow changes [manual_4_command_verification]"
+  ],
+  "acceptance_ref": "docs/acceptance/session-108.yaml"
+}

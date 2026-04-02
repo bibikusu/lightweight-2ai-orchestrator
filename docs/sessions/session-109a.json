@@ -1,0 +1,53 @@
+{
+  "session_id": "session-109a",
+  "phase_id": "phase6",
+  "title": "Extract preflight logic from run_session",
+  "goal": "Move preflight validation logic into a dedicated module without changing runtime behavior",
+  "scope": [
+    "Extract preflight-related logic from orchestration/run_session.py",
+    "Keep behavior identical",
+    "Add focused regression tests for extracted preflight flow"
+  ],
+  "out_of_scope": [
+    "full run_session modularization",
+    "report generation extraction",
+    "provider execution extraction",
+    "retry logic changes",
+    "acceptance semantics changes"
+  ],
+  "constraints": [
+    "one session one purpose",
+    "behavior must remain identical",
+    "no provider changes",
+    "no report schema changes",
+    "maximum 4 changed files"
+  ],
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "orchestration/preflight.py",
+    "backend/tests/test_preflight_module_extraction.py",
+    "docs/global_rules.md"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/run_session.py::imports and preflight invocation wiring only",
+    "orchestration/preflight.py::*",
+    "backend/tests/test_preflight_module_extraction.py::*",
+    "docs/global_rules.md::run_session modularization note"
+  ],
+  "forbidden_changes": [
+    "orchestration/providers/",
+    "docs/reports/",
+    ".github/workflows/",
+    "retry implementation behavior",
+    "report generation behavior",
+    "patch apply behavior"
+  ],
+  "acceptance_criteria": [
+    "AC-109a-01: preflight success path behaves the same after extraction [test_preflight_success_behavior_unchanged]",
+    "AC-109a-02: missing required session keys still fail with the same message after extraction [test_preflight_missing_keys_behavior_unchanged]",
+    "AC-109a-03: dirty worktree guard behavior remains unchanged after extraction [test_preflight_dirty_worktree_behavior_unchanged]",
+    "AC-109a-04: run_session imports and uses orchestration.preflight without changing provider flow [test_run_session_delegates_to_preflight_module]",
+    "AC-109a-05: local validation suite still passes after extraction [manual_4_command_verification]"
+  ],
+  "acceptance_ref": "docs/acceptance/session-109a.yaml"
+}

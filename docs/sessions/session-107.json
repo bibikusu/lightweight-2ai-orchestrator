@@ -1,0 +1,53 @@
+{
+  "session_id": "session-107",
+  "phase_id": "phase6",
+  "title": "Session JSON required key validation",
+  "goal": "Fail fast when a session JSON is missing required keys before execution begins",
+  "scope": [
+    "Define required session JSON keys",
+    "Validate missing keys before runtime execution",
+    "Add focused tests for missing-key failure behavior"
+  ],
+  "out_of_scope": [
+    "acceptance YAML schema validation",
+    "provider changes",
+    "CI workflow changes",
+    "module split",
+    "report format changes"
+  ],
+  "constraints": [
+    "one session one purpose",
+    "do not change provider implementations",
+    "do not change runtime behavior outside session JSON preflight validation",
+    "do not change report schema",
+    "maximum 3 changed files"
+  ],
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "backend/tests/test_session_json_required_keys.py",
+    "docs/global_rules.md"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/run_session.py::load_session_definition",
+    "orchestration/run_session.py::validate_session_definition",
+    "orchestration/run_session.py::main",
+    "backend/tests/test_session_json_required_keys.py::*",
+    "docs/global_rules.md::session JSON required keys rule section"
+  ],
+  "forbidden_changes": [
+    "orchestration/providers/",
+    "backend/tests unrelated existing tests",
+    "docs/reports/",
+    ".github/workflows/",
+    "report generation flow",
+    "patch normalization flow"
+  ],
+  "acceptance_criteria": [
+    "AC-107-01: missing constraints key fails before execution and names constraints in the error message [test_missing_constraints_key_fails_fast]",
+    "AC-107-02: multiple missing keys are reported in deterministic order [test_multiple_missing_keys_reported_deterministically]",
+    "AC-107-03: valid session JSON passes required-key validation [test_valid_session_json_passes_required_key_validation]",
+    "AC-107-04: provider call is not attempted when required keys are missing [test_missing_required_keys_do_not_call_provider]",
+    "AC-107-05: existing report flow remains unchanged for valid sessions [test_valid_session_preserves_existing_flow]"
+  ],
+  "acceptance_ref": "docs/acceptance/session-107.yaml"
+}

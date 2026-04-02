@@ -1,0 +1,22 @@
+session_id: session-107
+acceptance:
+  - id: AC-107-01
+    description: missing constraints key fails before execution and names constraints in the error message
+    type: automated
+    test: test_missing_constraints_key_fails_fast
+  - id: AC-107-02
+    description: multiple missing keys are reported in deterministic order
+    type: automated
+    test: test_multiple_missing_keys_reported_deterministically
+  - id: AC-107-03
+    description: valid session JSON passes required-key validation
+    type: automated
+    test: test_valid_session_json_passes_required_key_validation
+  - id: AC-107-04
+    description: provider call is not attempted when required keys are missing
+    type: automated
+    test: test_missing_required_keys_do_not_call_provider
+  - id: AC-107-05
+    description: existing report flow remains unchanged for valid sessions
+    type: automated
+    test: test_valid_session_preserves_existing_flow
