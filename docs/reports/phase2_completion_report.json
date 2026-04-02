@@ -1,0 +1,81 @@
+{
+  "phase": "Phase2",
+  "status": "completed",
+  "completed_sessions": [
+    "session-81a",
+    "session-81",
+    "session-82",
+    "session-83",
+    "session-84",
+    "session-85",
+    "session-86"
+  ],
+  "summary": "Lightweight 2AI orchestrator stabilization: input guards, scope enforcement, completion standardization, failure/retry normalization, and API usage recording",
+  "achievements": [
+    "Test mock foundation hardened with shared conftest.py fixtures (session-81a)",
+    "Input guard: session.json/acceptance.yaml preflight validation before API calls (session-81)",
+    "allowed_changes_detail enforcement with wildcard path matching (session-82)",
+    "Completion decision mechanized via evaluate_completion_decision() — no prose-only judgments (session-83)",
+    "failure_type enum fixed via VALID_FAILURE_TYPES frozenset + priority normalization (session-84)",
+    "patch_status='ready' normalized to 'applied' via alias (session-84)",
+    "retry_instruction schema validated: cause_summary/fix_instructions/do_not_change required (session-85)",
+    "API usage extraction and report.json recording for OpenAI and Claude (session-86)"
+  ],
+  "test_results": {
+    "total_tests": 256,
+    "ruff": "pass",
+    "pytest": "pass (256 tests)",
+    "mypy": "pass (6 source files)",
+    "compileall": "pass"
+  },
+  "git_history": {
+    "first_commit": "c97eb98 fix acceptance_ref path resolution for docs-prefixed session refs",
+    "last_commit": "5d554bf merge session-86: api usage and cost recording",
+    "total_merge_commits": 7,
+    "branch": "main"
+  },
+  "functions_added": {
+    "session-81a": ["shared conftest.py fixtures (git_mock_default_response, etc.)"],
+    "session-81": ["validate_session_required_keys", "resolve_acceptance_path", "validate_session_id_consistency", "run_preflight_validation"],
+    "session-82": ["validate_allowed_changes_detail_enforcement"],
+    "session-83": ["validate_acceptance_test_names", "evaluate_completion_decision"],
+    "session-84": ["VALID_FAILURE_TYPES", "validate_failure_type", "normalize_failure_type_by_priority"],
+    "session-85": ["validate_retry_instruction_schema"],
+    "session-86": ["extract_api_usage"]
+  },
+  "test_files_added": [
+    "backend/tests/conftest.py",
+    "backend/tests/test_session_validation.py",
+    "backend/tests/test_allowed_changes_detail.py",
+    "backend/tests/test_completion_verification.py",
+    "backend/tests/test_failure_type_normalization.py",
+    "backend/tests/test_retry_instruction_schema.py",
+    "backend/tests/test_api_usage_recording.py"
+  ],
+  "phase2_design_principles": {
+    "before": "Executable but quality varies, retry inefficient, AI cost unknown",
+    "after": "Input guarded, scope enforced, completion mechanized, retry structured, usage visible"
+  },
+  "risks": [
+    "evaluate_completion_decision is defined but not yet wired into main() flow — integration is a Phase3 candidate",
+    "extract_api_usage depends on provider responses containing 'usage' key — untested with real API responses",
+    "validate_allowed_changes_detail_enforcement uses colon-split parsing ('path: description') which may break on paths containing colons",
+    "session-81a retry pattern (initial patch failure + retry recovery) persists — Claude patch quality for run_session.py modifications remains unreliable via orchestrator"
+  ],
+  "open_issues": [
+    "provider file is claude_client.py (not anthropic_client.py) — session-86 definition should be corrected for accuracy",
+    "patch_status='ready_for_application' and 'complete' are not yet in _PATCH_STATUS_ALIASES (only 'ready' was added)",
+    "session-83 evaluate_completion_decision needs main() integration to actually gate report completion_status"
+  ],
+  "deferred_to_phase3": [
+    "Claude output verification by GPT (session-89 equivalent)",
+    "Context compression and diff-based token optimization (session-90 equivalent)",
+    "Multi-AI provider abstraction for Gemini etc. (session-91 equivalent)",
+    "evaluate_completion_decision integration into main() execution flow"
+  ],
+  "final_judgement": {
+    "result": "completed",
+    "reason": "All 7 sessions passed 4-command verification, 256 tests green, scope violations zero, and remaining issues are improvements not blockers.",
+    "next_phase": "Phase3"
+  }
+}
