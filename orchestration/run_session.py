@@ -378,6 +378,7 @@ def normalize_patch_for_git_apply(raw_patch: str) -> str:
     - ```diff / ```patch フェンスを除去
     - CRLF/CR を LF に統一
     - ---/+++ があるのに diff --git が無い塊へヘッダ補完
+    - 重複した diff --git ヘッダー（偽 index 行付き）を除去
     - 末尾改行を保証
     """
     text = str(raw_patch or "")
@@ -389,6 +390,28 @@ def normalize_patch_for_git_apply(raw_patch: str) -> str:
         return ""
 
     lines = text.split("\n")
+
+    # 重複 diff --git ヘッダーを除去:
+    # "diff --git A" の直後に index 行があり、さらに "diff --git A" が続く場合、
+    # 最初の diff --git と index 行を捨てて後者を残す。
+    cleaned: List[str] = []
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        if (
+            line.startswith("diff --git ")
+            and i + 1 < len(lines)
+            and re.match(r"^index [0-9a-f]+\.\.[0-9a-f]+ ", lines[i + 1])
+            and i + 2 < len(lines)
+            and lines[i + 2].startswith("diff --git ")
+        ):
+            # 偽 index 付き重複ヘッダー: 最初の diff --git と index を捨てる
+            i += 2
+            continue
+        cleaned.append(line)
+        i += 1
+    lines = cleaned
+
     out: List[str] = []
     i = 0
     while i < len(lines):
