@@ -1248,6 +1248,12 @@ Return only valid JSON.
 Do not add markdown fences.
 Do not expand scope.
 If implementation is not possible, explain in JSON.
+
+[patch format requirements]
+- proposed_patch MUST be in unified diff format (diff --git a/<path> b/<path>, --- a/<path>, +++ b/<path>, @@ ... @@)
+- Each modified file MUST have its own diff --git header
+- patch_status MUST be exactly one of: "applied", "not_applicable", "dry_run", "partial"
+- Do NOT use "ready", "done", "completed", "ready_for_manual_verification" or any other value for patch_status
 """
 
     retry_block = ""
@@ -1255,6 +1261,15 @@ If implementation is not possible, explain in JSON.
         retry_block = "\n\n[retry_instruction]\n" + json.dumps(
             retry_instruction, ensure_ascii=False, indent=2
         )
+        # fix_instructions と do_not_change を明示的に展開して反映する
+        fix_items = retry_instruction.get("fix_instructions") or []
+        dnc_items = retry_instruction.get("do_not_change") or []
+        if fix_items:
+            fix_lines = "\n".join(f"- {x}" for x in fix_items if x)
+            retry_block += f"\n\n[fix_instructions to apply]\n{fix_lines}"
+        if dnc_items:
+            dnc_lines = "\n".join(f"- {x}" for x in dnc_items if x)
+            retry_block += f"\n\n[do_not_change (must not touch these)]\n{dnc_lines}"
 
     user_prompt = f"""
 session_id: {ctx.session_id}
@@ -1270,10 +1285,10 @@ Return JSON with keys:
 session_id
 changed_files
 implementation_summary
-patch_status
+patch_status  (must be one of: "applied", "not_applicable", "dry_run", "partial")
 risks
 open_issues
-proposed_patch
+proposed_patch  (must be unified diff format)
 """
     return system_prompt, user_prompt
 
