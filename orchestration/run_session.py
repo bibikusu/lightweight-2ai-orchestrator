@@ -1430,6 +1430,47 @@ FAILURE_TYPE_PRIORITY_ORDER: List[str] = [
     "spec_missing",
 ]
 
+VALID_FAILURE_TYPES = frozenset({
+    "patch_apply_failure",
+    "generated_artifact_invalid",
+    "build_error",
+    "import_error",
+    "type_mismatch",
+    "test_failure",
+    "scope_violation",
+    "breaking_change",
+    "spec_missing",
+    "no_failure",
+})
+
+
+def validate_failure_type(failure_type: str) -> str:
+    """failure_type が定義済み enum にあるか検証する。未知値は ValueError を raise する。"""
+    if failure_type not in VALID_FAILURE_TYPES:
+        raise ValueError(
+            f"Unknown failure_type: {failure_type!r}. Valid: {sorted(VALID_FAILURE_TYPES)}"
+        )
+    return failure_type
+
+
+def normalize_failure_type_by_priority(candidates: list) -> str:
+    """複数の failure_type 候補から、FAILURE_TYPE_PRIORITY_ORDER に基づき
+    最も優先度の高い1つを返す。候補が空なら 'spec_missing' を返す。"""
+    if not candidates:
+        return "spec_missing"
+    best: Optional[str] = None
+    best_idx = len(FAILURE_TYPE_PRIORITY_ORDER)
+    for ft in candidates:
+        ft_str = str(ft)
+        try:
+            idx = FAILURE_TYPE_PRIORITY_ORDER.index(ft_str)
+        except ValueError:
+            idx = len(FAILURE_TYPE_PRIORITY_ORDER)
+        if idx < best_idx:
+            best_idx = idx
+            best = ft_str
+    return best if best is not None else "spec_missing"
+
 
 def _extract_cause_summary(check_results: Dict[str, Any], channel: str) -> str:
     channel_result = (check_results.get(channel) or {})
@@ -1590,7 +1631,8 @@ def classify_failure(check_results: Dict[str, Any]) -> Dict[str, Any]:
     if cr.get("spec_missing_detected") is True:
         return {"failure_type": "spec_missing", "cause_summary": "仕様情報が不足しています"}
 
-    return {"failure_type": "spec_missing", "cause_summary": "失敗原因を一意に特定できませんでした"}
+    _default_ft = validate_failure_type("spec_missing")  # 戻り値 failure_type の enum 検証
+    return {"failure_type": _default_ft, "cause_summary": "失敗原因を一意に特定できませんでした"}
 
 
 def build_retry_instruction(
@@ -2337,6 +2379,7 @@ _PATCH_STATUS_ALIASES: dict[str, str] = {
     "no_changes": "not_applicable",
     "skip": "not_applicable",
     "skipped": "not_applicable",
+    "ready": "applied",  # Claude が patch_status="ready" を返す場合のエイリアス
 }
 
 _VALID_PATCH_STATUSES = frozenset(
