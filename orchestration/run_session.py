@@ -465,7 +465,10 @@ def _recount_hunk_headers(patch_text: str) -> str:
                     old_count += 1
                     new_count += 1
                 j += 1
-            result.append(f"@@ -{old_start},{old_count} +{new_start},{new_count} @@{suffix}")
+            # カウントが 1 の場合は省略（unified diff 標準: count=1 は省略可）
+            old_str = f"-{old_start}" if old_count == 1 else f"-{old_start},{old_count}"
+            new_str = f"+{new_start}" if new_count == 1 else f"+{new_start},{new_count}"
+            result.append(f"@@ {old_str} {new_str} @@{suffix}")
             i += 1
             continue
         result.append(lines[i])
