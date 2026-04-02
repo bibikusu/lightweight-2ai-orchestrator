@@ -1,6 +1,24 @@
 {
   "session_id": "session-101",
   "phase_id": "phase5",
+  "title": "preflight guard",
+  "goal": "preflight guard: auto-clean previous session residue and validate before run",
+  "scope": [
+    "preflight cleanup of known session residue",
+    "dirty worktree detection with clear error",
+    "test coverage for preflight logic"
+  ],
+  "out_of_scope": [
+    "provider logic changes",
+    "prompt redesign",
+    "docs changes",
+    "model switching"
+  ],
+  "constraints": [
+    "one session one purpose",
+    "must not break existing flows",
+    "maximum 3 changed files"
+  ],
   "objective": "preflight guard: auto-clean previous session residue and validate before run",
   "inputs": [
     "git working tree state",
