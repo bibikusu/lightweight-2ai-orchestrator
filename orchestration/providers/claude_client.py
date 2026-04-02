@@ -53,6 +53,8 @@ class ClaudeClientWrapper:
             messages=[{"role": "user", "content": user_prompt}],
         )
         text = _message_text_content(message)
+        # デバッグ: 生レスポンスの先頭200文字を出力
+        print(f"[DEBUG] Claude raw response (first 200 chars): {repr(text[:200])}", flush=True)
         if not text.strip():
             raise RuntimeError("Claude Messages API から空の出力でした。")
         return parse_json_object(text)
