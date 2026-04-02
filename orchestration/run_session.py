@@ -385,7 +385,10 @@ def normalize_patch_for_git_apply(raw_patch: str) -> str:
     fenced = re.search(r"```(?:diff|patch)?\s*(.*?)```", text, flags=re.DOTALL)
     if fenced:
         text = fenced.group(1)
-    text = text.replace("\r\n", "\n").replace("\r", "\n").strip("\n")
+    # 末尾空行も差分内容として意味を持つことがあるため、改行そのものは落としすぎない。
+    # ただし CRLF/CR は LF へ統一し、末尾の改行数だけを一旦正規化する。
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
+    text = text.strip("\n")
     if not text:
         return ""
 
@@ -423,6 +426,18 @@ def normalize_patch_for_git_apply(raw_patch: str) -> str:
     i = 0
     while i < len(lines):
         line = lines[i]
+        # LLM が "+++ ..." だけを出力する（"--- ..." が欠落）ケースの救済
+        if line.startswith("+++ ") and (i == 0 or not lines[i - 1].startswith("--- ")):
+            out.append("--- /dev/null")
+            out.append(line)
+            i += 1
+            continue
+        # 逆に "--- ..." の次が "+++ ..." でないケース（削除パッチ等）の救済
+        if line.startswith("--- ") and (i + 1 >= len(lines) or not lines[i + 1].startswith("+++ ")):
+            out.append(line)
+            out.append("+++ /dev/null")
+            i += 1
+            continue
         if line.startswith("--- ") and i + 1 < len(lines) and lines[i + 1].startswith("+++ "):
             old_file = line.split(maxsplit=1)[1].strip()
             new_file = lines[i + 1].split(maxsplit=1)[1].strip()
@@ -439,9 +454,10 @@ def normalize_patch_for_git_apply(raw_patch: str) -> str:
 
     # hunk ヘッダー（@@ -X,Y +X,Z @@）の行カウントを実際の内容で再計算する
     # LLM が生成するカウント値は誤りが多く git apply が "corrupt patch" で失敗するため。
-    # strip() を先に行い、末尾の空行を除去してからカウントを合わせる。
-    joined = "\n".join(out).strip()
-    return _recount_hunk_headers(joined) + "\n"
+    joined = "\n".join(out)
+    # 結果は「必ず1つだけ」末尾改行を付ける（git apply の安定性のため）
+    recounted = _recount_hunk_headers(joined.rstrip("\n"))
+    return recounted + "\n"
 
 
 def _recount_hunk_headers(patch_text: str) -> str:
@@ -464,6 +480,10 @@ def _recount_hunk_headers(patch_text: str) -> str:
                 line = lines[j]
                 if line.startswith("@@") or line.startswith("diff --git "):
                     break
+                if line.startswith("\\"):
+                    # "\ No newline at end of file" は差分行数に含めない
+                    j += 1
+                    continue
                 if line.startswith("-"):
                     old_count += 1
                 elif line.startswith("+"):
@@ -723,6 +743,49 @@ def check_forbidden_paths(changed_files: List[str]) -> bool:
 
 
 def validate_patch_files(changed_files: List[str]) -> Dict[str, Any]:
+    # パスの危険パターン（絶対パス、トラバーサル、NUL 等）を先に拒否する
+    for raw in changed_files:
+        raw_s = str(raw)
+        # normalize_changed_file_path は先頭の "/" を落とし得るため、生の入力も併用して判定する
+        if raw_s.startswith(("/", "\\")) or re.match(r"^[A-Za-z]:", raw_s):
+            return {
+                "status": "error",
+                "error_type": "scope_violation",
+                "message": "invalid path detected",
+            }
+        if raw_s == ".." or raw_s.startswith("../") or "/../" in raw_s or raw_s.endswith("/.."):
+            return {
+                "status": "error",
+                "error_type": "scope_violation",
+                "message": "invalid path detected",
+            }
+
+        p = normalize_changed_file_path(raw_s)
+        if "\x00" in p:
+            return {
+                "status": "error",
+                "error_type": "scope_violation",
+                "message": "invalid path detected",
+            }
+        if p.startswith("/") or re.match(r"^[A-Za-z]:", p):
+            return {
+                "status": "error",
+                "error_type": "scope_violation",
+                "message": "invalid path detected",
+            }
+        if "\\" in p:
+            return {
+                "status": "error",
+                "error_type": "scope_violation",
+                "message": "invalid path detected",
+            }
+        if p == ".." or p.startswith("../") or "/../" in p or p.endswith("/.."):
+            return {
+                "status": "error",
+                "error_type": "scope_violation",
+                "message": "invalid path detected",
+            }
+
     if not check_file_count(changed_files):
         return {
             "status": "error",
@@ -1014,14 +1077,21 @@ def _apply_patch_smart(patch_path: Path, repo_root: Path) -> bool:
         remaining_patch = patch_path.parent / "remaining.patch"
         remaining_text = _normalize_hunk_line_prefixes("\n".join(existing_file_lines))
         remaining_patch.write_text(remaining_text, encoding="utf-8")
-        proc = _git_run(["apply", "--whitespace=fix", str(remaining_patch)])
-        if proc.returncode != 0:
+        check_proc = _git_run(["apply", "--check", "--whitespace=fix", str(remaining_patch)])
+        if check_proc.returncode != 0:
             logger.warning(
-                "git apply for existing files failed: %s",
-                (proc.stderr or "").strip(),
+                "git apply --check for existing files failed: %s",
+                (check_proc.stderr or "").strip(),
             )
         else:
-            applied_existing = True
+            proc = _git_run(["apply", "--whitespace=fix", str(remaining_patch)])
+            if proc.returncode != 0:
+                logger.warning(
+                    "git apply for existing files failed: %s",
+                    (proc.stderr or "").strip(),
+                )
+            else:
+                applied_existing = True
         remaining_patch.unlink(missing_ok=True)
 
     return bool(new_file_targets) or applied_existing
