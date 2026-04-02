@@ -33,6 +33,11 @@ GLOBAL_RULES_PATH = DOCS_DIR / "global_rules.md"
 ROADMAP_PATH = DOCS_DIR / "roadmap.yaml"
 SESSIONS_DIR = DOCS_DIR / "sessions"
 
+# 実装プロンプトへの既存ファイル埋め込み（build_implementation_prompts）
+# 改行数が FULL 以下なら全文、超過時は末尾 TAIL 行のみ（append 向け）
+IMPLEMENTATION_PROMPT_FULL_FILE_MAX_NEWLINES = 300
+IMPLEMENTATION_PROMPT_LARGE_FILE_TAIL_LINES = 150
+
 # Git 保護で拒否するブランチ名（小文字比較）
 FORBIDDEN_BRANCHES = frozenset({"main", "master"})
 
@@ -87,6 +92,31 @@ def load_yaml_as_text(path: Path) -> str:
 
 def load_runtime_config() -> Dict[str, Any]:
     return load_yaml(CONFIG_PATH)
+
+
+def orchestrator_version() -> str:
+    """オーケストレーター版識別子（パイプライン疎通カナリア用の純関数）。"""
+    return "1.0.0"
+
+
+def build_implementation_prompt_file_context_block(path_str: str, content: str) -> str:
+    """
+    allowed_changes 由来の1ファイル分、[current file ...] ブロックを返す。
+    改行数が IMPLEMENTATION_PROMPT_FULL_FILE_MAX_NEWLINES 以下なら全文、
+    超過時は末尾 IMPLEMENTATION_PROMPT_LARGE_FILE_TAIL_LINES 行の断片のみ。
+    """
+    newline_count = content.count("\n")
+    if newline_count <= IMPLEMENTATION_PROMPT_FULL_FILE_MAX_NEWLINES:
+        return f"\n\n[current file: {path_str}]\n{content}"
+
+    lines = content.splitlines(keepends=True)
+    total_lines = len(lines)
+    tail_n = min(IMPLEMENTATION_PROMPT_LARGE_FILE_TAIL_LINES, total_lines)
+    tail = "".join(lines[-tail_n:])
+    return (
+        f"\n\n[current file (partial tail only; {total_lines} lines total, "
+        f"last {tail_n} lines): {path_str}]\n{tail}"
+    )
 
 
 def load_session_context(session_id: str) -> SessionContext:
@@ -1610,10 +1640,9 @@ If implementation is not possible, explain in JSON.
         if full_path.exists() and full_path.is_file():
             try:
                 content = full_path.read_text(encoding="utf-8")
-                # 大きすぎるファイルはパッチ生成精度が下がるため除外（300行超）
-                if content.count("\n") > 300:
-                    continue
-                current_files_block += f"\n\n[current file: {path_str}]\n{content}"
+                current_files_block += build_implementation_prompt_file_context_block(
+                    path_str, content
+                )
             except Exception:
                 pass
 
