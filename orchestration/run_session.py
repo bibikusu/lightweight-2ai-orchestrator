@@ -629,6 +629,53 @@ def _collect_forbidden_phrases(
     return phrases
 
 
+def validate_allowed_changes_detail_enforcement(
+    changed_files: list,
+    allowed_changes_detail: list,
+) -> None:
+    """allowed_changes_detail の記述に基づき、changed_files の妥当性を検証する。
+
+    allowed_changes_detail の各項目は "path: description" 形式。
+    path 部分を抽出し、changed_files がいずれかの path にマッチするかを検証する。
+    マッチしない changed_file があれば ValueError を raise する。
+
+    path が "backend/tests/*" のようにワイルドカード末尾なら、
+    "backend/tests/" 配下のすべてのファイルを許可する。
+    """
+    # 許可パスリストを構築する
+    allowed_paths: list = []
+    for item in allowed_changes_detail:
+        if not isinstance(item, str):
+            continue
+        # "path: description" 形式の先頭 path 部分を取り出す
+        path_part = item.split(":")[0].strip()
+        if path_part:
+            allowed_paths.append(path_part)
+
+    if not allowed_paths:
+        # 許可リストが空なら検証スキップ（全許可と同義）
+        return
+
+    def _matches_detail_path(changed: str, detail_path: str) -> bool:
+        """detail_path が changed にマッチするか判定する。"""
+        if detail_path.endswith("/*"):
+            # ワイルドカード末尾: ディレクトリ配下を全許可
+            prefix = detail_path[:-2]  # "/*" を除去
+            return changed == prefix or changed.startswith(prefix + "/")
+        if detail_path.endswith("/"):
+            # スラッシュ末尾: ディレクトリ配下を全許可
+            prefix = detail_path.rstrip("/")
+            return changed == prefix or changed.startswith(prefix + "/")
+        return changed == detail_path
+
+    for changed in changed_files:
+        if not any(_matches_detail_path(changed, ap) for ap in allowed_paths):
+            raise ValueError(
+                f"changed_file {changed!r} は allowed_changes_detail に含まれていません。"
+                f" 許可パス: {allowed_paths}"
+            )
+
+
 def validate_changed_files_before_patch(
     impl_result: Dict[str, Any],
     prepared_spec: Dict[str, Any],
@@ -677,6 +724,11 @@ def validate_changed_files_before_patch(
     vp = validate_patch_files(non_explicit_files)
     if vp["status"] == "error":
         raise ValueError(vp.get("message", "scope violation"))
+
+    # allowed_changes_detail が存在する場合のみ粒度チェックを実行する
+    allowed_changes_detail = session_data.get("allowed_changes_detail")
+    if allowed_changes_detail and isinstance(allowed_changes_detail, list):
+        validate_allowed_changes_detail_enforcement(normalized, allowed_changes_detail)
 
     if len(normalized) > max_changed_files:
         raise ValueError(
