@@ -1271,6 +1271,22 @@ If implementation is not possible, explain in JSON.
             dnc_lines = "\n".join(f"- {x}" for x in dnc_items if x)
             retry_block += f"\n\n[do_not_change (must not touch these)]\n{dnc_lines}"
 
+    # allowed_changes の既存ファイル内容をプロンプトに含める（パッチ生成精度向上）
+    current_files_block = ""
+    for item in prepared_spec.get("allowed_changes", []):
+        # "path/to/file.py: description" 形式からファイルパスを抽出
+        path_str = item.split(":")[0].strip() if ":" in item else item.strip()
+        # ワイルドカードは除外
+        if "*" in path_str or "?" in path_str:
+            continue
+        full_path = ROOT_DIR / path_str
+        if full_path.exists() and full_path.is_file():
+            try:
+                content = full_path.read_text(encoding="utf-8")
+                current_files_block += f"\n\n[current file: {path_str}]\n{content}"
+            except Exception:
+                pass
+
     user_prompt = f"""
 session_id: {ctx.session_id}
 
@@ -1279,6 +1295,7 @@ session_id: {ctx.session_id}
 
 [session_json]
 {json.dumps(ctx.session_data, ensure_ascii=False, indent=2)}
+{current_files_block}
 {retry_block}
 
 Return JSON with keys:
