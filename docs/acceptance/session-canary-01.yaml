@@ -1,0 +1,14 @@
+session_id: session-canary-01
+
+acceptance:
+  - id: AC-canary-01
+    description: orchestrator_version() が文字列を返す
+    test_name: test_orchestrator_version_returns_string
+
+  - id: AC-canary-02
+    description: 専用テストが PASS する
+    test_name: test_orchestrator_version_returns_string
+
+  - id: AC-canary-03
+    description: 4コマンド検証が全 PASS する
+    test_name: manual_4_command_verification

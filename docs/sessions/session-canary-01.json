@@ -1,0 +1,75 @@
+{
+  "session_id": "session-canary-01",
+  "phase_id": "phase12",
+  "title": "add orchestrator_version utility for pipeline canary test",
+  "goal": "run_session.py に orchestrator_version() を追加し、専用テスト1本で検証する。パイプライン全経路（spec→implementation→checks→report）の疎通確認用カナリアセッション",
+  "scope": [
+    "orchestration/run_session.py に orchestrator_version 関数を追加",
+    "backend/tests/test_orchestrator_version.py を新規作成"
+  ],
+  "out_of_scope": [
+    "main() フロー変更",
+    "provider 変更",
+    "retry / report 構造変更",
+    "既存テスト変更",
+    "docs 変更"
+  ],
+  "constraints": [
+    "one session one purpose",
+    "orchestrator_version は文字列を返すだけの純関数とする",
+    "main() から呼び出さない",
+    "既存関数を変更しない",
+    "最大2ファイル変更"
+  ],
+  "acceptance_ref": "docs/acceptance/session-canary-01.yaml",
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "backend/tests/test_orchestrator_version.py"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/run_session.py::orchestrator_version (new function, append only)",
+    "backend/tests/test_orchestrator_version.py::test_orchestrator_version_returns_string (new file)"
+  ],
+  "forbidden_changes": [
+    "orchestration/providers/",
+    "docs/",
+    "main() control flow",
+    "existing test files",
+    "config.yaml",
+    "retry flow",
+    "report flow"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-canary-01",
+      "type": "artifact",
+      "condition": "orchestrator_version 関数が追加される"
+    },
+    {
+      "id": "CC-canary-02",
+      "type": "non_regression",
+      "condition": "専用テストが PASS する"
+    },
+    {
+      "id": "CC-canary-03",
+      "type": "non_regression",
+      "condition": "pytest / ruff / mypy / compileall が PASS する"
+    },
+    {
+      "id": "CC-canary-04",
+      "type": "side_effect_free",
+      "condition": "main() フロー、provider、retry/report 構造に副作用を与えない"
+    }
+  ],
+  "acceptance_criteria": [
+    "AC-canary-01",
+    "AC-canary-02",
+    "AC-canary-03"
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "実装過不足なし"
+  ]
+}
