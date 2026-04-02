@@ -1,0 +1,41 @@
+{
+  "session_id": "session-81a",
+  "phase_id": "phase2",
+  "title": "test mock foundation hardening",
+  "goal": "新機能追加時に既存テストモックが壊れにくい基盤へ改善する",
+  "scope": [
+    "backend test helper improvement",
+    "git command mock default behavior",
+    "test fixture reuse standardization"
+  ],
+  "out_of_scope": [
+    "runtime production logic change",
+    "provider api behavior change",
+    "report schema expansion",
+    "retry logic change"
+  ],
+  "constraints": [
+    "one session one purpose",
+    "must not change orchestration runtime behavior",
+    "must keep existing passing tests green",
+    "test helpers must remain readable and deterministic",
+    "maximum 5 changed files"
+  ],
+  "allowed_changes": [
+    "backend/tests/"
+  ],
+  "allowed_changes_detail": [
+    "backend/tests/conftest.py: shared fixture and mock helper definition",
+    "backend/tests/test_*.py: mock import path adjustment only if required by new shared fixtures"
+  ],
+  "forbidden_changes": [
+    "orchestration/run_session.py",
+    "orchestration/providers/",
+    "provider call flow redesign",
+    "session execution order change",
+    "retry policy change",
+    "report output redesign",
+    "new api integration"
+  ],
+  "acceptance_ref": "docs/acceptance/session-81a.yaml"
+}

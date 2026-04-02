@@ -1,0 +1,38 @@
+{
+  "session_id": "session-84",
+  "phase_id": "phase2",
+  "title": "failure classification and retry dedup unification",
+  "goal": "failure_type の正規化と同一原因リトライ停止を一つの基準に統合する",
+  "scope": [
+    "failure_type enum normalization",
+    "failure priority selection",
+    "retry deduplication rule unification"
+  ],
+  "out_of_scope": [
+    "retry prompt redesign",
+    "cost tracking",
+    "input validation",
+    "provider integration change"
+  ],
+  "constraints": [
+    "must preserve current retry ceiling",
+    "must preserve existing runtime flow unless failure classification requires guard refinement",
+    "must select exactly one canonical failure_type",
+    "maximum 5 changed files"
+  ],
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "backend/tests/"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/run_session.py: failure classification and retry dedup path only",
+    "backend/tests/*: canonical failure and retry stop coverage only"
+  ],
+  "forbidden_changes": [
+    "implementation prompt redesign",
+    "new provider call",
+    "report layout redesign",
+    "acceptance path logic change"
+  ],
+  "acceptance_ref": "docs/acceptance/session-84.yaml"
+}

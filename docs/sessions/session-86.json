@@ -1,0 +1,43 @@
+{
+  "session_id": "session-86",
+  "phase_id": "phase2",
+  "title": "api usage and cost recording",
+  "goal": "OpenAI と Claude の usage を記録し、session report で AI API コストを可視化する",
+  "scope": [
+    "provider usage extraction",
+    "api call count recording",
+    "session report usage fields"
+  ],
+  "out_of_scope": [
+    "retry control redesign",
+    "pricing optimizer",
+    "context compression",
+    "multi-ai expansion"
+  ],
+  "constraints": [
+    "must record usage without changing provider decision flow",
+    "must tolerate missing usage data gracefully",
+    "report extension must be backward-compatible where possible",
+    "provider-side changes are allowed only if existing provider responses do not already expose usage metadata",
+    "maximum 5 changed files"
+  ],
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "orchestration/providers/",
+    "backend/tests/"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/run_session.py: usage collection, api call counting, and report persistence only",
+    "orchestration/providers/openai_client.py: expose usage metadata only if current return structure does not already expose it",
+    "orchestration/providers/anthropic_client.py: expose usage metadata only if current return structure does not already expose it",
+    "backend/tests/*: usage record coverage only"
+  ],
+  "forbidden_changes": [
+    "additional provider call",
+    "retry policy change",
+    "completion criteria change",
+    "multi-provider routing",
+    "provider selection logic change"
+  ],
+  "acceptance_ref": "docs/acceptance/session-86.yaml"
+}

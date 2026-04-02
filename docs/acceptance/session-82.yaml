@@ -1,0 +1,17 @@
+session_id: session-82
+acceptance:
+  - id: AC-82-01
+    description: allowed_changes_detail に違反する changed_files を検出して fail する
+    test_name: test_allowed_changes_detail_violation_fails_validation
+
+  - id: AC-82-02
+    description: 明示許可された changed_files は既存 valid path として通過する
+    test_name: test_explicitly_allowed_changed_files_pass_validation
+
+  - id: AC-82-03
+    description: 既存 changed_files 検証で通っていた正常系を壊さない
+    test_name: test_scope_hardening_preserves_existing_valid_patch_behavior
+
+  - id: AC-82-04
+    description: 未カバーケースの post-patch scope verification が必要時のみ動作する
+    test_name: test_post_patch_scope_verification_runs_only_for_uncovered_cases

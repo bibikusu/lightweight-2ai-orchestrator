@@ -1,0 +1,40 @@
+{
+  "session_id": "session-81",
+  "phase_id": "phase2",
+  "title": "input guard for session and acceptance definitions",
+  "goal": "session.json と acceptance.yaml の不整合を実行前に検出し fail fast する",
+  "scope": [
+    "session definition validation",
+    "acceptance definition validation",
+    "acceptance_ref path resolution",
+    "session_id consistency check"
+  ],
+  "out_of_scope": [
+    "changed_files validation redesign",
+    "retry logic change",
+    "report schema redesign",
+    "provider integration change"
+  ],
+  "constraints": [
+    "one session one purpose",
+    "validation must happen before implementation api call",
+    "must support current docs/acceptance path as canonical",
+    "must fail with explicit error message",
+    "maximum 5 changed files"
+  ],
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "backend/tests/"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/run_session.py: add input validation functions and preflight invocation only",
+    "backend/tests/*: validation coverage only"
+  ],
+  "forbidden_changes": [
+    "implementation prompt redesign",
+    "retry instruction redesign",
+    "cost tracking",
+    "provider abstraction expansion"
+  ],
+  "acceptance_ref": "docs/acceptance/session-81.yaml"
+}

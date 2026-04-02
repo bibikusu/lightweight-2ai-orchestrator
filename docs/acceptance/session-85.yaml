@@ -1,0 +1,17 @@
+session_id: session-85
+acceptance:
+  - id: AC-85-01
+    description: retry_instruction に cause_summary が必ず含まれる
+    test_name: test_retry_instruction_includes_cause_summary
+
+  - id: AC-85-02
+    description: retry_instruction に fix_instructions が list[str] で含まれる
+    test_name: test_retry_instruction_includes_fix_instructions_list
+
+  - id: AC-85-03
+    description: retry_instruction に do_not_change が含まれ、スコープ保護が明示される
+    test_name: test_retry_instruction_includes_do_not_change_scope_guard
+
+  - id: AC-85-04
+    description: retry_instruction が machine-readable な JSON として保存できる
+    test_name: test_retry_instruction_is_saved_as_machine_readable_json

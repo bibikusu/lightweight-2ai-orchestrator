@@ -1,0 +1,42 @@
+{
+  "session_id": "session-83",
+  "phase_id": "phase2",
+  "title": "acceptance and completion verification standardization",
+  "goal": "acceptance criteria と test の対応関係を固定し、completion 判定を test pass のみから分離する",
+  "scope": [
+    "acceptance to test_name mapping validation",
+    "completion criteria validation rule definition",
+    "pre-report verification standardization"
+  ],
+  "out_of_scope": [
+    "business feature testing",
+    "provider api change",
+    "cost tracking",
+    "retry loop redesign"
+  ],
+  "constraints": [
+    "each acceptance item must include test_name",
+    "completion pass requires acceptance coverage, checks pass, and allowed_changes compliance",
+    "completion fail if any required condition is unsatisfied",
+    "must define the completion decision function name and invocation point",
+    "must not rely on prose-only completion judgment",
+    "maximum 5 changed files"
+  ],
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "backend/tests/"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/run_session.py: add acceptance-to-test verification and completion decision guard only",
+    "orchestration/run_session.py: add new function evaluate_completion_decision only",
+    "orchestration/run_session.py: invoke evaluate_completion_decision before final report completion status is determined",
+    "backend/tests/*: verification and completion gate coverage only"
+  ],
+  "forbidden_changes": [
+    "report format redesign beyond required fields",
+    "provider call flow change",
+    "new retry behavior",
+    "patch validator redesign"
+  ],
+  "acceptance_ref": "docs/acceptance/session-83.yaml"
+}

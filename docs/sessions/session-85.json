@@ -1,0 +1,39 @@
+{
+  "session_id": "session-85",
+  "phase_id": "phase2",
+  "title": "structured retry instruction quality improvement",
+  "goal": "retry_instruction を構造化し、Claude 再投入の修正精度を上げる",
+  "scope": [
+    "retry instruction schema hardening",
+    "cause summary normalization",
+    "fix_instructions generation",
+    "do_not_change generation"
+  ],
+  "out_of_scope": [
+    "new provider call",
+    "failure_type redesign beyond session-84 output use",
+    "cost tracking",
+    "input validation"
+  ],
+  "constraints": [
+    "retry instruction must remain machine-readable",
+    "must include session scope protection",
+    "must not broaden allowed changes",
+    "maximum 5 changed files"
+  ],
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "backend/tests/"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/run_session.py: retry instruction build path only",
+    "backend/tests/*: retry instruction schema and content coverage only"
+  ],
+  "forbidden_changes": [
+    "main execution flow redesign",
+    "additional verification api call",
+    "report schema redesign beyond retry fields",
+    "context compression"
+  ],
+  "acceptance_ref": "docs/acceptance/session-85.yaml"
+}

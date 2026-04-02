@@ -1,0 +1,21 @@
+session_id: session-81
+acceptance:
+  - id: AC-81-01
+    description: session.json の必須キー欠落時に implementation 実行前に fail する
+    test_name: test_session_definition_missing_required_key_fails_preflight
+
+  - id: AC-81-02
+    description: acceptance_ref の参照先が存在しない場合に明示エラーで fail する
+    test_name: test_acceptance_ref_missing_path_fails_preflight
+
+  - id: AC-81-03
+    description: session.json の session_id と acceptance.yaml の session_id が不一致なら fail する
+    test_name: test_session_and_acceptance_session_id_mismatch_fails
+
+  - id: AC-81-04
+    description: docs/acceptance 配下の正規パスを解決できる
+    test_name: test_acceptance_ref_docs_path_resolves_successfully
+
+  - id: AC-81-05
+    description: 正常定義では既存フローを壊さず preflight を通過する
+    test_name: test_valid_session_and_acceptance_pass_preflight

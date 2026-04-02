@@ -1,0 +1,17 @@
+session_id: session-81a
+acceptance:
+  - id: AC-81A-01
+    description: 既存テストで利用する git command mock が未知コマンドでも明示的な既定応答を返せる
+    test_name: test_git_mock_returns_default_response_for_unknown_command
+
+  - id: AC-81A-02
+    description: 新しい git command 追加時に既存テスト全体が一律破壊されない
+    test_name: test_git_mock_foundation_prevents_broad_breakage_on_new_command
+
+  - id: AC-81A-03
+    description: 共通モックまたは共通fixtureの再利用により重複定義が減る
+    test_name: test_shared_git_mock_fixture_is_reusable
+
+  - id: AC-81A-04
+    description: 既存テスト全件が新しいモック基盤導入後も全PASSする
+    test_name: test_full_test_suite_passes_after_mock_foundation_change

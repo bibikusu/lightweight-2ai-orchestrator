@@ -1,0 +1,17 @@
+session_id: session-86
+acceptance:
+  - id: AC-86-01
+    description: OpenAI usage 情報が取得できる場合に report へ保存される
+    test_name: test_openai_usage_is_recorded_in_session_report_when_available
+
+  - id: AC-86-02
+    description: Claude usage 情報が取得できる場合に report へ保存される
+    test_name: test_claude_usage_is_recorded_in_session_report_when_available
+
+  - id: AC-86-03
+    description: usage 情報が欠落していても session 実行は異常終了しない
+    test_name: test_missing_usage_data_does_not_break_session_execution
+
+  - id: AC-86-04
+    description: api call count と usage summary が machine-readable に保存される
+    test_name: test_api_call_count_and_usage_summary_are_saved_machine_readably

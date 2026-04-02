@@ -1,0 +1,44 @@
+{
+  "session_id": "session-82",
+  "phase_id": "phase2",
+  "title": "allowed changes detail enforcement hardening",
+  "goal": "既存の changed_files 検証で未カバーの粒度を補強し、許可範囲逸脱を厳格化する",
+  "scope": [
+    "allowed_changes_detail enforcement",
+    "explicit allowed path interpretation hardening",
+    "post-patch scope verification for uncovered cases"
+  ],
+  "out_of_scope": [
+    "full patch validator redesign",
+    "retry logic change",
+    "acceptance validation",
+    "provider or prompt changes"
+  ],
+  "constraints": [
+    "must extend only uncovered cases beyond current validate_changed_files behavior",
+    "must not duplicate existing checks without added value",
+    "must preserve current passing behavior for valid patches",
+    "maximum 5 changed files"
+  ],
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "backend/tests/"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/run_session.py: add new function validate_allowed_changes_detail_enforcement only",
+    "orchestration/run_session.py: invoke validate_allowed_changes_detail_enforcement inside validate_changed_files_before_patch after existing validate_patch_files call",
+    "backend/tests/*: add uncovered-case tests only"
+  ],
+  "forbidden_changes": [
+    "validate_patch_files",
+    "check_file_count",
+    "check_forbidden_paths",
+    "_is_explicitly_allowed",
+    "validate_changed_files_before_patch structural rewrite",
+    "patch application pipeline redesign",
+    "new provider checks",
+    "report schema change",
+    "retry instruction change"
+  ],
+  "acceptance_ref": "docs/acceptance/session-82.yaml"
+}

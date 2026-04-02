@@ -1,0 +1,17 @@
+session_id: session-83
+acceptance:
+  - id: AC-83-01
+    description: acceptance.yaml の各 acceptance 項目に test_name が必須である
+    test_name: test_acceptance_items_require_test_name
+
+  - id: AC-83-02
+    description: 記載された test_name に対応する test 関数が存在しない場合 fail する
+    test_name: test_missing_test_function_for_acceptance_fails
+
+  - id: AC-83-03
+    description: required completion conditions のうち1つでも欠ける場合 completion は成立しない
+    test_name: test_completion_fails_when_any_required_condition_is_missing
+
+  - id: AC-83-04
+    description: acceptance coverage, checks pass, allowed_changes compliance が全て満たされた場合のみ completion が成立する
+    test_name: test_completion_passes_only_when_all_required_conditions_are_satisfied

@@ -1,0 +1,17 @@
+session_id: session-84
+acceptance:
+  - id: AC-84-01
+    description: failure_type は定義済み enum のみを受け付ける
+    test_name: test_failure_type_rejects_unknown_value
+
+  - id: AC-84-02
+    description: 複数候補がある場合でも優先順位により failure_type が1つに正規化される
+    test_name: test_failure_type_is_normalized_to_single_highest_priority_value
+
+  - id: AC-84-03
+    description: 同一原因と判定された retry は停止される
+    test_name: test_retry_stops_on_same_cause_under_canonical_rule
+
+  - id: AC-84-04
+    description: 異なる原因の retry は既存上限内で継続できる
+    test_name: test_retry_continues_for_distinct_cause_within_limit
