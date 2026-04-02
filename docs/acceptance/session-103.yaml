@@ -1,0 +1,18 @@
+session_id: session-103
+
+acceptance:
+  - id: AC-103-01
+    description: invalid patch structure is detected before apply
+    test: test_patch_validation
+
+  - id: AC-103-02
+    description: hunk count recalculation is accurate using existing logic
+    test: test_hunk_accuracy
+
+  - id: AC-103-03
+    description: patch apply does not fail under valid conditions
+    test: test_safe_apply
+
+  - id: AC-103-04
+    description: no regression in existing patch handling
+    test: test_no_regression

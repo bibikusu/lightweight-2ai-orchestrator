@@ -1,0 +1,61 @@
+{
+  "session_id": "session-103",
+  "phase_id": "phase5",
+  "title": "patch validation refinement",
+  "goal": "improve patch validation reliability",
+  "scope": [
+    "enhance existing _recount_hunk_headers",
+    "improve patch validation logic"
+  ],
+  "out_of_scope": [
+    "new patch system",
+    "docs changes"
+  ],
+  "constraints": [
+    "must reuse existing patch functions",
+    "no duplicate functions",
+    "maximum 2 files"
+  ],
+  "acceptance_ref": "docs/acceptance/session-103.yaml",
+
+  "objective": "strengthen patch validation without duplication",
+
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "backend/tests/test_patch_safety.py"
+  ],
+
+  "allowed_changes_detail": [
+    "run_session.py::normalize_patch_for_git_apply",
+    "run_session.py::_recount_hunk_headers",
+    "run_session.py::_apply_patch_smart",
+    "run_session.py::validate_patch_files"
+  ],
+
+  "forbidden_changes": [
+    "docs/",
+    "providers/",
+    "backend/tests/test_patch_validation.py"
+  ],
+
+  "completion_criteria": [
+    "patch validation detects errors before apply",
+    "no git apply failure",
+    "no duplicate patch functions",
+    "tests pass"
+  ],
+
+  "acceptance_criteria": [
+    "AC-103-01:test_patch_validation",
+    "AC-103-02:test_hunk_accuracy",
+    "AC-103-03:test_safe_apply",
+    "AC-103-04:test_no_regression"
+  ],
+
+  "review_points": [
+    "仕様一致",
+    "変更範囲遵守",
+    "副作用なし",
+    "既存破壊なし"
+  ]
+}

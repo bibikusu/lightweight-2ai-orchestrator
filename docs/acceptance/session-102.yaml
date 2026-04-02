@@ -3,9 +3,16 @@ session_id: session-102
 acceptance:
   - id: AC-102-01
     description: failure_type is normalized to predefined enum
+    test: test_failure_type_normalized
+
   - id: AC-102-02
-    description: same failure cause is detected and retry is skipped
+    description: same failure cause is detected and duplicate retry is prevented
+    test: test_same_cause_detection
+
   - id: AC-102-03
-    description: retry stops at configured limit
+    description: retry stops at defined retry limit
+    test: test_retry_limit
+
   - id: AC-102-04
-    description: existing tests pass (no regression)
+    description: no regression in existing retry behavior
+    test: test_no_regression

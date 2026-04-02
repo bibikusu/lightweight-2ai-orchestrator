@@ -1,0 +1,18 @@
+session_id: session-105
+
+acceptance:
+  - id: AC-105-01
+    description: structured log format is generated
+    test: test_structured_log
+
+  - id: AC-105-02
+    description: each execution stage logs correctly
+    test: test_stage_log
+
+  - id: AC-105-03
+    description: failure snapshot is recorded on error
+    test: test_snapshot
+
+  - id: AC-105-04
+    description: no regression in existing logging behavior
+    test: test_no_regression

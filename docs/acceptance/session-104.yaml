@@ -1,0 +1,18 @@
+session_id: session-104
+
+acceptance:
+  - id: AC-104-01
+    description: forbidden paths are always detected correctly
+    test: test_forbidden_detect
+
+  - id: AC-104-02
+    description: allowed_changes does not override forbidden rules
+    test: test_no_override
+
+  - id: AC-104-03
+    description: validation behavior is consistent across runs
+    test: test_consistency
+
+  - id: AC-104-04
+    description: no regression in validation logic
+    test: test_no_regression

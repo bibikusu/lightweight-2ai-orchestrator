@@ -1,0 +1,55 @@
+{
+  "session_id": "session-104",
+  "phase_id": "phase5",
+  "title": "forbidden path validation consistency",
+  "goal": "ensure forbidden paths are consistently enforced",
+  "scope": [
+    "validate forbidden paths logic",
+    "ensure no override"
+  ],
+  "out_of_scope": [
+    "docs modification automation"
+  ],
+  "constraints": [
+    "forbidden rules must not be bypassed"
+  ],
+  "acceptance_ref": "docs/acceptance/session-104.yaml",
+
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "backend/tests/test_forbidden_paths_v2.py"
+  ],
+
+  "objective": "ensure forbidden paths are consistently enforced",
+
+  "allowed_changes_detail": [
+    "run_session.py::FORBIDDEN_PATHS",
+    "run_session.py::check_forbidden_paths",
+    "run_session.py::_collect_forbidden_phrases",
+    "run_session.py::validate_changed_files_before_patch"
+  ],
+
+  "forbidden_changes": [
+    "docs/",
+    "providers/",
+    "backend/tests/test_patch_validation.py"
+  ],
+
+  "completion_criteria": [
+    "forbidden rules are deterministic",
+    "no bypass possible",
+    "tests pass"
+  ],
+
+  "acceptance_criteria": [
+    "AC-104-01:test_forbidden_detect",
+    "AC-104-02:test_no_override",
+    "AC-104-03:test_consistency"
+  ],
+
+  "review_points": [
+    "仕様一致",
+    "変更範囲遵守",
+    "副作用なし"
+  ]
+}

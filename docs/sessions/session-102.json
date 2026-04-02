@@ -1,33 +1,66 @@
 {
   "session_id": "session-102",
-  "objective": "retry optimization (failure classification and deduplication)",
-  "inputs": ["failure logs", "previous retry results"],
-  "outputs": ["normalized failure_type", "deduplicated retry decision"],
+  "phase_id": "phase5",
+  "title": "retry optimization refinement",
+  "goal": "improve existing retry logic accuracy and prevent duplicate retries",
+  "scope": [
+    "improve existing failure_type classification",
+    "enhance same-cause detection",
+    "refine retry stop condition"
+  ],
+  "out_of_scope": [
+    "new retry system implementation",
+    "provider logic changes",
+    "docs changes"
+  ],
+  "constraints": [
+    "must reuse existing retry logic",
+    "no new core retry functions",
+    "maximum 2 files change"
+  ],
+  "acceptance_ref": "docs/acceptance/session-102.yaml",
+
+  "objective": "refine retry logic without breaking existing implementation",
+
   "allowed_changes": [
     "orchestration/run_session.py",
     "backend/tests/test_retry_optimization.py"
   ],
+
   "allowed_changes_detail": [
     "run_session.py::classify_failure",
-    "run_session.py::detect_same_cause",
-    "run_session.py::retry_control"
+    "run_session.py::classify_failure_type",
+    "run_session.py::resolve_canonical_failure_type",
+    "run_session.py::validate_failure_type",
+    "run_session.py::normalize_failure_type_by_priority",
+    "run_session.py::_compute_retry_cause_fingerprint",
+    "run_session.py::retry_loop"
   ],
+
   "forbidden_changes": [
     "docs/",
     "providers/",
     "backend/tests/test_retry_logic.py"
   ],
+
   "completion_criteria": [
-    "same cause retries are stopped",
-    "failure_type is always one of predefined enum",
-    "retry count does not exceed limit",
-    "existing tests pass"
+    "retry stops for same failure cause",
+    "failure_type is normalized",
+    "existing retry flow remains intact",
+    "all tests pass"
   ],
+
   "acceptance_criteria": [
     "AC-102-01:test_failure_type_normalized",
     "AC-102-02:test_same_cause_detection",
-    "AC-102-03:test_retry_limit_enforced",
+    "AC-102-03:test_retry_limit",
     "AC-102-04:test_no_regression"
   ],
-  "review_points": ["仕様一致", "変更範囲遵守", "副作用なし", "実装過不足なし"]
+
+  "review_points": [
+    "仕様一致",
+    "変更範囲遵守",
+    "副作用なし",
+    "既存破壊なし"
+  ]
 }

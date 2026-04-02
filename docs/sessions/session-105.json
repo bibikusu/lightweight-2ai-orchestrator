@@ -1,0 +1,51 @@
+{
+  "session_id": "session-105",
+  "phase_id": "phase5",
+  "title": "structured logging",
+  "goal": "improve observability with structured logs",
+  "scope": [
+    "enhance existing logging",
+    "add structured output"
+  ],
+  "out_of_scope": [
+    "external logging system"
+  ],
+  "constraints": [
+    "must not break existing logs"
+  ],
+  "acceptance_ref": "docs/acceptance/session-105.yaml",
+
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "backend/tests/test_logging_v2.py"
+  ],
+
+  "objective": "improve observability with structured logs",
+
+  "allowed_changes_detail": [
+    "run_session.py::main (logging enhancement only)",
+    "run_session.py::retry_loop (logging enhancement only)"
+  ],
+
+  "forbidden_changes": [
+    "docs/",
+    "providers/"
+  ],
+
+  "completion_criteria": [
+    "logs include structured data",
+    "failure snapshot exists",
+    "tests pass"
+  ],
+
+  "acceptance_criteria": [
+    "AC-105-01:test_structured_log",
+    "AC-105-02:test_stage_log",
+    "AC-105-03:test_snapshot"
+  ],
+
+  "review_points": [
+    "仕様一致",
+    "副作用なし"
+  ]
+}
