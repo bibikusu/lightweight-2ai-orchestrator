@@ -1,0 +1,37 @@
+{
+  "session_id": "session-97",
+  "phase_id": "phase4",
+  "title": "phase4 completion report",
+  "goal": "Phase4 の実案件投入と AI API 実運用安定化の結果を report として正式に記録する",
+  "scope": [
+    "phase4 completion report",
+    "real project outcome summary",
+    "provider usage observation summary",
+    "phase5 handoff summary"
+  ],
+  "out_of_scope": [
+    "new runtime changes",
+    "provider changes",
+    "prompt changes",
+    "test changes"
+  ],
+  "constraints": [
+    "one session one purpose",
+    "report must distinguish facts from interpretation",
+    "must record unresolved items clearly",
+    "manual acceptance notes are allowed"
+  ],
+  "allowed_changes": [
+    "docs/reports/"
+  ],
+  "allowed_changes_detail": [
+    "docs/reports/*: phase4 completion report only"
+  ],
+  "forbidden_changes": [
+    "runtime logic",
+    "provider files",
+    "tests",
+    "session definitions outside report"
+  ],
+  "acceptance_ref": "docs/acceptance/session-97.yaml"
+}

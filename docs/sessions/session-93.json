@@ -1,0 +1,41 @@
+{
+  "session_id": "session-93",
+  "phase_id": "phase4",
+  "title": "provider usage return stabilization",
+  "goal": "OpenAI と Claude provider が usage 情報を返し、run_session.py の extract_api_usage で実データを扱える状態にする",
+  "scope": [
+    "openai provider response usage exposure",
+    "claude provider response usage exposure",
+    "usage extraction compatibility verification"
+  ],
+  "out_of_scope": [
+    "cost threshold enforcement",
+    "config.yaml policy expansion",
+    "provider switching",
+    "new provider integration"
+  ],
+  "constraints": [
+    "one session one purpose",
+    "must not add new api calls",
+    "must preserve current provider call flow",
+    "maximum 5 changed files"
+  ],
+  "allowed_changes": [
+    "orchestration/providers/",
+    "orchestration/run_session.py",
+    "backend/tests/"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/providers/openai_client.py: expose usage metadata in returned structure if available from provider response",
+    "orchestration/providers/claude_client.py: expose usage metadata in returned structure if available from provider response",
+    "orchestration/run_session.py: compatibility adjustment only if required by provider return structure",
+    "backend/tests/*: provider usage extraction coverage only"
+  ],
+  "forbidden_changes": [
+    "new provider calls",
+    "retry policy change",
+    "completion logic change",
+    "config.yaml expansion"
+  ],
+  "acceptance_ref": "docs/acceptance/session-93.yaml"
+}

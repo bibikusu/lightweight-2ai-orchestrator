@@ -1,0 +1,17 @@
+session_id: session-94
+acceptance:
+  - id: AC-94-01
+    description: 実案件の対象が1つに絞られている
+    test_name: manual_check_real_project_target_is_single_and_small
+
+  - id: AC-94-02
+    description: session.json に title, goal, scope, out_of_scope, constraints, allowed_changes, acceptance_ref が定義される
+    test_name: manual_check_real_project_session_definition_is_complete
+
+  - id: AC-94-03
+    description: acceptance.yaml に検証可能な acceptance criteria が定義される
+    test_name: manual_check_real_project_acceptance_is_verifiable
+
+  - id: AC-94-04
+    description: 実案件の変更範囲が5ファイル以内に収まる
+    test_name: manual_check_real_project_scope_is_small_enough

@@ -1,0 +1,17 @@
+session_id: session-95
+acceptance:
+  - id: AC-95-01
+    description: 実案件 live-run が session processed OK または manual acceptance 可能な形で完走する
+    test_name: manual_check_real_project_live_run_completes
+
+  - id: AC-95-02
+    description: report.json に completion_status が含まれる
+    test_name: manual_check_real_project_report_has_completion_status
+
+  - id: AC-95-03
+    description: report.json に api_call_count が含まれる
+    test_name: manual_check_real_project_report_has_api_call_count
+
+  - id: AC-95-04
+    description: 実案件 run から少なくとも1つの運用学習点を得られる
+    test_name: manual_check_real_project_run_yields_operational_insight

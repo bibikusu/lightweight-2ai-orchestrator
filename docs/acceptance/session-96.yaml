@@ -1,0 +1,17 @@
+session_id: session-96
+acceptance:
+  - id: AC-96-01
+    description: 改善内容が session-95 の観測結果に直接紐づいている
+    test_name: manual_check_improvement_is_traceable_to_session_95
+
+  - id: AC-96-02
+    description: 改善が必要ない場合は no-op として明示できる
+    test_name: manual_check_noop_is_allowed_when_no_fix_needed
+
+  - id: AC-96-03
+    description: 改善後も既存 quality gate を壊さない
+    test_name: manual_check_improvement_preserves_quality_gate
+
+  - id: AC-96-04
+    description: 改善内容が最小スコープにとどまる
+    test_name: manual_check_improvement_scope_is_minimal

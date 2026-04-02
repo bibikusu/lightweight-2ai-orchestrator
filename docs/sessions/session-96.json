@@ -1,0 +1,43 @@
+{
+  "session_id": "session-96",
+  "phase_id": "phase4",
+  "title": "real project feedback improvement",
+  "goal": "実案件 live-run で得た学習点をもとに、必要最小限の改善を反映する",
+  "scope": [
+    "real project feedback application",
+    "minimal runtime improvement if needed",
+    "minimal provider improvement if needed",
+    "artifact or prompt adjustment if needed"
+  ],
+  "out_of_scope": [
+    "large framework redesign",
+    "new provider integration",
+    "config.yaml expansion",
+    "multi-ai expansion"
+  ],
+  "constraints": [
+    "one session one purpose",
+    "no-op is allowed if no improvement is required",
+    "must stay within 5 changed files",
+    "must be justified by session-95 evidence"
+  ],
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "orchestration/providers/",
+    "backend/tests/",
+    "docs/reports/"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/run_session.py: minimal fix only if directly justified by session-95",
+    "orchestration/providers/*: minimal fix only if directly justified by session-95",
+    "backend/tests/*: regression or evidence coverage only",
+    "docs/reports/*: feedback note only"
+  ],
+  "forbidden_changes": [
+    "new architecture layer",
+    "prompt cache introduction",
+    "provider switching",
+    "broad config system"
+  ],
+  "acceptance_ref": "docs/acceptance/session-96.yaml"
+}

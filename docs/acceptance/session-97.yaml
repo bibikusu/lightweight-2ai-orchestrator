@@ -1,0 +1,17 @@
+session_id: session-97
+acceptance:
+  - id: AC-97-01
+    description: Phase4 completed_sessions が明記される
+    test_name: manual_check_phase4_completed_sessions_are_recorded
+
+  - id: AC-97-02
+    description: 実案件 live-run の結果が要約される
+    test_name: manual_check_real_project_live_run_result_is_summarized
+
+  - id: AC-97-03
+    description: provider usage の実観測結果が記録される
+    test_name: manual_check_provider_usage_observation_is_recorded
+
+  - id: AC-97-04
+    description: Phase5 への未解決事項と引き継ぎが明記される
+    test_name: manual_check_phase5_handoff_is_recorded

@@ -1,0 +1,17 @@
+session_id: session-93
+acceptance:
+  - id: AC-93-01
+    description: OpenAI provider response に usage がある場合、戻り値に usage が含まれる
+    test_name: test_openai_provider_returns_usage_when_available
+
+  - id: AC-93-02
+    description: Claude provider response に usage がある場合、戻り値に usage が含まれる
+    test_name: test_claude_provider_returns_usage_when_available
+
+  - id: AC-93-03
+    description: usage がない場合でも provider は異常終了しない
+    test_name: test_provider_tolerates_missing_usage
+
+  - id: AC-93-04
+    description: extract_api_usage が provider 戻り値から usage を取得できる
+    test_name: test_extract_api_usage_reads_provider_usage_structure

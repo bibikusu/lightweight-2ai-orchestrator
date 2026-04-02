@@ -1,0 +1,43 @@
+{
+  "session_id": "session-94",
+  "phase_id": "phase4",
+  "title": "real project session definition",
+  "goal": "小さい実案件1本を選び、オーケストレーターで安全に通せる session.json と acceptance.yaml を定義する",
+  "scope": [
+    "real project target selection",
+    "session definition creation",
+    "acceptance definition creation",
+    "scope narrowing"
+  ],
+  "out_of_scope": [
+    "actual implementation",
+    "provider changes",
+    "prompt redesign",
+    "framework refactor"
+  ],
+  "constraints": [
+    "one session one purpose",
+    "must choose a small real task",
+    "must keep changed files within 5",
+    "must define acceptance criteria that can be verified",
+    "manual acceptance is allowed for target selection"
+  ],
+  "allowed_changes": [
+    "docs/sessions/",
+    "docs/acceptance/",
+    "docs/reports/"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/*: real project session definition only",
+    "docs/acceptance/*: real project acceptance definition only",
+    "docs/reports/*: target selection memo only if strictly required"
+  ],
+  "forbidden_changes": [
+    "runtime logic",
+    "provider files",
+    "prompt logic",
+    "actual product code",
+    "framework redesign"
+  ],
+  "acceptance_ref": "docs/acceptance/session-94.yaml"
+}

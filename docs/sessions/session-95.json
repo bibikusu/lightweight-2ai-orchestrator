@@ -1,0 +1,39 @@
+{
+  "session_id": "session-95",
+  "phase_id": "phase4",
+  "title": "real project live run",
+  "goal": "session-94 で定義した小さい実案件を live-run で1本通し、実運用での挙動を確認する",
+  "scope": [
+    "real project live run execution",
+    "artifact verification",
+    "manual acceptance verification"
+  ],
+  "out_of_scope": [
+    "framework redesign",
+    "provider redesign",
+    "new feature planning",
+    "config expansion"
+  ],
+  "constraints": [
+    "one session one purpose",
+    "must use sandbox branch",
+    "manual verification is allowed",
+    "must use the session defined in session-94",
+    "maximum 5 changed files"
+  ],
+  "allowed_changes": [
+    "docs/reports/",
+    "backend/tests/"
+  ],
+  "allowed_changes_detail": [
+    "docs/reports/*: live-run verification report only",
+    "backend/tests/*: minimal helper only if strictly required for observation"
+  ],
+  "forbidden_changes": [
+    "runtime logic",
+    "provider files",
+    "prompt logic",
+    "session target redefinition"
+  ],
+  "acceptance_ref": "docs/acceptance/session-95.yaml"
+}
