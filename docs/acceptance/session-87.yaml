@@ -1,0 +1,17 @@
+session_id: session-87
+acceptance:
+  - id: AC-87-01
+    description: evaluate_completion_decision が main() 実行フローから呼ばれ report payload の追加フィールドに反映される
+    test_name: test_main_flow_invokes_evaluate_completion_decision
+
+  - id: AC-87-02
+    description: extract_api_usage が prepared_spec と implementation の応答から usage を抽出し report へ渡す
+    test_name: test_main_flow_extracts_and_passes_api_usage
+
+  - id: AC-87-03
+    description: persist_session_reports に api_usage と api_call_count が渡される
+    test_name: test_main_flow_passes_api_usage_and_call_count_to_report
+
+  - id: AC-87-04
+    description: 既存の completion_status 決定ロジックを壊さない
+    test_name: test_phase2_integration_preserves_existing_success_flow

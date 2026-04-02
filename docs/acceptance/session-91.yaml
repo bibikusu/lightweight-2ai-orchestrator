@@ -1,0 +1,17 @@
+session_id: session-91
+acceptance:
+  - id: AC-91-01
+    description: usage 情報がある場合に概算コストが report.json に保存される
+    test_name: test_report_records_estimated_cost_when_usage_available
+
+  - id: AC-91-02
+    description: usage 情報が欠落していても cost summary 生成で異常終了しない
+    test_name: test_cost_summary_tolerates_missing_usage
+
+  - id: AC-91-03
+    description: api_usage と cost summary が machine-readable に保存される
+    test_name: test_api_usage_and_cost_summary_are_machine_readable
+
+  - id: AC-91-04
+    description: 既存 report 生成フローを壊さない
+    test_name: test_cost_summary_extension_has_no_report_regression

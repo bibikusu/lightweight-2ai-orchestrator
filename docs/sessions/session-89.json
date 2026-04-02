@@ -1,0 +1,39 @@
+{
+  "session_id": "session-89",
+  "phase_id": "phase3",
+  "title": "implementation prompt quality hardening",
+  "goal": "Claude implementation prompt に patch 形式制約と retry_instruction 反映を統合し、patch 空振りと retry 品質を改善する",
+  "scope": [
+    "implementation prompt hardening",
+    "patch format constraints",
+    "patch_status allowed value guidance",
+    "retry fix_instructions propagation",
+    "retry do_not_change propagation"
+  ],
+  "out_of_scope": [
+    "provider api change",
+    "retry loop redesign",
+    "additional verification api call",
+    "context compression"
+  ],
+  "constraints": [
+    "one session one purpose",
+    "must not add new api calls",
+    "must not change patch apply engine in this session",
+    "maximum 5 changed files"
+  ],
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "backend/tests/"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/run_session.py: build_implementation_prompts text only",
+    "backend/tests/*: prompt contract coverage only"
+  ],
+  "forbidden_changes": [
+    "patch apply engine redesign",
+    "retry loop redesign",
+    "provider logic change"
+  ],
+  "acceptance_ref": "docs/acceptance/session-89.yaml"
+}

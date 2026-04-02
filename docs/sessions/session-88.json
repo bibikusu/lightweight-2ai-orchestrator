@@ -1,0 +1,38 @@
+{
+  "session_id": "session-88",
+  "phase_id": "phase3",
+  "title": "phase2 live run verification",
+  "goal": "実 API live-run で Phase2 ガードと Phase3 接続が動作することを手動検証する",
+  "scope": [
+    "live run execution",
+    "artifact verification",
+    "manual acceptance verification"
+  ],
+  "out_of_scope": [
+    "new feature development",
+    "provider redesign",
+    "prompt redesign",
+    "cost optimization"
+  ],
+  "constraints": [
+    "one session one purpose",
+    "must use existing live-run flow",
+    "manual verification is allowed",
+    "maximum 5 changed files"
+  ],
+  "allowed_changes": [
+    "docs/reports/",
+    "backend/tests/"
+  ],
+  "allowed_changes_detail": [
+    "docs/reports/*: live-run verification report only",
+    "backend/tests/*: minimal helper or documentation-only support if strictly required"
+  ],
+  "forbidden_changes": [
+    "orchestration runtime logic",
+    "provider files",
+    "prompt logic",
+    "retry logic"
+  ],
+  "acceptance_ref": "docs/acceptance/session-88.yaml"
+}

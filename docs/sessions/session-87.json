@@ -1,0 +1,45 @@
+{
+  "session_id": "session-87",
+  "phase_id": "phase3",
+  "title": "phase2 integration into main flow",
+  "goal": "Phase2で追加した未接続関数のうち、completion評価とusage抽出を main() と report フローへ接続する",
+  "scope": [
+    "evaluate_completion_decision main flow integration",
+    "extract_api_usage main flow integration",
+    "report payload integration"
+  ],
+  "out_of_scope": [
+    "run_preflight_validation integration",
+    "provider api redesign",
+    "retry policy redesign",
+    "context compression",
+    "multi-ai expansion"
+  ],
+  "constraints": [
+    "one session one purpose",
+    "must preserve existing runtime flow except required integration points",
+    "must not replace decide_completion_status",
+    "must not add new api calls",
+    "maximum 5 changed files",
+    "main branch direct change forbidden"
+  ],
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "backend/tests/"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/run_session.py: connect evaluate_completion_decision into report flow as additional payload field only",
+    "orchestration/run_session.py: connect extract_api_usage into prepared_spec and implementation response handling only",
+    "orchestration/run_session.py: pass api_usage and api_call_count into persist_session_reports",
+    "backend/tests/*: integration coverage only"
+  ],
+  "forbidden_changes": [
+    "decide_completion_status replacement",
+    "run_preflight_validation redesign or new preflight flow",
+    "provider selection logic",
+    "new provider calls",
+    "prompt redesign",
+    "retry loop redesign"
+  ],
+  "acceptance_ref": "docs/acceptance/session-87.yaml"
+}

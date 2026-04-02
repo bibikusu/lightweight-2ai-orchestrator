@@ -1,0 +1,17 @@
+session_id: session-92
+acceptance:
+  - id: AC-92-01
+    description: live-run で completion gating が機能する
+    test_name: manual_check_live_run_completion_gating_is_effective
+
+  - id: AC-92-02
+    description: live-run で usage recording が report.json に反映される
+    test_name: manual_check_live_run_usage_recording_is_effective
+
+  - id: AC-92-03
+    description: prompt quality 改善により patch 空振り頻度の改善が観測できる
+    test_name: manual_check_live_run_patch_quality_improvement_is_observable
+
+  - id: AC-92-04
+    description: Phase3 統合後も4コマンド品質ゲートが全PASSする
+    test_name: manual_check_phase3_quality_gate_all_pass

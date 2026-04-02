@@ -1,0 +1,37 @@
+{
+  "session_id": "session-92",
+  "phase_id": "phase3",
+  "title": "phase3 live run acceptance verification",
+  "goal": "Phase3 統合後の live-run を実行し、completion gating と usage recording と prompt quality 改善の受入確認を行う",
+  "scope": [
+    "phase3 live run execution",
+    "acceptance verification",
+    "artifact review support"
+  ],
+  "out_of_scope": [
+    "new feature development",
+    "provider redesign",
+    "multi-ai expansion",
+    "context compression"
+  ],
+  "constraints": [
+    "one session one purpose",
+    "must use existing live-run flow",
+    "manual verification is allowed",
+    "maximum 5 changed files"
+  ],
+  "allowed_changes": [
+    "docs/reports/",
+    "backend/tests/"
+  ],
+  "allowed_changes_detail": [
+    "docs/reports/*: phase3 acceptance report only",
+    "backend/tests/*: minimal helper or documentation-only support if strictly required"
+  ],
+  "forbidden_changes": [
+    "orchestration runtime logic",
+    "provider files",
+    "prompt logic"
+  ],
+  "acceptance_ref": "docs/acceptance/session-92.yaml"
+}
