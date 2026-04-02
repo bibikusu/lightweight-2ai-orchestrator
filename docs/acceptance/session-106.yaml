@@ -1,0 +1,20 @@
+session_id: session-106
+acceptance:
+  - id: AC-106-01
+    description: live-run reached at least implementation stage
+    type: manual_check
+  - id: AC-106-02
+    description: no dirty-worktree false-positive stop
+    type: manual_check
+  - id: AC-106-03
+    description: retry behavior matches session-102 design
+    type: manual_check
+  - id: AC-106-04
+    description: patch normalization applied or not_applicable
+    type: manual_check
+  - id: AC-106-05
+    description: structured log exists in artifacts/
+    type: manual_check
+  - id: AC-106-06
+    description: live-run report saved
+    type: manual_check

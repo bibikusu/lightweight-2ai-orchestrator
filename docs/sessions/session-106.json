@@ -1,0 +1,19 @@
+{
+  "session_id": "session-106",
+  "phase_id": "phase5",
+  "title": "Phase5 live-run validation",
+  "goal": "Verify that Phase5 stability improvements (sessions 101-105) are effective under real API execution",
+  "scope": ["Execute one live-run with real APIs", "Observe preflight/retry/patch/forbidden/logging", "Save report"],
+  "out_of_scope": ["orchestrator runtime changes", "provider changes", "docs large-scale modifications"],
+  "allowed_changes": ["artifacts/session-106/", "docs/reports/session-106-liverun-report.json"],
+  "forbidden_changes": ["orchestration/run_session.py", "orchestration/providers/", "backend/tests/"],
+  "acceptance_criteria": [
+    "AC-106-01: live-run reached at least implementation stage",
+    "AC-106-02: no dirty-worktree false-positive stop",
+    "AC-106-03: retry behavior matches session-102 design",
+    "AC-106-04: patch normalization applied or not_applicable",
+    "AC-106-05: structured log exists in artifacts/",
+    "AC-106-06: live-run report saved"
+  ],
+  "acceptance_ref": "docs/acceptance/session-106.yaml"
+}
