@@ -99,7 +99,14 @@ def load_session_context(session_id: str) -> SessionContext:
     if not acceptance_ref:
         raise ValueError("session JSON must contain 'acceptance_ref'")
 
-    acceptance_path = DOCS_DIR / acceptance_ref
+    acceptance_ref_str = str(acceptance_ref).strip()
+
+    # docs/ 始まりはプロジェクトルート基準、それ以外は docs/ 配下基準
+    if acceptance_ref_str.startswith("docs/"):
+        acceptance_path = ROOT_DIR / acceptance_ref_str
+    else:
+        acceptance_path = DOCS_DIR / acceptance_ref_str
+
     acceptance_text = load_yaml_as_text(acceptance_path)
     acceptance_data = {
         "raw_yaml": acceptance_text,
