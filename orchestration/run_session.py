@@ -462,7 +462,7 @@ def _recount_hunk_headers(patch_text: str) -> str:
             new_count = 0
             while j < len(lines):
                 line = lines[j]
-                if line.startswith("@@") or l.startswith("diff --git "):
+                if line.startswith("@@") or line.startswith("diff --git "):
                     break
                 if line.startswith("-"):
                     old_count += 1
