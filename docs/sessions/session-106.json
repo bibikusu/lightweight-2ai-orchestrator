@@ -5,6 +5,7 @@
   "goal": "Verify that Phase5 stability improvements (sessions 101-105) are effective under real API execution",
   "scope": ["Execute one live-run with real APIs", "Observe preflight/retry/patch/forbidden/logging", "Save report"],
   "out_of_scope": ["orchestrator runtime changes", "provider changes", "docs large-scale modifications"],
+  "constraints": ["Do not modify runtime implementation; validation-only execution and reporting"],
   "allowed_changes": ["artifacts/session-106/", "docs/reports/session-106-liverun-report.json"],
   "forbidden_changes": ["orchestration/run_session.py", "orchestration/providers/", "backend/tests/"],
   "acceptance_criteria": [
