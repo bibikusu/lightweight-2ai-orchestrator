@@ -2267,6 +2267,51 @@ def extract_api_usage(response: dict) -> dict:
     return {}
 
 
+# 概算コスト単価（USD / 1Mトークン）—静的定数として管理する
+_COST_PER_1M_TOKENS: Dict[str, Dict[str, float]] = {
+    "openai": {"input": 2.50, "output": 10.00},   # gpt-4o 概算
+    "claude": {"input": 3.00, "output": 15.00},    # claude-sonnet-4 概算
+}
+
+
+def estimate_cost(usage: dict, provider: str) -> float:
+    """usage 辞書から概算コスト（USD）を計算する。
+    usage が欠落・不正な場合は 0.0 を返す（エラーにしない）。"""
+    if not isinstance(usage, dict) or not usage:
+        return 0.0
+    rates = _COST_PER_1M_TOKENS.get(provider, {})
+    if not rates:
+        return 0.0
+    # OpenAI: prompt_tokens / completion_tokens
+    # Claude: input_tokens / output_tokens
+    input_tokens = int(usage.get("prompt_tokens") or usage.get("input_tokens") or 0)
+    output_tokens = int(usage.get("completion_tokens") or usage.get("output_tokens") or 0)
+    cost = (input_tokens * rates["input"] + output_tokens * rates["output"]) / 1_000_000
+    return round(cost, 8)
+
+
+def build_cost_summary(api_usage: dict, api_call_count: dict) -> dict:
+    """api_usage と api_call_count から cost summary を生成する。
+    usage が欠落している場合は 0.0 として扱う（エラーにしない）。"""
+    if not isinstance(api_usage, dict):
+        api_usage = {}
+    if not isinstance(api_call_count, dict):
+        api_call_count = {}
+    summary: Dict[str, Any] = {}
+    total_usd = 0.0
+    for provider in ("openai", "claude"):
+        usage = api_usage.get(provider) or {}
+        call_count = int(api_call_count.get(provider) or 0)
+        cost = estimate_cost(usage, provider)
+        total_usd += cost
+        summary[provider] = {
+            "estimated_cost_usd": cost,
+            "call_count": call_count,
+        }
+    summary["total_estimated_cost_usd"] = round(total_usd, 8)
+    return summary
+
+
 def persist_session_reports(
     session_dir: Path,
     ctx: Optional[SessionContext],
@@ -2391,8 +2436,12 @@ def persist_session_reports(
     payload["completion_status"] = completion["completion_status"]
     payload["human_review_needed"] = completion["human_review_needed"]
     # API usage 情報（存在する場合のみ記録する）
-    payload["api_usage"] = api_usage if isinstance(api_usage, dict) else {}
-    payload["api_call_count"] = api_call_count if isinstance(api_call_count, dict) else {}
+    _api_usage_safe = api_usage if isinstance(api_usage, dict) else {}
+    _api_call_count_safe = api_call_count if isinstance(api_call_count, dict) else {}
+    payload["api_usage"] = _api_usage_safe
+    payload["api_call_count"] = _api_call_count_safe
+    # cost summary（usage から概算コストを計算する。欠落時は 0.0 として扱う）
+    payload["cost_summary"] = build_cost_summary(_api_usage_safe, _api_call_count_safe)
     # Phase2: evaluate_completion_decision を追加フィールドとして記録する（decide_completion_status を置換しない）
     try:
         _acc_parsed = (ctx.acceptance_data.get("parsed") or {}) if ctx is not None else {}
