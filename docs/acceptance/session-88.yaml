@@ -1,0 +1,17 @@
+session_id: session-88
+acceptance:
+  - id: AC-88-01
+    description: live-run の report.json に completion_status が含まれる
+    test_name: manual_check_live_run_report_has_completion_status
+
+  - id: AC-88-02
+    description: live-run の report.json に api_usage が含まれる
+    test_name: manual_check_live_run_report_has_api_usage
+
+  - id: AC-88-03
+    description: live-run が session processed OK で完走する
+    test_name: manual_check_live_run_completes_successfully
+
+  - id: AC-88-04
+    description: live-run の結果を docs/reports 配下に記録できる
+    test_name: manual_check_live_run_report_is_saved

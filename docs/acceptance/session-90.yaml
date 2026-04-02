@@ -1,0 +1,17 @@
+session_id: session-90
+acceptance:
+  - id: AC-90-01
+    description: retry_instruction の fix_instructions が implementation prompt に反映される
+    test_name: test_retry_fix_instructions_are_injected_into_implementation_prompt
+
+  - id: AC-90-02
+    description: retry_instruction の do_not_change が implementation prompt に反映される
+    test_name: test_retry_do_not_change_is_injected_into_implementation_prompt
+
+  - id: AC-90-03
+    description: retry prompt alignment が allowed_changes を広げない
+    test_name: test_retry_prompt_alignment_does_not_broaden_scope
+
+  - id: AC-90-04
+    description: 既存 retry フローを壊さない
+    test_name: test_retry_prompt_alignment_preserves_existing_retry_flow

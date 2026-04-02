@@ -1,0 +1,37 @@
+{
+  "session_id": "session-90",
+  "phase_id": "phase3",
+  "title": "retry prompt and implementation prompt alignment",
+  "goal": "retry_instruction の fix_instructions と do_not_change を Claude 実装 prompt に確実に反映し、retry 品質を改善する",
+  "scope": [
+    "retry prompt to implementation prompt alignment",
+    "scope guard reflection",
+    "fix instruction propagation"
+  ],
+  "out_of_scope": [
+    "new provider calls",
+    "failure_type redesign",
+    "context compression",
+    "multi-ai expansion"
+  ],
+  "constraints": [
+    "one session one purpose",
+    "must preserve existing retry count behavior",
+    "must not broaden allowed changes",
+    "maximum 5 changed files"
+  ],
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "backend/tests/"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/run_session.py: build_implementation_prompts and related retry prompt propagation only",
+    "backend/tests/*: retry prompt alignment coverage only"
+  ],
+  "forbidden_changes": [
+    "retry loop redesign",
+    "new api calls",
+    "provider logic change"
+  ],
+  "acceptance_ref": "docs/acceptance/session-90.yaml"
+}

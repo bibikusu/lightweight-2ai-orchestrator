@@ -1,0 +1,17 @@
+session_id: session-89
+acceptance:
+  - id: AC-89-01
+    description: implementation prompt に unified diff 必須の制約が含まれる
+    test_name: test_implementation_prompt_requires_unified_diff
+
+  - id: AC-89-02
+    description: implementation prompt に patch_status の有効値が明示される
+    test_name: test_implementation_prompt_lists_valid_patch_status_values
+
+  - id: AC-89-03
+    description: retry_instruction の fix_instructions が implementation prompt に反映される
+    test_name: test_retry_fix_instructions_are_injected_into_implementation_prompt
+
+  - id: AC-89-04
+    description: retry_instruction の do_not_change が implementation prompt に反映される
+    test_name: test_retry_do_not_change_is_injected_into_implementation_prompt

@@ -1,0 +1,39 @@
+{
+  "session_id": "session-91",
+  "phase_id": "phase3",
+  "title": "api usage cost summary extension",
+  "goal": "Phase2 で追加した usage 記録を cost summary まで拡張し、report.json で概算コストを見える化する",
+  "scope": [
+    "usage summary expansion",
+    "cost estimation helpers",
+    "report cost fields"
+  ],
+  "out_of_scope": [
+    "provider pricing sync automation",
+    "billing integration",
+    "new api calls",
+    "multi-provider routing"
+  ],
+  "constraints": [
+    "one session one purpose",
+    "must tolerate missing usage gracefully",
+    "cost estimation may use static config or constants only",
+    "maximum 5 changed files"
+  ],
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "orchestration/config.yaml",
+    "backend/tests/"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/run_session.py: add cost summary calculation and report fields only",
+    "orchestration/config.yaml: static price config only if required",
+    "backend/tests/*: cost summary coverage only"
+  ],
+  "forbidden_changes": [
+    "provider call flow change",
+    "retry policy change",
+    "completion logic change"
+  ],
+  "acceptance_ref": "docs/acceptance/session-91.yaml"
+}
