@@ -124,6 +124,43 @@ def load_session_context(session_id: str) -> SessionContext:
     )
 
 
+def validate_session_required_keys(session_data: dict) -> None:
+    """session.json の必須キー存在チェック。欠落時は ValueError。"""
+    required = ["session_id", "phase_id", "title", "goal", "scope",
+                "out_of_scope", "constraints", "acceptance_ref"]
+    for key in required:
+        if key not in session_data:
+            raise ValueError(f"session JSON missing required key: {key}")
+
+
+def resolve_acceptance_path(acceptance_ref: str, root_dir: Path, docs_dir: Path) -> Path:
+    """acceptance_ref を実パスに解決する。docs/ 始まりはプロジェクトルート基準。"""
+    ref = str(acceptance_ref).strip()
+    if ref.startswith("docs/"):
+        return root_dir / ref
+    return docs_dir / ref
+
+
+def validate_session_id_consistency(session_data: dict, acceptance_data: dict) -> None:
+    """session.json と acceptance.yaml の session_id 一致を検証する。"""
+    s_id = session_data.get("session_id", "")
+    a_id = acceptance_data.get("session_id", "")
+    if s_id != a_id:
+        raise ValueError(
+            f"session_id mismatch: session.json={s_id!r}, acceptance.yaml={a_id!r}"
+        )
+
+
+def run_preflight_validation(session_data: dict, acceptance_parsed: dict,
+                              acceptance_ref: str, root_dir: Path, docs_dir: Path) -> None:
+    """preflight: 必須キー + パス解決 + session_id 一致を一括検証。"""
+    validate_session_required_keys(session_data)
+    path = resolve_acceptance_path(acceptance_ref, root_dir, docs_dir)
+    if not path.exists():
+        raise FileNotFoundError(f"acceptance file not found: {path}")
+    validate_session_id_consistency(session_data, acceptance_parsed)
+
+
 def validate_session_context(ctx: SessionContext) -> None:
     required_keys = [
         "session_id",
