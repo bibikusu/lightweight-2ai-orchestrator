@@ -1,6 +1,4 @@
 """preflight guard のテスト（AC-101-01〜04）。"""
-import tempfile
-from pathlib import Path
 from unittest.mock import patch, MagicMock
 
 import pytest

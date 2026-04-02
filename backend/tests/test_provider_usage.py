@@ -2,7 +2,6 @@
 """Provider usage extraction test coverage."""
 
 from unittest.mock import Mock, patch
-import pytest
 from orchestration.providers.openai_client import OpenAIClientWrapper, OpenAIClientConfig
 from orchestration.providers.claude_client import ClaudeClientWrapper, ClaudeClientConfig
 
