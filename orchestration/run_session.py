@@ -602,6 +602,55 @@ def is_git_worktree_dirty() -> bool:
     return bool(p.stdout.strip())
 
 
+def preflight_cleanup() -> List[str]:
+    """前回セッションの残留ファイルを自動削除する。
+
+    削除対象: 未追跡（??）の session 生成テストファイル
+    対象外:   追跡済みファイルの変更（M/D）は触らない
+    戻り値:   削除したファイルパスのリスト
+    """
+    p = _git_run(["status", "--porcelain"])
+    if p.returncode != 0:
+        return []
+
+    _RESIDUE_PATTERNS = [
+        "backend/tests/test_",  # セッション生成テストファイル
+        "docs/reports/session-",  # セッション生成レポート（未追跡）
+    ]
+
+    removed: List[str] = []
+    for line in (p.stdout or "").splitlines():
+        if not line.startswith("?? "):
+            continue
+        path = line[3:].strip()
+        for pattern in _RESIDUE_PATTERNS:
+            if path.startswith(pattern):
+                full = ROOT_DIR / path
+                if full.exists():
+                    full.unlink()
+                    removed.append(path)
+                    logger.info("preflight_cleanup: 残留ファイルを削除 %s", path)
+                break
+    return removed
+
+
+def validate_before_run() -> None:
+    """実行前バリデーション: dirty worktree なら RuntimeError を送出する。
+
+    preflight_cleanup() 後も残った変更（追跡済みファイルの変更等）は
+    自動削除せず、明示的なエラーで停止する。
+    """
+    p = _git_run(["status", "--porcelain"])
+    if p.returncode != 0:
+        raise RuntimeError(f"git status に失敗しました: {p.stderr.strip()}")
+    dirty = [ln for ln in (p.stdout or "").splitlines() if ln.strip()]
+    if dirty:
+        files = ", ".join(ln[3:].strip() for ln in dirty[:5])
+        raise RuntimeError(
+            f"Dirty worktree detected: {files}. 未コミットの変更を解消してから実行してください。"
+        )
+
+
 def enforce_git_sandbox_branch(session_id: str) -> None:
     """
     main/master 上・dirty なら停止。
@@ -615,6 +664,11 @@ def enforce_git_sandbox_branch(session_id: str) -> None:
         raise RuntimeError(
             f"安全弁: ブランチが {branch!r} です。main/master 上では実行できません。"
         )
+
+    # 既知の残留ファイルを自動削除してから dirty チェック
+    cleaned = preflight_cleanup()
+    if cleaned:
+        logger.info("preflight_cleanup: %d 件の残留ファイルを自動削除しました。", len(cleaned))
 
     if is_git_worktree_dirty():
         raise RuntimeError(
