@@ -1339,12 +1339,18 @@ If implementation is not possible, explain in JSON.
             retry_block += f"\n\n[do_not_change (must not touch these)]\n{dnc_lines}"
 
     # allowed_changes の既存ファイル内容をプロンプトに含める（パッチ生成精度向上）
+    # session_data.allowed_changes_detail（具体的ファイルパス）を優先、
+    # なければ prepared_spec.allowed_changes を使う
+    detail_sources = (
+        ctx.session_data.get("allowed_changes_detail")
+        or prepared_spec.get("allowed_changes", [])
+    )
     current_files_block = ""
-    for item in prepared_spec.get("allowed_changes", []):
+    for item in detail_sources:
         # "path/to/file.py: description" 形式からファイルパスを抽出
         path_str = item.split(":")[0].strip() if ":" in item else item.strip()
-        # ワイルドカードは除外
-        if "*" in path_str or "?" in path_str:
+        # ワイルドカードやディレクトリは除外
+        if "*" in path_str or "?" in path_str or path_str.endswith("/"):
             continue
         full_path = ROOT_DIR / path_str
         if full_path.exists() and full_path.is_file():
