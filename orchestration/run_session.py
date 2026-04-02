@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 import hashlib
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 import yaml
 
@@ -734,8 +734,20 @@ def check_file_count(changed_files: List[str]) -> bool:
     return len(changed_files) <= MAX_FILES
 
 
-def check_forbidden_paths(changed_files: List[str]) -> bool:
+def check_forbidden_paths(
+    changed_files: List[str],
+    *,
+    allowlist: Optional[Set[str]] = None,
+) -> bool:
+    """
+    FORBIDDEN_PATHS に基づき禁止パスを検出する共通ロジック。
+
+    allowlist で明示的に許可するパスを与えた場合、そのパスは判定対象から除外する。
+    """
+    allow: Set[str] = set(allowlist or [])
     for f in changed_files:
+        if f in allow:
+            continue
         for forbidden in FORBIDDEN_PATHS:
             if f.startswith(forbidden):
                 return False
@@ -793,6 +805,7 @@ def validate_patch_files(changed_files: List[str]) -> Dict[str, Any]:
             "message": f"changed_files exceeds limit: {len(changed_files)} > {MAX_FILES}",
         }
 
+    # validate_patch_files では allowlist を与えず、FORBIDDEN_PATHS をそのまま適用する
     if not check_forbidden_paths(changed_files):
         return {
             "status": "error",
@@ -810,15 +823,36 @@ def _collect_forbidden_phrases(
     prepared_spec: Dict[str, Any],
 ) -> List[str]:
     phrases: List[str] = []
+
+    def _append_phrase(value: Any) -> None:
+        if not isinstance(value, str):
+            return
+        stripped = value.strip()
+        if not stripped:
+            return
+        # 誤検出を防ぐため、極端に短いフレーズはここで除外する
+        if len(stripped) < 3:
+            return
+        phrases.append(stripped)
+
     for item in session_data.get("out_of_scope", []):
-        if isinstance(item, str) and item.strip():
-            phrases.append(item.strip())
+        _append_phrase(item)
+
     fc = prepared_spec.get("forbidden_changes", [])
     if isinstance(fc, list):
         for item in fc:
-            if isinstance(item, str) and item.strip():
-                phrases.append(item.strip())
-    return phrases
+            _append_phrase(item)
+
+    # 重複排除しつつ順序は維持する
+    seen: Set[str] = set()
+    unique_phrases: List[str] = []
+    for p in phrases:
+        if p in seen:
+            continue
+        seen.add(p)
+        unique_phrases.append(p)
+
+    return unique_phrases
 
 
 def validate_allowed_changes_detail_enforcement(
@@ -927,14 +961,17 @@ def validate_changed_files_before_patch(
             f"changed_files が上限を超えています: {len(normalized)} > {max_changed_files}"
         )
 
+    # FORBIDDEN_PATHS ベースの禁止パス判定は、allowed_changes であっても原則としてバイパス不可。
+    # ただし artifacts/.gitkeep は歴史的な互換性維持のため例外的に許可する。
+    forbidden_allowlist: Set[str] = {"artifacts/.gitkeep"}
+    if not check_forbidden_paths(normalized, allowlist=forbidden_allowlist):
+        raise ValueError("forbidden path detected")
+
     phrases = _collect_forbidden_phrases(session_data, prepared_spec)
-    min_phrase_len = 3
     for path in non_explicit_files:
         path_l = path.lower()
         for phrase in phrases:
             pl = phrase.lower()
-            if len(pl) < min_phrase_len:
-                continue
             if pl in path_l:
                 raise ValueError(
                     f"禁止キーワードと一致するパス: {path!r} に対して forbidden/out_of_scope の "
