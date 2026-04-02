@@ -1993,6 +1993,63 @@ def _any_acceptance_not_applicable(acceptance_results: List[Dict[str, Any]]) -> 
     return False
 
 
+def validate_acceptance_test_names(acceptance_items: list) -> None:
+    """acceptance.yaml の各項目に test_name が必須であることを検証する。
+    test_name が欠落している項目があれば ValueError を raise する。"""
+    for i, item in enumerate(acceptance_items):
+        if not isinstance(item, dict):
+            continue
+        if not item.get("test_name"):
+            ac_id = item.get("id", f"index-{i}")
+            raise ValueError(
+                f"acceptance item {ac_id} is missing required 'test_name'"
+            )
+
+
+def evaluate_completion_decision(
+    acceptance_data: dict,
+    checks_results: dict,
+    changed_files: list,
+    allowed_changes: list,
+) -> dict:
+    """completion 判定を機械的に行う。
+
+    pass 条件（全て満たす必要あり）:
+      1. acceptance の全 AC に test_name が存在する
+      2. checks の test/lint/typecheck/build が全て passed or skipped
+      3. changed_files が allowed_changes 内
+
+    いずれか1つでも不成立なら fail を返す。
+
+    Returns: {"completion": "pass" | "fail", "reasons": [...]}
+    """
+    reasons: list = []
+
+    # 条件1: acceptance 全項目に test_name が存在する
+    items = acceptance_data.get("items", []) if isinstance(acceptance_data, dict) else []
+    try:
+        validate_acceptance_test_names(items)
+    except ValueError as exc:
+        reasons.append(str(exc))
+
+    # 条件2: checks の各カテゴリが passed または skipped
+    required_checks = ["test", "lint", "typecheck", "build"]
+    for check_key in required_checks:
+        result = checks_results.get(check_key, "")
+        if result not in ("passed", "skipped"):
+            reasons.append(f"check '{check_key}' is '{result}' (expected passed or skipped)")
+
+    # 条件3: changed_files が allowed_changes 内
+    allowed_set = set(allowed_changes)
+    for cf in changed_files:
+        if cf not in allowed_set:
+            reasons.append(f"changed_file {cf!r} is not in allowed_changes")
+
+    if reasons:
+        return {"completion": "fail", "reasons": reasons}
+    return {"completion": "pass", "reasons": []}
+
+
 def decide_completion_status(
     status: str,
     acceptance_results: List[Dict[str, Any]],
