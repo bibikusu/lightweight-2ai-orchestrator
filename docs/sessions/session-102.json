@@ -19,14 +19,11 @@
     "maximum 2 files change"
   ],
   "acceptance_ref": "docs/acceptance/session-102.yaml",
-
   "objective": "refine retry logic without breaking existing implementation",
-
   "allowed_changes": [
     "orchestration/run_session.py",
     "backend/tests/test_retry_optimization.py"
   ],
-
   "allowed_changes_detail": [
     "run_session.py::classify_failure",
     "run_session.py::classify_failure_type",
@@ -34,29 +31,26 @@
     "run_session.py::validate_failure_type",
     "run_session.py::normalize_failure_type_by_priority",
     "run_session.py::_compute_retry_cause_fingerprint",
-    "run_session.py::retry_loop"
+    "run_session.py::retry_loop",
+    "backend/tests/test_retry_optimization.py::new"
   ],
-
   "forbidden_changes": [
     "docs/",
     "providers/",
     "backend/tests/test_retry_logic.py"
   ],
-
   "completion_criteria": [
     "retry stops for same failure cause",
     "failure_type is normalized",
     "existing retry flow remains intact",
     "all tests pass"
   ],
-
   "acceptance_criteria": [
     "AC-102-01:test_failure_type_normalized",
     "AC-102-02:test_same_cause_detection",
     "AC-102-03:test_retry_limit",
     "AC-102-04:test_no_regression"
   ],
-
   "review_points": [
     "仕様一致",
     "変更範囲遵守",
