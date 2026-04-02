@@ -412,6 +412,13 @@ def normalize_patch_for_git_apply(raw_patch: str) -> str:
         i += 1
     lines = cleaned
 
+    def _has_recent_diff_git_header(buf: List[str], lookback: int = 5) -> bool:
+        """直前 lookback 行以内に diff --git ヘッダーがあるか確認する。"""
+        for recent in buf[-lookback:]:
+            if recent.startswith("diff --git "):
+                return True
+        return False
+
     out: List[str] = []
     i = 0
     while i < len(lines):
@@ -419,7 +426,7 @@ def normalize_patch_for_git_apply(raw_patch: str) -> str:
         if line.startswith("--- ") and i + 1 < len(lines) and lines[i + 1].startswith("+++ "):
             old_file = line.split(maxsplit=1)[1].strip()
             new_file = lines[i + 1].split(maxsplit=1)[1].strip()
-            if not out or not out[-1].startswith("diff --git "):
+            if not _has_recent_diff_git_header(out):
                 old_git = old_file if old_file.startswith(("a/", "b/", "/dev/null")) else f"a/{old_file}"
                 new_git = new_file if new_file.startswith(("a/", "b/", "/dev/null")) else f"b/{new_file}"
                 out.append(f"diff --git {old_git} {new_git}")
@@ -432,8 +439,9 @@ def normalize_patch_for_git_apply(raw_patch: str) -> str:
 
     # hunk ヘッダー（@@ -X,Y +X,Z @@）の行カウントを実際の内容で再計算する
     # LLM が生成するカウント値は誤りが多く git apply が "corrupt patch" で失敗するため。
-    recounted = _recount_hunk_headers("\n".join(out))
-    return recounted.strip() + "\n"
+    # strip() を先に行い、末尾の空行を除去してからカウントを合わせる。
+    joined = "\n".join(out).strip()
+    return _recount_hunk_headers(joined) + "\n"
 
 
 def _recount_hunk_headers(patch_text: str) -> str:
