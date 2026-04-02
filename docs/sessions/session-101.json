@@ -39,5 +39,6 @@
     "変更範囲遵守",
     "副作用なし",
     "実装過不足なし"
-  ]
+  ],
+  "acceptance_ref": "docs/acceptance/session-101.yaml"
 }
