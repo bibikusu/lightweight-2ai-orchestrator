@@ -57,4 +57,15 @@ class ClaudeClientWrapper:
         print(f"[DEBUG] Claude raw response (first 200 chars): {repr(text[:200])}", flush=True)
         if not text.strip():
             raise RuntimeError("Claude Messages API から空の出力でした。")
-        return parse_json_object(text)
+
+        parsed_data = parse_json_object(text)
+
+        # Add usage information if available from the response
+        if hasattr(message, 'usage') and message.usage:
+            parsed_data['usage'] = {
+                'input_tokens': getattr(message.usage, 'input_tokens', None),
+                'output_tokens': getattr(message.usage, 'output_tokens', None),
+                'total_tokens': getattr(message.usage, 'input_tokens', 0) + getattr(message.usage, 'output_tokens', 0) if hasattr(message.usage, 'input_tokens') and hasattr(message.usage, 'output_tokens') else None
+            }
+
+        return parsed_data

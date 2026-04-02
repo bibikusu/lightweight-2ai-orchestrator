@@ -46,7 +46,18 @@ class OpenAIClientWrapper:
         text = response.output_text
         if not text or not text.strip():
             raise RuntimeError("OpenAI Responses API から空の出力でした。")
-        return parse_json_object(text)
+
+        parsed_data = parse_json_object(text)
+
+        # Add usage information if available from the response
+        if hasattr(response, 'usage') and response.usage:
+            parsed_data['usage'] = {
+                'input_tokens': getattr(response.usage, 'input_tokens', None),
+                'output_tokens': getattr(response.usage, 'output_tokens', None),
+                'total_tokens': getattr(response.usage, 'total_tokens', None)
+            }
+
+        return parsed_data
 
     def request_prepared_spec(self, system_prompt: str, user_prompt: str) -> Dict[str, Any]:
         return self._responses_json(system_prompt, user_prompt)
