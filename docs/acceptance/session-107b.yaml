@@ -1,0 +1,22 @@
+session_id: session-107b
+acceptance:
+  - id: AC-107b-01
+    description: single missing key still reports that key name in error
+    type: automated
+    test: test_single_missing_key_reports_key_name
+  - id: AC-107b-02
+    description: multiple missing keys are collected sorted and reported in one error
+    type: automated
+    test: test_multiple_missing_keys_sorted_single_error
+  - id: AC-107b-03
+    description: valid session JSON with all existing required keys passes without error
+    type: automated
+    test: test_valid_session_passes
+  - id: AC-107b-04
+    description: validate_session_context delegates key checking to validate_session_required_keys
+    type: automated
+    test: test_context_delegates_to_required_keys
+  - id: AC-107b-05
+    description: all existing tests pass unchanged
+    type: manual_check
+    test: manual_4_command_verification

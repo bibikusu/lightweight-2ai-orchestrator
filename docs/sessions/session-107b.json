@@ -1,0 +1,56 @@
+{
+  "session_id": "session-107b",
+  "phase_id": "phase6",
+  "title": "Deterministic multi-missing key reporting",
+  "goal": "Change validate_session_required_keys to collect all missing keys, sort them, and report them in a single error instead of stopping at the first missing key",
+  "scope": [
+    "Change error reporting from first-missing-stop to collect-all-sort-report",
+    "Do NOT add any new required keys",
+    "Add focused tests for deterministic multi-key reporting"
+  ],
+  "out_of_scope": [
+    "Adding new required keys (allowed_changes, forbidden_changes, acceptance_criteria)",
+    "Changing existing required key set",
+    "Provider changes",
+    "CI workflow changes",
+    "Module split",
+    "Report format changes"
+  ],
+  "constraints": [
+    "one session one purpose",
+    "existing required keys remain exactly: session_id, phase_id, title, goal, scope, out_of_scope, constraints, acceptance_ref",
+    "do not add or remove any required key",
+    "do not change main() control flow",
+    "do not change provider, retry, report, or builder/reviewer flow",
+    "maximum 3 changed files"
+  ],
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "backend/tests/test_session_json_required_keys.py",
+    "docs/global_rules.md"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/run_session.py::validate_session_required_keys error reporting logic only",
+    "orchestration/run_session.py::validate_session_context to delegate to validate_session_required_keys (no key set change)",
+    "backend/tests/test_session_json_required_keys.py::new tests for multi-missing deterministic reporting",
+    "docs/global_rules.md::fail-fast multi-key reporting rule"
+  ],
+  "forbidden_changes": [
+    "SESSION_REQUIRED_KEYS contents (do not add or remove keys)",
+    "orchestration/providers/",
+    "existing test files",
+    "docs/reports/",
+    ".github/workflows/",
+    "main() control flow",
+    "report generation flow",
+    "retry flow"
+  ],
+  "acceptance_criteria": [
+    "AC-107b-01: single missing key still reports that key name in error [test_single_missing_key_reports_key_name]",
+    "AC-107b-02: multiple missing keys are collected sorted and reported in one error [test_multiple_missing_keys_sorted_single_error]",
+    "AC-107b-03: valid session JSON with all existing required keys passes without error [test_valid_session_passes]",
+    "AC-107b-04: validate_session_context delegates key checking to validate_session_required_keys [test_context_delegates_to_required_keys]",
+    "AC-107b-05: all existing tests pass unchanged [manual_4_command_verification]"
+  ],
+  "acceptance_ref": "docs/acceptance/session-107b.yaml"
+}
