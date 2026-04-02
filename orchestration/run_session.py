@@ -2378,6 +2378,25 @@ def persist_session_reports(
     # API usage 情報（存在する場合のみ記録する）
     payload["api_usage"] = api_usage if isinstance(api_usage, dict) else {}
     payload["api_call_count"] = api_call_count if isinstance(api_call_count, dict) else {}
+    # Phase2: evaluate_completion_decision を追加フィールドとして記録する（decide_completion_status を置換しない）
+    try:
+        _acc_parsed = (ctx.acceptance_data.get("parsed") or {}) if ctx is not None else {}
+        _acc_items = _acc_parsed.get("acceptance", [])
+        _allowed = list(ctx.session_data.get("allowed_changes", [])) if ctx is not None else []
+        # checks の値を evaluate_completion_decision が期待するフラット形式に正規化する
+        _norm_checks = {
+            k: (v.get("status", "") if isinstance(v, dict) else str(v or ""))
+            for k, v in (checks if isinstance(checks, dict) else {}).items()
+            if k in ("test", "lint", "typecheck", "build")
+        }
+        payload["phase2_completion_eval"] = evaluate_completion_decision(
+            acceptance_data={"items": _acc_items if isinstance(_acc_items, list) else []},
+            checks_results=_norm_checks,
+            changed_files=changed_files,
+            allowed_changes=_allowed,
+        )
+    except Exception:
+        payload["phase2_completion_eval"] = {"completion": "fail", "reasons": ["evaluation error"]}
     artifacts_root = session_dir.parent
     sessions_index, summary_metrics = _build_artifacts_index_and_summary(
         artifacts_root, payload
@@ -2776,6 +2795,7 @@ def main() -> int:
         )
         prepared_spec = call_chatgpt_for_prepared_spec(ctx)
         save_json(session_dir / "responses" / "prepared_spec.json", prepared_spec)
+        openai_usage = extract_api_usage(prepared_spec)  # usage 抽出（なければ空辞書）
 
         impl_system, impl_user = build_implementation_prompts(prepared_spec, ctx, None)
         save_text(session_dir / "prompts" / "implementation_system.txt", impl_system)
@@ -2785,6 +2805,8 @@ def main() -> int:
         stage = "implementation"
         log_stage_progress(args.session_id, stage, "Claude（実装案）呼び出し開始")
         impl_result = call_claude_for_implementation(prepared_spec, ctx, None)
+        claude_usage = extract_api_usage(impl_result)  # usage 抽出（なければ空辞書）
+        claude_call_count = 1
         try:
             validate_impl_result(impl_result)
         except ValueError as guard_err:
@@ -2914,6 +2936,8 @@ def main() -> int:
             impl_result = call_claude_for_implementation(
                 prepared_spec, ctx, retry_instruction
             )
+            claude_usage = extract_api_usage(impl_result)  # retry usage を上書き更新
+            claude_call_count += 1
             try:
                 validate_impl_result(impl_result)
             except ValueError as guard_err:
@@ -2967,6 +2991,8 @@ def main() -> int:
                 "retry_stopped_same_cause": retry_stopped_same_cause,
                 "retry_stopped_max_retries": retry_stopped_max_retries,
             },
+            api_usage={"openai": openai_usage, "claude": claude_usage},
+            api_call_count={"openai": 1, "claude": claude_call_count},
         )
 
         print(f"[OK] session processed: {args.session_id}")
