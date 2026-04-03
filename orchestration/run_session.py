@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 import logging
 import os
@@ -92,6 +93,38 @@ def load_yaml_as_text(path: Path) -> str:
 
 def load_runtime_config() -> Dict[str, Any]:
     return load_yaml(CONFIG_PATH)
+
+
+def detect_duplicate_top_level_function_names(source: str) -> List[str]:
+    """
+    単一モジュールソース内のトップレベル関数定義名を走査し、
+    2回以上定義されている名前のみをソート済みリストで返す。
+    async def もトップレベル関数として扱う。
+    """
+    tree = ast.parse(source)
+    counts: Dict[str, int] = {}
+    for node in tree.body:
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            counts[node.name] = counts.get(node.name, 0) + 1
+    return sorted(name for name, n in counts.items() if n > 1)
+
+
+def enforce_run_session_duplicate_definition_preflight(source_path: Path) -> None:
+    """
+    run_session 実行前 preflight: 対象ファイルのトップレベル関数重複を検出し、
+    インフラ・API 失敗と区別できるコード状態エラーとして停止する。
+    """
+    text = load_text(source_path)
+    duplicates = detect_duplicate_top_level_function_names(text)
+    if not duplicates:
+        return
+    names = ", ".join(duplicates)
+    raise RuntimeError(
+        f"[CODE_STATE_PREFLIGHT] duplicate top-level function definitions "
+        f"in {source_path.name}: {names}. "
+        "Fix duplicate definitions before continuing; "
+        "this is not an API, network, or infrastructure failure."
+    )
 
 
 def orchestrator_version() -> str:
@@ -3262,6 +3295,7 @@ def main() -> int:
     ctx: Optional[SessionContext] = None
 
     try:
+        enforce_run_session_duplicate_definition_preflight(Path(__file__).resolve())
         stage = "loading"
         log_stage_event(session_id=args.session_id, stage=stage, event="start")
         ctx = load_session_context(args.session_id)
