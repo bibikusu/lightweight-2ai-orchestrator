@@ -1,0 +1,117 @@
+session_id: "session-08"
+goal: "pipeline_spec_v0 と生成テンプレートを正本ルール準拠に補正し、Spec Check v0 の検査契約を固定する。"
+scope:
+  - "docs/pipeline_spec_v0.md の session JSON 仕様を補正する。"
+  - "docs/pipeline_spec_v0.json の session JSON 仕様を補正する。"
+  - "docs/pipeline_spec_v0.yaml の session JSON 仕様を補正する。"
+  - "docs/templates/session_json_generate.md を補正し、allowed_changes_detail を list[str]、completion_criteria を object 配列で生成するよう固定する。"
+  - "docs/templates/generation_selfcheck.md を補正し、allowed_changes_detail 型と completion_criteria 型を検査対象に追加する。"
+  - "Spec Check v0 の pass/fail 判定契約と failure_type=spec_missing の適用条件を明文化する。"
+out_of_scope:
+  - "orchestration/run_session.py の変更"
+  - "providers 配下の変更"
+  - "backend 配下の変更"
+  - ".github 配下の変更"
+  - "docs/templates/acceptance_yaml_generate.md の変更"
+  - "docs/sessions/session-06.json の修正"
+  - "docs/acceptance/session-06.yaml の修正"
+  - "docs/sessions/session-07.json の修正"
+  - "docs/acceptance/session-07.yaml の修正"
+  - "session-09 以降の生成"
+  - "Bootstrap 実装コードの追加"
+  - "Spec Check v0 の実行コード実装"
+acceptance:
+  - id: "AC-08-01"
+    requirement: "pipeline_spec_v0.md, pipeline_spec_v0.json, pipeline_spec_v0.yaml の3形式すべてで allowed_changes_detail が list[str] として定義されている。"
+    test_name: "test_pipeline_spec_v0_allowed_changes_detail_is_list_str"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "3形式の pipeline_spec_v0 を確認し、allowed_changes_detail の正式型記述が list[str] で一致していることを確認する。"
+  - id: "AC-08-02"
+    requirement: "pipeline_spec_v0.md, pipeline_spec_v0.json, pipeline_spec_v0.yaml の3形式すべてで completion_criteria が id, type, condition を持つ object 配列として定義されている。"
+    test_name: "test_pipeline_spec_v0_completion_criteria_is_object_array"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "3形式の pipeline_spec_v0 を確認し、completion_criteria の正式型記述が object 配列であることを確認する。"
+      - "各要素の必須キーが id, type, condition であることを確認する。"
+  - id: "AC-08-03"
+    requirement: "session_json_generate テンプレートが allowed_changes_detail を list[str] として生成する指示を含む。"
+    test_name: "test_session_json_generate_template_emits_allowed_changes_detail_list"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "docs/templates/session_json_generate.md を確認し、allowed_changes_detail の出力形式が list[str] であることを指示していることを確認する。"
+  - id: "AC-08-04"
+    requirement: "session_json_generate テンプレートが completion_criteria を object 配列として生成する指示を含む。"
+    test_name: "test_session_json_generate_template_emits_completion_criteria_objects"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "docs/templates/session_json_generate.md を確認し、completion_criteria の出力形式が object 配列であることを指示していることを確認する。"
+  - id: "AC-08-05"
+    requirement: "generation_selfcheck テンプレートが allowed_changes_detail 型検査を含む。"
+    test_name: "test_generation_selfcheck_includes_allowed_changes_detail_type_check"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "docs/templates/generation_selfcheck.md を確認し、allowed_changes_detail が list[str] であることを検査する項目が存在することを確認する。"
+  - id: "AC-08-06"
+    requirement: "generation_selfcheck テンプレートが completion_criteria の object 構造検査を含む。"
+    test_name: "test_generation_selfcheck_includes_completion_criteria_structure_check"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "docs/templates/generation_selfcheck.md を確認し、completion_criteria の各要素が id, type, condition を持つことを検査する項目が存在することを確認する。"
+  - id: "AC-08-07"
+    requirement: "generation_selfcheck テンプレートが schema/type 不一致時の failure_type=spec_missing を定義している。"
+    test_name: "test_generation_selfcheck_defines_spec_missing_failure_type"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "docs/templates/generation_selfcheck.md を確認し、schema/type 不一致時の failure_type が spec_missing であることを確認する。"
+  - id: "AC-08-08"
+    requirement: "変更ファイルが docs/pipeline_spec_v0.md, docs/pipeline_spec_v0.json, docs/pipeline_spec_v0.yaml, docs/templates/session_json_generate.md, docs/templates/generation_selfcheck.md の5件以内に限定される。"
+    test_name: "test_session_08_changed_files_within_allowed_scope"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "git diff --name-only で変更ファイル一覧を確認する。"
+      - "変更ファイルが allowed_changes の5件以内に限定されていることを確認する。"
+  - id: "AC-08-09"
+    requirement: "docs/sessions/session-06.json, docs/acceptance/session-06.yaml, docs/sessions/session-07.json, docs/acceptance/session-07.yaml が変更されていない。"
+    test_name: "test_session_08_does_not_modify_session_06_or_07_artifacts"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "git diff --name-only を確認し、session-06/07 の生成済み証跡ファイルが変更一覧に含まれていないことを確認する。"
+completion_checks:
+  - "docs/pipeline_spec_v0.md が更新保存されている。"
+  - "docs/pipeline_spec_v0.json が更新保存されている。"
+  - "docs/pipeline_spec_v0.yaml が更新保存されている。"
+  - "docs/templates/session_json_generate.md が更新保存されている。"
+  - "docs/templates/generation_selfcheck.md が更新保存されている。"
+  - "pipeline_spec_v0 の3形式すべてで allowed_changes_detail が list[str] として定義されている。"
+  - "pipeline_spec_v0 の3形式すべてで completion_criteria が id, type, condition を持つ object 配列として定義されている。"
+  - "generation_selfcheck テンプレートが schema/type 不一致時の failure_type=spec_missing を定義している。"
+  - "session-06 と session-07 の生成済み証跡ファイルを変更していない。"
+change_guardrails:
+  allowed_changes:
+    - "docs/pipeline_spec_v0.md"
+    - "docs/pipeline_spec_v0.json"
+    - "docs/pipeline_spec_v0.yaml"
+    - "docs/templates/session_json_generate.md"
+    - "docs/templates/generation_selfcheck.md"
+  forbidden_changes:
+    - "orchestration/run_session.py を変更しない。"
+    - "providers 配下を変更しない。"
+    - "backend 配下を変更しない。"
+    - ".github 配下を変更しない。"
+    - "docs/templates/acceptance_yaml_generate.md を変更しない。"
+    - "docs/sessions/session-06.json を変更しない。"
+    - "docs/acceptance/session-06.yaml を変更しない。"
+    - "docs/sessions/session-07.json を変更しない。"
+    - "docs/acceptance/session-07.yaml を変更しない。"
+    - "session-09 以降を作成しない。"
+    - "Spec Check v0 の実行コードを追加しない。"
