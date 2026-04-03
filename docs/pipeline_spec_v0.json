@@ -1,0 +1,197 @@
+{
+  "document_type": "pipeline_spec",
+  "version": "v0",
+  "name": "structured_3layer_pipeline_spec_v0",
+  "purpose": "仕様書から session JSON / acceptance YAML を生成し、現行オーケストレーター互換を保ったまま、差戻し可能な形で確定する",
+  "scope": {
+    "in_scope": [
+      "仕様書入力の事前精査",
+      "session JSON の生成",
+      "acceptance YAML の生成",
+      "生成物の構造・整合性・互換性チェック",
+      "fail 時の差戻し",
+      "pass 時の保存判定"
+    ],
+    "out_of_scope": [
+      "orchestrator 本体コードの変更",
+      "Bootstrap 実装コードの追加",
+      "2プロジェクト目以降を前提にした共通化実装",
+      "repository への自動保存処理",
+      "run_session.py の挙動変更"
+    ]
+  },
+  "pipeline": {
+    "steps": [
+      {
+        "id": "layer_1_input_gate",
+        "name": "Input Gate",
+        "owner": "gpt_or_rule_based_checker",
+        "goal": "入力仕様の不足・曖昧さ・矛盾を検出する",
+        "inputs": [
+          "source specification",
+          "phase definition",
+          "project config"
+        ],
+        "outputs": [
+          "spec_check_result.json"
+        ],
+        "pass_conditions": [
+          "in_scope と out_of_scope が分離されている",
+          "phase_id が定義されている",
+          "target_feature が1つに絞られている",
+          "UI と logic が混在していない",
+          "保存先パス規約がある"
+        ],
+        "fail_action": "不足項目を返して停止"
+      },
+      {
+        "id": "layer_2_generate",
+        "name": "Generate",
+        "owner": "gpt",
+        "goal": "session JSON と acceptance YAML を生成する",
+        "inputs": [
+          "validated spec",
+          "repository context",
+          "template A",
+          "template B"
+        ],
+        "outputs": [
+          "session-XX.json",
+          "session-XX.yaml"
+        ],
+        "rules": [
+          "現プロジェクト専用で生成する",
+          "現行オーケストレーター互換を優先する",
+          "一発正解を前提にしない",
+          "差戻し可能なドラフトとして生成する"
+        ]
+      },
+      {
+        "id": "layer_3_review_gate",
+        "name": "Review Gate",
+        "owner": "claude",
+        "goal": "構造・整合性・互換性を検査する",
+        "inputs": [
+          "generated session json",
+          "generated acceptance yaml",
+          "repository context",
+          "template C"
+        ],
+        "outputs": [
+          "review_result.json"
+        ],
+        "pass_action": "保存候補として確定",
+        "fail_action": "GPT へ差戻し"
+      }
+    ]
+  },
+  "review_contract": {
+    "allowed_outputs": [
+      "pass",
+      "fail_with_structured_errors"
+    ],
+    "forbidden_outputs": [
+      "感想のみ",
+      "曖昧な改善提案のみ",
+      "概ね問題ないが再確認してください",
+      "なんとなく不自然"
+    ],
+    "required_error_format": {
+      "status": "fail",
+      "errors": [
+        {
+          "id": "E-01",
+          "location": "string",
+          "message": "string",
+          "fix": "string"
+        }
+      ]
+    }
+  },
+  "compatibility_rules": {
+    "session_json": {
+      "required_keys": [
+        "session_id",
+        "phase_id",
+        "title",
+        "goal",
+        "scope",
+        "out_of_scope",
+        "constraints",
+        "acceptance_ref"
+      ],
+      "additional_rules": [
+        "session_id と session ファイル名は一致必須",
+        "acceptance_ref は repository 相対パス",
+        "phase_id は roadmap.yaml に存在必須"
+      ]
+    },
+    "acceptance_yaml": {
+      "required_by_orchestrator": [
+        "session_id"
+      ],
+      "required_by_template": [
+        "session_id",
+        "goal",
+        "scope",
+        "out_of_scope",
+        "acceptance",
+        "completion_checks",
+        "change_guardrails"
+      ],
+      "additional_rules": [
+        "session_id はトップレベル必須",
+        "既存 acceptance YAML サンプル構造を維持する",
+        "独自ネスト構造を増やさない"
+      ]
+    }
+  },
+  "return_loop": {
+    "trigger": "review_result.status == fail",
+    "flow": [
+      "Claude が構造化エラーを返す",
+      "GPT が最小差分で修正する",
+      "Claude が再検証する",
+      "pass まで繰り返す"
+    ]
+  },
+  "project_specific_v0_rules": {
+    "rules": [
+      "session required keys は現行実行系準拠",
+      "acceptance YAML は既存サンプル構造を維持",
+      "acceptance_ref は repository 相対パス",
+      "phase_id は roadmap.yaml に存在必須",
+      "session_id とファイル名は一致必須"
+    ]
+  },
+  "generalization_policy": {
+    "principle": "汎用化は思想として持つが、v0 では実装しない",
+    "common_layer_candidates": [
+      "required key validation",
+      "acceptance top-level structure validation",
+      "pass or fail review format",
+      "ambiguity detection rules"
+    ],
+    "project_specific_layer_candidates": [
+      "phase_id list",
+      "repository path rules",
+      "forbidden files",
+      "naming rules",
+      "acceptance sample structure"
+    ],
+    "generalization_start_conditions": [
+      "同一プロジェクトで3 session以上が pass",
+      "差戻し理由がパターン化している",
+      "固有ルールと共通ルールを分類できる"
+    ]
+  },
+  "recommended_repository_context": [
+    "docs/sessions の既存 JSON サンプル 1件",
+    "docs/acceptance の既存 YAML サンプル 1件",
+    "roadmap.yaml の phase_id 一覧",
+    "session 保存先パス",
+    "acceptance 保存先パス",
+    "命名規則"
+  ],
+  "status": "draft_ready_for_storage"
+}
