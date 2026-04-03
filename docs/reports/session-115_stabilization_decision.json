@@ -1,0 +1,182 @@
+{
+  "session_id": "session-115",
+  "phase_id": "phase13",
+  "title": "stabilization gate for production-ready development OS baseline",
+  "status": "completed",
+  "decision": "pass",
+  "decision_summary": "All 6 stabilization checks passed. The current main (611cbd3) is verified as a stable baseline for real-project usage of the development OS.",
+  "baseline_reference": {
+    "branch": "main",
+    "commit": "611cbd3",
+    "worktree_required_state": "clean"
+  },
+  "verification_scope": [
+    "changed_files verification against latest scoped session",
+    "four-command validation",
+    "representative live-run verification",
+    "preflight guard side-effect verification",
+    "report and failure classification consistency verification"
+  ],
+  "inputs_checked": [
+    {
+      "name": "definition_of_done",
+      "path": "docs/definition_of_done_orchestrator_v1.json",
+      "status": "present"
+    },
+    {
+      "name": "session_definition",
+      "path": "docs/sessions/session-115.json",
+      "status": "present"
+    },
+    {
+      "name": "acceptance_definition",
+      "path": "docs/acceptance/session-115.yaml",
+      "status": "present"
+    },
+    {
+      "name": "phase12_completion_report",
+      "path": "docs/reports/phase12_completion_report.json",
+      "status": "present"
+    }
+  ],
+  "changed_files_verification": {
+    "latest_scoped_session_id": "session-114",
+    "diff_range": "28b3185..567e29b",
+    "expected_changed_files": [
+      "orchestration/run_session.py",
+      "backend/tests/test_runtime_preflight_duplicate_detection.py"
+    ],
+    "actual_changed_files": [
+      "orchestration/run_session.py",
+      "backend/tests/test_runtime_preflight_duplicate_detection.py"
+    ],
+    "result": "pass",
+    "notes": "Exactly 2 files changed, both within session-114 allowed_changes scope."
+  },
+  "four_command_results": {
+    "ruff": {
+      "command": ".venv/bin/ruff check .",
+      "result": "pass",
+      "notes": "All checks passed!"
+    },
+    "pytest": {
+      "command": "PYTHONPATH=. .venv/bin/pytest backend/tests/ -q",
+      "result": "pass",
+      "notes": "All tests passed (100%)"
+    },
+    "mypy": {
+      "command": "PYTHONPATH=. .venv/bin/python -m mypy --explicit-package-bases orchestration --ignore-missing-imports",
+      "result": "pass",
+      "notes": "Success: no issues found in 6 source files"
+    },
+    "compileall": {
+      "command": "PYTHONPYCACHEPREFIX=./.pycache_compileall python3 -m compileall -q -f orchestration backend",
+      "result": "pass",
+      "notes": "No errors"
+    }
+  },
+  "representative_live_run": {
+    "target_session_id": "session-115",
+    "branch": "sandbox/session-115",
+    "command": "PYTHONPATH=. .venv/bin/python orchestration/run_session.py --session-id session-115",
+    "exit_code": 0,
+    "result": "pass",
+    "classification": "full_pipeline_completion",
+    "stages_reached": [
+      "loading",
+      "validating",
+      "git_guard",
+      "prepared_spec",
+      "implementation",
+      "patch_apply",
+      "patch_validation",
+      "checks",
+      "completed"
+    ],
+    "artifacts_generated": [
+      "logs/",
+      "patches/",
+      "prompts/",
+      "report.json",
+      "reports/",
+      "responses/",
+      "test_results/"
+    ],
+    "duration_approx_seconds": 56,
+    "notes": "Full E2E pipeline completed with exit code 0. All stages reached including real OpenAI and Claude API calls. Structured logging emitted at each stage boundary."
+  },
+  "preflight_guard_side_effects": {
+    "result": "pass",
+    "observations": [
+      "git_guard correctly identified sandbox branch and proceeded",
+      "No dirty worktree false-positive observed",
+      "No unintended file modifications after live-run completion",
+      "sandbox/session-115 branch was cleanly deletable after checkout back to main"
+    ],
+    "notes": "Preflight guard operated without side effects."
+  },
+  "report_and_failure_classification_consistency": {
+    "result": "pass",
+    "observations": [
+      "Live-run produced report.json in artifacts/session-115/",
+      "Structured JSON logs emitted at each stage with session_id, timestamp, and branch",
+      "No failure classification needed (session completed successfully)",
+      "Stage progression was monotonic: loading -> validating -> git_guard -> prepared_spec -> implementation -> patch_apply -> patch_validation -> checks -> completed"
+    ],
+    "notes": "Report output and stage logging are consistent with the expected pipeline flow."
+  },
+  "acceptance_results": [
+    {
+      "id": "AC-115-01",
+      "result": "pass",
+      "evidence": "git diff --name-only 28b3185..567e29b returned exactly orchestration/run_session.py and backend/tests/test_runtime_preflight_duplicate_detection.py"
+    },
+    {
+      "id": "AC-115-02",
+      "result": "pass",
+      "evidence": "ruff=pass, pytest=pass(100%), mypy=pass(6 files), compileall=pass"
+    },
+    {
+      "id": "AC-115-03",
+      "result": "pass",
+      "evidence": "session-115 live-run completed with exit code 0, all 9 stages reached, artifacts generated"
+    },
+    {
+      "id": "AC-115-04",
+      "result": "pass",
+      "evidence": "No side effects from preflight guard; sandbox branch cleanly created and deleted"
+    },
+    {
+      "id": "AC-115-05",
+      "result": "pass",
+      "evidence": "Structured logs consistent with pipeline flow; report.json generated; no failure classification discrepancy"
+    },
+    {
+      "id": "AC-115-06",
+      "result": "not_applicable",
+      "evidence": "No blocking issues were found during verification. This AC applies only when a blocker is detected."
+    }
+  ],
+  "stable_main_checklist": {
+    "SM-01_worktree_clean": "pass",
+    "SM-02_changed_files_in_scope": "pass",
+    "SM-03_four_commands_pass": "pass",
+    "SM-04_live_run_pass_or_expected_fail_fast": "pass",
+    "SM-05_preflight_guard_no_side_effects": "pass",
+    "SM-06_report_failure_classification_consistent": "pass"
+  },
+  "blocking_issues": [],
+  "risks": [
+    "Live-run was executed once; intermittent API failures (low reproducibility) may still occur on future runs.",
+    "The live-run used session-115 itself as the representative session, which is a verification-only session. A real implementation session may exercise different code paths."
+  ],
+  "open_issues": [
+    "DOD-06 (実案件通過) requires a separate real-project session to be fully satisfied. session-115 confirms infrastructure readiness but not end-to-end real-project completion.",
+    "sandbox/session-canary-01 branch still exists as a closed diagnostic reference."
+  ],
+  "next_action": {
+    "type": "adopt_stable_baseline",
+    "description": "main (611cbd3) is adopted as the stable baseline. Next step is to select a representative real-project session and execute DOD-06 final validation."
+  },
+  "generated_at_utc": "2026-04-03T04:00:00Z"
+}
