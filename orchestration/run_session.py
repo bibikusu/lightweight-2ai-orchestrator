@@ -484,6 +484,77 @@ def save_error_snapshot(
         return None
 
 
+def build_stop_decision_record(
+    *,
+    session_id: str,
+    stage: str,
+    stop_reason: str,
+    failure_type: str,
+    observed_facts: List[str],
+    reference_only_proposals: Optional[List[Dict[str, str]]] = None,
+    source_modification_performed: bool = False,
+) -> Dict[str, Any]:
+    """blocking 停止時に標準化された stop decision record を生成する。
+
+    提案は reference_only として記録し、自動適用しない。
+    """
+    return {
+        "session_id": session_id,
+        "status": "stopped",
+        "stop_reason": stop_reason,
+        "failure_type": failure_type,
+        "observed_facts": observed_facts,
+        "reference_only_proposals": [
+            {"type": "reference_only", "content": p["content"]}
+            for p in (reference_only_proposals or [])
+        ],
+        "next_action": {
+            "type": "stop_and_review",
+            "description": "Do not repair in this session. Use the log as input for the next scoped decision.",
+        },
+        "source_modification_performed": source_modification_performed,
+        "generated_at_utc": _iso_utc_now(),
+    }
+
+
+def persist_stop_decision(session_dir: Path, record: Dict[str, Any]) -> Path:
+    """stop decision record を artifacts に保存し、パスを返す。"""
+    path = session_dir / "logs" / "stop_decision.json"
+    save_json(path, record)
+    return path
+
+
+def _classify_stop_reason(error: BaseException) -> Tuple[str, str]:
+    """例外からstop_reasonとfailure_typeを分類する。"""
+    msg = str(error).lower()
+    etype = type(error).__name__
+
+    if "missing required key" in msg:
+        return "spec_missing", "spec_missing"
+    if "acceptance_ref" in msg or "file not found" in msg.lower() or etype == "FileNotFoundError":
+        return "spec_missing", "spec_missing"
+    if "session_id mismatch" in msg:
+        return "spec_missing", "spec_missing"
+    if "goal must not be empty" in msg:
+        return "spec_missing", "spec_missing"
+    if "scope must be" in msg or "out_of_scope must be" in msg:
+        return "spec_missing", "spec_missing"
+
+    if "forbidden path" in msg or "scope violation" in msg or "scope_violation" in msg:
+        return "scope_violation", "scope_violation"
+    if "禁止キーワード" in msg:
+        return "scope_violation", "scope_violation"
+    if "changed_files が上限" in msg:
+        return "scope_violation", "scope_violation"
+
+    if "dirty" in msg and ("worktree" in msg or "ワーキングツリー" in msg or "作業ツリー" in msg):
+        return "code_state_error", "code_state_error"
+    if "duplicate" in msg and "definition" in msg:
+        return "code_state_error", "code_state_error"
+
+    return "unknown_blocking_error", "spec_missing"
+
+
 def _git_run(args: List[str], *, check: bool = False) -> subprocess.CompletedProcess[str]:
     """Git サブプロセス（shell 不使用）。"""
     return subprocess.run(
@@ -3635,6 +3706,24 @@ def main() -> int:
             error=e,
             branch=br,
         )
+        # stop decision record を標準形式で保存
+        try:
+            sr, ft = _classify_stop_reason(e)
+            stop_record = build_stop_decision_record(
+                session_id=args.session_id,
+                stage=stage,
+                stop_reason=sr,
+                failure_type=ft,
+                observed_facts=[
+                    f"error_type={type(e).__name__}",
+                    f"message={str(e)[:200]}",
+                    f"stage={stage}",
+                ],
+            )
+            persist_stop_decision(session_dir, stop_record)
+        except Exception:
+            pass  # stop decision は補助。メイン処理を止めない。
+
         # 可能なら途中までのレポートを残す
         try:
             ps: Dict[str, Any] = {}
