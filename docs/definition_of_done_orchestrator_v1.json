@@ -1,0 +1,138 @@
+{
+  "document_id": "definition-of-done-orchestrator-v1",
+  "title": "軽量2AIオーケストレーター方式 完成定義",
+  "objective": "仕様書・ロードマップ・セッション定義に沿って、AI API とローカル実行環境を用いたシステム開発を、勝手な拡張なしで安全に反復できる開発OSとして固定する。",
+  "completion_definition": {
+    "summary": "新しい実案件を、正本仕様の読込、セッション分解、実装、検証、差戻し、再試行、レポート固定まで、人間の過剰な中継なしで安定反復できる状態を完成とする。",
+    "required_capabilities": [
+      {
+        "id": "DOD-01",
+        "name": "仕様駆動実行",
+        "condition": "master_instruction.md、global_rules.md、roadmap、session JSON、acceptance YAML を起点に開発が進行できる。"
+      },
+      {
+        "id": "DOD-02",
+        "name": "逸脱停止",
+        "condition": "仕様不足、scope逸脱、危険な code-state、不正な変更範囲、検証失敗のいずれかを検知した場合、勝手に拡張せず停止し、理由をログに残せる。"
+      },
+      {
+        "id": "DOD-03",
+        "name": "検証可能性",
+        "condition": "changed_files、test、lint、typecheck、build、report、failure classification の証跡を各セッションで残せる。"
+      },
+      {
+        "id": "DOD-04",
+        "name": "再試行可能性",
+        "condition": "失敗時に原因分類と fix instruction を生成し、同一原因の無限再試行をせずに次の判断材料を残せる。"
+      },
+      {
+        "id": "DOD-05",
+        "name": "安定版固定",
+        "condition": "main を実案件投入可能な安定版として扱うための判定基準を満たした時のみ、次の実案件投入へ進める。"
+      },
+      {
+        "id": "DOD-06",
+        "name": "実案件通過",
+        "condition": "代表実案件 1 本を、仕様整理から最終レポート固定まで安全に通せる。"
+      }
+    ]
+  },
+  "non_completion_definition": [
+    {
+      "id": "NOD-01",
+      "condition": "新機能が増えていても、scope逸脱を止められない状態は完成ではない。"
+    },
+    {
+      "id": "NOD-02",
+      "condition": "dry-run だけ通って通常実行の安定性が未確認の状態は完成ではない。"
+    },
+    {
+      "id": "NOD-03",
+      "condition": "失敗時に理由が曖昧で、次の改善に使えるログが残らない状態は完成ではない。"
+    },
+    {
+      "id": "NOD-04",
+      "condition": "AI が勝手に scope を広げて変更を進める状態は完成ではない。"
+    },
+    {
+      "id": "NOD-05",
+      "condition": "実案件 1 本を安全に通せていない状態は完成ではない。"
+    }
+  ],
+  "stable_main_definition": {
+    "summary": "main は、実案件投入可能な安定版候補であり、以下を全て満たした時のみ安定版と判定する。",
+    "requirements": [
+      {
+        "id": "SM-01",
+        "condition": "git status --short が clean である。"
+      },
+      {
+        "id": "SM-02",
+        "condition": "直近セッションの changed_files が allowed_changes の範囲内である。"
+      },
+      {
+        "id": "SM-03",
+        "condition": "ruff、pytest、mypy、compileall の4コマンドが pass である。"
+      },
+      {
+        "id": "SM-04",
+        "condition": "representative live-run が pass、または想定どおり fail-fast で停止し、理由がログに残る。"
+      },
+      {
+        "id": "SM-05",
+        "condition": "preflight guard による副作用がないことが確認されている。"
+      },
+      {
+        "id": "SM-06",
+        "condition": "session report と failure classification の整合が確認されている。"
+      }
+    ]
+  },
+  "logging_policy": {
+    "summary": "問題がある場合は、勝手に修正や拡張を進めず、停止理由・観測事実・改善提案をログとして残す。",
+    "required_log_outputs": [
+      {
+        "id": "LOG-01",
+        "condition": "停止理由を1つの failure_type または code-state issue として記録する。"
+      },
+      {
+        "id": "LOG-02",
+        "condition": "何が仕様と合っていないかを事実ベースで記録する。"
+      },
+      {
+        "id": "LOG-03",
+        "condition": "改善提案は reference 情報として分離し、自動適用しない。"
+      },
+      {
+        "id": "LOG-04",
+        "condition": "次の開発で再利用できるように、再現条件と確認手順を残す。"
+      }
+    ]
+  },
+  "expansion_freeze_line": {
+    "summary": "安定版判定前は、以下の拡張を禁止する。",
+    "forbidden_expansions": [
+      "provider の大改修",
+      "retry 制御の高度化",
+      "report 構造変更",
+      "Builder 契約変更",
+      "Reviewer 契約変更",
+      "複数セッション並列化",
+      "自動 merge",
+      "UI ダッシュボード追加",
+      "広範囲リファクタ",
+      "安定版判定に直接必要でない最適化"
+    ]
+  },
+  "final_validation_method": {
+    "summary": "完成判定の最終確認は、代表実案件 1 本の通し実行で行う。",
+    "steps": [
+      "実案件 1 本を選定する。",
+      "session JSON と acceptance YAML を作成する。",
+      "仕様整理から実装、検証、差戻し、レポート固定まで通す。",
+      "途中停止が発生した場合はログを記録し、改善対象として扱う。",
+      "正常通過または想定停止が再現可能であれば、完成候補とする。"
+    ]
+  },
+  "status_after_adoption": "adopted_when_saved_and_referenced_by_next_stabilization_session"
+}

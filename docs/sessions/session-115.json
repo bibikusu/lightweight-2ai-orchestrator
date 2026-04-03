@@ -1,0 +1,148 @@
+{
+  "session_id": "session-115",
+  "phase_id": "phase13",
+  "title": "stabilization gate for production-ready development OS baseline",
+  "goal": "この開発OSを、実案件投入できる安定版として固定できるかを判定する。",
+  "scope": [
+    "current main baseline verification",
+    "changed_files verification against latest scoped session",
+    "four-command validation",
+    "representative live-run verification",
+    "preflight guard side-effect verification",
+    "report and failure classification consistency verification",
+    "stabilization decision report generation"
+  ],
+  "out_of_scope": [
+    "new feature implementation",
+    "provider modification",
+    "retry logic enhancement",
+    "report schema redesign",
+    "Builder contract modification",
+    "Reviewer contract modification",
+    "multi-session orchestration enhancement",
+    "UI or dashboard work",
+    "performance optimization not required for stabilization decision"
+  ],
+  "constraints": [
+    "one session one purpose",
+    "verification-only session must not introduce source code changes unless a documented blocking defect is found",
+    "if a blocking defect is found, do not fix it in this session; log it and stop",
+    "all findings must be evidence-based",
+    "all stop reasons must be logged for future development reference",
+    "do not widen scope based on convenience or suggested optimization"
+  ],
+  "acceptance_ref": "docs/acceptance/session-115.yaml",
+  "objective": "Verify whether the current main branch can be treated as a stable baseline for real-project usage of the development OS.",
+  "inputs": [
+    "docs/master_instruction.md",
+    "docs/global_rules.md",
+    "docs/reports/phase12_completion_report.json",
+    "orchestration/run_session.py",
+    "latest session report for session-114",
+    "current main branch state"
+  ],
+  "outputs": [
+    "stabilization decision report",
+    "verification results for changed_files",
+    "verification results for ruff pytest mypy compileall",
+    "representative live-run result",
+    "preflight guard side-effect assessment",
+    "report and failure classification consistency assessment",
+    "explicit pass or stop decision for stable baseline adoption"
+  ],
+  "allowed_changes": [
+    "docs/reports/session-115_stabilization_decision.json",
+    "artifacts/session-115/report.json",
+    "artifacts/session-115/logs/"
+  ],
+  "allowed_changes_detail": [
+    "docs/reports/session-115_stabilization_decision.json: create a decision record only",
+    "artifacts/session-115/report.json: create a verification report only",
+    "artifacts/session-115/logs/: create evidence logs only"
+  ],
+  "forbidden_changes": [
+    "orchestration/run_session.py",
+    "backend/tests/",
+    "orchestration/providers/",
+    "docs/master_instruction.md",
+    "docs/global_rules.md",
+    "docs/roadmap.yaml",
+    "retry loop logic",
+    "report generation structure",
+    "Builder contract content",
+    "Reviewer contract content",
+    "session-114 implementation",
+    "canary-01 reactivation",
+    "any source code fix in the name of stabilization"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-115-01",
+      "type": "artifact",
+      "condition": "A stabilization decision report is created and records pass or stop with evidence."
+    },
+    {
+      "id": "CC-115-02",
+      "type": "non_regression",
+      "condition": "Verification confirms that the latest scoped implementation did not exceed allowed changed_files."
+    },
+    {
+      "id": "CC-115-03",
+      "type": "artifact",
+      "condition": "ruff, pytest, mypy, and compileall results are recorded with pass or fail values."
+    },
+    {
+      "id": "CC-115-04",
+      "type": "state_transition_consistent",
+      "condition": "A representative live-run result is recorded as either pass or expected fail-fast with a logged stop reason."
+    },
+    {
+      "id": "CC-115-05",
+      "type": "side_effect_free",
+      "condition": "Preflight guard behavior is assessed for side effects without changing implementation."
+    },
+    {
+      "id": "CC-115-06",
+      "type": "document_rule",
+      "condition": "If a blocking defect is found, this session stops with logs and does not expand into a repair session."
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-115-01",
+      "description": "latest scoped session changed_files are verified against allowed_changes and recorded",
+      "test_function": "manual_verification_changed_files_against_scope"
+    },
+    {
+      "id": "AC-115-02",
+      "description": "ruff pytest mypy compileall results are all recorded and any fail result causes stabilization stop",
+      "test_function": "manual_verification_four_command_gate"
+    },
+    {
+      "id": "AC-115-03",
+      "description": "representative live-run result is recorded and classified as pass or expected fail-fast",
+      "test_function": "manual_verification_representative_live_run"
+    },
+    {
+      "id": "AC-115-04",
+      "description": "preflight guard side effects are assessed and recorded without implementation change",
+      "test_function": "manual_verification_preflight_guard_side_effects"
+    },
+    {
+      "id": "AC-115-05",
+      "description": "report output and failure classification consistency are checked and recorded",
+      "test_function": "manual_verification_report_and_failure_classification_consistency"
+    },
+    {
+      "id": "AC-115-06",
+      "description": "if a blocking issue is found, the session outputs a stop decision with reusable logs instead of performing new fixes",
+      "test_function": "manual_verification_stop_with_logs_on_blocking_issue"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "実装過不足なし"
+  ]
+}
