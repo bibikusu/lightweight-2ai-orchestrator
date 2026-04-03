@@ -1,0 +1,77 @@
+{
+  "_comment": "Phase.depends_on は完了ゲート依存、Session.depends_on は実装投入・技術依存を表す（二層構造）",
+  "phases": [
+    {
+      "id": "Phase1-A",
+      "goal": "PIN認証と初回起動判定を成立させ、利用開始の入口を安定化する。",
+      "sessions": [
+        "session-01-pin-auth-logic",
+        "session-02-onboarding-wizard"
+      ],
+      "depends_on": []
+    },
+    {
+      "id": "Phase1-A-prime",
+      "goal": "全画面のDOM骨格とボトムナビを先に安定化し、その上に後続機能を載せられる状態を作る。",
+      "sessions": [
+        "session-03-html-skeleton-css-nav",
+        "session-04-home-static"
+      ],
+      "depends_on": ["Phase1-A"]
+    },
+    {
+      "id": "Phase1-B",
+      "goal": "営業日基準のシフトを登録・参照できる状態を作る。",
+      "sessions": [
+        "session-05-shift-calendar-crud",
+        "session-06-shift-offduty-home"
+      ],
+      "depends_on": ["Phase1-A-prime"]
+    },
+    {
+      "id": "Phase1-C",
+      "goal": "DEFAULT_TASKS 46件を時間帯別・頻度別で扱い、業務漏れ防止の中核を作る。",
+      "sessions": [
+        "session-07-task-checklist-display",
+        "session-08-task-crud-reset-home"
+      ],
+      "depends_on": ["Phase1-B"]
+    },
+    {
+      "id": "Phase1-D",
+      "goal": "打刻実績を給与概算へ接続し、CSV出力まで通す。",
+      "sessions": [
+        "session-09-timeclock-payroll-csv"
+      ],
+      "depends_on": ["Phase1-C"]
+    },
+    {
+      "id": "Phase1-E",
+      "goal": "継続運用に必要な設定変更、バックアップ、売上入力、業務終了フローを成立させる。",
+      "sessions": [
+        "session-10-settings-backup-sales-close"
+      ],
+      "depends_on": ["Phase1-D"]
+    },
+    {
+      "id": "Phase1-F",
+      "goal": "AIを完全オプションで載せ、OFFで100%動作を保証する。",
+      "sessions": [
+        "session-11-ai-settings-toggle",
+        "session-12-ai-task-consultation",
+        "session-13-ai-off-regression"
+      ],
+      "depends_on": ["Phase1-E"]
+    },
+    {
+      "id": "Phase1-G",
+      "goal": "統合テスト、印刷、エッジケース検証を完了し、実運用開始可能な品質まで整える。",
+      "sessions": [
+        "session-14-integration-test",
+        "session-15-print-support",
+        "session-16-edge-case-test"
+      ],
+      "depends_on": ["Phase1-F"]
+    }
+  ]
+}
