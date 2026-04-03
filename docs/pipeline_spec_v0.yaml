@@ -103,6 +103,22 @@ compatibility_rules:
       - acceptance_ref は repository 相対パス
       - phase_id は roadmap.yaml に存在必須
 
+  session_json_schema_constraints:
+    allowed_changes_detail:
+      type: list[str]
+      item_format: "path: 変更内容の説明"
+    completion_criteria:
+      type: list[object]
+      required_keys:
+        - id
+        - type
+        - condition
+      type_enum:
+        - artifact
+        - document_rule
+        - non_regression
+        - side_effect_free
+
   acceptance_yaml:
     required_by_orchestrator:
       - session_id

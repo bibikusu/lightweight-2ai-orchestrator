@@ -118,14 +118,17 @@
     }
   ],
   "allowed_changes": ["string"],
-  "allowed_changes_detail": {
-    "file_or_path": [
-      "allowed change detail 1",
-      "allowed change detail 2"
-    ]
-  },
+  "allowed_changes_detail": [
+    "path/to/file: 変更内容の説明"
+  ],
   "forbidden_changes": ["string"],
-  "completion_criteria": ["string"],
+  "completion_criteria": [
+    {
+      "id": "CC-01",
+      "type": "artifact | document_rule | non_regression | side_effect_free",
+      "condition": "string"
+    }
+  ],
   "acceptance_criteria": [
     {
       "id": "AC-01",
@@ -212,5 +215,8 @@
 - 曖昧語が残っていない
 - acceptance_ref が相対パス形式である
 - session_id と acceptance_ref のファイル名が対応している
+- allowed_changes_detail が list[str] 形式であり、各要素が "path: 説明" 形式になっている
+- completion_criteria が object配列であり、各要素に id / type / condition がある
+- completion_criteria の type が artifact / document_rule / non_regression / side_effect_free のいずれかである
 
 では、JSONのみを出力してください。

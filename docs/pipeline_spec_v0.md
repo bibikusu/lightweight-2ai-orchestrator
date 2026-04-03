@@ -153,6 +153,20 @@ Claude の返答は以下のどちらかに限定する。
 - acceptance_ref は repository 相対パス
 - phase_id は roadmap.yaml に存在必須
 
+### session JSON スキーマ制約
+
+| フィールド | 型 | 制約 |
+|---|---|---|
+| allowed_changes_detail | list[str] | 各要素は "path: 変更内容の説明" 形式 |
+| completion_criteria | list[object] | 各要素に id / type / condition 必須 |
+
+completion_criteria.type の許可値:
+
+- artifact
+- document_rule
+- non_regression
+- side_effect_free
+
 ### acceptance YAML 必須キー
 
 #### required_by_orchestrator（実行互換）
