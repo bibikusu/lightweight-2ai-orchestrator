@@ -1,0 +1,184 @@
+{
+  "session_id": "session-07",
+  "phase_id": "phase-07",
+  "title": "Reproduce pipeline v0 generation flow with session-07 to verify template reusability",
+  "goal": "session-06 と同一のパイプライン v0 型で session-07 定義と acceptance YAML を生成・検証・保存し、テンプレートの再現性を確認する。",
+  "scope": [
+    "docs/session-07_input_set.md を入力として使用する。",
+    "docs/templates/session_json_generate.md を使用して docs/sessions/session-07.json の内容を生成する。",
+    "生成した session JSON をもとに docs/templates/acceptance_yaml_generate.md を使用して docs/acceptance/session-07.yaml の内容を生成する。",
+    "生成した JSON と YAML を docs/templates/generation_selfcheck.md により整合性・互換性チェックする。",
+    "pass した生成物を docs/sessions/session-07.json と docs/acceptance/session-07.yaml に保存する。",
+    "session-06 と session-07 の構造差分を確認し、テンプレート再現性を評価する。"
+  ],
+  "out_of_scope": [
+    "orchestration/run_session.py の変更",
+    "providers 配下の変更",
+    "backend 配下の変更",
+    ".github 配下の変更",
+    "docs/templates 配下の新規作成・更新・削除",
+    "roadmap.yaml の追加変更",
+    "session-08 以降の生成",
+    "Bootstrap 実装コードの追加",
+    "テンプレートA/B/Cの改訂",
+    "Spec Check v0 のコード実装"
+  ],
+  "constraints": [
+    "1セッション1目的",
+    "最大5ファイル以内で完結すること",
+    "実装コードを変更しないこと",
+    "既存テンプレートファイルを再作成・上書きしないこと",
+    "session required keys は現行実行系準拠とすること",
+    "acceptance_ref は repository 相対パスとすること",
+    "phase_id は phase-07 を使用すること",
+    "acceptance YAML は既存サンプル構造を壊さないこと",
+    "曖昧語を使用しないこと",
+    "docs/sessions/session-07.json と docs/acceptance/session-07.yaml の生成・保存のみを対象とすること"
+  ],
+  "acceptance_ref": "docs/acceptance/session-07.yaml",
+  "inputs": [
+    {
+      "name": "session_07_input_set",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/session-07_input_set.md"
+    },
+    {
+      "name": "session_json_generate_template",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/templates/session_json_generate.md"
+    },
+    {
+      "name": "acceptance_yaml_generate_template",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/templates/acceptance_yaml_generate.md"
+    },
+    {
+      "name": "generation_selfcheck_template",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/templates/generation_selfcheck.md"
+    },
+    {
+      "name": "roadmap_reference",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/roadmap.yaml"
+    },
+    {
+      "name": "session_06_reference",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/sessions/session-06.json"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "session_definition",
+      "type": "json",
+      "required": true,
+      "description": "docs/sessions/session-07.json"
+    },
+    {
+      "name": "acceptance_definition",
+      "type": "yaml",
+      "required": true,
+      "description": "docs/acceptance/session-07.yaml"
+    },
+    {
+      "name": "selfcheck_result",
+      "type": "json",
+      "required": true,
+      "description": "テンプレートCによる pass/fail 判定結果"
+    }
+  ],
+  "allowed_changes": [
+    "docs/sessions/session-07.json",
+    "docs/acceptance/session-07.yaml"
+  ],
+  "allowed_changes_detail": {
+    "docs/sessions/session-07.json": [
+      "session-07 の required keys をすべて含む JSON を保存する。",
+      "phase_id を phase-07 に固定する。",
+      "acceptance_ref を docs/acceptance/session-07.yaml に固定する。",
+      "allowed_changes と forbidden_changes が衝突しないように定義する。",
+      "acceptance_criteria に test_name 付き項目を定義する。"
+    ],
+    "docs/acceptance/session-07.yaml": [
+      "session-07.json の acceptance_ref と一致する YAML を保存する。",
+      "session_id をトップレベルに置く。",
+      "既存 acceptance YAML サンプル構造を維持する。",
+      "acceptance / completion_checks / change_guardrails を含める。",
+      "テンプレートCで pass する内容にする。"
+    ]
+  },
+  "forbidden_changes": [
+    "orchestration/run_session.py を変更しない。",
+    "providers 配下を変更しない。",
+    "backend 配下を変更しない。",
+    ".github 配下を変更しない。",
+    "docs/templates 配下を変更しない。",
+    "docs/roadmap.yaml を変更しない。",
+    "docs/sessions/session-08.json 以降を作成しない。",
+    "docs/acceptance/session-08.yaml 以降を作成しない。"
+  ],
+  "completion_criteria": [
+    "docs/sessions/session-07.json が保存されている。",
+    "docs/acceptance/session-07.yaml が保存されている。",
+    "session-07.json に session_id, phase_id, title, goal, scope, out_of_scope, constraints, acceptance_ref が存在する。",
+    "session-07.json の acceptance_ref が docs/acceptance/session-07.yaml と一致する。",
+    "session-07.yaml のトップレベルに session_id が存在する。",
+    "生成物が generation_selfcheck により pass 判定となる。",
+    "変更ファイルが docs/sessions/session-07.json と docs/acceptance/session-07.yaml の2件に限定される。",
+    "session-06.json と session-07.json の構造が同一スキーマに従っている。"
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-01",
+      "text": "session-07.json に現行オーケストレーター required keys がすべて存在する。",
+      "test_name": "test_session_07_required_keys_present"
+    },
+    {
+      "id": "AC-02",
+      "text": "session-07.json の phase_id が phase-07 であり、roadmap.yaml と整合する。",
+      "test_name": "test_session_07_phase_id_matches_roadmap"
+    },
+    {
+      "id": "AC-03",
+      "text": "session-07.json の acceptance_ref が docs/acceptance/session-07.yaml と一致する。",
+      "test_name": "test_session_07_acceptance_ref_matches_path"
+    },
+    {
+      "id": "AC-04",
+      "text": "session-07.yaml のトップレベルに session_id があり、session-07 と一致する。",
+      "test_name": "test_session_07_yaml_top_level_session_id"
+    },
+    {
+      "id": "AC-05",
+      "text": "session-07.yaml が既存 acceptance YAML 構造を維持しつつ acceptance, completion_checks, change_guardrails を含む。",
+      "test_name": "test_session_07_yaml_required_template_sections"
+    },
+    {
+      "id": "AC-06",
+      "text": "allowed_changes に docs/templates 配下や実装コードが含まれていない。",
+      "test_name": "test_session_07_allowed_changes_restricted"
+    },
+    {
+      "id": "AC-07",
+      "text": "forbidden_changes が run_session.py、providers、backend、.github、docs/templates を禁止している。",
+      "test_name": "test_session_07_forbidden_changes_defined"
+    },
+    {
+      "id": "AC-08",
+      "text": "generation_selfcheck の結果が pass である。",
+      "test_name": "test_session_07_generation_selfcheck_passes"
+    },
+    {
+      "id": "AC-09",
+      "text": "session-06.json と session-07.json のトップレベルキー構成が一致する。",
+      "test_name": "test_session_07_schema_matches_session_06"
+    }
+  ]
+}
