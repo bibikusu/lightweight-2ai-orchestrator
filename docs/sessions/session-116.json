@@ -1,0 +1,150 @@
+{
+  "session_id": "session-116",
+  "phase_id": "phase14",
+  "title": "standardize stop-with-log behavior for blocking conditions",
+  "goal": "軽量2AIオーケストレーターが blocking issue を検知した際に、勝手に修正や scope 拡張を行わず、理由・観測事実・提案を再利用可能な標準ログとして保存して停止できるようにする。",
+  "scope": [
+    "stop decision record format definition",
+    "run_session blocking-stop logging integration",
+    "spec_missing stop logging",
+    "scope_violation stop logging",
+    "code-state stop logging",
+    "verification-only session stop logging",
+    "tests for deterministic stop record output"
+  ],
+  "out_of_scope": [
+    "provider modification",
+    "retry logic enhancement",
+    "report schema redesign",
+    "builder contract modification",
+    "reviewer contract modification",
+    "real-project pilot execution",
+    "automatic remediation",
+    "automatic scope narrowing",
+    "multi-session orchestration enhancement",
+    "UI or dashboard work"
+  ],
+  "constraints": [
+    "one session one purpose",
+    "do not implement any automatic fix behavior in this session",
+    "when a blocking issue is detected, the system must stop and emit a standardized log record",
+    "proposal content must be recorded as reference_only and must not be auto-applied",
+    "all findings must be evidence-based",
+    "do not widen scope based on convenience or optimization",
+    "changed files must remain within 5 files",
+    "if existing stop behavior conflicts with current stabilization rules, prefer explicit stop-with-log and do not broaden repair behavior"
+  ],
+  "acceptance_ref": "docs/acceptance/session-116.yaml",
+  "objective": "Standardize reusable stop logs so the orchestrator can halt safely and explain why without performing unauthorized fixes.",
+  "inputs": [
+    "docs/master_instruction.md",
+    "docs/global_rules.md",
+    "docs/definition_of_done_orchestrator_v1.json",
+    "docs/sessions/session-115.json",
+    "docs/reports/session-115_stabilization_decision.json",
+    "orchestration/run_session.py",
+    "existing error and report output behavior"
+  ],
+  "outputs": [
+    "standardized stop decision JSON artifact",
+    "run_session stop-with-log integration",
+    "tests covering blocking stop cases",
+    "session report proving deterministic stop logging behavior"
+  ],
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "backend/tests/test_stop_with_log_standardization.py",
+    "docs/reports/stop_decision_schema_reference.json"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/run_session.py: add minimal helper logic to build and persist a standardized stop decision record for blocking conditions only",
+    "orchestration/run_session.py: modify existing blocking-stop path only to call the standardized stop decision logger",
+    "backend/tests/test_stop_with_log_standardization.py: add tests for spec_missing, scope_violation, code_state, and verification_only blocking-stop records only",
+    "docs/reports/stop_decision_schema_reference.json: add a reference example of the stop decision record schema only"
+  ],
+  "forbidden_changes": [
+    "orchestration/providers/openai_client.py",
+    "orchestration/providers/claude_client.py",
+    "retry loop logic",
+    "report generation structure",
+    "builder contract content",
+    "reviewer contract content",
+    "docs/master_instruction.md",
+    "docs/global_rules.md",
+    "docs/roadmap.yaml",
+    "automatic fix behavior",
+    "automatic retry escalation",
+    "real-project session definitions",
+    "session-115 stabilization decision content"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-116-01",
+      "type": "artifact",
+      "condition": "A standardized stop decision record format exists and includes stop_reason, observed_facts, reference_only_proposals, and next_action."
+    },
+    {
+      "id": "CC-116-02",
+      "type": "state_transition_consistent",
+      "condition": "When spec_missing is detected, the orchestrator stops and persists the standardized stop decision record without applying fixes."
+    },
+    {
+      "id": "CC-116-03",
+      "type": "state_transition_consistent",
+      "condition": "When scope_violation or code-state issue is detected, the orchestrator stops and persists the standardized stop decision record without widening scope."
+    },
+    {
+      "id": "CC-116-04",
+      "type": "non_regression",
+      "condition": "Successful execution paths remain unaffected for the tested scope after stop-with-log standardization is introduced."
+    },
+    {
+      "id": "CC-116-05",
+      "type": "side_effect_free",
+      "condition": "The session adds logging standardization only and does not introduce provider changes, retry changes, or automatic remediation behavior."
+    },
+    {
+      "id": "CC-116-06",
+      "type": "document_rule",
+      "condition": "Reference proposals in stop logs are explicitly marked as reference_only and are not used as executable instructions."
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-116-01",
+      "description": "spec_missing produces a standardized stop decision record with reusable evidence",
+      "test_function": "test_spec_missing_persists_standardized_stop_decision_record"
+    },
+    {
+      "id": "AC-116-02",
+      "description": "scope_violation produces a standardized stop decision record and does not proceed to automatic repair",
+      "test_function": "test_scope_violation_stops_with_standardized_log_without_auto_fix"
+    },
+    {
+      "id": "AC-116-03",
+      "description": "code-state issue produces a standardized stop decision record and includes observed facts",
+      "test_function": "test_code_state_issue_stops_with_observed_facts_in_standardized_log"
+    },
+    {
+      "id": "AC-116-04",
+      "description": "reference proposals in stop decision records are explicitly marked as reference_only",
+      "test_function": "test_stop_decision_reference_proposals_are_marked_reference_only"
+    },
+    {
+      "id": "AC-116-05",
+      "description": "successful execution path remains unaffected by stop-with-log standardization for the covered scope",
+      "test_function": "test_success_path_is_unchanged_after_stop_with_log_standardization"
+    },
+    {
+      "id": "AC-116-06",
+      "description": "verification-only blocking issue stops with standardized log and does not modify source code",
+      "test_function": "test_verification_only_blocking_issue_stops_without_source_modification"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "実装過不足なし"
+  ]
+}

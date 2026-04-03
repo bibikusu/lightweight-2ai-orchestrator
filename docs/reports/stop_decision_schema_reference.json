@@ -1,0 +1,37 @@
+{
+  "schema_name": "stop_decision_record_v1",
+  "description": "Reference-only schema example for standardized blocking-stop logs.",
+  "required_fields": [
+    "session_id",
+    "status",
+    "stop_reason",
+    "failure_type",
+    "observed_facts",
+    "reference_only_proposals",
+    "next_action",
+    "source_modification_performed",
+    "generated_at_utc"
+  ],
+  "example": {
+    "session_id": "session-XXX",
+    "status": "stopped",
+    "stop_reason": "spec_missing",
+    "failure_type": "spec_missing",
+    "observed_facts": [
+      "required contract was not confirmable from repository evidence",
+      "session constraints prohibit inventing missing structure"
+    ],
+    "reference_only_proposals": [
+      {
+        "type": "reference_only",
+        "content": "Clarify the missing contract in the next scoped session."
+      }
+    ],
+    "next_action": {
+      "type": "stop_and_review",
+      "description": "Do not repair in this session. Use the log as input for the next scoped decision."
+    },
+    "source_modification_performed": false,
+    "generated_at_utc": "REPLACE_WITH_ACTUAL_UTC_TIMESTAMP"
+  }
+}

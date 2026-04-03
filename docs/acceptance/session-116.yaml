@@ -1,0 +1,26 @@
+session_id: session-116
+
+acceptance:
+  - id: AC-116-01
+    description: spec_missing produces a standardized stop decision record with reusable evidence
+    test_function: test_spec_missing_persists_standardized_stop_decision_record
+
+  - id: AC-116-02
+    description: scope_violation produces a standardized stop decision record and does not proceed to automatic repair
+    test_function: test_scope_violation_stops_with_standardized_log_without_auto_fix
+
+  - id: AC-116-03
+    description: code-state issue produces a standardized stop decision record and includes observed facts
+    test_function: test_code_state_issue_stops_with_observed_facts_in_standardized_log
+
+  - id: AC-116-04
+    description: reference proposals in stop decision records are explicitly marked as reference_only
+    test_function: test_stop_decision_reference_proposals_are_marked_reference_only
+
+  - id: AC-116-05
+    description: successful execution path remains unaffected by stop-with-log standardization for the covered scope
+    test_function: test_success_path_is_unchanged_after_stop_with_log_standardization
+
+  - id: AC-116-06
+    description: verification-only blocking issue stops with standardized log and does not modify source code
+    test_function: test_verification_only_blocking_issue_stops_without_source_modification
