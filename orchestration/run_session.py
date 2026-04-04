@@ -721,6 +721,86 @@ def _extract_proposed_patch_text(impl_result: Dict[str, Any]) -> str:
         return str(raw)
 
 
+def _line_looks_like_unified_diff_content(line: str) -> bool:
+    """末尾走査で残すべき unified diff らしい行かどうか（緩い判定）。"""
+    # unified diff の「空行コンテキスト」は行全体が単一スペース1つのみ、という慣習がある。
+    if line == " ":
+        return True
+    if not line.strip():
+        return False
+    if line.startswith(
+        (
+            "diff --git",
+            "--- ",
+            "+++ ",
+            "@@ ",
+            "index ",
+            "new file mode",
+            "deleted file mode",
+            "old mode",
+            "new mode",
+            "similarity index ",
+            "rename from ",
+            "rename to ",
+            "Binary files ",
+            "GIT binary patch",
+        )
+    ):
+        return True
+    if line.startswith(("+", "-", " ")) or line.startswith("\\"):
+        return True
+    return False
+
+
+def normalize_proposed_patch_text_minimal_before_git_apply(raw_patch: str) -> str:
+    """
+    git apply / normalize_patch_for_git_apply の直前に載せる最小正規化のみ。
+
+    - 非空かつ行頭 diff --git を1行以上含むときだけ処理（それ以外は入力をそのまま返す）
+    - 先頭の diff より前のノイズ除去、末尾の diff 外テキスト除去
+    - 各行末尾の空白除去、CRLF を LF に統一（処理対象ブロック内のみ）
+    - hunk 位置の推測・意味変更・全文からの diff 再生成は行わない
+    """
+    if raw_patch is None:
+        return ""
+    if not str(raw_patch).strip():
+        logger.info(
+            "patch_pre_normalize: skip (empty) stage=noop chars=%s",
+            len(str(raw_patch)),
+        )
+        return raw_patch
+
+    work_for_probe = str(raw_patch).replace("\r\n", "\n").replace("\r", "\n")
+    lines = work_for_probe.split("\n")
+    start = next((i for i, ln in enumerate(lines) if ln.startswith("diff --git")), None)
+    if start is None:
+        logger.info(
+            "patch_pre_normalize: skip (no diff --git line) stage=noop chars=%s",
+            len(str(raw_patch)),
+        )
+        return raw_patch
+
+    stage = "slice_and_trim"
+    sliced = lines[start:]
+    while sliced and sliced[-1].strip() == "":
+        sliced.pop()
+    while sliced and not _line_looks_like_unified_diff_content(sliced[-1]):
+        sliced.pop()
+    trimmed_lines = [ln.rstrip() for ln in sliced]
+    out = "\n".join(trimmed_lines)
+
+    body_before = "\n".join(lines[start:])
+    logger.info(
+        "patch_pre_normalize: done stage=%s chars_raw=%s chars_slice_before=%s chars_out=%s altered=%s",
+        stage,
+        len(str(raw_patch)),
+        len(body_before),
+        len(out),
+        out != body_before,
+    )
+    return out
+
+
 def normalize_patch_for_git_apply(raw_patch: str) -> str:
     """
     git apply 前に patch 文字列を正規化する。
@@ -884,7 +964,10 @@ def _apply_proposed_patch_and_capture_artifacts_with_artifacts(
     implementation_result.proposed_patch を実ファイルへ適用し、artifact を保存する。
     返り値は impl_result へ追記可能なメタ情報（diff_summary 等）を返す。
     """
-    patch_text = normalize_patch_for_git_apply(_extract_proposed_patch_text(impl_result))
+    extracted = _extract_proposed_patch_text(impl_result)
+    patch_text = normalize_patch_for_git_apply(
+        normalize_proposed_patch_text_minimal_before_git_apply(extracted)
+    )
     patches_dir = session_dir / "patches"
     patch_path = patches_dir / "proposed_patch.diff"
     save_text(patch_path, patch_text)
@@ -1499,6 +1582,7 @@ def apply_proposed_patch_and_capture_artifacts(
     raw_patch = impl_result.get("proposed_patch", "")
     if not isinstance(raw_patch, str):
         raw_patch = str(raw_patch)
+    raw_patch = normalize_proposed_patch_text_minimal_before_git_apply(raw_patch)
     patch_text = normalize_patch_for_git_apply(raw_patch)
 
     patch_path = patch_dir / "proposed.patch"
