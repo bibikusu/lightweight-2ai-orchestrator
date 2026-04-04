@@ -103,6 +103,81 @@ def test_success_checks_imply_no_failure_canonical():
     assert out["priority"] == 0
 
 
+def test_resolve_canonical_failure_type_prefers_spec_missing_for_missing_json():
+    """AC-118-01: JSON 欠損メッセージは test_failure に落とさず spec_missing。"""
+    checks = {
+        "test": {"status": "failed", "stderr": "Error: JSON file not found: /x/y.json", "stdout": ""},
+        "lint": {"status": "skipped"},
+        "typecheck": {"status": "skipped"},
+        "build": {"status": "skipped"},
+        "success": False,
+    }
+    out = resolve_canonical_failure_type(
+        checks, error_message="JSON file not found: specs/foo.json", stop_stage="loading"
+    )
+    assert out["failure_type"] == "spec_missing"
+
+
+def test_resolve_canonical_failure_type_prefers_scope_violation_for_forbidden_path():
+    """AC-118-02: 禁止パス検出は test_failure ではなく scope_violation。"""
+    checks = {
+        "test": {"status": "failed", "stderr": "forbidden path detected: ../../etc/passwd", "stdout": ""},
+        "lint": {"status": "skipped"},
+        "typecheck": {"status": "skipped"},
+        "build": {"status": "skipped"},
+        "success": False,
+    }
+    out = resolve_canonical_failure_type(checks)
+    assert out["failure_type"] == "scope_violation"
+
+
+def test_resolve_canonical_failure_type_prefers_regression_for_init_preflight_duplicate():
+    """AC-118-03: init 段の preflight 重複定義は regression。"""
+    msg = (
+        "[CODE_STATE_PREFLIGHT] duplicate top-level function definitions "
+        "in run_session.py: foo. Fix duplicate definitions before continuing"
+    )
+    checks = {"success": False}
+    out = resolve_canonical_failure_type(checks, error_message=msg, stop_stage="init")
+    assert out["failure_type"] == "regression"
+
+
+def test_resolve_canonical_failure_type_keeps_real_test_failures_as_test_failure():
+    """AC-118-04: 実際の pytest / import 失敗は test_failure のまま。"""
+    assert (
+        resolve_canonical_failure_type(
+            {
+                "test": {
+                    "status": "failed",
+                    "stderr": "AssertionError: expected 1 got 2",
+                    "stdout": "",
+                },
+                "lint": {"status": "skipped"},
+                "typecheck": {"status": "skipped"},
+                "build": {"status": "skipped"},
+                "success": False,
+            }
+        )["failure_type"]
+        == "test_failure"
+    )
+    assert (
+        resolve_canonical_failure_type(
+            {
+                "test": {
+                    "status": "failed",
+                    "stderr": "ModuleNotFoundError: no module named 'missing_pkg'",
+                    "stdout": "",
+                },
+                "lint": {"status": "skipped"},
+                "typecheck": {"status": "skipped"},
+                "build": {"status": "skipped"},
+                "success": False,
+            }
+        )["failure_type"]
+        == "import_error"
+    )
+
+
 def test_normalize_fills_missing_optional_fields():
     """未存在の checks フィールドは normalize でデフォルト化される。"""
     cr = {"test": {"status": "failed"}, "success": False}

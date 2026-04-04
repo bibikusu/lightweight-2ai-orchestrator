@@ -898,3 +898,32 @@ def test_report_index_contains_summary_metrics(tmp_path):
     assert abs(sm["duration_avg"] - (35.0 / 3.0)) < 1e-9
     assert sm["failure_type_counts"].get("unknown") == 2
     assert sm["failure_type_counts"].get("lint") == 1
+
+
+def test_report_generation_preserves_success_cases_after_failure_type_reclassification(tmp_path) -> None:
+    """AC-118-05: failure_type 再分類ロジックが成功系 report の failure フィールドを壊さない。"""
+    session_dir = tmp_path / "artifacts" / "session-118-success"
+    persist_session_reports(
+        session_dir=session_dir,
+        ctx=None,
+        prepared_spec={},
+        impl_result={"changed_files": ["a.py"], "risks": [], "open_issues": []},
+        checks={
+            "test": {"status": "passed"},
+            "lint": {"status": "passed"},
+            "typecheck": {"status": "passed"},
+            "build": {"status": "passed"},
+            "success": True,
+        },
+        status="success",
+        dry_run=False,
+        started_at="2026-04-04T00:00:00+00:00",
+        finished_at="2026-04-04T00:00:01+00:00",
+        error_message=None,
+    )
+    report = json.loads((session_dir / "report.json").read_text(encoding="utf-8"))
+    assert report["status"] == "success"
+    assert report.get("failure_type") is None
+    assert report.get("error_message") is None
+    assert report.get("stop_stage") is None
+    assert report.get("retryable") is None

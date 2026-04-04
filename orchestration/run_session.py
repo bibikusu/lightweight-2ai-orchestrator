@@ -2238,7 +2238,8 @@ FAILURE_TYPE_PRIORITY_ORDER: List[str] = [
     "type_mismatch",
     "test_failure",
     "scope_violation",
-    "breaking_change",
+    "regression",
+    "breaking_change",  # 後方互換（旧ログ・外部入力用。新規分類は regression を使う）
     "spec_missing",
 ]
 
@@ -2250,6 +2251,7 @@ VALID_FAILURE_TYPES = frozenset({
     "type_mismatch",
     "test_failure",
     "scope_violation",
+    "regression",
     "breaking_change",
     "spec_missing",
     "no_failure",
@@ -2301,6 +2303,45 @@ def _test_stderr_indicates_generated_syntax_error(check_results: Dict[str, Any])
     blob = f"{stderr}\n{stdout}"
     syntax_error_family = ("SyntaxError", "IndentationError", "TabError")
     return any(token in blob for token in syntax_error_family)
+
+
+def _aggregate_diagnostic_text(check_results: Dict[str, Any], error_message: Optional[str]) -> str:
+    """error_message・checks 内のメッセージと各チャネル出力を結合し、小文字化する（部分一致用）。"""
+    parts: List[str] = []
+    if error_message:
+        parts.append(str(error_message))
+    em = check_results.get("error_messages")
+    if isinstance(em, list):
+        parts.extend(str(x) for x in em)
+    for key in ("test", "build", "typecheck", "lint", "patch_apply"):
+        ch = check_results.get(key) or {}
+        if isinstance(ch, dict):
+            parts.append(str(ch.get("stderr") or ""))
+            parts.append(str(ch.get("stdout") or ""))
+    blob = "\n".join(parts)
+    return blob.lower()
+
+
+def _heuristic_failure_from_report_context(
+    combined_lower: str,
+    stop_stage: Optional[str],
+) -> Optional[Dict[str, Any]]:
+    """
+    report.json 系の error_message / stop_stage / ログ断片から canonical failure_type を推定する。
+    session-118: test_failure への誤分類を防ぐための優先ルール（build/import/typecheck より後段で適用）。
+    """
+    if "json file not found" in combined_lower:
+        return {"failure_type": "spec_missing", "priority": 7}
+    if "forbidden path detected" in combined_lower:
+        return {"failure_type": "scope_violation", "priority": 5}
+    st = (stop_stage or "").strip().lower()
+    if st == "init" and (
+        "[code_state_preflight]" in combined_lower
+        or "duplicate top-level function" in combined_lower
+        or ("code_state_preflight" in combined_lower and "duplicate" in combined_lower)
+    ):
+        return {"failure_type": "regression", "priority": 6}
+    return None
 
 
 def _detect_failure_signals(check_results: Dict[str, Any]) -> Dict[str, Any]:
@@ -2371,7 +2412,7 @@ def _extract_fingerprint_material(cr: Dict[str, Any], failure_type: str) -> Dict
                 str((cr.get("typecheck") or {}).get("stderr") or "")
             )
         }
-    if failure_type in ("scope_violation", "breaking_change", "spec_missing"):
+    if failure_type in ("scope_violation", "breaking_change", "regression", "spec_missing"):
         return {"flags": True}
     return {"stderr": _normalize_text_for_fingerprint(str((cr.get("test") or {}).get("stderr") or ""))}
 
@@ -2386,6 +2427,7 @@ def _failure_layer_for_failure_type(failure_type: str) -> str:
         "test_failure",
         "scope_violation",
         "breaking_change",
+        "regression",
         "spec_missing",
     ):
         return "specification"
@@ -2434,8 +2476,10 @@ def build_failure_record_for_report(
             "cause_summary": None,
         }
 
-    canonical = resolve_canonical_failure_type(checks)
-    cf = classify_failure(checks)
+    canonical = resolve_canonical_failure_type(
+        checks, error_message=error_message, stop_stage=aborted_stage
+    )
+    cf = classify_failure(checks, error_message=error_message, stop_stage=aborted_stage)
     ft = str(canonical.get("failure_type") or cf.get("failure_type") or "spec_missing")
     if ft == "no_failure":
         ft = "spec_missing"
@@ -2454,16 +2498,23 @@ def build_failure_record_for_report(
     }
 
 
-def classify_failure(check_results: Dict[str, Any]) -> Dict[str, Any]:
+def classify_failure(
+    check_results: Dict[str, Any],
+    *,
+    error_message: Optional[str] = None,
+    stop_stage: Optional[str] = None,
+) -> Dict[str, Any]:
     """
     retry 用の failure_type を正規化して 1 つだけ返す。
     優先順位:
     patch_apply_failure -> build_error -> generated_artifact_invalid(SyntaxError) ->
-    import_error -> type_mismatch -> test_failure -> scope_violation -> breaking_change -> spec_missing
+    import_error -> type_mismatch -> test_failure -> scope_violation -> regression -> spec_missing
     """
     sig = _detect_failure_signals(check_results or {})
     cr = sig["cr"]
-    canonical = resolve_canonical_failure_type(cr)
+    canonical = resolve_canonical_failure_type(
+        cr, error_message=error_message, stop_stage=stop_stage
+    )
     failure_type = str(canonical.get("failure_type") or "spec_missing")
     if failure_type == "no_failure":
         failure_type = "spec_missing"
@@ -2662,11 +2713,17 @@ def retry_loop(
     }
 
 
-def resolve_canonical_failure_type(check_results: Dict[str, Any]) -> Dict[str, Any]:
+def resolve_canonical_failure_type(
+    check_results: Dict[str, Any],
+    *,
+    error_message: Optional[str] = None,
+    stop_stage: Optional[str] = None,
+) -> Dict[str, Any]:
     """
     正本の failure_type ＋ no_failure を返す。
     priority は小さいほど高優先（0 は no_failure）。
     既存テスト互換のため build_error=1, import_error=2, type_mismatch=3, test_failure=4 は維持する。
+    error_message / stop_stage は report や例外経路の再分類にのみ用いる（省略時は従来どおり）。
     """
     sig = _detect_failure_signals(check_results or {})
     cr = sig["cr"]
@@ -2677,7 +2734,7 @@ def resolve_canonical_failure_type(check_results: Dict[str, Any]) -> Dict[str, A
     # フラグ系（テストが成功でも scope_violation 等が立つことがある）
     flag_map = [
         ("scope_violation", "scope_violation", 5),
-        ("regression_detected", "breaking_change", 6),
+        ("regression_detected", "regression", 6),
         ("spec_missing_detected", "spec_missing", 7),
     ]
     flagged: List[Tuple[str, int]] = []
@@ -2704,6 +2761,12 @@ def resolve_canonical_failure_type(check_results: Dict[str, Any]) -> Dict[str, A
 
     if sig["typecheck_failed"]:
         return {"failure_type": "type_mismatch", "priority": 3}
+
+    # メッセージ・段階による test_failure 誤分類の補正（session-118）
+    combined = _aggregate_diagnostic_text(cr, error_message)
+    hinted = _heuristic_failure_from_report_context(combined, stop_stage)
+    if hinted is not None:
+        return hinted
 
     if sig["lint_failed"] or sig["test_failed"]:
         return {"failure_type": "test_failure", "priority": 4}
@@ -3278,7 +3341,9 @@ def persist_session_reports(
     failure_type: Optional[str] = None
     if status == "failed":
         try:
-            failure_type = resolve_canonical_failure_type(checks).get("failure_type")
+            failure_type = resolve_canonical_failure_type(
+                checks, error_message=error_message, stop_stage=aborted_stage
+            ).get("failure_type")
         except Exception:
             failure_type = None
         # no_failure は失敗時の failure_type としては意味が薄いので null 扱い

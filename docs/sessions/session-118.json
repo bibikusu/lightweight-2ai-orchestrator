@@ -1,49 +1,42 @@
 {
   "session_id": "session-118",
   "phase_id": "phase6",
-  "title": "patch apply の context mismatch を軽減する最小対策",
-  "goal": "proposed.patch が diff ヘッダを持ち、軽微な context mismatch によって git apply に失敗する場合に、意味変更を伴わない範囲で apply 成功率を上げるための最小対策を追加する。",
+  "title": "正本 failure_type 分類の精緻化（誤分類補正と regression の正本化）",
+  "goal": "error_message・stop_stage・各チェック出力を結合した診断文脈から、JSON 欠損・禁止パス・init 段の preflight 重複などが test_failure に誤分類されないよう spec_missing / scope_violation / regression に振り分ける。regression_detected フラグは breaking_change ではなく regression にマップする。成功セッションの report フィールドを壊さない。",
   "scope": [
-    "orchestration/run_session.py の patch apply 前後の失敗分類と軽微な context mismatch 対策を追加する",
-    "git apply --check 失敗時の stderr を解析し、context mismatch 系失敗を識別できるようにする",
-    "patch 正規化後も apply できない場合の再試行条件を最小限追加する",
-    "context mismatch 系失敗の観測ログを標準化する",
-    "軽微な context mismatch 対策の単体テストを追加する"
+    "orchestration/run_session.py の FAILURE_TYPE_PRIORITY_ORDER / VALID_FAILURE_TYPES への regression 追加",
+    "診断テキスト集約とヒューリスティック（_aggregate_diagnostic_text / _heuristic_failure_from_report_context）",
+    "resolve_canonical_failure_type / classify_failure の error_message・stop_stage オプション引数と分岐順序",
+    "build_failure_record_for_report / persist_session_reports からの canonical 解決への文脈引き渡し",
+    "上記契約を検証する backend/tests/test_failure_type_priority.py と backend/tests/test_report_generation.py の追補"
   ],
   "out_of_scope": [
-    "_apply_patch_smart の大規模改造",
-    "semantic rebase",
-    "Claude prompt contract の変更",
-    "providers 配下の変更",
     "retry ループ全体の設計変更",
-    "AIによる patch 再解釈",
-    "Card_task_02 側ファイルの変更",
-    "docs 配下の既存ファイル変更"
+    "providers / config.yaml の変更",
+    "patch apply context mismatch 専用ロジックの新規大改修（別セッションで扱う）",
+    "breaking_change を完全削除すること（後方互換のため残す）"
   ],
   "constraints": [
-    "1セッション1目的を厳守し、context mismatch の軽減のみに限定する",
-    "変更ファイル数は最大2ファイル以内とする",
-    "run_session.py 自己修正セッションのため Cursor 手動投入を前提とする",
-    "patch の意味内容を変更しないこと",
-    "semantic な hunk 再配置を行わないこと",
-    "diff ヘッダや hunk の構造自体を書き換えて別物にしないこと",
-    "apply 失敗時は context mismatch とその他失敗をログ上で区別できること",
-    "既存の session-117 正規化処理と責務を重複させないこと",
-    "retry は context mismatch 系に限定した最小条件に留めること"
+    "1セッション1目的を厳守し、failure_type 正本分類の補正のみに限定する",
+    "既存の優先順位（patch / build / import / typecheck / lint+test の基本順）を崩さない",
+    "ヒューリスティックは型付きチャネル判定の後段で適用し、実際の pytest 失敗は test_failure のまま残す",
+    "省略時は従来どおり error_message / stop_stage なしで動作すること（既存呼び出し互換）"
   ],
   "acceptance_ref": "docs/acceptance/session-118.yaml",
   "allowed_changes": [
     "orchestration/run_session.py",
-    "backend/tests/test_patch_apply_context_mismatch.py"
+    "backend/tests/test_failure_type_priority.py",
+    "backend/tests/test_report_generation.py"
   ],
   "allowed_changes_detail": [
-    "orchestration/run_session.py: git apply --check 失敗時の stderr を解析し、context mismatch 系失敗を識別する最小処理を追加する。session-117 の patch 前正規化の後段でのみ機能し、意味変更を伴う補正は行わない。",
-    "backend/tests/test_patch_apply_context_mismatch.py: context mismatch 系失敗の識別、通常の patch_apply_failure との差分、再試行条件の最小接続を検証する単体テストを新規追加する。"
+    "orchestration/run_session.py: regression 正本値の追加、診断集約・文脈ヒューリスティック、resolve_canonical_failure_type / classify_failure の kwargs、report 経路への文脈連携、fingerprint / failure_layer への regression 反映",
+    "backend/tests/test_failure_type_priority.py: spec_missing / scope_violation / regression / 実テスト失敗の AC テスト",
+    "backend/tests/test_report_generation.py: 成功系 report が再分類後も壊れないことの回帰テスト"
   ],
   "forbidden_changes": [
     "orchestration/providers/",
-    "docs/sessions/ の既存ファイル",
-    "docs/acceptance/ の既存ファイル",
+    "docs/sessions/ の session-118.json 以外の既存セッション定義の無関係な改変",
+    "docs/acceptance/ の session-118.yaml 以外の無関係な改変",
     ".github/",
     "orchestration/config.yaml",
     "Card_task_02 側アプリケーションファイル"
@@ -51,70 +44,65 @@
   "completion_criteria": [
     {
       "id": "CC-118-01",
-      "type": "document_rule",
-      "condition": "context mismatch 系の apply 失敗が run_session.py 上で識別可能になっている"
+      "type": "behavior_contract",
+      "condition": "JSON 欠損系メッセージは spec_missing に分類される"
     },
     {
       "id": "CC-118-02",
-      "type": "state_transition_consistent",
-      "condition": "context mismatch 系失敗は通常の patch_apply_failure と区別してログに残る"
+      "type": "behavior_contract",
+      "condition": "禁止パス検出メッセージは scope_violation に分類される"
     },
     {
       "id": "CC-118-03",
-      "type": "non_regression",
-      "condition": "session-117 の patch 前正規化処理を壊さない"
+      "type": "behavior_contract",
+      "condition": "init 段の preflight 重複定義は regression に分類される"
     },
     {
       "id": "CC-118-04",
-      "type": "side_effect_free",
-      "condition": "patch の意味内容や hunk の意味を変える補正を行わない"
+      "type": "non_regression",
+      "condition": "AssertionError / ModuleNotFoundError 等の実テスト・import 失敗は test_failure / import_error のまま"
     },
     {
       "id": "CC-118-05",
       "type": "artifact",
-      "condition": "context mismatch 対策の単体テストが追加され、4コマンド検証で通過できる"
+      "condition": "status=success の report に失敗系メタデータが混入しない"
     }
   ],
   "acceptance_criteria": [
     {
       "id": "AC-118-01",
-      "text": "git apply --check の stderr から context mismatch 系失敗を識別できる",
-      "test_name": "test_classify_context_mismatch_from_git_apply_stderr",
-      "completion_criteria_refs": [
-        "CC-118-01",
-        "CC-118-02"
-      ]
+      "text": "JSON 欠損メッセージは test_failure に落とさず spec_missing とする",
+      "test_name": "test_resolve_canonical_failure_type_prefers_spec_missing_for_missing_json",
+      "completion_criteria_refs": ["CC-118-01"]
     },
     {
       "id": "AC-118-02",
-      "text": "通常の patch_apply_failure と context mismatch 系失敗はログ上で区別される",
-      "test_name": "test_log_context_mismatch_separately_from_generic_patch_apply_failure",
-      "completion_criteria_refs": [
-        "CC-118-02"
-      ]
+      "text": "禁止パス検出は test_failure ではなく scope_violation とする",
+      "test_name": "test_resolve_canonical_failure_type_prefers_scope_violation_for_forbidden_path",
+      "completion_criteria_refs": ["CC-118-02"]
     },
     {
       "id": "AC-118-03",
-      "text": "session-117 の patch 正規化処理は保持される",
-      "test_name": "test_context_mismatch_handling_preserves_pre_normalization_flow",
-      "completion_criteria_refs": [
-        "CC-118-03",
-        "CC-118-04"
-      ]
+      "text": "init 段の preflight 重複定義は regression とする",
+      "test_name": "test_resolve_canonical_failure_type_prefers_regression_for_init_preflight_duplicate",
+      "completion_criteria_refs": ["CC-118-03"]
     },
     {
       "id": "AC-118-04",
-      "text": "軽微な context mismatch 対策追加後も 4コマンドが通る",
-      "test_name": "test_context_mismatch_handling_passes_validation_suite",
-      "completion_criteria_refs": [
-        "CC-118-05"
-      ]
+      "text": "実際の pytest / import 失敗は test_failure / import_error のまま維持する",
+      "test_name": "test_resolve_canonical_failure_type_keeps_real_test_failures_as_test_failure",
+      "completion_criteria_refs": ["CC-118-04"]
+    },
+    {
+      "id": "AC-118-05",
+      "text": "failure_type 再分類後も成功系 report の failure 系フィールドを壊さない",
+      "test_name": "test_report_generation_preserves_success_cases_after_failure_type_reclassification",
+      "completion_criteria_refs": ["CC-118-05"]
     }
   ],
   "review_points": [
-    "仕様一致（AC達成）",
-    "変更範囲遵守",
-    "副作用なし（既存破壊なし）",
-    "検証十分性"
+    "ヒューリスティックが高優先チャネル判定と矛盾しない順序になっているか",
+    "kwargs 省略時の後方互換",
+    "成功パスの report 破壊がないか"
   ]
 }
