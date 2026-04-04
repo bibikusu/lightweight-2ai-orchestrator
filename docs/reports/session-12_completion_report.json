@@ -1,0 +1,52 @@
+{
+  "session_id": "session-12",
+  "status": "completed_with_review",
+  "changed_files": [
+    "index.html"
+  ],
+  "test_result": "pass",
+  "lint_result": "pass",
+  "typecheck_result": "pass",
+  "build_result": "pass",
+  "acceptance_results": [
+    {
+      "id": "AC-12-01",
+      "result": "not_applicable"
+    },
+    {
+      "id": "AC-12-02",
+      "result": "not_applicable"
+    },
+    {
+      "id": "AC-12-03",
+      "result": "not_applicable"
+    },
+    {
+      "id": "AC-12-04",
+      "result": "not_applicable"
+    },
+    {
+      "id": "AC-12-05",
+      "result": "not_applicable"
+    },
+    {
+      "id": "AC-12-06",
+      "result": "not_applicable"
+    },
+    {
+      "id": "AC-12-07",
+      "result": "not_applicable"
+    }
+  ],
+  "risks": [
+    "getBusinessDate() が単純な日付返却のままで、営業日判定としては未完成の可能性がある",
+    "task state 保存・復元は前進しているが、実装品質はなお人間レビューが必要",
+    "settings.businessStartTime を参照しているが、営業日計算との一貫性確認が必要"
+  ],
+  "open_issues": [
+    "index.html の差分が session-12 の本来意図に十分一致するかを人間検収する",
+    "businessStartTime 基準の営業日判定を必要に応じて Card_task_02 repo 側で手動補正する"
+  ],
+  "diff_summary": "session-117 の patch 前正規化導入後、session-12 を再実行し、status=success・failure_type=None・changed_files=['index.html'] を確認した。proposed.patch は非空であり、仕様書→AI/API→実装コード自動生成→patch適用→checks通過の end-to-end 成功例となった。一方で index.html の実装品質は review_required とする。",
+  "final_decision": "review_required"
+}

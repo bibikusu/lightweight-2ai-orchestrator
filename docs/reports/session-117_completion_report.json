@@ -1,0 +1,43 @@
+{
+  "session_id": "session-117",
+  "status": "completed",
+  "changed_files": [
+    "orchestration/run_session.py",
+    "backend/tests/test_patch_normalization.py"
+  ],
+  "test_result": "pass",
+  "lint_result": "pass",
+  "typecheck_result": "pass",
+  "build_result": "pass",
+  "acceptance_results": [
+    {
+      "id": "AC-117-01",
+      "result": "pass",
+      "evidence": "trailing whitespace 除去テストが通過"
+    },
+    {
+      "id": "AC-117-02",
+      "result": "pass",
+      "evidence": "非diffノイズ除去テストが通過"
+    },
+    {
+      "id": "AC-117-03",
+      "result": "pass",
+      "evidence": "diff ヘッダと patch 本体保持テストが通過"
+    },
+    {
+      "id": "AC-117-04",
+      "result": "pass",
+      "evidence": "git apply --check 前に正規化済み patch を使うテストが通過"
+    }
+  ],
+  "risks": [
+    "context mismatch 自体は今回のスコープ外であり、すべての patch_apply_failure を解消するとは限らない",
+    "ログ上の patch_pre_normalize 観測は今後の改善余地がある"
+  ],
+  "open_issues": [
+    "session-12 などの実セッションで効果測定を継続する"
+  ],
+  "diff_summary": "run_session.py に proposed.patch の最小事前正規化を追加し、normalize_patch_for_git_apply の前段に接続した。test_patch_normalization.py を追加し、trailing whitespace 除去、非diffノイズ除去、diff ヘッダ保持、apply 前接続を検証した。main で 4コマンドは全 PASS。",
+  "final_decision": "pass"
+}
