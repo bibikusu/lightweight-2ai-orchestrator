@@ -49,12 +49,12 @@ def test_small_file_context_is_included_fully(tmp_path, monkeypatch):
 
 
 def test_large_file_uses_partial_tail_context(tmp_path, monkeypatch):
-    """300 行超（改行数基準）は末尾断片のみ注入される。"""
+    """300 行超で section 未指定なら先頭50行・末尾20行と omitted（session-114）。"""
     monkeypatch.setattr(rs, "ROOT_DIR", tmp_path)
     rel = "large_ctx.txt"
     (tmp_path / rel).parent.mkdir(parents=True, exist_ok=True)
     # 改行を 301 以上にする（先頭だけ別行、あとは短い行を足す）
-    lines = ["UNIQUE_HEAD_LARGE_SHOULD_NOT_APPEAR"]
+    lines = ["UNIQUE_HEAD_LARGE_SHOULD_APPEAR"]
     lines.extend([f"x{i}" for i in range(350)])
     lines.append("UNIQUE_TAIL_LARGE_SHOULD_APPEAR")
     content = "\n".join(lines) + "\n"
@@ -63,9 +63,11 @@ def test_large_file_uses_partial_tail_context(tmp_path, monkeypatch):
 
     ctx = _ctx_with_detail("session-113-large", [f"{rel}: test"])
     _, user = build_implementation_prompts({"objective": "x"}, ctx)
-    assert "partial tail only" in user
     assert "UNIQUE_TAIL_LARGE_SHOULD_APPEAR" in user
-    assert "UNIQUE_HEAD_LARGE_SHOULD_NOT_APPEAR" not in user
+    assert "UNIQUE_HEAD_LARGE_SHOULD_APPEAR" in user
+    assert "x150" not in user
+    assert "omitted" in user.lower()
+    assert "partial tail only" not in user
 
 
 def test_missing_allowed_change_file_is_skipped_safely(tmp_path, monkeypatch):
@@ -74,9 +76,8 @@ def test_missing_allowed_change_file_is_skipped_safely(tmp_path, monkeypatch):
     rel = "definitely_missing_file_113.txt"
     ctx = _ctx_with_detail("session-113-missing", [f"{rel}: test"])
     _, user = build_implementation_prompts({"objective": "x"}, ctx)
-    # session_json にパス文字列は載るが、ファイル本文の current file ブロックは付与しない
-    assert f"\n\n[current file: {rel}]\n" not in user
-    assert f"lines): {rel}]\n" not in user  # partial tail 形式のヘッダも付けない
+    # 注入ブロックは付与されない（このフィクスチャでは detail のみで他に本文無し）
+    assert "[current file" not in user
 
 
 def test_context_injection_is_limited_to_allowed_changes(tmp_path, monkeypatch):

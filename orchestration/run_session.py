@@ -35,9 +35,11 @@ ROADMAP_PATH = DOCS_DIR / "roadmap.yaml"
 SESSIONS_DIR = DOCS_DIR / "sessions"
 
 # 実装プロンプトへの既存ファイル埋め込み（build_implementation_prompts）
-# 改行数が FULL 以下なら全文、超過時は末尾 TAIL 行のみ（append 向け）
+# 改行数が FULL 以下なら。超過時は <section id> 抽出または先頭/末尾フォールバック。
 IMPLEMENTATION_PROMPT_FULL_FILE_MAX_NEWLINES = 300
-IMPLEMENTATION_PROMPT_LARGE_FILE_TAIL_LINES = 150
+IMPLEMENTATION_PROMPT_LARGE_FILE_HEAD_LINES = 50
+IMPLEMENTATION_PROMPT_LARGE_FILE_FALLBACK_TAIL_LINES = 20
+IMPLEMENTATION_PROMPT_FILE_CONTEXT_MAX_INJECTED_LINES = 1000
 
 # Git 保護で拒否するブランチ名（小文字比較）
 FORBIDDEN_BRANCHES = frozenset({"main", "master"})
@@ -132,11 +134,123 @@ def orchestrator_version() -> str:
     return "1.0.0"
 
 
-def build_implementation_prompt_file_context_block(path_str: str, content: str) -> str:
+_SECTION_HINT_PAREN_RE = re.compile(r"\(section:\s*([^)]+)\)", re.IGNORECASE)
+
+
+def _extract_section_hint(detail_sources: Any, path_str: str) -> Optional[str]:
+    """allowed_changes_detail 等から path_str を含む行の (section: xxx) を拾う。"""
+    if not detail_sources:
+        return None
+    for item in detail_sources:
+        text = str(item)
+        for line in text.splitlines():
+            if path_str in line:
+                m = _SECTION_HINT_PAREN_RE.search(line)
+                if m:
+                    hint = m.group(1).strip()
+                    return hint or None
+    return None
+
+
+def _find_opening_section_tag_end(content: str, section_id: str) -> Optional[int]:
+    """<section id="section_id"> の直後（内側開始）のインデックス。無ければ None。"""
+    esc = re.escape(section_id)
+    pat = re.compile(
+        rf'<section\b[^>]*\bid\s*=\s*(["\']){esc}\1[^>]*>',
+        re.IGNORECASE,
+    )
+    m = pat.search(content)
+    if not m:
+        return None
+    gt = content.find(">", m.start())
+    if gt < 0:
+        return None
+    return gt + 1
+
+
+def _extract_html_section(content: str, section_id: str) -> Optional[str]:
+    """
+    <section id="section_id"> ... </section> の内側テキストを返す（ネストした section に対応）。
+    閉じタグが無い・不平衡なら抽出失敗として None。
+    """
+    start_inner = _find_opening_section_tag_end(content, section_id)
+    if start_inner is None:
+        return None
+    depth = 1
+    i = start_inner
+    n = len(content)
+    lc = content.lower()
+    while i < n and depth > 0:
+        rel_open = lc.find("<section", i)
+        rel_close = lc.find("</section", i)
+        if rel_close < 0:
+            return None
+        next_open = rel_open if rel_open >= 0 else n
+        if next_open < rel_close:
+            depth += 1
+            gt = content.find(">", next_open)
+            if gt < 0:
+                return None
+            i = gt + 1
+        else:
+            if depth == 1:
+                return content[start_inner:rel_close]
+            depth -= 1
+            gt = content.find(">", rel_close)
+            if gt < 0:
+                return None
+            i = gt + 1
+    return None
+
+
+def _get_head_tail_fallback(
+    content: str,
+    total_lines: int,
+    head_n: int = IMPLEMENTATION_PROMPT_LARGE_FILE_HEAD_LINES,
+    tail_n: int = IMPLEMENTATION_PROMPT_LARGE_FILE_FALLBACK_TAIL_LINES,
+) -> str:
+    """大ファイル時: 先頭 head_n 行 + 末尾 tail_n 行 + 中間 omitted 注記。"""
+    lines = content.splitlines(keepends=True)
+    n = len(lines)
+    if n != total_lines:
+        total_lines = n
+    head_n = min(head_n, total_lines)
+    tail_n = min(tail_n, total_lines)
+    if head_n + tail_n >= total_lines:
+        return "".join(lines)
+    head = "".join(lines[:head_n])
+    tail = "".join(lines[-tail_n:])
+    omitted = total_lines - head_n - tail_n
+    return (
+        f"{head}\n... [omitted {omitted} lines between head and tail] ...\n{tail}"
+    )
+
+
+def _truncate_lines(
+    text: str,
+    max_lines: int = IMPLEMENTATION_PROMPT_FILE_CONTEXT_MAX_INJECTED_LINES,
+) -> str:
+    """max_lines 超なら先頭のみ残し切り詰め注記を付ける。"""
+    raw_lines = text.splitlines(keepends=True)
+    if len(raw_lines) <= max_lines:
+        return text
+    capped = "".join(raw_lines[:max_lines])
+    return (
+        f"{capped}"
+        f"\n... [truncated: showing first {max_lines} of {len(raw_lines)} "
+        f"injected lines] ...\n"
+    )
+
+
+def build_implementation_prompt_file_context_block(
+    path_str: str, content: str, *, section_hint: Optional[str] = None
+) -> str:
     """
     allowed_changes 由来の1ファイル分、[current file ...] ブロックを返す。
-    改行数が IMPLEMENTATION_PROMPT_FULL_FILE_MAX_NEWLINES 以下なら全文、
-    超過時は末尾 IMPLEMENTATION_PROMPT_LARGE_FILE_TAIL_LINES 行の断片のみ。
+    改行数が IMPLEMENTATION_PROMPT_FULL_FILE_MAX_NEWLINES 以下なら全文。
+    超過時は section_hint があれば <section id="..."> 範囲を抽出し、
+    未指定または抽出できない場合は先頭/末尾フォールバックと omitted 注記。
+    最終的な注入本文は IMPLEMENTATION_PROMPT_FILE_CONTEXT_MAX_INJECTED_LINES 行まで。
     """
     newline_count = content.count("\n")
     if newline_count <= IMPLEMENTATION_PROMPT_FULL_FILE_MAX_NEWLINES:
@@ -144,12 +258,36 @@ def build_implementation_prompt_file_context_block(path_str: str, content: str) 
 
     lines = content.splitlines(keepends=True)
     total_lines = len(lines)
-    tail_n = min(IMPLEMENTATION_PROMPT_LARGE_FILE_TAIL_LINES, total_lines)
-    tail = "".join(lines[-tail_n:])
-    return (
-        f"\n\n[current file (partial tail only; {total_lines} lines total, "
-        f"last {tail_n} lines): {path_str}]\n{tail}"
-    )
+
+    if section_hint:
+        section_body = _extract_html_section(content, section_hint)
+        if section_body is not None:
+            # 開始直後・閉じ直前の空改行は注入ノイズになるため除く
+            section_body = section_body.strip("\n")
+            inj_line_count = len(section_body.splitlines())
+            header = (
+                f"[current file (section id={section_hint!r} extracted; "
+                f"{inj_line_count} lines from {total_lines} total): {path_str}]"
+            )
+            body = section_body
+        else:
+            header = (
+                f"[current file (section id={section_hint!r} not found; "
+                f"head {IMPLEMENTATION_PROMPT_LARGE_FILE_HEAD_LINES} + tail "
+                f"{IMPLEMENTATION_PROMPT_LARGE_FILE_FALLBACK_TAIL_LINES}; "
+                f"{total_lines} lines total, middle omitted): {path_str}]"
+            )
+            body = _get_head_tail_fallback(content, total_lines)
+    else:
+        header = (
+            f"[current file (head {IMPLEMENTATION_PROMPT_LARGE_FILE_HEAD_LINES} + tail "
+            f"{IMPLEMENTATION_PROMPT_LARGE_FILE_FALLBACK_TAIL_LINES}; "
+            f"{total_lines} lines total, middle omitted): {path_str}]"
+        )
+        body = _get_head_tail_fallback(content, total_lines)
+
+    body = _truncate_lines(body)
+    return f"\n\n{header}\n{body}"
 
 
 def load_session_context(session_id: str) -> SessionContext:
@@ -1744,8 +1882,9 @@ If implementation is not possible, explain in JSON.
         if full_path.exists() and full_path.is_file():
             try:
                 content = full_path.read_text(encoding="utf-8")
+                section_hint = _extract_section_hint(detail_sources, path_str)
                 current_files_block += build_implementation_prompt_file_context_block(
-                    path_str, content
+                    path_str, content, section_hint=section_hint
                 )
             except Exception:
                 pass
