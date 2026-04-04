@@ -1,113 +1,120 @@
 {
   "session_id": "session-119",
-  "phase_id": "phase6",
-  "title": "artifacts report を自動集計し成功率と failure 分布を可視化する",
-  "goal": "artifacts 配下の report.json と retry_state.json を集計し、成功率、failure_type 分布、retry 傾向、changed_files 傾向を JSON と Markdown で出力できるようにする。",
+  "phase_id": "phase_observation_v0",
+  "title": "patch_apply_failure の原因切り分け精度を改善する",
+  "goal": "patch_apply_failure の report/logs に最小限の診断情報を残し、git apply 相当失敗・空差分・パッチ形式不整合の切り分け精度を改善する。",
   "scope": [
-    "artifacts 配下の report.json 集計スクリプトを追加する",
-    "retry_state.json を使った retry 統計集計を追加する",
-    "集計結果を JSON で保存する",
-    "集計結果を Markdown で保存する",
-    "集計スクリプトの単体テストを追加する"
+    "orchestration/run_session.py 内の patch apply 失敗時診断情報の整備",
+    "patch_apply_failure の cause_summary / detail 生成ロジックの最小改善",
+    "backend/tests/ 配下の patch apply failure 診断テストの追加または更新",
+    "既存の failure_type enum を変えずに観測精度のみ改善する"
   ],
   "out_of_scope": [
-    "orchestration/run_session.py の変更",
+    "_apply_patch_smart の大規模改造",
+    "patch 適用成功率を上げるための semantic rebase",
+    "新規 failure_type enum の追加",
+    "session-81・session-102・session-canary-01 の個別実装修正",
     "providers 配下の変更",
-    "Claude prompt contract の変更",
-    "dashboard の Web UI 実装",
-    "既存 report.json 形式の変更",
-    "Card_task_02 側ファイルの変更"
+    "dashboard 集計ロジックの再変更",
+    "docs/sessions/ 既存ファイルの変更",
+    "docs/acceptance/ 既存ファイルの変更",
+    "artifacts 配下の既存 report.json の書き換え"
   ],
   "constraints": [
-    "1セッション1目的を厳守し、観測レポート集計のみに限定する",
-    "変更ファイル数は最大3ファイル以内とする",
-    "入力は artifacts/*/report.json を基本とし、retry_state.json は存在する場合のみ読むこと",
-    "report.json が存在しない session は sessions_scanned には含めても sessions_with_report には含めないこと",
-    "failure_type が null の report は成功系として扱うこと",
-    "changed_files が空配列なら empty_count として集計すること",
-    "Markdown 出力と JSON 出力の両方を生成すること",
-    "既存 report.json のフォーマットを変更しないこと"
+    "1セッション1目的を守る",
+    "failure_type は patch_apply_failure のまま維持する",
+    "原因切り分けは cause_summary または補助フィールドで表現する",
+    "git apply 相当失敗・空差分・パッチ形式不整合を区別できること",
+    "既存の success / test_failure / spec_missing / scope_violation / regression の判定を壊さない",
+    "変更ファイル数は最大4ファイル以内とする",
+    "run_session.py の他機能には副作用を出さない"
   ],
   "acceptance_ref": "docs/acceptance/session-119.yaml",
   "allowed_changes": [
-    "scripts/aggregate_observation_reports.py",
-    "backend/tests/test_aggregate_observation_reports.py",
-    "docs/sessions/session-119.json"
+    "orchestration/run_session.py",
+    "backend/tests/test_patch_apply_failure_diagnostics.py",
+    "docs/sessions/session-119.json",
+    "docs/acceptance/session-119.yaml"
   ],
   "allowed_changes_detail": [
-    "scripts/aggregate_observation_reports.py: artifacts 配下の report.json と retry_state.json を読み、成功率・failure_type 分布・completion_status 分布・changed_files 統計・retry 統計を JSON と Markdown で出力するスクリプトを新規実装する。",
-    "backend/tests/test_aggregate_observation_reports.py: 複数の report.json / retry_state.json を模擬入力として、集計結果が正しいことを検証する単体テストを新規追加する。",
-    "docs/sessions/session-119.json: 本セッション定義のみを保存する。"
+    "orchestration/run_session.py: patch apply failure 時の cause_summary 生成、関連ヘルパー、report 出力整備のみ",
+    "backend/tests/test_patch_apply_failure_diagnostics.py: patch apply failure 診断ロジックの単体テスト新規追加のみ",
+    "docs/sessions/session-119.json: このセッション定義の新規作成のみ",
+    "docs/acceptance/session-119.yaml: この受入条件ファイルの新規作成のみ"
   ],
   "forbidden_changes": [
-    "orchestration/",
-    "docs/acceptance/ の既存ファイル",
+    "orchestration/providers/",
     ".github/",
     "orchestration/config.yaml",
-    "Card_task_02 側アプリケーションファイル"
+    "scripts/aggregate_observation_reports.py",
+    "docs/sessions/ 既存ファイル",
+    "docs/acceptance/ 既存ファイル",
+    "artifacts/ 配下の既存成果物の手修正"
+  ],
+  "inputs": [
+    {
+      "name": "patch_apply_context",
+      "type": "object",
+      "schema": {
+        "patch_text": "str",
+        "git_apply_stderr": "str",
+        "changed_files": "list[str]",
+        "diff_after_apply": "str"
+      }
+    }
+  ],
+  "outputs": [
+    {
+      "name": "patch_apply_diagnostic",
+      "type": "object"
+    },
+    {
+      "name": "test_results",
+      "type": "object"
+    }
   ],
   "completion_criteria": [
     {
       "id": "CC-119-01",
       "type": "artifact",
-      "condition": "artifacts 配下の report.json を集計して JSON 出力を生成できる"
+      "condition": "patch_apply_failure 時に cause_summary から git apply 相当失敗・空差分・パッチ形式不整合を区別できる"
     },
     {
       "id": "CC-119-02",
-      "type": "artifact",
-      "condition": "同じ集計結果を Markdown 出力として生成できる"
+      "type": "non_regression",
+      "condition": "既存の patch apply 成功ケースと他 failure_type 判定を壊さない"
     },
     {
       "id": "CC-119-03",
       "type": "state_transition_consistent",
-      "condition": "failure_type、completion_status、changed_files、retry_count の集計ルールが実装上で一意に定義されている"
+      "condition": "patch_apply_failure の failure_type 自体は維持しつつ、診断情報だけが詳細化される"
     },
     {
       "id": "CC-119-04",
-      "type": "non_regression",
-      "condition": "既存 orchestration / report 生成ロジックを変更しない"
-    },
-    {
-      "id": "CC-119-05",
-      "type": "artifact",
-      "condition": "集計スクリプトの単体テストが追加され、4コマンド検証で通過できる"
+      "type": "side_effect_free",
+      "condition": "provider・dashboard 集計・retry 高度化には変更がなく、診断精度改善に限定される"
     }
   ],
   "acceptance_criteria": [
     {
       "id": "AC-119-01",
-      "text": "複数の report.json を読み込み、成功率と failure_type 分布を正しく集計できる",
-      "test_name": "test_aggregate_reports_computes_success_rate_and_failure_distribution",
-      "completion_criteria_refs": [
-        "CC-119-01",
-        "CC-119-03"
-      ]
+      "text": "git apply stderr がある場合は patch format / context / apply failure を識別した cause_summary が生成される",
+      "test_name": "test_patch_apply_failure_diagnostic_classifies_git_apply_stderr"
     },
     {
       "id": "AC-119-02",
-      "text": "retry_state.json が存在する場合、retry 統計を正しく集計できる",
-      "test_name": "test_aggregate_reports_computes_retry_stats",
-      "completion_criteria_refs": [
-        "CC-119-01",
-        "CC-119-03"
-      ]
+      "text": "apply 実行後に diff が空の場合は empty_diff 系の cause_summary が生成される",
+      "test_name": "test_patch_apply_failure_diagnostic_detects_empty_diff_after_apply"
     },
     {
       "id": "AC-119-03",
-      "text": "Markdown 出力に summary と session rows が含まれる",
-      "test_name": "test_aggregate_reports_writes_markdown_summary",
-      "completion_criteria_refs": [
-        "CC-119-02"
-      ]
+      "text": "patch_apply_failure の failure_type は維持され、他の canonical failure_type に誤って変化しない",
+      "test_name": "test_patch_apply_failure_diagnostic_preserves_failure_type"
     },
     {
       "id": "AC-119-04",
-      "text": "集計スクリプト追加後も 4コマンドが通る",
-      "test_name": "test_aggregate_reports_passes_validation_suite",
-      "completion_criteria_refs": [
-        "CC-119-04",
-        "CC-119-05"
-      ]
+      "text": "成功ケースでは patch_apply_failure 用の診断が出力されない",
+      "test_name": "test_patch_apply_failure_diagnostic_does_not_pollute_success_case"
     }
   ],
   "review_points": [
@@ -115,5 +122,6 @@
     "変更範囲遵守",
     "副作用なし（既存破壊なし）",
     "検証十分性"
-  ]
+  ],
+  "priority": "high"
 }

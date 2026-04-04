@@ -2498,6 +2498,41 @@ def build_failure_record_for_report(
     }
 
 
+def _build_patch_apply_cause_summary(pa: Dict[str, Any]) -> str:
+    """
+    patch_apply checks ブロックから cause_summary 文字列を生成する。
+
+    3 ケースを区別する:
+      1. context_mismatch — git apply stderr が context 不一致系
+      2. git apply stderr あり（非 context_mismatch）— 何らかの apply エラー
+      3. stderr なし — パッチ自体は受け付けたが差分ゼロ（既適用・行不一致等）
+    failure_type は変えない。success ケースには呼ばれない。
+    """
+    failure_kind = str(pa.get("failure_kind") or "generic").strip() or "generic"
+    git_stderr = str(pa.get("git_apply_stderr") or "").strip()
+    cmr = str(pa.get("context_mismatch_reason") or "").strip()
+
+    if failure_kind == "context_mismatch":
+        # ケース 1: context mismatch — 理由と stderr を含める
+        parts = []
+        if cmr:
+            parts.append(cmr)
+        if git_stderr:
+            parts.append(git_stderr[:400])
+        detail = "; ".join(parts) if parts else "context mismatch (詳細不明)"
+        return f"patch context mismatch: {detail}"
+
+    if git_stderr:
+        # ケース 2: apply エラーあり（format / permission 等）
+        return f"git apply error: {git_stderr[:400]}"
+
+    # ケース 3: stderr なし → パッチ適用後も差分ゼロ
+    return (
+        "パッチ適用後も差分が検出されませんでした"
+        "（パッチが既に適用済みか、対象行が存在しない可能性があります）"
+    )
+
+
 def classify_failure(
     check_results: Dict[str, Any],
     *,
@@ -2520,9 +2555,8 @@ def classify_failure(
         failure_type = "spec_missing"
 
     if sig["patch_apply_failed"]:
-        detail = str((cr.get("patch_apply") or {}).get("stderr") or "").strip()
-        if not detail:
-            detail = "proposed_patch が適用されず実差分がありません"
+        pa = cr.get("patch_apply") or {}
+        detail = _build_patch_apply_cause_summary(pa)
         return {
             "failure_type": validate_failure_type(failure_type),
             "cause_summary": detail[:2000],
