@@ -1,0 +1,30 @@
+session_id: session-118
+phase_id: phase6
+title: "patch apply の context mismatch を軽減する最小対策"
+
+acceptance:
+  - id: AC-118-01
+    description: "git apply --check の stderr から context mismatch 系失敗を識別できる"
+    test_name: test_classify_context_mismatch_from_git_apply_stderr
+    completion_criteria_refs:
+      - CC-118-01
+      - CC-118-02
+
+  - id: AC-118-02
+    description: "通常の patch_apply_failure と context mismatch 系失敗はログ上で区別される"
+    test_name: test_log_context_mismatch_separately_from_generic_patch_apply_failure
+    completion_criteria_refs:
+      - CC-118-02
+
+  - id: AC-118-03
+    description: "session-117 の patch 正規化処理は保持される"
+    test_name: test_context_mismatch_handling_preserves_pre_normalization_flow
+    completion_criteria_refs:
+      - CC-118-03
+      - CC-118-04
+
+  - id: AC-118-04
+    description: "軽微な context mismatch 対策追加後も 4コマンドが通る"
+    test_name: test_context_mismatch_handling_passes_validation_suite
+    completion_criteria_refs:
+      - CC-118-05

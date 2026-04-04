@@ -1,0 +1,31 @@
+session_id: session-119
+phase_id: phase6
+title: "artifacts report を自動集計し成功率と failure 分布を可視化する"
+
+acceptance:
+  - id: AC-119-01
+    description: "複数の report.json を読み込み、成功率と failure_type 分布を正しく集計できる"
+    test_name: test_aggregate_reports_computes_success_rate_and_failure_distribution
+    completion_criteria_refs:
+      - CC-119-01
+      - CC-119-03
+
+  - id: AC-119-02
+    description: "retry_state.json が存在する場合、retry 統計を正しく集計できる"
+    test_name: test_aggregate_reports_computes_retry_stats
+    completion_criteria_refs:
+      - CC-119-01
+      - CC-119-03
+
+  - id: AC-119-03
+    description: "Markdown 出力に summary と session rows が含まれる"
+    test_name: test_aggregate_reports_writes_markdown_summary
+    completion_criteria_refs:
+      - CC-119-02
+
+  - id: AC-119-04
+    description: "集計スクリプト追加後も 4コマンドが通る"
+    test_name: test_aggregate_reports_passes_validation_suite
+    completion_criteria_refs:
+      - CC-119-04
+      - CC-119-05

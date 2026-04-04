@@ -1,0 +1,120 @@
+{
+  "session_id": "session-118",
+  "phase_id": "phase6",
+  "title": "patch apply の context mismatch を軽減する最小対策",
+  "goal": "proposed.patch が diff ヘッダを持ち、軽微な context mismatch によって git apply に失敗する場合に、意味変更を伴わない範囲で apply 成功率を上げるための最小対策を追加する。",
+  "scope": [
+    "orchestration/run_session.py の patch apply 前後の失敗分類と軽微な context mismatch 対策を追加する",
+    "git apply --check 失敗時の stderr を解析し、context mismatch 系失敗を識別できるようにする",
+    "patch 正規化後も apply できない場合の再試行条件を最小限追加する",
+    "context mismatch 系失敗の観測ログを標準化する",
+    "軽微な context mismatch 対策の単体テストを追加する"
+  ],
+  "out_of_scope": [
+    "_apply_patch_smart の大規模改造",
+    "semantic rebase",
+    "Claude prompt contract の変更",
+    "providers 配下の変更",
+    "retry ループ全体の設計変更",
+    "AIによる patch 再解釈",
+    "Card_task_02 側ファイルの変更",
+    "docs 配下の既存ファイル変更"
+  ],
+  "constraints": [
+    "1セッション1目的を厳守し、context mismatch の軽減のみに限定する",
+    "変更ファイル数は最大2ファイル以内とする",
+    "run_session.py 自己修正セッションのため Cursor 手動投入を前提とする",
+    "patch の意味内容を変更しないこと",
+    "semantic な hunk 再配置を行わないこと",
+    "diff ヘッダや hunk の構造自体を書き換えて別物にしないこと",
+    "apply 失敗時は context mismatch とその他失敗をログ上で区別できること",
+    "既存の session-117 正規化処理と責務を重複させないこと",
+    "retry は context mismatch 系に限定した最小条件に留めること"
+  ],
+  "acceptance_ref": "docs/acceptance/session-118.yaml",
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "backend/tests/test_patch_apply_context_mismatch.py"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/run_session.py: git apply --check 失敗時の stderr を解析し、context mismatch 系失敗を識別する最小処理を追加する。session-117 の patch 前正規化の後段でのみ機能し、意味変更を伴う補正は行わない。",
+    "backend/tests/test_patch_apply_context_mismatch.py: context mismatch 系失敗の識別、通常の patch_apply_failure との差分、再試行条件の最小接続を検証する単体テストを新規追加する。"
+  ],
+  "forbidden_changes": [
+    "orchestration/providers/",
+    "docs/sessions/ の既存ファイル",
+    "docs/acceptance/ の既存ファイル",
+    ".github/",
+    "orchestration/config.yaml",
+    "Card_task_02 側アプリケーションファイル"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-118-01",
+      "type": "document_rule",
+      "condition": "context mismatch 系の apply 失敗が run_session.py 上で識別可能になっている"
+    },
+    {
+      "id": "CC-118-02",
+      "type": "state_transition_consistent",
+      "condition": "context mismatch 系失敗は通常の patch_apply_failure と区別してログに残る"
+    },
+    {
+      "id": "CC-118-03",
+      "type": "non_regression",
+      "condition": "session-117 の patch 前正規化処理を壊さない"
+    },
+    {
+      "id": "CC-118-04",
+      "type": "side_effect_free",
+      "condition": "patch の意味内容や hunk の意味を変える補正を行わない"
+    },
+    {
+      "id": "CC-118-05",
+      "type": "artifact",
+      "condition": "context mismatch 対策の単体テストが追加され、4コマンド検証で通過できる"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-118-01",
+      "text": "git apply --check の stderr から context mismatch 系失敗を識別できる",
+      "test_name": "test_classify_context_mismatch_from_git_apply_stderr",
+      "completion_criteria_refs": [
+        "CC-118-01",
+        "CC-118-02"
+      ]
+    },
+    {
+      "id": "AC-118-02",
+      "text": "通常の patch_apply_failure と context mismatch 系失敗はログ上で区別される",
+      "test_name": "test_log_context_mismatch_separately_from_generic_patch_apply_failure",
+      "completion_criteria_refs": [
+        "CC-118-02"
+      ]
+    },
+    {
+      "id": "AC-118-03",
+      "text": "session-117 の patch 正規化処理は保持される",
+      "test_name": "test_context_mismatch_handling_preserves_pre_normalization_flow",
+      "completion_criteria_refs": [
+        "CC-118-03",
+        "CC-118-04"
+      ]
+    },
+    {
+      "id": "AC-118-04",
+      "text": "軽微な context mismatch 対策追加後も 4コマンドが通る",
+      "test_name": "test_context_mismatch_handling_passes_validation_suite",
+      "completion_criteria_refs": [
+        "CC-118-05"
+      ]
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ]
+}

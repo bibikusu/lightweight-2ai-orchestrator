@@ -1,0 +1,119 @@
+{
+  "session_id": "session-119",
+  "phase_id": "phase6",
+  "title": "artifacts report を自動集計し成功率と failure 分布を可視化する",
+  "goal": "artifacts 配下の report.json と retry_state.json を集計し、成功率、failure_type 分布、retry 傾向、changed_files 傾向を JSON と Markdown で出力できるようにする。",
+  "scope": [
+    "artifacts 配下の report.json 集計スクリプトを追加する",
+    "retry_state.json を使った retry 統計集計を追加する",
+    "集計結果を JSON で保存する",
+    "集計結果を Markdown で保存する",
+    "集計スクリプトの単体テストを追加する"
+  ],
+  "out_of_scope": [
+    "orchestration/run_session.py の変更",
+    "providers 配下の変更",
+    "Claude prompt contract の変更",
+    "dashboard の Web UI 実装",
+    "既存 report.json 形式の変更",
+    "Card_task_02 側ファイルの変更"
+  ],
+  "constraints": [
+    "1セッション1目的を厳守し、観測レポート集計のみに限定する",
+    "変更ファイル数は最大3ファイル以内とする",
+    "入力は artifacts/*/report.json を基本とし、retry_state.json は存在する場合のみ読むこと",
+    "report.json が存在しない session は sessions_scanned には含めても sessions_with_report には含めないこと",
+    "failure_type が null の report は成功系として扱うこと",
+    "changed_files が空配列なら empty_count として集計すること",
+    "Markdown 出力と JSON 出力の両方を生成すること",
+    "既存 report.json のフォーマットを変更しないこと"
+  ],
+  "acceptance_ref": "docs/acceptance/session-119.yaml",
+  "allowed_changes": [
+    "scripts/aggregate_observation_reports.py",
+    "backend/tests/test_aggregate_observation_reports.py",
+    "docs/sessions/session-119.json"
+  ],
+  "allowed_changes_detail": [
+    "scripts/aggregate_observation_reports.py: artifacts 配下の report.json と retry_state.json を読み、成功率・failure_type 分布・completion_status 分布・changed_files 統計・retry 統計を JSON と Markdown で出力するスクリプトを新規実装する。",
+    "backend/tests/test_aggregate_observation_reports.py: 複数の report.json / retry_state.json を模擬入力として、集計結果が正しいことを検証する単体テストを新規追加する。",
+    "docs/sessions/session-119.json: 本セッション定義のみを保存する。"
+  ],
+  "forbidden_changes": [
+    "orchestration/",
+    "docs/acceptance/ の既存ファイル",
+    ".github/",
+    "orchestration/config.yaml",
+    "Card_task_02 側アプリケーションファイル"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-119-01",
+      "type": "artifact",
+      "condition": "artifacts 配下の report.json を集計して JSON 出力を生成できる"
+    },
+    {
+      "id": "CC-119-02",
+      "type": "artifact",
+      "condition": "同じ集計結果を Markdown 出力として生成できる"
+    },
+    {
+      "id": "CC-119-03",
+      "type": "state_transition_consistent",
+      "condition": "failure_type、completion_status、changed_files、retry_count の集計ルールが実装上で一意に定義されている"
+    },
+    {
+      "id": "CC-119-04",
+      "type": "non_regression",
+      "condition": "既存 orchestration / report 生成ロジックを変更しない"
+    },
+    {
+      "id": "CC-119-05",
+      "type": "artifact",
+      "condition": "集計スクリプトの単体テストが追加され、4コマンド検証で通過できる"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-119-01",
+      "text": "複数の report.json を読み込み、成功率と failure_type 分布を正しく集計できる",
+      "test_name": "test_aggregate_reports_computes_success_rate_and_failure_distribution",
+      "completion_criteria_refs": [
+        "CC-119-01",
+        "CC-119-03"
+      ]
+    },
+    {
+      "id": "AC-119-02",
+      "text": "retry_state.json が存在する場合、retry 統計を正しく集計できる",
+      "test_name": "test_aggregate_reports_computes_retry_stats",
+      "completion_criteria_refs": [
+        "CC-119-01",
+        "CC-119-03"
+      ]
+    },
+    {
+      "id": "AC-119-03",
+      "text": "Markdown 出力に summary と session rows が含まれる",
+      "test_name": "test_aggregate_reports_writes_markdown_summary",
+      "completion_criteria_refs": [
+        "CC-119-02"
+      ]
+    },
+    {
+      "id": "AC-119-04",
+      "text": "集計スクリプト追加後も 4コマンドが通る",
+      "test_name": "test_aggregate_reports_passes_validation_suite",
+      "completion_criteria_refs": [
+        "CC-119-04",
+        "CC-119-05"
+      ]
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ]
+}
