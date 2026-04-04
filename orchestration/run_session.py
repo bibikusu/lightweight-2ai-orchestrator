@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 import hashlib
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, NamedTuple, Optional, Set, Tuple, Union
 
 import yaml
 
@@ -64,6 +64,21 @@ class SessionContext:
     global_rules: str
     roadmap_text: str
     runtime_config: Dict[str, Any]
+
+
+class GitApplyContextMismatchClassif(NamedTuple):
+    """git apply 失敗 stderr のうち context mismatch 系かどうか（観測・分類のみ）。"""
+
+    is_context_mismatch: bool
+    matched_reason: str
+
+
+@dataclass(frozen=True)
+class _ApplyPatchSmartOutcome:
+    """_apply_patch_smart の戻り値。stderr の解釈は呼び出し側で行う。"""
+
+    applied: bool
+    existing_files_git_apply_stderr: str = ""
 
 
 def load_text(path: Path) -> str:
@@ -1418,6 +1433,26 @@ def validate_changed_files_before_patch(
                     )
 
 
+def classify_git_apply_stderr_for_context_mismatch(stderr: str) -> GitApplyContextMismatchClassif:
+    """
+    git apply / git apply --check が返す stderr のうち、context mismatch 系と判断できるものを識別する。
+    修復・再試行は行わず、観測・ログ用の分類のみ。
+    """
+    s = (stderr or "").strip()
+    if not s:
+        return GitApplyContextMismatchClassif(False, "")
+    blob = s.lower()
+    if "patch does not apply" in blob:
+        return GitApplyContextMismatchClassif(True, "patch_does_not_apply")
+    if "while searching for:" in blob:
+        return GitApplyContextMismatchClassif(True, "while_searching_for")
+    if "error: patch failed:" in blob:
+        return GitApplyContextMismatchClassif(True, "error_patch_failed")
+    if re.search(r"hunk\s+#\d+\s+failed", blob):
+        return GitApplyContextMismatchClassif(True, "hunk_failed")
+    return GitApplyContextMismatchClassif(False, "")
+
+
 def _normalize_hunk_line_prefixes(text: str) -> str:
     """
     hunk 内で +/-/スペース/\\ で始まらない行に + を補完する。
@@ -1449,7 +1484,7 @@ def _normalize_hunk_line_prefixes(text: str) -> str:
     return "\n".join(fixed)
 
 
-def _apply_patch_smart(patch_path: Path, repo_root: Path) -> bool:
+def _apply_patch_smart(patch_path: Path, repo_root: Path) -> _ApplyPatchSmartOutcome:
     """Apply a unified diff patch, handling new files by direct write.
 
     For files that don't exist in the repo:
@@ -1457,7 +1492,7 @@ def _apply_patch_smart(patch_path: Path, repo_root: Path) -> bool:
     For files that already exist:
       - Use git apply --whitespace=fix
 
-    Returns True if at least one change was made, False otherwise.
+    Returns 適用結果（既存ファイル向け git の stderr は呼び出し側で分類する）。
     """
     raw_text = patch_path.read_text(encoding="utf-8", errors="replace")
     # hunk 内で + が抜けた行を補完してから処理する
@@ -1542,28 +1577,34 @@ def _apply_patch_smart(patch_path: Path, repo_root: Path) -> bool:
             existing_file_lines.extend(section["lines"])
 
     applied_existing = False
+    existing_git_stderr = ""
     if existing_file_lines:
         remaining_patch = patch_path.parent / "remaining.patch"
         remaining_text = _normalize_hunk_line_prefixes("\n".join(existing_file_lines))
         remaining_patch.write_text(remaining_text, encoding="utf-8")
         check_proc = _git_run(["apply", "--check", "--whitespace=fix", str(remaining_patch)])
         if check_proc.returncode != 0:
+            existing_git_stderr = (check_proc.stderr or "").strip()
             logger.warning(
                 "git apply --check for existing files failed: %s",
-                (check_proc.stderr or "").strip(),
+                existing_git_stderr,
             )
         else:
             proc = _git_run(["apply", "--whitespace=fix", str(remaining_patch)])
             if proc.returncode != 0:
+                existing_git_stderr = (proc.stderr or "").strip()
                 logger.warning(
                     "git apply for existing files failed: %s",
-                    (proc.stderr or "").strip(),
+                    existing_git_stderr,
                 )
             else:
                 applied_existing = True
         remaining_patch.unlink(missing_ok=True)
 
-    return bool(new_file_targets) or applied_existing
+    return _ApplyPatchSmartOutcome(
+        applied=bool(new_file_targets) or applied_existing,
+        existing_files_git_apply_stderr=existing_git_stderr,
+    )
 
 
 def apply_proposed_patch_and_capture_artifacts(
@@ -1634,9 +1675,14 @@ def apply_proposed_patch_and_capture_artifacts(
             "changed_files": changed,
             "patch_apply_failed": False,
             "patch_apply_message": "",
+            "patch_apply_failure_kind": "",
+            "patch_apply_git_apply_stderr": "",
+            "patch_apply_context_mismatch_reason": "",
         }
 
-    patch_applied = _apply_patch_smart(patch_path, ROOT_DIR)
+    smart_out = _apply_patch_smart(patch_path, ROOT_DIR)
+    patch_applied = smart_out.applied
+    git_apply_stderr = (smart_out.existing_files_git_apply_stderr or "").strip()
     if not patch_applied:
         logger.warning("No changes were applied from the patch")
 
@@ -1644,10 +1690,28 @@ def apply_proposed_patch_and_capture_artifacts(
 
     patch_apply_failed = bool(patch_text.strip()) and len(changed_files) == 0
     patch_apply_message = ""
+    ctx_class = classify_git_apply_stderr_for_context_mismatch(git_apply_stderr)
+    patch_apply_failure_kind = ""
+    patch_apply_context_mismatch_reason = ""
     if patch_apply_failed:
         patch_apply_message = (
             "git apply 相当の処理後も実差分が得られませんでした（パッチ形式の不整合または適用失敗の可能性）"
         )
+        if ctx_class.is_context_mismatch:
+            patch_apply_failure_kind = "context_mismatch"
+            patch_apply_context_mismatch_reason = ctx_class.matched_reason
+            logger.warning(
+                "patch_apply context_mismatch: failure_kind=%s matched_reason=%s git_stderr=%s",
+                patch_apply_failure_kind,
+                ctx_class.matched_reason,
+                git_apply_stderr,
+            )
+        else:
+            patch_apply_failure_kind = "generic"
+            logger.warning(
+                "patch_apply_failure (generic): git_stderr=%s",
+                git_apply_stderr if git_apply_stderr else "(empty)",
+            )
 
     return {
         "patch_path": patch_path,
@@ -1655,7 +1719,11 @@ def apply_proposed_patch_and_capture_artifacts(
         "changed_files": changed_files,
         "patch_apply_failed": patch_apply_failed,
         "patch_apply_message": patch_apply_message,
+        "patch_apply_failure_kind": patch_apply_failure_kind,
+        "patch_apply_git_apply_stderr": git_apply_stderr,
+        "patch_apply_context_mismatch_reason": patch_apply_context_mismatch_reason,
     }
+
 
 def build_dry_run_prepared_spec(ctx: SessionContext) -> Dict[str, Any]:
     """dry-run 用のダミー prepared_spec（API 非呼び出し）。"""
@@ -1742,7 +1810,13 @@ def _build_check_results_for_read_only_live_run() -> Dict[str, Any]:
     }
 
 
-def _build_check_results_for_patch_apply_failure(patch_apply_message: str) -> Dict[str, Any]:
+def _build_check_results_for_patch_apply_failure(
+    patch_apply_message: str,
+    *,
+    failure_kind: str = "generic",
+    git_apply_stderr: str = "",
+    context_mismatch_reason: str = "",
+) -> Dict[str, Any]:
     """proposed_patch があるが git apply 相当で実差分が得られなかった場合の checks（以降の pytest 等は実行しない）。"""
     sk: Dict[str, Any] = {
         "status": "skipped",
@@ -1758,6 +1832,9 @@ def _build_check_results_for_patch_apply_failure(patch_apply_message: str) -> Di
             "returncode": 1,
             "stdout": "",
             "stderr": patch_apply_message,
+            "failure_kind": failure_kind,
+            "git_apply_stderr": git_apply_stderr,
+            "context_mismatch_reason": context_mismatch_reason,
         },
         "test": dict(sk),
         "lint": dict(sk),
@@ -1818,13 +1895,30 @@ def _apply_patch_validate_and_run_local_checks(
             detail = (
                 "git apply 相当の処理後も実差分が得られませんでした（パッチ形式の不整合または適用失敗の可能性）"
             )
+        fk = str(patch_info.get("patch_apply_failure_kind") or "generic").strip() or "generic"
+        gae = str(patch_info.get("patch_apply_git_apply_stderr") or "")
+        cmr = str(patch_info.get("patch_apply_context_mismatch_reason") or "")
+        progress_extra = ""
+        if fk == "context_mismatch":
+            progress_extra = (
+                f" [failure_kind=context_mismatch matched_reason={cmr!r} "
+                f"git_stderr={gae.strip()[:400]!r}]"
+            )
+        elif gae.strip():
+            progress_extra = f" [failure_kind=generic git_stderr={gae.strip()[:400]!r}]"
         log_stage_progress(
             session_id,
             "patch_apply",
             (retry_label + " " if retry_label else "")
-            + "patch 未適用のためローカル checks（pytest 等）をスキップ",
+            + "patch 未適用のためローカル checks（pytest 等）をスキップ"
+            + progress_extra,
         )
-        check_results = _build_check_results_for_patch_apply_failure(detail)
+        check_results = _build_check_results_for_patch_apply_failure(
+            detail,
+            failure_kind=fk,
+            git_apply_stderr=gae,
+            context_mismatch_reason=cmr,
+        )
         save_json(session_dir / "test_results" / "checks.json", check_results)
         log_stage_event(session_id=session_id, stage="patch_apply", event="end")
         return check_results

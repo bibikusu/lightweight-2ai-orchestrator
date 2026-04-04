@@ -61,8 +61,8 @@ def test_safe_apply(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     patch_path = tmp_path / "p.patch"
     patch_path.write_text(patch_text, encoding="utf-8")
 
-    applied = rs._apply_patch_smart(patch_path, rs.ROOT_DIR)
-    assert applied is True
+    outcome = rs._apply_patch_smart(patch_path, rs.ROOT_DIR)
+    assert outcome.applied is True
 
     # 先に --check が呼ばれていること（要件: apply 前の dry-run）
     assert any(call[:2] == ["apply", "--check"] for call in calls), calls
