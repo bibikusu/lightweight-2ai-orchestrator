@@ -1,148 +1,96 @@
 {
   "session_id": "session-115",
-  "phase_id": "phase13",
-  "title": "stabilization gate for production-ready development OS baseline",
-  "goal": "この開発OSを、実案件投入できる安定版として固定できるかを判定する。",
+  "phase_id": "phase6",
+  "title": "completion_criteria.type enum を正本統一し state_transition_consistent を正式化する",
+  "goal": "completion_criteria.type の正本定義を docs 上で統一し、state_transition_consistent を正式 enum として追加して session-114 の既知 warning を解消する。",
   "scope": [
-    "current main baseline verification",
-    "changed_files verification against latest scoped session",
-    "four-command validation",
-    "representative live-run verification",
-    "preflight guard side-effect verification",
-    "report and failure classification consistency verification",
-    "stabilization decision report generation"
+    "docs/global_rules.md の completion_criteria 型定義を更新する",
+    "docs/session_review_checklist.md の completion_criteria.type 参照箇所を正本に合わせて更新する",
+    "session-114 で観測された enum warning の解消方針を docs 上で明文化する"
   ],
   "out_of_scope": [
-    "new feature implementation",
-    "provider modification",
-    "retry logic enhancement",
-    "report schema redesign",
-    "Builder contract modification",
-    "Reviewer contract modification",
-    "multi-session orchestration enhancement",
-    "UI or dashboard work",
-    "performance optimization not required for stabilization decision"
+    "orchestration/run_session.py の変更",
+    "providers 配下の変更",
+    "backend 配下の変更",
+    "既存 session JSON/YAML の一括修正",
+    "selfcheck 実装コードの変更",
+    "retry ループの変更",
+    "report 生成ロジックの変更"
   ],
   "constraints": [
-    "one session one purpose",
-    "verification-only session must not introduce source code changes unless a documented blocking defect is found",
-    "if a blocking defect is found, do not fix it in this session; log it and stop",
-    "all findings must be evidence-based",
-    "all stop reasons must be logged for future development reference",
-    "do not widen scope based on convenience or suggested optimization"
+    "1セッション1目的を厳守し、completion_criteria.type enum の正本統一のみに限定する",
+    "変更ファイル数は最大3ファイル以内とする",
+    "runtime / provider / backend のコード変更は禁止する",
+    "state_transition_consistent を completion_criteria.type の正式値として採用する",
+    "既存の document_rule / artifact / non_regression / side_effect_free は維持する",
+    "review_points 第4軸は現運用に合わせて『検証十分性』を前提として扱う",
+    "session-114 で発生した warning の原因と解消方針が docs 上で追跡可能であること"
   ],
   "acceptance_ref": "docs/acceptance/session-115.yaml",
-  "objective": "Verify whether the current main branch can be treated as a stable baseline for real-project usage of the development OS.",
-  "inputs": [
-    "docs/master_instruction.md",
-    "docs/global_rules.md",
-    "docs/reports/phase12_completion_report.json",
-    "orchestration/run_session.py",
-    "latest session report for session-114",
-    "current main branch state"
-  ],
-  "outputs": [
-    "stabilization decision report",
-    "verification results for changed_files",
-    "verification results for ruff pytest mypy compileall",
-    "representative live-run result",
-    "preflight guard side-effect assessment",
-    "report and failure classification consistency assessment",
-    "explicit pass or stop decision for stable baseline adoption"
-  ],
   "allowed_changes": [
-    "docs/reports/session-115_stabilization_decision.json",
-    "artifacts/session-115/report.json",
-    "artifacts/session-115/logs/"
+    "docs/global_rules.md",
+    "docs/session_review_checklist.md",
+    "docs/sessions/session-115.json"
   ],
   "allowed_changes_detail": [
-    "docs/reports/session-115_stabilization_decision.json: create a decision record only",
-    "artifacts/session-115/report.json: create a verification report only",
-    "artifacts/session-115/logs/: create evidence logs only"
+    "docs/global_rules.md: completion_criteria.type の許容 enum 定義に state_transition_consistent を追加し、既存値との整合を明文化する。",
+    "docs/session_review_checklist.md: completion_criteria.type の確認観点がある場合、global_rules.md と一致するように文言を更新する。",
+    "docs/sessions/session-115.json: 本セッション定義のみを保存し、他 session の内容変更は行わない。"
   ],
   "forbidden_changes": [
-    "orchestration/run_session.py",
-    "backend/tests/",
-    "orchestration/providers/",
-    "docs/master_instruction.md",
-    "docs/global_rules.md",
-    "docs/roadmap.yaml",
-    "retry loop logic",
-    "report generation structure",
-    "Builder contract content",
-    "Reviewer contract content",
-    "session-114 implementation",
-    "canary-01 reactivation",
-    "any source code fix in the name of stabilization"
+    "orchestration/",
+    "backend/",
+    "docs/acceptance/ の既存ファイル",
+    ".github/",
+    "orchestration/config.yaml"
   ],
   "completion_criteria": [
     {
       "id": "CC-115-01",
-      "type": "artifact",
-      "condition": "A stabilization decision report is created and records pass or stop with evidence."
+      "type": "document_rule",
+      "condition": "global_rules.md に completion_criteria.type の正式 enum として state_transition_consistent が明記されている"
     },
     {
       "id": "CC-115-02",
-      "type": "non_regression",
-      "condition": "Verification confirms that the latest scoped implementation did not exceed allowed changed_files."
+      "type": "document_rule",
+      "condition": "session_review_checklist.md の該当記述が global_rules.md と一致している"
     },
     {
       "id": "CC-115-03",
       "type": "artifact",
-      "condition": "ruff, pytest, mypy, and compileall results are recorded with pass or fail values."
-    },
-    {
-      "id": "CC-115-04",
-      "type": "state_transition_consistent",
-      "condition": "A representative live-run result is recorded as either pass or expected fail-fast with a logged stop reason."
-    },
-    {
-      "id": "CC-115-05",
-      "type": "side_effect_free",
-      "condition": "Preflight guard behavior is assessed for side effects without changing implementation."
-    },
-    {
-      "id": "CC-115-06",
-      "type": "document_rule",
-      "condition": "If a blocking defect is found, this session stops with logs and does not expand into a repair session."
+      "condition": "session-114 の既知 warning 解消方針が docs 上で説明可能な状態になっている"
     }
   ],
   "acceptance_criteria": [
     {
       "id": "AC-115-01",
-      "description": "latest scoped session changed_files are verified against allowed_changes and recorded",
-      "test_function": "manual_verification_changed_files_against_scope"
+      "text": "completion_criteria.type の許容値に state_transition_consistent が正式追加される",
+      "test_name": "test_completion_criteria_type_enum_includes_state_transition_consistent",
+      "completion_criteria_refs": [
+        "CC-115-01"
+      ]
     },
     {
       "id": "AC-115-02",
-      "description": "ruff pytest mypy compileall results are all recorded and any fail result causes stabilization stop",
-      "test_function": "manual_verification_four_command_gate"
+      "text": "review/check 用ドキュメントの completion_criteria.type 参照が正本と一致する",
+      "test_name": "test_session_review_checklist_matches_completion_criteria_type_enum",
+      "completion_criteria_refs": [
+        "CC-115-02"
+      ]
     },
     {
       "id": "AC-115-03",
-      "description": "representative live-run result is recorded and classified as pass or expected fail-fast",
-      "test_function": "manual_verification_representative_live_run"
-    },
-    {
-      "id": "AC-115-04",
-      "description": "preflight guard side effects are assessed and recorded without implementation change",
-      "test_function": "manual_verification_preflight_guard_side_effects"
-    },
-    {
-      "id": "AC-115-05",
-      "description": "report output and failure classification consistency are checked and recorded",
-      "test_function": "manual_verification_report_and_failure_classification_consistency"
-    },
-    {
-      "id": "AC-115-06",
-      "description": "if a blocking issue is found, the session outputs a stop decision with reusable logs instead of performing new fixes",
-      "test_function": "manual_verification_stop_with_logs_on_blocking_issue"
+      "text": "session-114 の既知 warning が docs 観点で説明可能になり、enum 外値扱いではなくなる",
+      "test_name": "test_session_114_warning_is_resolved_by_docs_definition",
+      "completion_criteria_refs": [
+        "CC-115-03"
+      ]
     }
   ],
   "review_points": [
     "仕様一致（AC達成）",
     "変更範囲遵守",
     "副作用なし（既存破壊なし）",
-    "実装過不足なし"
+    "検証十分性"
   ]
 }
