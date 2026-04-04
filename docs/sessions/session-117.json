@@ -1,0 +1,123 @@
+{
+  "session_id": "session-117",
+  "phase_id": "phase6",
+  "title": "proposed.patch の事前正規化を追加し patch_apply_failure を減らす",
+  "goal": "Claude が返す proposed.patch が非空かつ diff ヘッダを持つ場合に、軽微なフォーマット不整合を apply 前に正規化し、patch_apply_failure を減らせるようにする。",
+  "scope": [
+    "orchestration/run_session.py の patch apply 前処理を改善する",
+    "proposed.patch の前後ノイズ除去を追加する",
+    "trailing whitespace の正規化を追加する",
+    "diff ヘッダを持つ patch の最小正規化を追加する",
+    "git apply --check 前に正規化結果を適用対象とする",
+    "patch 正規化の単体テストを追加する"
+  ],
+  "out_of_scope": [
+    "_apply_patch_smart の大規模改造",
+    "Claude prompt contract の変更",
+    "retry ループの変更",
+    "providers 配下の変更",
+    "run_session.py の stop-with-log ロジック変更",
+    "semantic rebase や hunk の自動再配置",
+    "context mismatch を AI 再解釈で補正する処理",
+    "Card_task_02 側ファイルの変更"
+  ],
+  "constraints": [
+    "1セッション1目的を厳守し、patch apply 前の軽微な正規化のみに限定する",
+    "変更ファイル数は最大2ファイル以内とする",
+    "run_session.py 自己修正セッションのため Cursor 手動投入を前提とする",
+    "patch が非空かつ diff ヘッダを持つ場合のみ正規化対象とする",
+    "patch の意味内容を変更する補正は禁止する",
+    "trailing whitespace 除去、前後ノイズ除去、改行整形などの軽微補正に限定する",
+    "semantic な hunk 再解釈や位置ずらし補正は禁止する",
+    "git apply --check 実行前に正規化済み patch を使うこと",
+    "失敗時は正規化前後の観測がログで追えること"
+  ],
+  "acceptance_ref": "docs/acceptance/session-117.yaml",
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "backend/tests/test_patch_normalization.py"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/run_session.py: proposed.patch を git apply 前に最小正規化する処理を追加する。対象は前後ノイズ除去、trailing whitespace 除去、diff ヘッダを持つ patch の軽微整形に限定し、意味内容や hunk 位置の再解釈は行わない。",
+    "backend/tests/test_patch_normalization.py: patch 正規化の単体テストを新規追加する。trailing whitespace 除去、非diffノイズ除去、diff ヘッダ保持、git apply 前処理への接続を検証対象とする。"
+  ],
+  "forbidden_changes": [
+    "orchestration/providers/",
+    "docs/sessions/ の既存ファイル",
+    "docs/acceptance/ の既存ファイル",
+    ".github/",
+    "orchestration/config.yaml",
+    "Card_task_02 側アプリケーションファイル"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-117-01",
+      "type": "document_rule",
+      "condition": "proposed.patch が非空かつ diff ヘッダを持つ場合の正規化対象と補正範囲が run_session.py 上で明示されている"
+    },
+    {
+      "id": "CC-117-02",
+      "type": "state_transition_consistent",
+      "condition": "git apply --check 前に正規化済み patch が使われる"
+    },
+    {
+      "id": "CC-117-03",
+      "type": "non_regression",
+      "condition": "正規化によって diff ヘッダや patch 本体が失われない"
+    },
+    {
+      "id": "CC-117-04",
+      "type": "side_effect_free",
+      "condition": "意味内容の変更や semantic な hunk 再配置を行わない"
+    },
+    {
+      "id": "CC-117-05",
+      "type": "artifact",
+      "condition": "patch 正規化の単体テストが追加され、4コマンド検証で通過できる"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-117-01",
+      "text": "trailing whitespace を含む proposed.patch は apply 前に正規化される",
+      "test_name": "test_strip_trailing_whitespace_from_patch_before_apply",
+      "completion_criteria_refs": [
+        "CC-117-01",
+        "CC-117-02"
+      ]
+    },
+    {
+      "id": "AC-117-02",
+      "text": "diff 前後の非diffノイズは apply 前に除去される",
+      "test_name": "test_remove_non_diff_noise_from_patch_before_apply",
+      "completion_criteria_refs": [
+        "CC-117-01",
+        "CC-117-02"
+      ]
+    },
+    {
+      "id": "AC-117-03",
+      "text": "正規化後も diff ヘッダと patch 本体は保持される",
+      "test_name": "test_patch_normalization_preserves_diff_header_and_body",
+      "completion_criteria_refs": [
+        "CC-117-03",
+        "CC-117-04"
+      ]
+    },
+    {
+      "id": "AC-117-04",
+      "text": "git apply --check は元の patch ではなく正規化済み patch を対象に実行される",
+      "test_name": "test_apply_check_uses_normalized_patch",
+      "completion_criteria_refs": [
+        "CC-117-02",
+        "CC-117-05"
+      ]
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ]
+}

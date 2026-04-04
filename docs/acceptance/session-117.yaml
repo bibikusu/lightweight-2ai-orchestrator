@@ -1,0 +1,32 @@
+session_id: session-117
+phase_id: phase6
+title: "proposed.patch の事前正規化を追加し patch_apply_failure を減らす"
+
+acceptance:
+  - id: AC-117-01
+    description: "trailing whitespace を含む proposed.patch は apply 前に正規化される"
+    test_name: test_strip_trailing_whitespace_from_patch_before_apply
+    completion_criteria_refs:
+      - CC-117-01
+      - CC-117-02
+
+  - id: AC-117-02
+    description: "diff 前後の非diffノイズは apply 前に除去される"
+    test_name: test_remove_non_diff_noise_from_patch_before_apply
+    completion_criteria_refs:
+      - CC-117-01
+      - CC-117-02
+
+  - id: AC-117-03
+    description: "正規化後も diff ヘッダと patch 本体は保持される"
+    test_name: test_patch_normalization_preserves_diff_header_and_body
+    completion_criteria_refs:
+      - CC-117-03
+      - CC-117-04
+
+  - id: AC-117-04
+    description: "git apply --check は元の patch ではなく正規化済み patch を対象に実行される"
+    test_name: test_apply_check_uses_normalized_patch
+    completion_criteria_refs:
+      - CC-117-02
+      - CC-117-05
