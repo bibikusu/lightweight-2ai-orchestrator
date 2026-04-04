@@ -1,0 +1,46 @@
+{
+  "session_id": "session-12",
+  "observation_type": "post-improvement-validation",
+  "related_session": "session-114",
+  "status": "confirmed_improvement",
+  "facts": [
+    {
+      "item": "implementation_user.txt includes target file context",
+      "result": "pass",
+      "evidence": "artifacts/session-12/prompts/implementation_user.txt に index.html 参照が複数含まれる"
+    },
+    {
+      "item": "proposed.patch is non-empty",
+      "result": "pass",
+      "evidence": "artifacts/session-12/patches/proposed.patch size = 7411 bytes"
+    },
+    {
+      "item": "changed_files is no longer empty",
+      "result": "pass",
+      "evidence": "artifacts/session-12/report.json changed_files = ['index.html']"
+    },
+    {
+      "item": "previous empty-patch symptom reproduced or not",
+      "result": "not_reproduced",
+      "evidence": "以前の changed_files: [] / empty patch 症状は再現しなかった"
+    }
+  ],
+  "before_after_summary": {
+    "before": {
+      "implementation_prompt_context": "大規模ファイルの本文が実質見えず、Claude が空 patch または無効 patch を返す傾向があった",
+      "patch_result": "changed_files = []"
+    },
+    "after": {
+      "implementation_prompt_context": "index.html が implementation_user.txt に注入される状態を確認",
+      "patch_result": "proposed.patch 非空、changed_files = ['index.html']"
+    }
+  },
+  "interpretation": [
+    "session-114 の大規模ファイル注入改善は、少なくとも Card_task_02 の index.html に対する prompt 文脈供給の改善として効果が確認できた",
+    "改善後は patch 生成自体が成立しており、ボトルネックは『ファイルが見えていない』段階から次の実装品質段階へ移行した"
+  ],
+  "remaining_risks": [
+    "section 抽出の精度は HTML 構造や allowed_changes_detail 記述品質に依存する",
+    "巨大 section ではトークン量と切り詰め境界の調整余地が残る"
+  ]
+}

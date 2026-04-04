@@ -1,0 +1,48 @@
+{
+  "session_id": "session-114",
+  "status": "completed_with_review",
+  "changed_files": [
+    "orchestration/run_session.py",
+    "backend/tests/test_implementation_prompt_file_injection.py",
+    "backend/tests/test_implementation_prompt_context.py"
+  ],
+  "test_result": "pass",
+  "lint_result": "pass",
+  "typecheck_result": "pass",
+  "build_result": "pass",
+  "acceptance_results": [
+    {
+      "id": "AC-114-01",
+      "result": "pass",
+      "evidence": "300行以下ファイルの全文注入テストが通過"
+    },
+    {
+      "id": "AC-114-02",
+      "result": "pass",
+      "evidence": "section hint 指定時の <section id=\"...\"> 抽出テストが通過"
+    },
+    {
+      "id": "AC-114-03",
+      "result": "pass",
+      "evidence": "section 未指定または不一致時の head+tail fallback テストが通過"
+    },
+    {
+      "id": "AC-114-04",
+      "result": "pass",
+      "evidence": "1000行上限の切り詰めテストが通過"
+    }
+  ],
+  "risks": [
+    "completion_criteria.type の state_transition_consistent は既知 warning のままで、将来 enum 厳格検証で差戻し対象になる可能性がある",
+    "既存テスト backend/tests/test_implementation_prompt_context.py の更新は当初 allowed_changes 外だったため、docs 側の scope 補正が適用済みであることを最終確認する必要がある",
+    "HTML section 抽出は整形式でないマークアップや複雑なネストで想定外挙動の余地がある"
+  ],
+  "open_issues": [
+    "docs/sessions/session-114.json の allowed_changes と allowed_changes_detail に backend/tests/test_implementation_prompt_context.py の追加反映が最終コミット済みか要確認"
+  ],
+  "diff_summary": "run_session.py の build_implementation_prompt_file_context_block を拡張し、300行超ファイルで tail-only から section extraction または head+tail fallback へ変更。allowed_changes_detail の (section: xxx) を抽出して section_hint として渡す最小変更を build_implementation_prompts に追加。新規注入テストを追加し、既存の tail-only 前提テストを新仕様へ更新。",
+  "notes": [
+    "session-114 は自動 patch 適用ではなく Cursor 手動実装へ切り替えて収束した",
+    "大規模ファイル注入改善の有効性は session-12 再実行で追加確認済み"
+  ]
+}
