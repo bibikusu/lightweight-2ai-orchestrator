@@ -1,0 +1,54 @@
+session_id: session-12
+phase_id: phase1-f
+title: タスク状態管理の保存・復元・日次リセット整合を固定する
+acceptance:
+  - id: AC-12-01
+    description: タスクを完了状態に変更した後、画面再読み込みを行っても同一営業日の完了状態が復元される。
+    test_name: test_task_state_persist_and_restore_same_business_day
+    priority: highest
+    completion_criteria_refs:
+      - CC-12-01
+
+  - id: AC-12-02
+    description: 業務開始ボタン実行時に、その営業日の taskCompletions が初期状態へ更新される。
+    test_name: test_task_state_reset_by_business_start_action
+    priority: highest
+    completion_criteria_refs:
+      - CC-12-02
+
+  - id: AC-12-03
+    description: 業務開始ボタン未実行でも、businessStartTime を跨いだ条件で当日タスク状態の自動初期化が行われる。
+    test_name: test_task_state_auto_reset_by_business_start_time_fallback
+    priority: highest
+    completion_criteria_refs:
+      - CC-12-03
+
+  - id: AC-12-04
+    description: 当日状態の初期化を実行しても、前営業日以前の taskCompletions データは保持される。
+    test_name: test_task_state_reset_does_not_overwrite_previous_business_days
+    priority: high
+    completion_criteria_refs:
+      - CC-12-04
+
+  - id: AC-12-05
+    description: localStorage にタスク状態データが存在しない場合でも、初期表示または初回操作でクラッシュせず初期状態を生成できる。
+    test_name: test_task_state_initializes_when_storage_missing
+    priority: high
+    completion_criteria_refs:
+      - CC-12-01
+      - CC-12-03
+
+  - id: AC-12-06
+    description: タスク状態管理の変更後も、シフト管理・打刻・給与概算・設定関連の既存機能が破壊されない。
+    test_name: test_task_state_changes_do_not_break_other_modules
+    priority: highest
+    completion_criteria_refs:
+      - CC-12-05
+
+  - id: AC-12-07
+    description: docs/sessions/session-12.json と docs/acceptance/session-12.yaml が repository 相対パスで保存対象として定義されている。
+    test_name: test_session_12_spec_and_acceptance_paths_are_defined
+    priority: medium
+    completion_criteria_refs:
+      - CC-12-06
+      - CC-12-07

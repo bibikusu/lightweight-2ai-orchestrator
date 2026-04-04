@@ -1,0 +1,179 @@
+{
+  "session_id": "session-12",
+  "phase_id": "phase1-f",
+  "title": "タスク状態管理の保存・復元・日次リセット整合を固定する",
+  "goal": "index.html 内のタスク管理ロジックに対して、タスク完了状態の保存・復元・業務開始時リセット・businessStartTime 到達時の自動フォールバックリセットを一貫した仕様で実装し、同一営業日における状態遷移の破綻を防ぐ。",
+  "scope": [
+    "index.html 内のタスク状態管理ロジックを対象とする",
+    "タスク完了状態の localStorage 保存処理を対象とする",
+    "画面再読み込み時のタスク完了状態復元処理を対象とする",
+    "業務開始ボタン実行時の当日タスク状態初期化処理を対象とする",
+    "businessStartTime 到達時の自動フォールバックによる当日タスク状態初期化処理を対象とする",
+    "当日データと過去日データが混線しないための状態遷移整合を対象とする",
+    "タスク状態管理に関する受入条件と検証観点の追加を対象とする"
+  ],
+  "out_of_scope": [
+    "シフト管理モジュールの仕様変更",
+    "出退勤打刻モジュールの仕様変更",
+    "給与概算モジュールの仕様変更",
+    "設定・バックアップ・売上入力モジュールの仕様変更",
+    "AI連携設定機能の実装変更",
+    "タスク管理UIの大幅なレイアウト変更",
+    "デフォルトタスク定義の全面見直し",
+    "新規モジュール追加",
+    "外部サーバー連携",
+    "IndexedDB への移行",
+    "複数ファイル構成への分割"
+  ],
+  "constraints": [
+    "1セッション1目的を厳守すること",
+    "変更ファイル数は最大5ファイル以内に収めること",
+    "単一HTMLファイル構成を維持すること",
+    "外部依存を追加しないこと",
+    "状態管理対象はタスクモジュールに限定すること",
+    "UI変更は状態管理に必要な最小限に留めること",
+    "既存モジュールの挙動を破壊しないこと",
+    "localStorage 保存構造は既存アプリ全体との整合を維持すること",
+    "localStorage 保存キーは既存 index.html の実装に従うこと。V3 正本との差異は別途整理対象とすること",
+    "当日状態と過去日状態を上書き混線させないこと",
+    "日付判定は既存の日付基準関数に整合する形で実装すること",
+    "businessStartTime を基準にした営業日切替判定を明示すること",
+    "業務開始ボタンによる明示的初期化と自動フォールバック初期化を両立させること",
+    "曖昧語を使用しないこと",
+    "acceptance_ref は repository 相対パスとすること",
+    "review_points は固定4軸を使用すること",
+    "completion_criteria.type は document_rule, artifact, non_regression, state_transition_consistent, side_effect_free のみ使用すること"
+  ],
+  "acceptance_ref": "docs/acceptance/session-12.yaml",
+  "allowed_changes": [
+    "index.html",
+    "docs/sessions/session-12.json",
+    "docs/acceptance/session-12.yaml"
+  ],
+  "allowed_changes_detail": [
+    "index.html: タスク管理セクションに関連する JavaScript の状態保存・復元・日次リセット・業務開始時初期化・businessStartTime 自動フォールバック初期化の処理追加または整理",
+    "index.html: taskCompletions 相当の状態オブジェクトの読込・保存・整合チェック処理の追加または整理",
+    "index.html: タスク状態管理に必要な最小限の data 属性、id、補助表示文言の追加",
+    "docs/sessions/session-12.json: 本セッション定義の新規作成",
+    "docs/acceptance/session-12.yaml: 本セッション用 acceptance 定義の新規作成"
+  ],
+  "forbidden_changes": [
+    "index.html 内のシフト管理ロジックの変更",
+    "index.html 内の出退勤打刻ロジックの変更",
+    "index.html 内の給与概算ロジックの変更",
+    "index.html 内の設定・バックアップ・売上入力ロジックの変更",
+    "AI連携設定の機能追加",
+    "外部ファイル追加",
+    "orchestration/run_session.py の変更",
+    "providers 配下の変更",
+    "backend 配下の変更",
+    ".github 配下の変更",
+    "docs/roadmap.yaml の変更",
+    "orchestration/config.yaml の変更",
+    "既存 session-01 から session-11 の変更",
+    "既存 acceptance session-01 から session-11 の変更"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-12-01",
+      "type": "state_transition_consistent",
+      "condition": "同一営業日において、タスク完了状態が保存後の再読込で再現されること。"
+    },
+    {
+      "id": "CC-12-02",
+      "type": "state_transition_consistent",
+      "condition": "業務開始ボタン実行時に、当日タスク状態が新しい営業日用の初期状態へリセットされること。"
+    },
+    {
+      "id": "CC-12-03",
+      "type": "state_transition_consistent",
+      "condition": "業務開始ボタン未実行でも、businessStartTime 到達後の条件で当日タスク状態の自動初期化が実行されること。"
+    },
+    {
+      "id": "CC-12-04",
+      "type": "non_regression",
+      "condition": "過去日タスク状態が当日初期化処理によって上書きされず、営業日単位で分離保持されること。"
+    },
+    {
+      "id": "CC-12-05",
+      "type": "side_effect_free",
+      "condition": "タスク状態管理の変更により、シフト管理・打刻・給与概算・設定・バックアップ・売上入力の既存挙動に副作用が発生しないこと。"
+    },
+    {
+      "id": "CC-12-06",
+      "type": "artifact",
+      "condition": "docs/acceptance/session-12.yaml に本セッションの acceptance 定義が保存されていること。"
+    },
+    {
+      "id": "CC-12-07",
+      "type": "document_rule",
+      "condition": "本セッション定義が allowed_changes_detail、forbidden_changes、completion_criteria、acceptance_criteria、review_points を含む構造化JSONとして保存されていること。"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-12-01",
+      "text": "タスクを完了状態に変更した後、画面再読み込みを行っても同一営業日の完了状態が復元される。",
+      "test_name": "test_task_state_persist_and_restore_same_business_day",
+      "completion_criteria_refs": [
+        "CC-12-01"
+      ]
+    },
+    {
+      "id": "AC-12-02",
+      "text": "業務開始ボタン実行時に、その営業日の taskCompletions が初期状態へ更新される。",
+      "test_name": "test_task_state_reset_by_business_start_action",
+      "completion_criteria_refs": [
+        "CC-12-02"
+      ]
+    },
+    {
+      "id": "AC-12-03",
+      "text": "業務開始ボタン未実行でも、businessStartTime を跨いだ条件で当日タスク状態の自動初期化が行われる。",
+      "test_name": "test_task_state_auto_reset_by_business_start_time_fallback",
+      "completion_criteria_refs": [
+        "CC-12-03"
+      ]
+    },
+    {
+      "id": "AC-12-04",
+      "text": "当日状態の初期化を実行しても、前営業日以前の taskCompletions データは保持される。",
+      "test_name": "test_task_state_reset_does_not_overwrite_previous_business_days",
+      "completion_criteria_refs": [
+        "CC-12-04"
+      ]
+    },
+    {
+      "id": "AC-12-05",
+      "text": "localStorage にタスク状態データが存在しない場合でも、初期表示または初回操作でクラッシュせず初期状態を生成できる。",
+      "test_name": "test_task_state_initializes_when_storage_missing",
+      "completion_criteria_refs": [
+        "CC-12-01",
+        "CC-12-03"
+      ]
+    },
+    {
+      "id": "AC-12-06",
+      "text": "タスク状態管理の変更後も、シフト管理・打刻・給与概算・設定関連の既存機能が破壊されない。",
+      "test_name": "test_task_state_changes_do_not_break_other_modules",
+      "completion_criteria_refs": [
+        "CC-12-05"
+      ]
+    },
+    {
+      "id": "AC-12-07",
+      "text": "docs/sessions/session-12.json と docs/acceptance/session-12.yaml が repository 相対パスで保存対象として定義されている。",
+      "test_name": "test_session_12_spec_and_acceptance_paths_are_defined",
+      "completion_criteria_refs": [
+        "CC-12-06",
+        "CC-12-07"
+      ]
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ]
+}
