@@ -100,8 +100,9 @@ def test_aggregate_reports_computes_success_rate_and_failure_distribution(tmp_pa
     assert doc["failed_count"] == 1
     assert doc["success_rate"] == pytest.approx(2.0 / 3.0)
     dist = doc["failure_type_distribution"]
-    assert dist.get("__success__") == 2
+    assert "__success__" not in dist
     assert dist.get("test_failure") == 1
+    assert sum(dist.values()) == doc["failed_count"]
 
 
 def test_aggregate_reports_computes_retry_stats(tmp_path: Path) -> None:
@@ -228,3 +229,137 @@ def test_aggregate_reports_passes_validation_suite() -> None:
                 check=False,
             )
             assert proc.returncode == 0, (cmd, proc.stdout, proc.stderr)
+
+
+def test_dashboard_status_counts_match_sessions_with_report(tmp_path: Path) -> None:
+    """AC-13-01: レポートありセッション数と status 区分カウントの整合。"""
+    art = tmp_path / "artifacts"
+    _write_report(
+        art,
+        "s-ok",
+        session_id="s-ok",
+        status="success",
+        failure_type=None,
+        completion_status="review_required",
+    )
+    _write_report(
+        art,
+        "s-ng",
+        session_id="s-ng",
+        status="failed",
+        failure_type="test_failure",
+        completion_status="stopped",
+    )
+    _write_report(
+        art,
+        "s-other",
+        session_id="s-other",
+        status="timeout",
+        failure_type=None,
+        completion_status="__unknown__",
+    )
+    doc = agg.build_dashboard_document(art)
+    assert (
+        doc["sessions_with_report"]
+        == doc["success_count"] + doc["failed_count"] + doc["other_status_count"]
+    )
+
+
+def test_failure_type_distribution_counts_failed_rows_only(tmp_path: Path) -> None:
+    """AC-13-02: failure_type 分布は failed のみ（__success__ なし）。"""
+    art = tmp_path / "artifacts"
+    _write_report(
+        art,
+        "a",
+        session_id="a",
+        status="success",
+        failure_type=None,
+        completion_status="review_required",
+    )
+    _write_report(
+        art,
+        "b",
+        session_id="b",
+        status="failed",
+        failure_type="lint_failure",
+        completion_status="stopped",
+    )
+    doc = agg.build_dashboard_document(art)
+    dist = doc["failure_type_distribution"]
+    assert "__success__" not in dist
+    assert dist == {"lint_failure": 1}
+
+
+def test_failure_type_distribution_total_matches_failed_count(tmp_path: Path) -> None:
+    """AC-13-03: failure_type 分布の合計が failed_count と一致。"""
+    art = tmp_path / "artifacts"
+    for i, ft in enumerate(["a", "b", None]):
+        _write_report(
+            art,
+            f"f{i}",
+            session_id=f"f{i}",
+            status="failed",
+            failure_type=ft,
+            completion_status="stopped",
+        )
+    _write_report(
+        art,
+        "ok",
+        session_id="ok",
+        status="success",
+        failure_type=None,
+        completion_status="review_required",
+    )
+    doc = agg.build_dashboard_document(art)
+    assert doc["failed_count"] == 3
+    dist = doc["failure_type_distribution"]
+    assert "__success__" not in dist
+    assert dist.get("a") == 1
+    assert dist.get("b") == 1
+    assert dist.get("__missing_failure_type__") == 1
+    assert sum(dist.values()) == 3
+
+
+def test_failed_rows_with_empty_failure_type_are_not_bucketed_as_success(
+    tmp_path: Path,
+) -> None:
+    """AC-13-04: failed かつ failure_type 欠損は __success__ に載せない。"""
+    art = tmp_path / "artifacts"
+    _write_report(
+        art,
+        "untyped",
+        session_id="untyped",
+        status="failed",
+        failure_type=None,
+        completion_status="stopped",
+    )
+    _write_report(
+        art,
+        "blank",
+        session_id="blank",
+        status="failed",
+        failure_type="   ",
+        completion_status="stopped",
+    )
+    doc = agg.build_dashboard_document(art)
+    dist = doc["failure_type_distribution"]
+    assert "__success__" not in dist
+    assert dist.get("__missing_failure_type__") == 2
+
+
+def test_dashboard_output_labels_match_aggregation_rule(tmp_path: Path) -> None:
+    """AC-13-05: Markdown の failure_type 説明が集計ルールと矛盾しない。"""
+    art = tmp_path / "artifacts"
+    _write_report(
+        art,
+        "x",
+        session_id="x",
+        status="failed",
+        failure_type="t",
+        completion_status="stopped",
+    )
+    doc = agg.build_dashboard_document(art)
+    md = agg.render_markdown(doc)
+    assert "`status` が `failed`" in md
+    assert "__missing_failure_type__" in md
+    assert "`__success__` キーは使わない" in md

@@ -97,12 +97,15 @@ def compute_dashboard(
     other_status_n = sessions_with_report - success_n - failed_n
     success_rate = (float(success_n) / float(sessions_with_report)) if sessions_with_report else 0.0
 
-    # failure_type: None は成功系キーとして "__success__" に寄せる（仕様）
+    # failure_type 分布は status=failed のセッションのみを母集団とする（success と __success__ は混在させない）
     ft_counts: Counter[str] = Counter()
     for r in rows:
+        if str(r["report"].get("status")) != "failed":
+            continue
         ft = r["report"].get("failure_type")
-        if ft is None or ft == "":
-            ft_key = "__success__"
+        if ft is None or (isinstance(ft, str) and ft.strip() == ""):
+            # 失敗だが failure_type 未設定は成功キーに寄せず、件数は failed_count 側と同期できるよう欠損用バケットに分類する
+            ft_key = "__missing_failure_type__"
         else:
             ft_key = str(ft)
         ft_counts[ft_key] += 1
@@ -237,8 +240,16 @@ def render_markdown(doc: Dict[str, Any]) -> str:
     lines.append(f"- success_rate: **{doc.get('success_rate')}**")
     lines.append(f"- success_count: {doc.get('success_count')}")
     lines.append(f"- failed_count: {doc.get('failed_count')}")
+    lines.append(
+        f"- other_status_count: {doc.get('other_status_count')}"
+    )
     lines.append("")
     lines.append("### failure_type_distribution")
+    lines.append("")
+    lines.append(
+        "（`status` が `failed` のセッションのみを集計。成功セッションは含めない。"
+        " `failure_type` が未設定の失敗は `__missing_failure_type__` に分類。`__success__` キーは使わない。）"
+    )
     lines.append("")
     for k, v in (doc.get("failure_type_distribution") or {}).items():
         lines.append(f"- `{k}`: {v}")

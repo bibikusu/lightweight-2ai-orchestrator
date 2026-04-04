@@ -1,0 +1,437 @@
+{
+  "generated_at": "2026-04-04T11:12:48.173925+00:00",
+  "artifacts_root": "/Users/kunihideyamane/AI_Team/軽量2AIオーケストレーター方式/artifacts",
+  "sessions_scanned": 35,
+  "sessions_with_report": 33,
+  "success_rate": 0.3939393939393939,
+  "success_count": 13,
+  "failed_count": 18,
+  "other_status_count": 2,
+  "failure_type_distribution": {
+    "test_failure": 9,
+    "patch_apply_failure": 5,
+    "spec_missing": 2,
+    "__missing_failure_type__": 1,
+    "type_mismatch": 1
+  },
+  "completion_status_distribution": {
+    "stopped": 16,
+    "review_required": 12,
+    "conditional_pass": 2,
+    "failed": 2,
+    "__unknown__": 1
+  },
+  "changed_files_stats": {
+    "empty_count": 12,
+    "nonempty_count": 21,
+    "total_changed_file_refs": 28,
+    "avg_files_per_session": 0.848485,
+    "top_changed_files": [
+      {
+        "path": "artifacts/.gitkeep",
+        "count": 2
+      },
+      {
+        "path": "orchestration/run_session.py",
+        "count": 2
+      },
+      {
+        "path": "index.html",
+        "count": 2
+      },
+      {
+        "path": "backend/tests/test_live_api_validation.py",
+        "count": 2
+      },
+      {
+        "path": "docs/phase2_operation_guide.md",
+        "count": 1
+      },
+      {
+        "path": "requirements.txt",
+        "count": 1
+      },
+      {
+        "path": "artifacts/session-02/report.json",
+        "count": 1
+      },
+      {
+        "path": "backend/tests/test_retry_optimization.py",
+        "count": 1
+      },
+      {
+        "path": "backend/tests/test_session_json_required_keys.py",
+        "count": 1
+      },
+      {
+        "path": "backend/tests/test_report_generation.py",
+        "count": 1
+      },
+      {
+        "path": "docs/reports/session-115_stabilization_decision.json",
+        "count": 1
+      },
+      {
+        "path": "backend/tests/test_session_validation.py",
+        "count": 1
+      },
+      {
+        "path": "backend/tests/conftest.py",
+        "count": 1
+      },
+      {
+        "path": "docs/acceptance/session-92.yaml",
+        "count": 1
+      },
+      {
+        "path": "docs/reports/phase3-live-run-acceptance-report.md",
+        "count": 1
+      },
+      {
+        "path": "orchestration/providers/claude_client.py",
+        "count": 1
+      },
+      {
+        "path": "orchestration/providers/openai_client.py",
+        "count": 1
+      },
+      {
+        "path": "backend/tests/test_provider_usage.py",
+        "count": 1
+      },
+      {
+        "path": "docs/acceptance/session-95.yaml",
+        "count": 1
+      },
+      {
+        "path": "docs/sessions/session-95.json",
+        "count": 1
+      },
+      {
+        "path": "docs/reports/session-95-live-run-report.json",
+        "count": 1
+      },
+      {
+        "path": "docs/reports/session-95-feedback.md",
+        "count": 1
+      },
+      {
+        "path": "docs/reports/phase4-completion-report.md",
+        "count": 1
+      },
+      {
+        "path": "backend/tests/test_orchestrator_version.py",
+        "count": 1
+      }
+    ]
+  },
+  "retry_stats": {
+    "sessions_with_retry_state_file": 13,
+    "total_retry_count": 9,
+    "avg_retry_count": 0.272727,
+    "max_retry_count": 1,
+    "retry_histogram": {
+      "0": 24,
+      "1": 9
+    }
+  },
+  "sessions": [
+    {
+      "session_id": "live-run-safe-04",
+      "artifact_dir": "live-run-safe-04",
+      "status": "success",
+      "failure_type": null,
+      "completion_status": "review_required",
+      "retry_count": 0,
+      "changed_files_count": 0
+    },
+    {
+      "session_id": "phase2-real-02",
+      "artifact_dir": "phase2-real-02",
+      "status": "success",
+      "failure_type": null,
+      "completion_status": "review_required",
+      "retry_count": 0,
+      "changed_files_count": 1
+    },
+    {
+      "session_id": "real-run-safe-01",
+      "artifact_dir": "real-run-safe-01",
+      "status": "failed",
+      "failure_type": "test_failure",
+      "completion_status": "failed",
+      "retry_count": 0,
+      "changed_files_count": 1
+    },
+    {
+      "session_id": "real-run-safe-02",
+      "artifact_dir": "real-run-safe-02",
+      "status": "failed",
+      "failure_type": "type_mismatch",
+      "completion_status": "failed",
+      "retry_count": 1,
+      "changed_files_count": 1
+    },
+    {
+      "session_id": "session-01",
+      "artifact_dir": "session-01",
+      "status": "dry_run",
+      "failure_type": null,
+      "completion_status": "conditional_pass",
+      "retry_count": 0,
+      "changed_files_count": 0
+    },
+    {
+      "session_id": "session-02a",
+      "artifact_dir": "session-02",
+      "status": "completed",
+      "failure_type": null,
+      "completion_status": null,
+      "retry_count": 0,
+      "changed_files_count": 2
+    },
+    {
+      "session_id": "session-101",
+      "artifact_dir": "session-101",
+      "status": "failed",
+      "failure_type": "patch_apply_failure",
+      "completion_status": "stopped",
+      "retry_count": 1,
+      "changed_files_count": 0
+    },
+    {
+      "session_id": "session-102",
+      "artifact_dir": "session-102",
+      "status": "failed",
+      "failure_type": "test_failure",
+      "completion_status": "stopped",
+      "retry_count": 1,
+      "changed_files_count": 1
+    },
+    {
+      "session_id": "session-106",
+      "artifact_dir": "session-106",
+      "status": "success",
+      "failure_type": null,
+      "completion_status": "review_required",
+      "retry_count": 0,
+      "changed_files_count": 0
+    },
+    {
+      "session_id": "session-107b",
+      "artifact_dir": "session-107b",
+      "status": "success",
+      "failure_type": null,
+      "completion_status": "review_required",
+      "retry_count": 0,
+      "changed_files_count": 1
+    },
+    {
+      "session_id": "session-11-duration",
+      "artifact_dir": "session-11-duration",
+      "status": "success",
+      "failure_type": null,
+      "completion_status": "review_required",
+      "retry_count": 0,
+      "changed_files_count": 2
+    },
+    {
+      "session_id": "session-114",
+      "artifact_dir": "session-114",
+      "status": "failed",
+      "failure_type": "patch_apply_failure",
+      "completion_status": "stopped",
+      "retry_count": 1,
+      "changed_files_count": 0
+    },
+    {
+      "session_id": "session-114-preflight",
+      "artifact_dir": "session-114-preflight",
+      "status": "failed",
+      "failure_type": "test_failure",
+      "completion_status": "stopped",
+      "retry_count": 0,
+      "changed_files_count": 0
+    },
+    {
+      "session_id": "session-115",
+      "artifact_dir": "session-115",
+      "status": "success",
+      "failure_type": null,
+      "completion_status": "review_required",
+      "retry_count": 0,
+      "changed_files_count": 1
+    },
+    {
+      "session_id": "session-116",
+      "artifact_dir": "session-116",
+      "status": "failed",
+      "failure_type": "patch_apply_failure",
+      "completion_status": "stopped",
+      "retry_count": 1,
+      "changed_files_count": 0
+    },
+    {
+      "session_id": "session-12",
+      "artifact_dir": "session-12",
+      "status": "success",
+      "failure_type": null,
+      "completion_status": "review_required",
+      "retry_count": 0,
+      "changed_files_count": 0
+    },
+    {
+      "session_id": "session-12",
+      "artifact_dir": "session-12-old-20260404-133620",
+      "status": "failed",
+      "failure_type": "spec_missing",
+      "completion_status": "stopped",
+      "retry_count": 0,
+      "changed_files_count": 1
+    },
+    {
+      "session_id": "session-12",
+      "artifact_dir": "session-12-stale-20260404-172351",
+      "status": "failed",
+      "failure_type": "spec_missing",
+      "completion_status": "stopped",
+      "retry_count": 0,
+      "changed_files_count": 1
+    },
+    {
+      "session_id": "session-14",
+      "artifact_dir": "session-14",
+      "status": "failed",
+      "failure_type": "test_failure",
+      "completion_status": "stopped",
+      "retry_count": 0,
+      "changed_files_count": 0
+    },
+    {
+      "session_id": "session-57",
+      "artifact_dir": "session-57",
+      "status": "success",
+      "failure_type": null,
+      "completion_status": "review_required",
+      "retry_count": 0,
+      "changed_files_count": 1
+    },
+    {
+      "session_id": "session-57",
+      "artifact_dir": "session-57-old2",
+      "status": "failed",
+      "failure_type": null,
+      "completion_status": "stopped",
+      "retry_count": 0,
+      "changed_files_count": 1
+    },
+    {
+      "session_id": "session-81",
+      "artifact_dir": "session-81",
+      "status": "failed",
+      "failure_type": "test_failure",
+      "completion_status": "stopped",
+      "retry_count": 1,
+      "changed_files_count": 1
+    },
+    {
+      "session_id": "session-81a",
+      "artifact_dir": "session-81a",
+      "status": "success",
+      "failure_type": null,
+      "completion_status": "review_required",
+      "retry_count": 0,
+      "changed_files_count": 1
+    },
+    {
+      "session_id": "session-81」",
+      "artifact_dir": "session-81」",
+      "status": "failed",
+      "failure_type": "test_failure",
+      "completion_status": "stopped",
+      "retry_count": 0,
+      "changed_files_count": 0
+    },
+    {
+      "session_id": "session-88",
+      "artifact_dir": "session-88",
+      "status": "failed",
+      "failure_type": "patch_apply_failure",
+      "completion_status": "stopped",
+      "retry_count": 1,
+      "changed_files_count": 0
+    },
+    {
+      "session_id": "session-92",
+      "artifact_dir": "session-92",
+      "status": "failed",
+      "failure_type": "test_failure",
+      "completion_status": "stopped",
+      "retry_count": 0,
+      "changed_files_count": 2
+    },
+    {
+      "session_id": "session-93",
+      "artifact_dir": "session-93",
+      "status": "success",
+      "failure_type": null,
+      "completion_status": "review_required",
+      "retry_count": 0,
+      "changed_files_count": 3
+    },
+    {
+      "session_id": "session-94",
+      "artifact_dir": "session-94",
+      "status": "failed",
+      "failure_type": "test_failure",
+      "completion_status": "stopped",
+      "retry_count": 0,
+      "changed_files_count": 2
+    },
+    {
+      "session_id": "session-95",
+      "artifact_dir": "session-95",
+      "status": "success",
+      "failure_type": null,
+      "completion_status": "review_required",
+      "retry_count": 0,
+      "changed_files_count": 1
+    },
+    {
+      "session_id": "session-96",
+      "artifact_dir": "session-96",
+      "status": "success",
+      "failure_type": null,
+      "completion_status": "conditional_pass",
+      "retry_count": 0,
+      "changed_files_count": 1
+    },
+    {
+      "session_id": "session-97",
+      "artifact_dir": "session-97",
+      "status": "success",
+      "failure_type": null,
+      "completion_status": "review_required",
+      "retry_count": 0,
+      "changed_files_count": 1
+    },
+    {
+      "session_id": "session-canary-01",
+      "artifact_dir": "session-canary-01",
+      "status": "failed",
+      "failure_type": "test_failure",
+      "completion_status": "stopped",
+      "retry_count": 1,
+      "changed_files_count": 2
+    },
+    {
+      "session_id": "session-canary-01",
+      "artifact_dir": "session-canary-01-prev",
+      "status": "failed",
+      "failure_type": "patch_apply_failure",
+      "completion_status": "stopped",
+      "retry_count": 1,
+      "changed_files_count": 0
+    }
+  ]
+}

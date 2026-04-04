@@ -1,0 +1,137 @@
+{
+  "session_id": "session-13",
+  "phase_id": "phase_observation_v0",
+  "title": "dashboard集計のsuccess_countとfailure_type_distributionの意味衝突を解消する",
+  "goal": "docs/pipeline_v0/dashboard_latest.json の success_count と failure_type_distribution の定義衝突を解消し、failure_type 分布を failed セッションのみの集計に補正する。",
+  "scope": [
+    "scripts/aggregate_observation_reports.py の compute_dashboard における failure_type_distribution 集計条件の修正",
+    "scripts/aggregate_observation_reports.py の dashboard JSON / Markdown 出力文言の整合修正",
+    "backend/tests/test_aggregate_observation_reports.py の追加または更新",
+    "docs/pipeline_v0/dashboard_latest.json の再生成による結果確認"
+  ],
+  "out_of_scope": [
+    "orchestration/run_session.py の変更",
+    "failure_type の canonical enum 自体の変更",
+    "patch_apply_failure の正本 enum への統合方針決定",
+    "artifacts 配下の過去 report.json の書き換え",
+    "session-12 の rerun 再実行",
+    "providers 配下の変更",
+    "docs/sessions/ 既存ファイルの変更",
+    "docs/acceptance/ 既存ファイルの変更"
+  ],
+  "constraints": [
+    "1セッション1目的を守る",
+    "dashboard の success_count / failed_count / other_status_count の定義は変更しない",
+    "failure_type_distribution は failed セッションのみを母集団にする",
+    "__success__ キーは failure_type_distribution から除去する",
+    "failure_type_distribution の総数は failed_count と一致させる",
+    "sessions_with_report と success_count + failed_count + other_status_count の一致を維持する",
+    "変更ファイル数は最大3ファイル以内とする",
+    "既存の collect_session_rows / build_dashboard_document の主要入出力互換を壊さない"
+  ],
+  "acceptance_ref": "docs/acceptance/session-13.yaml",
+  "allowed_changes": [
+    "scripts/aggregate_observation_reports.py",
+    "backend/tests/test_aggregate_observation_reports.py",
+    "docs/sessions/session-13.json",
+    "docs/acceptance/session-13.yaml"
+  ],
+  "allowed_changes_detail": [
+    "scripts/aggregate_observation_reports.py: compute_dashboard 内の failure_type_distribution 集計条件、関連コメント、dashboard 出力文言の整合修正のみ",
+    "backend/tests/test_aggregate_observation_reports.py: session-13 の acceptance に対応するテスト追加または更新のみ",
+    "docs/sessions/session-13.json: このセッション定義の新規作成のみ",
+    "docs/acceptance/session-13.yaml: この受入条件ファイルの新規作成のみ"
+  ],
+  "forbidden_changes": [
+    "orchestration/run_session.py",
+    "orchestration/providers/",
+    "docs/sessions/ 既存ファイル",
+    "docs/acceptance/ 既存ファイル",
+    ".github/",
+    "orchestration/config.yaml",
+    "artifacts/ 配下の既存成果物の手修正"
+  ],
+  "inputs": [
+    {
+      "name": "dashboard_latest_json",
+      "type": "object",
+      "schema": {
+        "success_count": "int",
+        "failed_count": "int",
+        "other_status_count": "int",
+        "sessions_with_report": "int",
+        "failure_type_distribution": "object"
+      }
+    },
+    {
+      "name": "report_rows",
+      "type": "list[object]"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "updated_dashboard_document",
+      "type": "object"
+    },
+    {
+      "name": "test_results",
+      "type": "object"
+    }
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-13-01",
+      "type": "state_transition_consistent",
+      "condition": "success_count と failed_count と other_status_count の合計が sessions_with_report と一致する"
+    },
+    {
+      "id": "CC-13-02",
+      "type": "artifact",
+      "condition": "failure_type_distribution が failed セッションのみを母集団として集計され、__success__ を含まない"
+    },
+    {
+      "id": "CC-13-03",
+      "type": "non_regression",
+      "condition": "既存の dashboard 生成フローが壊れず backend/tests/test_aggregate_observation_reports.py が PASS する"
+    },
+    {
+      "id": "CC-13-04",
+      "type": "side_effect_free",
+      "condition": "run_session 本体や provider 実装に変更がなく、集計スクリプトとテスト以外に副作用がない"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-13-01",
+      "text": "sessions_with_report が success_count + failed_count + other_status_count と一致する",
+      "test_name": "test_dashboard_status_counts_match_sessions_with_report"
+    },
+    {
+      "id": "AC-13-02",
+      "text": "failure_type_distribution は failed セッションのみを集計し、成功系の __success__ キーを含まない",
+      "test_name": "test_failure_type_distribution_counts_failed_rows_only"
+    },
+    {
+      "id": "AC-13-03",
+      "text": "failure_type_distribution の件数合計が failed_count と一致する",
+      "test_name": "test_failure_type_distribution_total_matches_failed_count"
+    },
+    {
+      "id": "AC-13-04",
+      "text": "status が failed かつ failure_type が null または空文字の row は __success__ に分類せず、欠損用の __missing_failure_type__ に分類する（成功として failure_type_distribution に載せない）",
+      "test_name": "test_failed_rows_with_empty_failure_type_are_not_bucketed_as_success"
+    },
+    {
+      "id": "AC-13-05",
+      "text": "dashboard JSON / Markdown の文言が実際の集計定義と矛盾しない",
+      "test_name": "test_dashboard_output_labels_match_aggregation_rule"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ],
+  "priority": "high"
+}

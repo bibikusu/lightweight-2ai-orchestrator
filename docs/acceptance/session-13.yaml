@@ -1,0 +1,62 @@
+session_id: session-13
+phase_id: phase_observation_v0
+title: dashboard集計のsuccess_countとfailure_type_distributionの意味衝突を解消する
+
+acceptance:
+  - id: AC-13-01
+    description: sessions_with_report が success_count + failed_count + other_status_count と一致する
+    test_name: test_dashboard_status_counts_match_sessions_with_report
+    priority: highest
+    completion_criteria_refs:
+      - CC-13-01
+
+  - id: AC-13-02
+    description: failure_type_distribution は failed セッションのみを集計し、成功系の __success__ キーを含まない
+    test_name: test_failure_type_distribution_counts_failed_rows_only
+    priority: highest
+    completion_criteria_refs:
+      - CC-13-02
+
+  - id: AC-13-03
+    description: failure_type_distribution の件数合計が failed_count と一致する
+    test_name: test_failure_type_distribution_total_matches_failed_count
+    priority: highest
+    completion_criteria_refs:
+      - CC-13-02
+
+  - id: AC-13-04
+    description: status が failed かつ failure_type が null または空文字の row は __success__ に分類せず、欠損用の __missing_failure_type__ に分類する（成功として failure_type_distribution に載せない）
+    test_name: test_failed_rows_with_empty_failure_type_are_not_bucketed_as_success
+    priority: high
+    completion_criteria_refs:
+      - CC-13-02
+
+  - id: AC-13-05
+    description: dashboard JSON と Markdown の出力文言が failure_type_distribution の実定義と矛盾しない
+    test_name: test_dashboard_output_labels_match_aggregation_rule
+    priority: medium
+    completion_criteria_refs:
+      - CC-13-03
+
+completion_criteria:
+  - id: CC-13-01
+    type: state_transition_consistent
+    condition: success_count と failed_count と other_status_count の合計が sessions_with_report と一致する
+
+  - id: CC-13-02
+    type: artifact
+    condition: failure_type_distribution が failed セッションのみを母集団とし、__success__ を含まない
+
+  - id: CC-13-03
+    type: non_regression
+    condition: backend/tests/test_aggregate_observation_reports.py が PASS する
+
+  - id: CC-13-04
+    type: side_effect_free
+    condition: run_session 本体および provider 実装に変更がない
+
+review_points:
+  - 仕様一致（AC達成）
+  - 変更範囲遵守
+  - 副作用なし（既存破壊なし）
+  - 検証十分性
