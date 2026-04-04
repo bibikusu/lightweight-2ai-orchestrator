@@ -123,5 +123,48 @@
     "副作用なし（既存破壊なし）",
     "検証十分性"
   ],
-  "priority": "high"
+  "priority": "high",
+  "status": "completed_with_review",
+  "changed_files": [
+    "orchestration/run_session.py",
+    "backend/tests/test_patch_apply_failure_diagnosis.py",
+    "docs/sessions/session-119.json",
+    "docs/acceptance/session-119.yaml"
+  ],
+  "test_result": "pass",
+  "lint_result": "pass",
+  "typecheck_result": "pass",
+  "build_result": "pass",
+  "acceptance_results": [
+    {
+      "id": "AC-119-01",
+      "result": "pass",
+      "evidence": "patch_apply_failure の cause_summary で git apply stderr 由来の診断文を区別できる"
+    },
+    {
+      "id": "AC-119-02",
+      "result": "pass",
+      "evidence": "apply 後 diff 空のケースで empty_diff 系の cause_summary を生成できる"
+    },
+    {
+      "id": "AC-119-03",
+      "result": "pass",
+      "evidence": "failure_type は patch_apply_failure のまま維持される"
+    },
+    {
+      "id": "AC-119-04",
+      "result": "pass",
+      "evidence": "success ケースに patch_apply_failure 用の診断が混入しない"
+    }
+  ],
+  "risks": [
+    "git_apply_stderr の先頭400文字で要約しているため、極端に長い stderr の後半情報は cause_summary に含まれない",
+    "context_mismatch_reason が空の context mismatch では詳細不明フォールバック文言になる",
+    "未コミット差分がある状態では _collect_changed_files の既知挙動により統合テストが揺れるため、クリーン worktree 前提での検証が必要"
+  ],
+  "open_issues": [
+    "backend/tests/test_orchestrator_version.py の修正は別コミット 600048b で扱われており、session-119 本体スコープとは分離して記録する必要がある",
+    "patch_apply_failure 7件の内訳は診断強化後も未集計であり、session-120 以降で cause_summary を横断確認する余地がある"
+  ],
+  "diff_summary": "patch_apply_failure の failure_type 自体は変更せず、run_session.py に cause_summary 生成ヘルパーを追加して context mismatch / git apply error / diff zero を区別できるようにした。対応する単体テストを追加し、lint・pytest・mypy・compileall を通過した。"
 }
