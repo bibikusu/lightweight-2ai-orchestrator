@@ -1,36 +1,51 @@
 {
   "session_id": "session-01",
-  "phase_id": "phase-01",
-  "title": "最初の1セッション雛形",
-  "goal": "まず1セッション分の実行フローを成立させる",
-  "objective": "automatically generate session-01 artifacts using builder-reviewer-human flow and output them in a review-ready state",
+  "phase_id": "A02_fina-phase-a",
+  "title": "A02_fina Phase A — HTML+JS MVP（構成JSONのみ）",
+  "goal": "金融・法務・アフィリエイト縦割りポリシーを反映し、入力から title/meta/slug/H2・H3/CTA/risk_notes の構成JSONを GPT-4o-mini 経由で返す MVP を成立させる（本文は生成しない）",
+  "objective": "phase_a_mvp に index.html・vertical policy JSON・api_proxy.php を置き、POST→JSON が安定して動く状態にする",
   "scope": [
-    "run_session.py が session ファイルを読み込める",
-    "acceptance ファイルを参照できる",
-    "artifacts に結果保存ができる",
-    "ダミーの prepared spec を生成できる",
-    "ダミーの implementation result を保存できる"
+    "実装先: /Users/kunihideyamane/AI_Team/projects/A02_fina/phase_a_mvp/",
+    "index.html: primary_keyword, secondary_keywords, target_reader, search_intent 入力と API 呼び出し、結果表示（本文は表示しない）",
+    "config/vertical.finance_legal_affiliate.json: 禁止表現・CTAテンプレ・比較軸・YMYL注意",
+    "api_proxy.php: POST 受信、GPT-4o-mini 呼び出し、JSON 返却、APIキーは環境変数または仮直書き",
+    "オーケストレーター側 docs に本セッション定義・受入 YAML を保存する"
   ],
   "out_of_scope": [
-    "本番API連携",
-    "本番ブランチへの反映",
-    "複数セッション並列実行",
-    "自動マージ",
-    "本番デプロイ"
+    "本文生成・本文表示",
+    "UI の作り込み",
+    "DB・認証",
+    "オーケストレーター repo 内の他ディレクトリ変更（本 session/acceptance 定義を除く）",
+    "本番デプロイ・複数拠点運用"
   ],
   "constraints": [
-    "1セッション1目的",
-    "main/master を直接変更しない",
-    "自由文ではなく構造化データを優先する",
-    "ログと成果物は artifacts 配下に保存する"
+    "出力スキーマは構成要素のみ（title, meta, slug, h2_h3, cta, risk_notes）。本文フィールドを含めない",
+    "vertical policy をプロンプトに含め、禁止表現・YMYL・CTA 方針を反映する",
+    "エラー時もプロセスを落とさず JSON でエラー内容を返す",
+    "ログに API キーや個人情報を出さない",
+    "1セッション1目的"
   ],
   "acceptance_ref": "acceptance/session-01.yaml",
   "acceptance_criteria": [
-    {"id": "AC-01", "description": "master_instruction file exists", "test_function": "test_master_instruction_exists"},
-    {"id": "AC-02", "description": "roadmap file exists", "test_function": "test_roadmap_exists"},
-    {"id": "AC-03", "description": "session json exists", "test_function": "test_session_json_exists"},
-    {"id": "AC-SELF-01", "description": "acceptance file exists", "test_function": "test_acceptance_file_exists"},
-    {"id": "AC-SELF-02", "description": "yaml parse success", "test_function": "test_acceptance_yaml_parse"},
-    {"id": "AC-SELF-03", "description": "ac mapping is one-to-one", "test_function": "test_ac_mapping_integrity"}
+    {
+      "id": "AC-A02-01",
+      "description": "session-01.json / session-01.yaml が A02_fina Phase A 仕様を記述している",
+      "test_function": "manual_review"
+    },
+    {
+      "id": "AC-A02-02",
+      "description": "phase_a_mvp で入力から構成 JSON が取得できる",
+      "test_function": "browser_or_curl"
+    },
+    {
+      "id": "AC-A02-03",
+      "description": "本文が応答・画面に含まれない",
+      "test_function": "manual_review"
+    }
+  ],
+  "implementation_paths": [
+    "/Users/kunihideyamane/AI_Team/projects/A02_fina/phase_a_mvp/index.html",
+    "/Users/kunihideyamane/AI_Team/projects/A02_fina/phase_a_mvp/config/vertical.finance_legal_affiliate.json",
+    "/Users/kunihideyamane/AI_Team/projects/A02_fina/phase_a_mvp/api_proxy.php"
   ]
 }

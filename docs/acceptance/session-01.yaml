@@ -1,27 +1,25 @@
 session_id: session-01
 
 acceptance:
-  - id: AC-01
-    description: run_session.py が session-01.json を読める
+  - id: AC-A02-01
+    description: docs/sessions/session-01.json が session_id・phase_id・goal・scope・acceptance_ref を含み A02_fina Phase A MVP を定義している
 
-  - id: AC-02
-    description: acceptance/session-01.yaml を参照できる
+  - id: AC-A02-02
+    description: docs/acceptance/session-01.yaml の session_id が session-01 と一致する
 
-  - id: AC-03
-    description: artifacts/session-01/ 配下に response と report が保存される
+  - id: AC-A02-03
+    description: phase_a_mvp/index.html から primary_keyword 等を入力し api_proxy.php へ POST できる
 
-  - id: AC-04
-    description: prepared_spec.json が保存される
+  - id: AC-A02-04
+    description: 応答 JSON に title, meta, slug, H2/H3 構成, CTA, risk_notes が含まれる（本文用フィールドは含めない）
 
-  - id: AC-05
-    description: implementation_result.json が保存される
+  - id: AC-A02-05
+    description: vertical.finance_legal_affiliate.json の禁止表現・CTA・比較軸・YMYL がプロンプト方針として反映される
 
-  - id: AC-06
-    description: session_report.md が保存される
-
-  - id: AC-07
-    description: 例外発生時にプロセスがエラー終了する
+  - id: AC-A02-06
+    description: API 失敗・入力不正時も PHP が致命エラーで終了せず JSON でエラーを返す
 
 notes:
-  - v1ではAI APIの実接続は未実装でもよい
-  - v1ではローカルチェックはダミー結果でもよい
+  - 実装リポジトリ外パス /Users/kunihideyamane/AI_Team/projects/A02_fina/phase_a_mvp/ を正とする
+  - ブラウザ確認は同一オリジンとなるよう PHP ビルトインサーバ等で index.html と api_proxy.php を配信すること
+  - API キーは OPENAI_API_KEY 環境変数を推奨（未設定時はプレースホルダで 502 相当の JSON エラー）
