@@ -38,8 +38,10 @@ SESSIONS_DIR = DOCS_DIR / "sessions"
 # 改行数が FULL 以下なら。超過時は <section id> 抽出または先頭/末尾フォールバック。
 IMPLEMENTATION_PROMPT_FULL_FILE_MAX_NEWLINES = 300
 IMPLEMENTATION_PROMPT_LARGE_FILE_HEAD_LINES = 50
-IMPLEMENTATION_PROMPT_LARGE_FILE_FALLBACK_TAIL_LINES = 20
+IMPLEMENTATION_PROMPT_LARGE_FILE_FALLBACK_TAIL_LINES = 50
 IMPLEMENTATION_PROMPT_FILE_CONTEXT_MAX_INJECTED_LINES = 1000
+# 関数名ベース抽出時の前後コンテキスト（行数）
+IMPLEMENTATION_PROMPT_FUNCTION_CONTEXT_LINES = 5
 
 # Git 保護で拒否するブランチ名（小文字比較）
 FORBIDDEN_BRANCHES = frozenset({"main", "master"})
@@ -150,6 +152,53 @@ def orchestrator_version() -> str:
 
 
 _SECTION_HINT_PAREN_RE = re.compile(r"\(section:\s*([^)]+)\)", re.IGNORECASE)
+# allowed_changes_detail の説明文から foo() 形式の識別子を拾う（関数名ヒント）
+_FUNCTION_HINT_CALL_RE = re.compile(r"\b([A-Za-z_][A-Za-z0-9_]*)\s*\(")
+_FUNCTION_HINT_SKIP_NAMES = frozenset(
+    {
+        "if",
+        "for",
+        "while",
+        "with",
+        "except",
+        "print",
+        "len",
+        "str",
+        "int",
+        "float",
+        "bool",
+        "list",
+        "dict",
+        "set",
+        "tuple",
+        "range",
+        "open",
+        "min",
+        "max",
+        "sum",
+        "any",
+        "all",
+        "abs",
+        "round",
+        "isinstance",
+        "type",
+        "super",
+        "getattr",
+        "setattr",
+        "hasattr",
+        "enumerate",
+        "zip",
+        "map",
+        "filter",
+        "sorted",
+        "repr",
+        "ord",
+        "chr",
+        "hex",
+        "oct",
+        "bin",
+    }
+)
 
 
 def _extract_section_hint(detail_sources: Any, path_str: str) -> Optional[str]:
@@ -165,6 +214,107 @@ def _extract_section_hint(detail_sources: Any, path_str: str) -> Optional[str]:
                     hint = m.group(1).strip()
                     return hint or None
     return None
+
+
+def _extract_function_hints_from_detail(detail_sources: Any, path_str: str) -> List[str]:
+    """allowed_changes_detail から path 行の説明に含まれる foo() 形式の関数名を順序維持で列挙。"""
+    if not detail_sources:
+        return []
+    seen: Set[str] = set()
+    out: List[str] = []
+    for item in detail_sources:
+        text = str(item).strip()
+        if path_str not in text:
+            continue
+        desc = text
+        if ":" in text:
+            head, rest = text.split(":", 1)
+            if head.strip() == path_str:
+                desc = rest
+        for m in _FUNCTION_HINT_CALL_RE.finditer(desc):
+            name = m.group(1)
+            if name in _FUNCTION_HINT_SKIP_NAMES:
+                continue
+            if name not in seen:
+                seen.add(name)
+                out.append(name)
+    return out
+
+
+def _extract_python_functions_with_context(
+    content: str,
+    names: List[str],
+    ctx_lines: int = IMPLEMENTATION_PROMPT_FUNCTION_CONTEXT_LINES,
+) -> Optional[str]:
+    """Python ソースから指定名の関数定義ブロック＋前後コンテキストを抽出する。"""
+    want = {n for n in names if n}
+    if not want:
+        return None
+    try:
+        tree = ast.parse(content)
+    except SyntaxError:
+        return None
+    lines = content.splitlines(keepends=True)
+    found: List[Tuple[int, str]] = []
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name in want:
+            end_ln = getattr(node, "end_lineno", None)
+            if end_ln is None:
+                continue
+            start_idx = max(0, node.lineno - 1 - ctx_lines)
+            chunk = "".join(lines[start_idx:end_ln])
+            found.append((node.lineno, chunk))
+    if not found:
+        return None
+    found.sort(key=lambda x: x[0])
+    return "\n\n... [between functions] ...\n\n".join(x[1] for x in found)
+
+
+def _extract_functions_by_regex_fallback(
+    content: str,
+    names: List[str],
+    ctx_lines: int = IMPLEMENTATION_PROMPT_FUNCTION_CONTEXT_LINES,
+) -> Optional[str]:
+    """非 Python 向け: def name / function name 等の簡易検索でブロック近似抽出。"""
+    want = [n for n in names if n]
+    if not want:
+        return None
+    lines = content.splitlines(keepends=True)
+    chunks: List[str] = []
+    for name in want:
+        best_i: Optional[int] = None
+        for i, line in enumerate(lines):
+            if re.search(rf"^\s*def\s+{re.escape(name)}\s*\(", line):
+                best_i = i
+                break
+            if re.search(rf"^\s*async\s+def\s+{re.escape(name)}\s*\(", line):
+                best_i = i
+                break
+            if re.search(rf"\bfunction\s+{re.escape(name)}\s*\(", line):
+                best_i = i
+                break
+        if best_i is None:
+            continue
+        start = max(0, best_i - ctx_lines)
+        end = min(len(lines), best_i + 200)
+        chunks.append("".join(lines[start:end]))
+    if not chunks:
+        return None
+    return "\n\n... [between functions] ...\n\n".join(chunks)
+
+
+def _extract_by_function_names(
+    path_str: str, content: str, names: List[str]
+) -> Optional[str]:
+    """関数名ヒントに基づき該当「セクション」相当の本文を返す。見つからなければ None。"""
+    if not names:
+        return None
+    suffix = Path(path_str).suffix.lower()
+    if suffix == ".py":
+        got = _extract_python_functions_with_context(content, names)
+        if got is not None:
+            return got
+    return _extract_functions_by_regex_fallback(content, names)
 
 
 def _find_opening_section_tag_end(content: str, section_id: str) -> Optional[int]:
@@ -258,13 +408,17 @@ def _truncate_lines(
 
 
 def build_implementation_prompt_file_context_block(
-    path_str: str, content: str, *, section_hint: Optional[str] = None
+    path_str: str,
+    content: str,
+    *,
+    section_hint: Optional[str] = None,
+    function_hints: Optional[List[str]] = None,
 ) -> str:
     """
     allowed_changes 由来の1ファイル分、[current file ...] ブロックを返す。
     改行数が IMPLEMENTATION_PROMPT_FULL_FILE_MAX_NEWLINES 以下なら全文。
-    超過時は section_hint があれば <section id="..."> 範囲を抽出し、
-    未指定または抽出できない場合は先頭/末尾フォールバックと omitted 注記。
+    超過時は (1) section_hint と <section id>、(2) allowed_changes_detail の関数名ヒント、
+    の順で抽出を試し、だめなら先頭/末尾フォールバックと omitted 注記。
     最終的な注入本文は IMPLEMENTATION_PROMPT_FILE_CONTEXT_MAX_INJECTED_LINES 行まで。
     """
     newline_count = content.count("\n")
@@ -273,11 +427,14 @@ def build_implementation_prompt_file_context_block(
 
     lines = content.splitlines(keepends=True)
     total_lines = len(lines)
+    fh = function_hints or []
+
+    body: Optional[str] = None
+    header = ""
 
     if section_hint:
         section_body = _extract_html_section(content, section_hint)
         if section_body is not None:
-            # 開始直後・閉じ直前の空改行は注入ノイズになるため除く
             section_body = section_body.strip("\n")
             inj_line_count = len(section_body.splitlines())
             header = (
@@ -285,20 +442,40 @@ def build_implementation_prompt_file_context_block(
                 f"{inj_line_count} lines from {total_lines} total): {path_str}]"
             )
             body = section_body
-        else:
+
+    if body is None and fh:
+        func_body = _extract_by_function_names(path_str, content, fh)
+        if func_body is not None:
+            inj_line_count = len(func_body.splitlines())
+            names_desc = ", ".join(fh[:8])
+            if len(fh) > 8:
+                names_desc += ", ..."
             header = (
-                f"[current file (section id={section_hint!r} not found; "
+                f"[current file (functions [{names_desc}] extracted; "
+                f"{inj_line_count} lines from {total_lines} total): {path_str}]"
+            )
+            body = func_body
+
+    if body is None:
+        parts: List[str] = []
+        if section_hint:
+            parts.append(f"section id={section_hint!r} not found")
+        if fh:
+            parts.append("function hints not matched in source")
+        if parts:
+            reason = "; ".join(parts)
+            header = (
+                f"[current file ({reason}; "
                 f"head {IMPLEMENTATION_PROMPT_LARGE_FILE_HEAD_LINES} + tail "
                 f"{IMPLEMENTATION_PROMPT_LARGE_FILE_FALLBACK_TAIL_LINES}; "
                 f"{total_lines} lines total, middle omitted): {path_str}]"
             )
-            body = _get_head_tail_fallback(content, total_lines)
-    else:
-        header = (
-            f"[current file (head {IMPLEMENTATION_PROMPT_LARGE_FILE_HEAD_LINES} + tail "
-            f"{IMPLEMENTATION_PROMPT_LARGE_FILE_FALLBACK_TAIL_LINES}; "
-            f"{total_lines} lines total, middle omitted): {path_str}]"
-        )
+        else:
+            header = (
+                f"[current file (head {IMPLEMENTATION_PROMPT_LARGE_FILE_HEAD_LINES} + tail "
+                f"{IMPLEMENTATION_PROMPT_LARGE_FILE_FALLBACK_TAIL_LINES}; "
+                f"{total_lines} lines total, middle omitted): {path_str}]"
+            )
         body = _get_head_tail_fallback(content, total_lines)
 
     body = _truncate_lines(body)
@@ -2061,8 +2238,12 @@ If implementation is not possible, explain in JSON.
             try:
                 content = full_path.read_text(encoding="utf-8")
                 section_hint = _extract_section_hint(detail_sources, path_str)
+                fn_hints = _extract_function_hints_from_detail(detail_sources, path_str)
                 current_files_block += build_implementation_prompt_file_context_block(
-                    path_str, content, section_hint=section_hint
+                    path_str,
+                    content,
+                    section_hint=section_hint,
+                    function_hints=fn_hints if fn_hints else None,
                 )
             except Exception:
                 pass
