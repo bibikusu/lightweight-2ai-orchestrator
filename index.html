@@ -1,0 +1,2438 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>びくす東千葉 業務管理</title>
+  <style>
+    /* ============================================================
+       CSS変数（正本準拠）
+    ============================================================ */
+    :root {
+      --primary: #2563eb;
+      --primary-light: #dbeafe;
+      --success: #16a34a;
+      --warning: #f59e0b;
+      --danger: #dc2626;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-500: #6b7280;
+      --gray-700: #374151;
+      --gray-900: #111827;
+    }
+
+    /* ============================================================
+       基盤CSS（正本準拠）
+    ============================================================ */
+    * { box-sizing: border-box; }
+    body {
+      max-width: 100%;
+      min-width: 320px;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--gray-700);
+      background: var(--gray-50);
+      padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px));
+    }
+    button {
+      min-height: 44px;
+      min-width: 44px;
+      padding: 12px 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    button:active { opacity: 0.7; }
+    .btn-primary { background: var(--primary); color: white; width: 100%; }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-secondary { background: var(--gray-200); color: var(--gray-700); }
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      margin: 8px 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+    input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    .error-text {
+      color: var(--danger);
+      font-size: 12px;
+      display: block;
+      min-height: 16px;
+    }
+    .empty-state {
+      color: var(--gray-500);
+      text-align: center;
+      padding: 24px 0;
+      font-size: 14px;
+    }
+    .link {
+      color: var(--primary);
+      cursor: pointer;
+      text-decoration: underline;
+    }
+    .warning-banner {
+      background: #fef3c7;
+      border: 1px solid var(--warning);
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin: 8px 16px;
+      color: #92400e;
+      font-weight: bold;
+    }
+
+    /* ============================================================
+       画面切替（正本準拠）
+    ============================================================ */
+    .screen { display: none; }
+    .screen.active { display: block; }
+    .bottom-nav.nav-hidden { display: none; }
+
+    /* 汎用非表示クラス（style.display直接操作の代替） */
+    .hidden { display: none; }
+
+    /* ============================================================
+       ボトムナビCSS（正本準拠）
+    ============================================================ */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: calc(60px + env(safe-area-inset-bottom, 0px));
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      background: white;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      border-top: 1px solid var(--gray-200);
+      z-index: 100;
+    }
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      color: var(--gray-500);
+      cursor: pointer;
+      padding: 4px 0;
+    }
+    .nav-item.active {
+      color: var(--primary);
+      font-weight: bold;
+    }
+    .nav-icon { font-size: 20px; }
+    .nav-label { font-size: 10px; }
+
+    /* ============================================================
+       トースト
+    ============================================================ */
+    .toast {
+      position: fixed;
+      top: -60px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--gray-900);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      z-index: 2000;
+      transition: top 0.3s;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+    .toast.show { top: 20px; }
+
+    /* ============================================================
+       ログイン画面
+    ============================================================ */
+    .login-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 64px 24px 24px;
+      min-height: 100vh;
+    }
+    .login-title {
+      font-size: 20px;
+      font-weight: bold;
+      color: var(--gray-900);
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    .login-subtitle {
+      font-size: 13px;
+      color: var(--gray-500);
+      margin-bottom: 40px;
+      text-align: center;
+    }
+    .pin-input-wrap {
+      width: 100%;
+      max-width: 280px;
+      margin-bottom: 8px;
+    }
+    .pin-input-wrap label {
+      display: block;
+      font-size: 13px;
+      color: var(--gray-500);
+      margin-bottom: 4px;
+    }
+    .pin-input-wrap input {
+      text-align: center;
+      font-size: 24px;
+      letter-spacing: 8px;
+    }
+    .login-error-wrap {
+      width: 100%;
+      max-width: 280px;
+      min-height: 16px;
+      margin-bottom: 4px;
+    }
+    .lock-countdown {
+      color: var(--danger);
+      font-size: 13px;
+      text-align: center;
+      width: 100%;
+      max-width: 280px;
+      min-height: 20px;
+      margin-bottom: 8px;
+    }
+    .login-btn-wrap {
+      width: 100%;
+      max-width: 280px;
+    }
+
+    /* ============================================================
+       ウィザード画面
+    ============================================================ */
+    .wizard-container {
+      padding: 32px 24px;
+      min-height: 100vh;
+    }
+    .wizard-header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .wizard-header h2 {
+      font-size: 20px;
+      font-weight: bold;
+      color: var(--gray-900);
+      margin: 0 0 8px;
+    }
+    .wizard-header p {
+      font-size: 13px;
+      color: var(--gray-500);
+      margin: 0;
+    }
+    .step-indicator {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    .step-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--gray-200);
+    }
+    .step-dot.active {
+      background: var(--primary);
+    }
+    .wizard-step { display: none; }
+    .wizard-step.active { display: block; }
+    .wizard-label {
+      display: block;
+      font-size: 13px;
+      color: var(--gray-700);
+      margin-bottom: 4px;
+      margin-top: 16px;
+    }
+    .wizard-guide-list {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 24px;
+    }
+    .wizard-guide-list li {
+      padding: 12px 0;
+      border-bottom: 1px solid var(--gray-100);
+      font-size: 14px;
+      color: var(--gray-700);
+    }
+    .wizard-guide-list li::before {
+      content: "✓ ";
+      color: var(--success);
+    }
+
+    /* ============================================================
+       ホーム画面
+    ============================================================ */
+    .home-header {
+      padding: 20px 16px 12px;
+      background: white;
+      border-bottom: 1px solid var(--gray-100);
+    }
+    .home-greeting {
+      font-size: 18px;
+      font-weight: bold;
+      color: var(--gray-900);
+    }
+    .home-datetime {
+      font-size: 13px;
+      color: var(--gray-500);
+      margin-top: 2px;
+    }
+    .home-period-badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: bold;
+      margin-top: 6px;
+    }
+    .badge-open { background: var(--primary-light); color: var(--primary); }
+    .badge-active { background: #dcfce7; color: var(--success); }
+    .badge-close { background: #fce7f3; color: #be185d; }
+    .section-title {
+      font-size: 12px;
+      font-weight: bold;
+      color: var(--gray-500);
+      margin: 16px 16px 4px;
+      letter-spacing: 0.5px;
+    }
+    .business-btn-wrap {
+      margin: 12px 16px 4px;
+    }
+    .btn-start {
+      background: var(--success);
+      color: white;
+      width: 100%;
+      font-weight: bold;
+    }
+    .btn-end {
+      background: var(--danger);
+      color: white;
+      width: 100%;
+      font-weight: bold;
+    }
+    .sales-amount {
+      font-size: 28px;
+      font-weight: bold;
+      color: var(--gray-900);
+    }
+    .sales-label {
+      font-size: 12px;
+      color: var(--gray-500);
+      margin-top: 2px;
+    }
+    .timeclock-wrap {
+      display: flex;
+      gap: 8px;
+    }
+    .timeclock-wrap button {
+      flex: 1;
+      background: var(--gray-100);
+      color: var(--gray-500);
+    }
+
+    /* ============================================================
+       空画面（シフト/タスク/給与/設定）
+    ============================================================ */
+    .placeholder-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 60vh;
+      padding: 24px;
+    }
+    .placeholder-screen h3 {
+      color: var(--gray-500);
+      font-size: 16px;
+      margin: 0 0 8px;
+    }
+    .placeholder-screen p {
+      color: var(--gray-500);
+      font-size: 13px;
+      margin: 0;
+    }
+
+    /* ============================================================
+       シフト画面（session-05）
+    ============================================================ */
+    .shift-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: white;
+      border-bottom: 1px solid var(--gray-200);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .shift-nav {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .shift-nav-btn {
+      background: var(--gray-100);
+      color: var(--gray-700);
+      min-height: 36px;
+      min-width: 36px;
+      padding: 4px 14px;
+      font-size: 18px;
+      border-radius: 8px;
+    }
+    .shift-month-label {
+      font-size: 16px;
+      font-weight: bold;
+      color: var(--gray-900);
+      min-width: 110px;
+      text-align: center;
+    }
+    .btn-bulk {
+      background: var(--primary-light);
+      color: var(--primary);
+      font-weight: bold;
+      min-height: 36px;
+      padding: 4px 12px;
+      font-size: 13px;
+    }
+    .shift-cal-dow {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      background: var(--gray-100);
+      border-bottom: 1px solid var(--gray-200);
+    }
+    .shift-cal-dow-cell {
+      text-align: center;
+      font-size: 11px;
+      font-weight: bold;
+      padding: 6px 0;
+      color: var(--gray-500);
+    }
+    .shift-cal-dow-cell.sun { color: var(--danger); }
+    .shift-cal-dow-cell.sat { color: var(--primary); }
+    .shift-cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      border-left: 1px solid var(--gray-200);
+      border-top: 1px solid var(--gray-200);
+    }
+    .shift-day-cell {
+      border-right: 1px solid var(--gray-200);
+      border-bottom: 1px solid var(--gray-200);
+      min-height: 64px;
+      padding: 4px;
+      cursor: pointer;
+      background: white;
+      overflow: hidden;
+    }
+    .shift-day-cell.other-month {
+      background: var(--gray-50);
+      cursor: default;
+    }
+    .shift-day-cell.today { background: var(--primary-light); }
+    .shift-day-cell.not-editable { opacity: 0.55; cursor: default; }
+    .shift-day-cell.bulk-selected { background: #dcfce7; }
+    .shift-day-num {
+      font-size: 12px;
+      font-weight: bold;
+      color: var(--gray-700);
+      line-height: 1.4;
+    }
+    .shift-day-num.sun { color: var(--danger); }
+    .shift-day-num.sat { color: var(--primary); }
+    .shift-day-chip {
+      font-size: 10px;
+      padding: 1px 4px;
+      border-radius: 4px;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.4;
+    }
+    .chip-working { background: #dcfce7; color: var(--success); }
+    .chip-off { background: var(--gray-100); color: var(--gray-500); }
+
+    /* 一括登録パネル */
+    .bulk-panel {
+      background: white;
+      border-top: 2px solid var(--primary);
+      padding: 16px;
+      position: sticky;
+      bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+    }
+    .bulk-panel-title {
+      font-size: 14px;
+      font-weight: bold;
+      color: var(--gray-900);
+      margin-bottom: 8px;
+    }
+    .bulk-hint {
+      font-size: 12px;
+      color: var(--gray-500);
+      margin-bottom: 8px;
+    }
+    .bulk-selected-count {
+      font-size: 13px;
+      color: var(--primary);
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+    .bulk-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .bulk-actions button { flex: 1; }
+
+    /* モーダル */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 500;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    /* .hidden が先に定義済みだが、同一特殊度なので後勝ちを避けるため明示 */
+    .modal-overlay.hidden { display: none; }
+    .modal-box {
+      background: white;
+      border-radius: 16px 16px 0 0;
+      width: 100%;
+      max-width: 480px;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 16px 12px;
+      border-bottom: 1px solid var(--gray-200);
+      position: sticky;
+      top: 0;
+      background: white;
+    }
+    .modal-title {
+      font-size: 15px;
+      font-weight: bold;
+      color: var(--gray-900);
+    }
+    .modal-close-btn {
+      background: var(--gray-100);
+      color: var(--gray-700);
+      min-height: 36px;
+      min-width: 36px;
+      padding: 4px 10px;
+      font-size: 18px;
+    }
+    .modal-body {
+      padding: 8px 16px 4px;
+    }
+    .modal-label {
+      display: block;
+      font-size: 12px;
+      color: var(--gray-500);
+      margin-top: 12px;
+      margin-bottom: 4px;
+    }
+    .modal-select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      font-size: 14px;
+      background: white;
+      margin-bottom: 0;
+    }
+    .modal-select:focus { outline: none; border-color: var(--primary); }
+    .modal-select:disabled { background: var(--gray-100); color: var(--gray-500); }
+    .time-row {
+      display: flex;
+      gap: 8px;
+    }
+    .time-row input { flex: 1; }
+    input:disabled { background: var(--gray-100); color: var(--gray-500); }
+    .modal-footer {
+      padding: 12px 16px;
+      display: flex;
+      gap: 8px;
+      border-top: 1px solid var(--gray-200);
+      position: sticky;
+      bottom: 0;
+      background: white;
+    }
+    .modal-footer button { flex: 1; }
+
+    /* ============================================================
+       タスク一覧（session-12）
+    ============================================================ */
+    .task-screen-title {
+      font-size: 12px;
+      font-weight: bold;
+      color: var(--gray-500);
+      margin: 16px 16px 4px;
+      letter-spacing: 0.5px;
+    }
+    .task-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--gray-100);
+    }
+    .task-row:last-child { border-bottom: none; }
+    .task-row input[type="checkbox"] {
+      width: auto;
+      min-width: 20px;
+      min-height: 20px;
+      margin-top: 2px;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+    .task-body { flex: 1; min-width: 0; }
+    .task-name { font-size: 14px; color: var(--gray-900); line-height: 1.4; }
+    .task-meta { font-size: 11px; color: var(--gray-500); margin-top: 2px; }
+  </style>
+</head>
+<body>
+
+  <!-- ============================================================
+       ログイン画面 (session-01)
+  ============================================================ -->
+  <div id="screen-login" class="screen">
+    <div class="login-container">
+      <div class="login-title">びくす東千葉 業務管理</div>
+      <div class="login-subtitle">PINを入力してください</div>
+      <div class="pin-input-wrap">
+        <label for="login-pin">4桁のPIN</label>
+        <input id="login-pin" type="tel" maxlength="4" inputmode="numeric" placeholder="----" autocomplete="off">
+      </div>
+      <div class="login-error-wrap">
+        <span id="login-error" class="error-text"></span>
+      </div>
+      <div id="lock-countdown" class="lock-countdown hidden"></div>
+      <div class="login-btn-wrap">
+        <button id="login-btn" class="btn-primary">ログイン</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       ウィザード画面 (session-02)
+  ============================================================ -->
+  <div id="screen-wizard" class="screen">
+    <div class="wizard-container">
+      <div class="wizard-header">
+        <h2>初期設定</h2>
+        <p>びくす東千葉 業務管理アプリへようこそ</p>
+      </div>
+      <div class="step-indicator">
+        <div class="step-dot active" id="dot-1"></div>
+        <div class="step-dot" id="dot-2"></div>
+        <div class="step-dot" id="dot-3"></div>
+      </div>
+
+      <!-- Step1: 名前入力 -->
+      <div id="wizard-step1" class="wizard-step active">
+        <label class="wizard-label" for="wizard-name">あなたの名前（1〜10文字）</label>
+        <input id="wizard-name" type="text" maxlength="10" placeholder="例：田中">
+        <span id="wizard-name-error" class="error-text"></span>
+        <div style="margin-top:24px;">
+          <button id="wizard-step1-next" class="btn-primary">次へ</button>
+        </div>
+      </div>
+
+      <!-- Step2: PIN設定 -->
+      <div id="wizard-step2" class="wizard-step">
+        <label class="wizard-label" for="wizard-pin">PINを設定（4桁の数字）</label>
+        <input id="wizard-pin" type="tel" maxlength="4" inputmode="numeric" placeholder="----" autocomplete="off">
+        <label class="wizard-label" for="wizard-pin-confirm">PIN確認（再入力）</label>
+        <input id="wizard-pin-confirm" type="tel" maxlength="4" inputmode="numeric" placeholder="----" autocomplete="off">
+        <span id="wizard-pin-error" class="error-text"></span>
+        <div style="margin-top:24px;">
+          <button id="wizard-step2-next" class="btn-primary">次へ</button>
+        </div>
+      </div>
+
+      <!-- Step3: 完了 -->
+      <div id="wizard-step3" class="wizard-step">
+        <div class="card">
+          <p style="font-weight:bold;margin:0 0 12px;color:var(--gray-900);">使い方ガイド</p>
+          <ul class="wizard-guide-list">
+            <li>下のタブで画面を切り替えられます</li>
+            <li>シフトやタスクは各画面から登録できます</li>
+            <li>設定画面からバックアップができます</li>
+          </ul>
+        </div>
+        <div style="margin-top:16px;">
+          <button id="wizard-finish" class="btn-primary">始める</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       ホーム画面 (session-04)
+  ============================================================ -->
+  <div id="screen-home" class="screen">
+    <div class="home-header">
+      <div id="home-greeting" class="home-greeting"></div>
+      <div id="home-datetime" class="home-datetime"></div>
+      <span id="home-period-badge" class="home-period-badge badge-open"></span>
+    </div>
+
+    <!-- バックアップ警告バナー（7日以上バックアップなしで表示） -->
+    <div id="backup-warning" class="warning-banner hidden">
+      ⚠️ バックアップが7日以上行われていません。設定画面からバックアップしてください。
+    </div>
+
+    <!-- 業務開始/終了ボタン -->
+    <div class="business-btn-wrap">
+      <button id="business-start-btn" class="btn-start">業務開始</button>
+      <button id="business-end-btn" class="btn-end hidden">業務終了</button>
+    </div>
+
+    <!-- シフト枠 -->
+    <div class="section-title">今日のシフト</div>
+    <div class="card">
+      <div class="empty-state">
+        今日のシフトはまだ登録されていません<br>
+        <span id="shift-link" class="link">シフト画面へ</span>
+      </div>
+    </div>
+
+    <!-- タスク進捗枠（session-07/12） -->
+    <div class="section-title">タスク進捗</div>
+    <div class="card">
+      <div id="home-task-summary" class="empty-state">読み込み中…</div>
+    </div>
+
+    <!-- 売上表示枠（常に表示、正本Q5準拠） -->
+    <div class="section-title">本日の売上</div>
+    <div class="card">
+      <div class="sales-amount">¥---</div>
+      <div class="sales-label">未入力</div>
+    </div>
+
+    <!-- 打刻ボタン枠（session-09で実装） -->
+    <div class="section-title">打刻</div>
+    <div class="card">
+      <div class="timeclock-wrap">
+        <button disabled>出勤打刻</button>
+        <button disabled>退勤打刻</button>
+      </div>
+      <div class="empty-state" style="padding:8px 0 0;">打刻機能は準備中です</div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       シフト画面（session-05）
+  ============================================================ -->
+  <div id="screen-shift" class="screen">
+    <!-- ヘッダー：月ナビ + 一括登録ボタン -->
+    <div class="shift-header">
+      <div class="shift-nav">
+        <button id="shift-prev-btn" class="shift-nav-btn">&#8249;</button>
+        <span id="shift-month-label" class="shift-month-label"></span>
+        <button id="shift-next-btn" class="shift-nav-btn">&#8250;</button>
+      </div>
+      <button id="bulk-register-btn" class="btn-bulk">一括登録</button>
+    </div>
+
+    <!-- 曜日ヘッダー -->
+    <div class="shift-cal-dow">
+      <div class="shift-cal-dow-cell sun">日</div>
+      <div class="shift-cal-dow-cell">月</div>
+      <div class="shift-cal-dow-cell">火</div>
+      <div class="shift-cal-dow-cell">水</div>
+      <div class="shift-cal-dow-cell">木</div>
+      <div class="shift-cal-dow-cell">金</div>
+      <div class="shift-cal-dow-cell sat">土</div>
+    </div>
+
+    <!-- カレンダーグリッド（JS で描画） -->
+    <div id="shift-cal-grid" class="shift-cal-grid"></div>
+
+    <!-- 一括登録パネル（初期非表示） -->
+    <div id="bulk-panel" class="bulk-panel hidden">
+      <div class="bulk-panel-title">一括登録モード</div>
+      <div class="bulk-hint">カレンダーの日付をタップして選択してください</div>
+      <div id="bulk-selected-count" class="bulk-selected-count">0日選択中</div>
+      <label class="modal-label" for="bulk-status-select">ステータス</label>
+      <select id="bulk-status-select" class="modal-select">
+        <option value="working">出勤</option>
+        <option value="off">休み</option>
+      </select>
+      <label class="modal-label" for="bulk-pattern-select">シフトパターン</label>
+      <select id="bulk-pattern-select" class="modal-select">
+        <option value="">（パターンなし）</option>
+      </select>
+      <div class="bulk-actions">
+        <button id="bulk-cancel-btn" class="btn-secondary">キャンセル</button>
+        <button id="bulk-apply-btn" class="btn-primary">適用</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       タスク画面（session-07/12）
+  ============================================================ -->
+  <div id="screen-task" class="screen">
+    <div class="task-screen-title">本日のタスク（現在時間帯）</div>
+    <div class="card">
+      <div id="task-list-container"></div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       給与画面（空、session-08以降で実装）
+  ============================================================ -->
+  <div id="screen-payroll" class="screen">
+    <div class="placeholder-screen">
+      <h3>💰 給与</h3>
+      <p>給与管理機能は準備中です</p>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       設定画面（空、session-10以降で実装）
+  ============================================================ -->
+  <div id="screen-settings" class="screen">
+    <div class="placeholder-screen">
+      <h3>⚙ 設定</h3>
+      <p>設定機能は準備中です</p>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       シフトモーダル（session-05）— スクリーン外に配置してz-index確保
+  ============================================================ -->
+  <div id="shift-modal-overlay" class="modal-overlay hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <span id="modal-title" class="modal-title">シフト登録</span>
+        <button id="modal-close-btn" class="modal-close-btn">&#10005;</button>
+      </div>
+      <div class="modal-body">
+        <!-- 非表示フィールド：シフトID・日付 -->
+        <input type="hidden" id="modal-shift-id">
+        <input type="hidden" id="modal-shift-date">
+
+        <label class="modal-label" for="modal-user-id">対象ユーザー</label>
+        <select id="modal-user-id" class="modal-select"></select>
+
+        <label class="modal-label" for="modal-status">ステータス</label>
+        <select id="modal-status" class="modal-select">
+          <option value="working">出勤</option>
+          <option value="off">休み</option>
+        </select>
+
+        <label class="modal-label" for="modal-pattern-id">シフトパターン</label>
+        <select id="modal-pattern-id" class="modal-select"></select>
+
+        <label class="modal-label">時刻</label>
+        <div class="time-row">
+          <input id="modal-start-time" type="time" placeholder="開始">
+          <input id="modal-end-time" type="time" placeholder="終了">
+        </div>
+
+        <label class="modal-label" for="modal-notes">メモ</label>
+        <input id="modal-notes" type="text" placeholder="任意メモ">
+
+        <span id="modal-error" class="error-text"></span>
+      </div>
+      <div class="modal-footer">
+        <button id="modal-save-btn" class="btn-primary">保存</button>
+        <button id="modal-delete-btn" class="btn-danger hidden">削除</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       ボトムナビ（session-03）
+  ============================================================ -->
+  <nav id="bottom-nav" class="bottom-nav">
+    <div class="nav-item" data-screen="home">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">ホーム</span>
+    </div>
+    <div class="nav-item" data-screen="shift">
+      <span class="nav-icon">📅</span>
+      <span class="nav-label">シフト</span>
+    </div>
+    <div class="nav-item" data-screen="task">
+      <span class="nav-icon">✅</span>
+      <span class="nav-label">タスク</span>
+    </div>
+    <div class="nav-item" data-screen="payroll">
+      <span class="nav-icon">💰</span>
+      <span class="nav-label">給与</span>
+    </div>
+    <div class="nav-item" data-screen="settings">
+      <span class="nav-icon">⚙</span>
+      <span class="nav-label">設定</span>
+    </div>
+  </nav>
+
+  <!-- トースト -->
+  <div id="toast" class="toast"></div>
+
+  <script>
+    /* ============================================================
+       共通ユーティリティ（session-03）
+    ============================================================ */
+
+    /* XSSエスケープ — innerHTML使用時は必ずこれを通す */
+    function esc(str) {
+      var d = document.createElement('div');
+      d.textContent = str == null ? '' : String(str);
+      return d.innerHTML;
+    }
+
+    /* 一意ID生成 */
+    function generateId(prefix) {
+      return prefix + '_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+    }
+
+    /* 今日の日付文字列（5時以前は前日扱い） */
+    function getTodayString() {
+      var now = new Date();
+      if (now.getHours() < 5) {
+        now.setDate(now.getDate() - 1);
+      }
+      return now.getFullYear() + '-' +
+        String(now.getMonth() + 1).padStart(2, '0') + '-' +
+        String(now.getDate()).padStart(2, '0');
+    }
+
+    /* 時間文字列（HH:MM）を分に変換 */
+    function parseTimeToMin(timeStr) {
+      var parts = timeStr.split(':');
+      return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+    }
+
+    /* 現在の営業時間帯（data.settingsから取得、ハードコード禁止） */
+    function getCurrentPeriod() {
+      if (!data || !data.settings) return 'OPEN';
+      var s = data.settings;
+      var now = new Date();
+      var totalMin = now.getHours() * 60 + now.getMinutes();
+      var openStart = parseTimeToMin(s.businessStartTime);
+      var openEnd = openStart + s.openDurationMinutes;
+      var closeStart = parseTimeToMin(s.closeStartTime);
+      var bizEnd = parseTimeToMin(s.businessEndTime);
+
+      if (totalMin >= openStart && totalMin < openEnd) return 'OPEN';
+      if (totalMin >= openEnd && totalMin < closeStart) return 'ACTIVE';
+      if (totalMin >= closeStart || totalMin < bizEnd) return 'CLOSE';
+      return 'OPEN';
+    }
+
+    /* ============================================================
+       タスク状態（session-12）— 営業日キーは businessStartTime で日付が切り替わる
+    ============================================================ */
+
+    /* タスク用・営業日キー（YYYY-MM-DD）。時刻が businessStartTime 未満なら前日扱い */
+    function getTaskBusinessDayKey() {
+      var s = (data && data.settings) ? data.settings : DEFAULT_DATA.settings;
+      var now = new Date();
+      var totalMin = now.getHours() * 60 + now.getMinutes();
+      var startMin = parseTimeToMin(s.businessStartTime);
+      var d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      if (totalMin < startMin) {
+        d.setDate(d.getDate() - 1);
+      }
+      return d.getFullYear() + '-' +
+        String(d.getMonth() + 1).padStart(2, '0') + '-' +
+        String(d.getDate()).padStart(2, '0');
+    }
+
+    /* 営業日キーをローカル日付の Date に変換（正午固定でタイムゾーンずれを抑える） */
+    function parseTaskBusinessDayKeyToDate(key) {
+      var p = String(key).split('-');
+      if (p.length !== 3) return new Date();
+      var y = parseInt(p[0], 10);
+      var mo = parseInt(p[1], 10) - 1;
+      var da = parseInt(p[2], 10);
+      return new Date(y, mo, da, 12, 0, 0);
+    }
+
+    /* taskCompletions の形を保証（日付キー → タスクID → 真偽） */
+    function ensureTaskCompletionsShape() {
+      if (!data.taskCompletions || typeof data.taskCompletions !== 'object' || Array.isArray(data.taskCompletions)) {
+        data.taskCompletions = {};
+      }
+      /* businessStartTime を跨いでタスク営業日キーが変わったら当日分のみ空にする（過去キーは保持）。初回のみアンカーを立てて既存データは消さない */
+      var k = getTaskBusinessDayKey();
+      if (data.taskCompletionAnchorBusinessDayKey == null || data.taskCompletionAnchorBusinessDayKey === '') {
+        data.taskCompletionAnchorBusinessDayKey = k;
+      } else if (data.taskCompletionAnchorBusinessDayKey !== k) {
+        data.taskCompletions[k] = {};
+        data.taskCompletionAnchorBusinessDayKey = k;
+        saveAppState();
+      }
+    }
+
+    /* 当日（タスク営業日）の完了マップを取得 */
+    function getCompletionsForCurrentTaskDay() {
+      ensureTaskCompletionsShape();
+      var k = getTaskBusinessDayKey();
+      if (!data.taskCompletions[k] || typeof data.taskCompletions[k] !== 'object') {
+        data.taskCompletions[k] = {};
+      }
+      return data.taskCompletions[k];
+    }
+
+    /* タスク完了を保存 */
+    function setTaskCompletion(taskId, completed) {
+      ensureTaskCompletionsShape();
+      var k = getTaskBusinessDayKey();
+      if (!data.taskCompletions[k] || typeof data.taskCompletions[k] !== 'object') {
+        data.taskCompletions[k] = {};
+      }
+      if (completed) {
+        data.taskCompletions[k][taskId] = true;
+      } else {
+        delete data.taskCompletions[k][taskId];
+      }
+      saveAppState();
+    }
+
+    /* 業務開始時：当日（タスク営業日）の完了のみクリア。他日付キーは保持 */
+    function resetTaskCompletionsForCurrentBusinessDay() {
+      ensureTaskCompletionsShape();
+      var k = getTaskBusinessDayKey();
+      data.taskCompletions[k] = {};
+      data.taskCompletionAnchorBusinessDayKey = k;
+      saveAppState();
+    }
+
+    /* 指定営業日にそのタスクを表示するか（時間帯・日次/週次/月次） */
+    function isTaskShownForBusinessDay(task, businessDayDate) {
+      var period = getCurrentPeriod();
+      if (task.period !== period) return false;
+      if (task.freq === 'daily') return true;
+      if (task.freq === 'weekly') {
+        return task.freqDay != null && businessDayDate.getDay() === task.freqDay;
+      }
+      if (task.freq === 'monthly') {
+        return task.freqDay != null && businessDayDate.getDate() === task.freqDay;
+      }
+      return false;
+    }
+
+    /* 現在のタスク営業日で一覧に出すタスクを列挙 */
+    function getVisibleTasksForCurrentTaskDay() {
+      var d = parseTaskBusinessDayKeyToDate(getTaskBusinessDayKey());
+      var out = [];
+      for (var i = 0; i < data.tasks.length; i++) {
+        var t = data.tasks[i];
+        if (t.isHidden) continue;
+        if (isTaskShownForBusinessDay(t, d)) out.push(t);
+      }
+      /* 優先度 P1 を先に、同一なら名前順 */
+      out.sort(function(a, b) {
+        var pa = a.priority === 'P1' ? 0 : 1;
+        var pb = b.priority === 'P1' ? 0 : 1;
+        if (pa !== pb) return pa - pb;
+        return String(a.name).localeCompare(String(b.name), 'ja');
+      });
+      return out;
+    }
+
+    /* ホーム：タスク進捗サマリー */
+    function renderHomeTaskSummary() {
+      var el = document.getElementById('home-task-summary');
+      if (!el) return;
+      var list = getVisibleTasksForCurrentTaskDay();
+      var comp = getCompletionsForCurrentTaskDay();
+      if (list.length === 0) {
+        el.className = 'empty-state';
+        el.textContent = '現在の時間帯に表示するタスクはありません';
+        return;
+      }
+      var done = 0;
+      for (var i = 0; i < list.length; i++) {
+        if (comp[list[i].id]) done++;
+      }
+      el.className = '';
+      el.textContent = '完了 ' + done + ' / ' + list.length + '（タスクタブで詳細）';
+    }
+
+    /* タスク画面：チェックリスト描画 */
+    function renderTaskScreen() {
+      var container = document.getElementById('task-list-container');
+      if (!container) return;
+      var list = getVisibleTasksForCurrentTaskDay();
+      var comp = getCompletionsForCurrentTaskDay();
+      if (list.length === 0) {
+        container.innerHTML = '<div class="empty-state">現在の時間帯に表示するタスクはありません</div>';
+        return;
+      }
+      var html = '';
+      for (var i = 0; i < list.length; i++) {
+        var t = list[i];
+        var tid = esc(t.id);
+        var checked = comp[t.id] ? ' checked' : '';
+        var freqLabel = t.freq === 'daily' ? '日次' : (t.freq === 'weekly' ? '週次' : '月次');
+        html += '<label class="task-row">' +
+          '<input type="checkbox" data-task-id="' + tid + '"' + checked + '>' +
+          '<span class="task-body">' +
+          '<span class="task-name">' + esc(t.name) + '</span>' +
+          '<div class="task-meta">' + esc(freqLabel) + ' · ' + esc(t.priority) + '</div>' +
+          '</span></label>';
+      }
+      container.innerHTML = html;
+    }
+
+    /* トースト表示 */
+    function showToast(msg, duration) {
+      var t = document.getElementById('toast');
+      if (!t) return;
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(function() {
+        t.classList.remove('show');
+      }, duration || 2000);
+    }
+
+    /* ============================================================
+       DEFAULT_DATA（session-01）
+    ============================================================ */
+    var DEFAULT_DATA = {
+      version: "2.2",
+      initialized: false,
+      currentUser: null,
+      lastBackup: null,
+      auth: {
+        failedAttempts: 0,
+        lockedUntilEpochMs: null
+      },
+      businessStatus: {
+        date: null,
+        started: false,
+        startedAt: null,
+        ended: false,
+        endedAt: null
+      },
+      users: [],
+      shiftPatterns: [
+        { id: "pattern_normal", name: "通常", startTime: "11:30", endTime: "00:30" },
+        { id: "pattern_early",  name: "早番", startTime: "18:00", endTime: "00:30" },
+        { id: "pattern_late",   name: "遅番", startTime: "21:00", endTime: "02:00" }
+      ],
+      shifts: [],
+      timeclock: [],
+      tasks: [],
+      taskCompletions: {},
+      /* 直近に保存・表示が整合していたタスク営業日キー（businessStartTime 基準）。日跨ぎ検知に使用 */
+      taskCompletionAnchorBusinessDayKey: null,
+      dailySales: {},
+      aiConfig: {
+        enabled: false,
+        provider: "gemini",
+        apiKey: "",
+        dailyLimit: 3,
+        todayUsage: 0,
+        lastUsageDate: null
+      },
+      settings: {
+        businessStartTime: "11:30",
+        businessEndTime: "06:00",
+        defaultBreakMinutes: 60,
+        openDurationMinutes: 30,
+        closeStartTime: "23:00"
+      },
+    };
+
+    /* アプリ状態変数 */
+    var data = {};
+
+    /* ============================================================
+       データ管理（session-01）
+    ============================================================ */
+
+    /* ディープマージ（DEFAULT_DATAの構造を維持しながら保存済みデータを上書き） */
+    function deepMerge(target, source) {
+      for (var key in target) {
+        if (source && Object.prototype.hasOwnProperty.call(source, key)) {
+          if (
+            typeof target[key] === 'object' &&
+            target[key] !== null &&
+            !Array.isArray(target[key])
+          ) {
+            target[key] = deepMerge(target[key], source[key] || {});
+          } else {
+            target[key] = source[key];
+          }
+        }
+      }
+      for (var key2 in source) {
+        if (
+          Object.prototype.hasOwnProperty.call(source, key2) &&
+          !Object.prototype.hasOwnProperty.call(target, key2)
+        ) {
+          target[key2] = source[key2];
+        }
+      }
+      return target;
+    }
+
+    /* アプリ状態読み込み */
+    function loadAppState() {
+      try {
+        var saved = localStorage.getItem('bikusu_v22');
+        if (saved) {
+          data = deepMerge(JSON.parse(JSON.stringify(DEFAULT_DATA)), JSON.parse(saved));
+        } else {
+          data = JSON.parse(JSON.stringify(DEFAULT_DATA));
+        }
+      } catch (e) {
+        data = JSON.parse(JSON.stringify(DEFAULT_DATA));
+      }
+    }
+
+    /* アプリ状態保存 */
+    function saveAppState() {
+      localStorage.setItem('bikusu_v22', JSON.stringify(data));
+    }
+
+    /* ============================================================
+       認証ロジック（session-01）
+    ============================================================ */
+
+    /* 初回起動判定 */
+    function isFirstLaunch() {
+      return data.users.length === 0;
+    }
+
+    /* ルーティング判定 */
+    function getRouteState() {
+      if (data.users.length === 0) return 'wizard';
+      if (!data.currentUser) return 'login';
+      return 'authenticated';
+    }
+
+    /* PINフォーマット検証（4桁数字のみ） */
+    function validatePinFormat(pin) {
+      return /^[0-9]{4}$/.test(pin);
+    }
+
+    /* ロック中判定 */
+    function isAuthLocked() {
+      return !!(data.auth.lockedUntilEpochMs && Date.now() < data.auth.lockedUntilEpochMs);
+    }
+
+    /* 失敗回数インクリメント（3回でロック） */
+    function incrementFailedAttempts() {
+      data.auth.failedAttempts += 1;
+      if (data.auth.failedAttempts >= 3) {
+        data.auth.lockedUntilEpochMs = Date.now() + 30000;
+      }
+      saveAppState();
+    }
+
+    /* カレントユーザー設定 */
+    function setCurrentUser(user) {
+      data.currentUser = { userId: user.userId, role: user.role };
+      saveAppState();
+    }
+
+    /* PINログイン検証 */
+    function verifyPinLogin(pin) {
+      if (isAuthLocked()) {
+        return {
+          status: 'locked',
+          messageCode: 'PIN_LOCKED',
+          failedAttempts: data.auth.failedAttempts,
+          lockedUntilEpochMs: data.auth.lockedUntilEpochMs
+        };
+      }
+
+      if (!validatePinFormat(pin)) {
+        return {
+          status: 'validation_error',
+          messageCode: 'PIN_INVALID_FORMAT',
+          failedAttempts: data.auth.failedAttempts,
+          lockedUntilEpochMs: data.auth.lockedUntilEpochMs
+        };
+      }
+
+      var matched = null;
+      for (var i = 0; i < data.users.length; i++) {
+        if (data.users[i].pin === pin && data.users[i].status === 'active') {
+          matched = data.users[i];
+          break;
+        }
+      }
+
+      if (!matched) {
+        incrementFailedAttempts();
+        return {
+          status: isAuthLocked() ? 'locked' : 'auth_error',
+          messageCode: isAuthLocked() ? 'PIN_LOCKED' : 'PIN_MISMATCH',
+          failedAttempts: data.auth.failedAttempts,
+          lockedUntilEpochMs: data.auth.lockedUntilEpochMs
+        };
+      }
+
+      data.auth.failedAttempts = 0;
+      data.auth.lockedUntilEpochMs = null;
+      setCurrentUser(matched);
+
+      return {
+        status: 'success',
+        messageCode: 'LOGIN_SUCCESS',
+        currentUser: data.currentUser,
+        failedAttempts: data.auth.failedAttempts,
+        lockedUntilEpochMs: data.auth.lockedUntilEpochMs
+      };
+    }
+
+    /* ログアウト（設定画面の責務、session-10で呼び出し） */
+    function logoutCurrentUser() {
+      data.currentUser = null;
+      saveAppState();
+      showScreen('login');
+    }
+
+    /* ============================================================
+       画面切替（session-03）
+    ============================================================ */
+
+    /* ナビアクティブ状態更新 */
+    function updateNavActive(screenId) {
+      var ids = ['home', 'shift', 'task', 'payroll', 'settings'];
+      document.querySelectorAll('.nav-item').forEach(function(el, i) {
+        el.classList.toggle('active', ids[i] === screenId);
+      });
+    }
+
+    /* 画面切替（class制御で統一、style.display直接操作禁止） */
+    function showScreen(screenId) {
+      document.querySelectorAll('.screen').forEach(function(el) {
+        el.classList.remove('active');
+      });
+      var target = document.getElementById('screen-' + screenId);
+      if (target) target.classList.add('active');
+
+      var hideNav = (screenId === 'login' || screenId === 'wizard');
+      document.getElementById('bottom-nav').classList.toggle('nav-hidden', hideNav);
+
+      if (!hideNav) updateNavActive(screenId);
+
+      if (screenId === 'home' && typeof renderHome === 'function') renderHome();
+      if (screenId === 'shift' && typeof renderShiftCalendar === 'function') renderShiftCalendar();
+      if (screenId === 'task') {
+        if (typeof ensureTaskCompletionsShape === 'function') ensureTaskCompletionsShape();
+        if (typeof renderTaskScreen === 'function') renderTaskScreen();
+        /* ホーム未経由でタスクへ来た場合も営業日跨ぎを検知できるようタイマーを起動 */
+        if (!homeTimer) {
+          homeTimer = setInterval(mainScreenMinuteTick, 60000);
+        }
+      }
+    }
+
+    /* ============================================================
+       ウィザード（session-02）
+    ============================================================ */
+
+    /* DEFAULT_TASKS 46件（1件も省略しない） */
+    var DEFAULT_TASKS = [
+      /* ---- 日次 OPEN（9件）---- */
+      {name:"レジ開け・釣銭確認",        detail:"釣銭を確認して本日の売上レジをセットする。千円札×20枚、五千円札×4枚、一万円札×2枚が基本。",               period:"OPEN",  freq:"daily",   priority:"P1"},
+      {name:"出勤確認（EC-CUBE承認）",    detail:"EC-CUBEで出勤承認を行い、サイト上の出勤状況を反映させる。予約とのダブルブッキングも確認。",               period:"OPEN",  freq:"daily",   priority:"P1"},
+      {name:"清掃（待機所・トイレ・階段・事務所）", detail:"トイレ・洗面台・フロア・待合室・階段を清掃。タオル・紙コップ・消耗品の在庫確認。",              period:"OPEN",  freq:"daily",   priority:"P1"},
+      {name:"洗濯（タオル・シーツ）",      detail:"使用済みタオル・シーツの洗濯。乾燥後の補充まで行う。",                                                    period:"OPEN",  freq:"daily",   priority:"P1"},
+      {name:"リマインドLINE（当日出勤者）",detail:"当日出勤予定の女の子にLINEで出勤確認を送る。返信で出勤意思を確認。",                                     period:"OPEN",  freq:"daily",   priority:"P1"},
+      {name:"顧客メモ確認",              detail:"前日の顧客メモ・指名状況を確認。当日の対応に活かす。",                                                      period:"OPEN",  freq:"daily",   priority:"P2"},
+      {name:"姫予約・本指名確認",         detail:"本日の予約台帳を確認。本指名の有無、時間帯の重複がないかチェック。",                                        period:"OPEN",  freq:"daily",   priority:"P1"},
+      {name:"即姫設定（ダミー出勤）",      detail:"サイト上の出勤表示を調整し、常に数名が出勤表示されるようにする。",                                         period:"OPEN",  freq:"daily",   priority:"P2"},
+      {name:"朝礼（理念＋称賛カード）",    detail:"開店前に理念の読み上げと称賛カードの配布を行う。1分程度でOK。",                                           period:"OPEN",  freq:"daily",   priority:"P2"},
+      /* ---- 日次 ACTIVE（5件）---- */
+      {name:"電話応対・予約管理",         detail:"電話での問い合わせ対応と予約台帳の管理。キャンセル・変更も随時対応。",                                      period:"ACTIVE",freq:"daily",   priority:"P1"},
+      {name:"女の子相談対応",             detail:"営業中の女の子からの相談に随時対応。困りごとは記録して後日フォロー。",                                      period:"ACTIVE",freq:"daily",   priority:"P1"},
+      {name:"Web応募確認・返信",          detail:"求人サイトからの応募を確認し、2時間以内に返信する。",                                                       period:"ACTIVE",freq:"daily",   priority:"P2"},
+      {name:"メルマガ送信",               detail:"定時にメルマガを配信。内容は本日の出勤情報やキャンペーン案内。",                                            period:"ACTIVE",freq:"daily",   priority:"P2"},
+      {name:"口コミ承認",                 detail:"サイトに投稿された口コミを確認し、承認処理を行う。不適切な投稿は対応。",                                    period:"ACTIVE",freq:"daily",   priority:"P2"},
+      /* ---- 日次 CLOSE（7件）---- */
+      {name:"女の子清算・現金管理",        detail:"女の子への報酬を精算。現金の受け渡しはダブルチェック。",                                                    period:"CLOSE", freq:"daily",   priority:"P1"},
+      {name:"レジ締め・売上確認",          detail:"レジの現金を数え、POS売上と突合する。差異があれば原因を記録。",                                            period:"CLOSE", freq:"daily",   priority:"P1"},
+      {name:"EC-CUBE業務終了ボタン押下",  detail:"EC-CUBEの業務終了ボタンを押し、当日の処理を確定させる。",                                                 period:"CLOSE", freq:"daily",   priority:"P1"},
+      {name:"営業終了後の並び替え調整",    detail:"EC-CUBEの並び順を調整。完売・休み表示を正確にし、翌日のおすすめ3人を上位に配置。",                         period:"CLOSE", freq:"daily",   priority:"P2"},
+      {name:"忘れ物チェック（待機室）",    detail:"待機室の忘れ物をチェック。あれば保管し、該当者に連絡。",                                                    period:"CLOSE", freq:"daily",   priority:"P2"},
+      {name:"電気・エアコンOFF・施錠確認", detail:"事務所・待機室の電気・エアコンを消灯。全出入口の施錠を確認。日報に特記事項を記入。",                        period:"CLOSE", freq:"daily",   priority:"P1"},
+      {name:"翌日準備",                   detail:"備品補充、翌日の予約確認、清掃箇所の最終チェック。",                                                        period:"CLOSE", freq:"daily",   priority:"P2"},
+      /* ---- 週次（12件）---- */
+      {name:"備品在庫チェック・発注",      detail:"消耗品の在庫を確認し、不足分を発注する。タオル、紙コップ等の消耗品が対象。",  period:"ACTIVE",freq:"weekly",  freqDay:5, priority:"P1"},
+      {name:"出勤率・稼働状況確認",        detail:"週間の出勤率と稼働状況を集計。7割を下回る場合はフォロー計画を立てる。",       period:"ACTIVE",freq:"weekly",  freqDay:1, priority:"P1"},
+      {name:"無出勤者への連絡",            detail:"1週間出勤がない女の子にLINE等で連絡。放置感をなくす。",                      period:"ACTIVE",freq:"weekly",  freqDay:1, priority:"P1"},
+      {name:"面談ログ記録",               detail:"週次の面談内容を記録。成長ポイントと課題を可視化。",                          period:"ACTIVE",freq:"weekly",  freqDay:5, priority:"P2"},
+      {name:"週次清掃（徹底清掃）",        detail:"通常清掃では行わないエアコンフィルター、窓、床のワックスがけ等。",            period:"OPEN",  freq:"weekly",  freqDay:1, priority:"P2"},
+      {name:"送信例文・ミス事例の見直し",  detail:"受付対応の送信例文を見直し。今週あったミス事例を共有・改善。",               period:"ACTIVE",freq:"weekly",  freqDay:5, priority:"P2"},
+      {name:"プロフィール補完",            detail:"女の子のプロフィールページに空欄がないか確認。写真やコメントを更新。",        period:"ACTIVE",freq:"weekly",  freqDay:3, priority:"P2"},
+      {name:"写メ日記用撮影",             detail:"女の子の写メ日記用の写真・動画を撮影。素材をストック。",                      period:"ACTIVE",freq:"weekly",  freqDay:3, priority:"P2"},
+      {name:"求人ページ・バナー更新",      detail:"求人サイトのページ内容とバナーを更新。最新の待遇や写真を反映。",              period:"ACTIVE",freq:"weekly",  freqDay:2, priority:"P2"},
+      {name:"SNS／広告調整",              detail:"SNS投稿の反応と広告のクリック率を確認。必要に応じて調整。",                   period:"ACTIVE",freq:"weekly",  freqDay:2, priority:"P2"},
+      {name:"理念チェックシート回収",      detail:"スタッフの理念チェックシートを回収。実践度を確認しフィードバック。",          period:"ACTIVE",freq:"weekly",  freqDay:5, priority:"P2"},
+      {name:"スタッフ振り返りミーティング",detail:"週末にスタッフ全員でよかった点・改善点を共有。10〜15分程度。",               period:"ACTIVE",freq:"weekly",  freqDay:6, priority:"P2"},
+      /* ---- 月次（13件）---- */
+      {name:"新札交換（1日・15日）",       detail:"女の子への精算用に新札を準備。1日と15日に銀行で交換。",                      period:"ACTIVE",freq:"monthly", freqDay:1,  priority:"P1"},
+      {name:"月1面談（女の子全員）",       detail:"女の子全員と1対1面談。悩み・要望・目標を聞く。面談シートに記録。",           period:"ACTIVE",freq:"monthly", freqDay:15, priority:"P1"},
+      {name:"KPIレビュー",                detail:"売上・稼働率・応募数・定着率等のKPIを月次で振り返り。改善点を決定。",         period:"ACTIVE",freq:"monthly", freqDay:1,  priority:"P1"},
+      {name:"寝具・マットレス点検／クリーニング",detail:"寝具やマットレスの汚れ・傷みを点検。必要に応じてクリーニングや交換。",  period:"ACTIVE",freq:"monthly", freqDay:1,  priority:"P2"},
+      {name:"求人効果測定",               detail:"媒体別のCV・面接率・定着率を集計。効果の低い媒体の見直し。",                 period:"ACTIVE",freq:"monthly", freqDay:1,  priority:"P2"},
+      {name:"広告費・コスト精算確認",      detail:"当月の広告費・経費を集計。売上とのバランスを確認。",                         period:"ACTIVE",freq:"monthly", freqDay:5,  priority:"P2"},
+      {name:"顧客動向・リピーター分析",    detail:"リピート率や顧客の傾向を分析。集客施策に反映。",                             period:"ACTIVE",freq:"monthly", freqDay:5,  priority:"P2"},
+      {name:"事務所・備品見直し",          detail:"事務所全体の備品を棚卸し。古いものは交換・補充。発注リストを更新。",          period:"ACTIVE",freq:"monthly", freqDay:1,  priority:"P2"},
+      {name:"スタッフKPI評価・振り返り面談",detail:"スタッフ個別のKPI評価と振り返り面談。成長ポイントと改善点を共有。",         period:"ACTIVE",freq:"monthly", freqDay:15, priority:"P2"},
+      {name:"理念振り返り会（実例共有）",  detail:"全員参加で理念の実践事例を共有。良い事例を称賛し、理念を習慣化。",           period:"ACTIVE",freq:"monthly", freqDay:15, priority:"P2"},
+      {name:"オフィシャル記事追加",        detail:"公式サイトに記事を1本以上追加。SNSで告知。",                                 period:"ACTIVE",freq:"monthly", freqDay:10, priority:"P3"},
+      {name:"在籍女性へのイベント促し",    detail:"季節イベントやキャンペーンへの参加を促す。モチベーション向上。",              period:"ACTIVE",freq:"monthly", freqDay:20, priority:"P3"},
+      {name:"誕生日カレンダー反映",        detail:"EC-CUBEの誕生日データをGoogleカレンダーに反映。お祝い連絡の準備。",          period:"ACTIVE",freq:"monthly", freqDay:1,  priority:"P3"}
+    ];
+
+    /* ウィザードで一時保持する名前とPIN */
+    var wizardName = '';
+    var wizardPin = '';
+
+    /* ウィザードステップ切替 */
+    function showWizardStep(step) {
+      [1, 2, 3].forEach(function(n) {
+        var el = document.getElementById('wizard-step' + n);
+        var dot = document.getElementById('dot-' + n);
+        if (el) el.classList.toggle('active', n === step);
+        if (dot) dot.classList.toggle('active', n === step);
+      });
+    }
+
+    /* ウィザード完了処理（users[0]作成 + DEFAULT_TASKS 46件投入） */
+    function completeWizard() {
+      /* 1. admin ユーザー作成 */
+      var adminUser = {
+        userId: generateId('user'),
+        name: wizardName.trim(),
+        pin: wizardPin,
+        role: 'admin',
+        status: 'active',
+        hourlyWage: 0,
+        transportAllowance: 0,
+        breakMinutes: 60,
+        createdAt: new Date().toISOString()
+      };
+      data.users.push(adminUser);
+
+      /* 2. DEFAULT_TASKS 46件投入 */
+      DEFAULT_TASKS.forEach(function(t) {
+        data.tasks.push({
+          id: generateId('task'),
+          name: t.name,
+          detail: t.detail,
+          period: t.period,
+          freq: t.freq,
+          freqDay: t.freqDay || null,
+          assignType: 'all',
+          assignedTo: [],
+          priority: t.priority,
+          isCustom: false,
+          isHidden: false,
+          createdAt: new Date().toISOString()
+        });
+      });
+
+      /* 3. 初期化完了 */
+      data.initialized = true;
+      data.currentUser = { userId: adminUser.userId, role: 'admin' };
+      data.auth = { failedAttempts: 0, lockedUntilEpochMs: null };
+      saveAppState();
+      showScreen('home');
+    }
+
+    /* ============================================================
+       ホーム画面（session-04）
+    ============================================================ */
+
+    /* ホーム画面の1分更新タイマー */
+    var homeTimer = null;
+
+    /* ホームまたはタスク表示中の1分ティック（日時・バッジ・タスク進捗／営業日跨ぎの自動初期化） */
+    function mainScreenMinuteTick() {
+      var homeScreen = document.getElementById('screen-home');
+      var taskScreen = document.getElementById('screen-task');
+      var onHome = homeScreen && homeScreen.classList.contains('active');
+      var onTask = taskScreen && taskScreen.classList.contains('active');
+      if (onHome) {
+        var dtEl = document.getElementById('home-datetime');
+        var bgEl = document.getElementById('home-period-badge');
+        if (dtEl) dtEl.textContent = formatDateTime();
+        if (bgEl) renderPeriodBadge(bgEl);
+        renderHomeTaskSummary();
+      } else if (onTask) {
+        ensureTaskCompletionsShape();
+        renderTaskScreen();
+      } else {
+        if (homeTimer) {
+          clearInterval(homeTimer);
+          homeTimer = null;
+        }
+      }
+    }
+
+    /* 挨拶文（時間帯4分岐、正本D-9準拠） */
+    function getGreeting() {
+      var h = new Date().getHours();
+      if (h >= 5 && h < 12) return 'おはようございます';
+      if (h >= 12 && h < 17) return 'こんにちは';
+      if (h >= 17 && h < 22) return 'こんばんは';
+      return 'お疲れさまです';
+    }
+
+    /* 日時フォーマット（例：4月3日（木） 14:30） */
+    function formatDateTime() {
+      var now = new Date();
+      var weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+      var month = now.getMonth() + 1;
+      var day = now.getDate();
+      var weekday = weekdays[now.getDay()];
+      var hours = String(now.getHours()).padStart(2, '0');
+      var minutes = String(now.getMinutes()).padStart(2, '0');
+      return month + '月' + day + '日（' + weekday + '） ' + hours + ':' + minutes;
+    }
+
+    /* 時間帯バッジ更新 */
+    function renderPeriodBadge(badge) {
+      var period = getCurrentPeriod();
+      if (period === 'OPEN') {
+        badge.className = 'home-period-badge badge-open';
+        badge.textContent = 'OPEN 開店準備';
+      } else if (period === 'ACTIVE') {
+        badge.className = 'home-period-badge badge-active';
+        badge.textContent = 'ACTIVE 営業中';
+      } else {
+        badge.className = 'home-period-badge badge-close';
+        badge.textContent = 'CLOSE 閉店';
+      }
+    }
+
+    /* バックアップ警告チェック（7日以上または未実施でバナー表示） */
+    function checkBackupWarning() {
+      var banner = document.getElementById('backup-warning');
+      if (!banner) return;
+      var lastBackup = data.lastBackup;
+      var showWarning = false;
+      if (!lastBackup) {
+        showWarning = true;
+      } else {
+        var diff = Date.now() - new Date(lastBackup).getTime();
+        if (diff >= 7 * 24 * 60 * 60 * 1000) showWarning = true;
+      }
+      banner.classList.toggle('hidden', !showWarning);
+    }
+
+    /* 業務開始/終了ボタン表示切替 */
+    function renderBusinessBtn() {
+      var startBtn = document.getElementById('business-start-btn');
+      var endBtn = document.getElementById('business-end-btn');
+      if (!startBtn || !endBtn) return;
+
+      var today = getTodayString();
+      var bs = data.businessStatus;
+      /* 今日業務開始済みかチェック（日付が変わればリセット） */
+      var isStarted = !!(bs.started && bs.date === today);
+
+      startBtn.classList.toggle('hidden', isStarted);
+      endBtn.classList.toggle('hidden', !isStarted);
+    }
+
+    /* ホーム画面レンダリング */
+    function renderHome() {
+      /* ログイン中ユーザーの名前を取得 */
+      var userName = '';
+      if (data.currentUser) {
+        for (var i = 0; i < data.users.length; i++) {
+          if (data.users[i].userId === data.currentUser.userId) {
+            userName = data.users[i].name;
+            break;
+          }
+        }
+      }
+
+      var greeting = document.getElementById('home-greeting');
+      var datetime = document.getElementById('home-datetime');
+      var badge = document.getElementById('home-period-badge');
+
+      /* innerHTML使用時はesc()を通す */
+      if (greeting) {
+        greeting.innerHTML = esc(getGreeting()) + '、' + esc(userName) + 'さん';
+      }
+      if (datetime) datetime.textContent = formatDateTime();
+      if (badge) renderPeriodBadge(badge);
+
+      checkBackupWarning();
+      renderBusinessBtn();
+      renderHomeTaskSummary();
+
+      /* ホームまたはタスク表示中は1分ごとに更新（営業日跨ぎ時の自動初期化・表示整合） */
+      if (homeTimer) clearInterval(homeTimer);
+      homeTimer = setInterval(mainScreenMinuteTick, 60000);
+    }
+
+    /* ============================================================
+       ロックカウントダウン
+    ============================================================ */
+
+    var lockTimer = null;
+
+    /* ロックカウントダウン表示（1秒ごと更新） */
+    function startLockCountdown(lockedUntilMs) {
+      var countdown = document.getElementById('lock-countdown');
+      var loginBtn = document.getElementById('login-btn');
+      if (!countdown) return;
+
+      countdown.classList.remove('hidden');
+      if (loginBtn) loginBtn.disabled = true;
+
+      if (lockTimer) clearInterval(lockTimer);
+
+      lockTimer = setInterval(function() {
+        var remaining = Math.ceil((lockedUntilMs - Date.now()) / 1000);
+        if (remaining <= 0) {
+          clearInterval(lockTimer);
+          lockTimer = null;
+          /* ロック解除：状態リセット */
+          data.auth.lockedUntilEpochMs = null;
+          data.auth.failedAttempts = 0;
+          saveAppState();
+          countdown.classList.add('hidden');
+          countdown.textContent = '';
+          var errorEl = document.getElementById('login-error');
+          if (errorEl) errorEl.textContent = '';
+          if (loginBtn) loginBtn.disabled = false;
+        } else {
+          countdown.textContent = 'ロック中: 残り' + remaining + '秒';
+        }
+      }, 1000);
+    }
+
+    /* ============================================================
+       ログイン処理
+    ============================================================ */
+
+    function doLogin() {
+      var pinInput = document.getElementById('login-pin');
+      var errorEl = document.getElementById('login-error');
+      var pin = pinInput ? pinInput.value : '';
+
+      var result = verifyPinLogin(pin);
+
+      if (result.status === 'success') {
+        if (errorEl) errorEl.textContent = '';
+        if (pinInput) pinInput.value = '';
+        showScreen('home');
+        return;
+      }
+
+      if (result.status === 'locked') {
+        if (errorEl) errorEl.textContent = 'PINが3回間違えられました。しばらくお待ちください。';
+        startLockCountdown(result.lockedUntilEpochMs);
+        return;
+      }
+
+      if (result.status === 'validation_error') {
+        if (errorEl) errorEl.textContent = 'PINは4桁の数字で入力してください';
+        return;
+      }
+
+      if (result.status === 'auth_error') {
+        var remaining = 3 - result.failedAttempts;
+        /* innerHTML使用時はesc()を通す */
+        if (errorEl) {
+          errorEl.innerHTML = 'PINが違います。あと' + esc(String(remaining)) + '回間違えるとロックされます。';
+        }
+        return;
+      }
+    }
+
+    /* ============================================================
+       シフト管理（session-05）
+    ============================================================ */
+
+    /* カレンダー表示状態 */
+    var shiftCalendarYear = new Date().getFullYear();
+    var shiftCalendarMonth = new Date().getMonth(); /* 0-indexed */
+
+    /* 一括登録モード状態 */
+    var isBulkMode = false;
+    var bulkSelectedDates = [];
+
+    /* ---- 永続保存 ---- */
+
+    /* data.shiftsを更新してsaveAppState()経由で永続化 */
+    function saveShifts() {
+      saveAppState();
+    }
+
+    /* localStorage復元はloadAppState()が担う — data.shiftsを参照するだけ */
+    function loadShifts() {
+      return data.shifts || [];
+    }
+
+    /* ---- 日付ユーティリティ ---- */
+
+    /* 過去7日より前の日付は編集不可 */
+    function isEditableDate(dateStr) {
+      var today = getTodayString();
+      var thresholdMs = new Date(today).getTime() - (7 * 24 * 60 * 60 * 1000);
+      return new Date(dateStr).getTime() >= thresholdMs;
+    }
+
+    /* ---- バリデーション ---- */
+
+    /* シフト入力検証（status=offの場合は時刻不要、深夜跨ぎ許可） */
+    function validateShiftInput(formData) {
+      if (formData.status === 'off') return null;
+      if (!formData.startTime) return '開始時刻を入力してください';
+      if (!formData.endTime) return '終了時刻を入力してください';
+      if (!/^\d{2}:\d{2}$/.test(formData.startTime)) return '開始時刻の形式が正しくありません';
+      if (!/^\d{2}:\d{2}$/.test(formData.endTime)) return '終了時刻の形式が正しくありません';
+      /* 深夜跨ぎ（startTime > endTime）は正当として許可 */
+      return null;
+    }
+
+    /* ---- CRUD ---- */
+
+    /* 新規シフト作成 */
+    function createShiftRecord(formData) {
+      var isOff = formData.status === 'off';
+      var record = {
+        id: generateId('shift'),
+        userId: formData.userId,
+        date: formData.date,
+        patternId: isOff ? null : (formData.patternId || null),
+        startTime: isOff ? null : (formData.startTime || null),
+        endTime: isOff ? null : (formData.endTime || null),
+        status: formData.status,
+        notes: formData.notes || ''
+      };
+      data.shifts.push(record);
+      saveShifts();
+      return record;
+    }
+
+    /* 既存シフト更新 */
+    function updateShiftRecord(shiftId, formData) {
+      var isOff = formData.status === 'off';
+      for (var i = 0; i < data.shifts.length; i++) {
+        if (data.shifts[i].id === shiftId) {
+          data.shifts[i].userId = formData.userId;
+          data.shifts[i].patternId = isOff ? null : (formData.patternId || null);
+          data.shifts[i].startTime = isOff ? null : (formData.startTime || null);
+          data.shifts[i].endTime = isOff ? null : (formData.endTime || null);
+          data.shifts[i].status = formData.status;
+          data.shifts[i].notes = formData.notes || '';
+          break;
+        }
+      }
+      saveShifts();
+    }
+
+    /* シフト削除 */
+    function deleteShiftRecord(shiftId) {
+      data.shifts = data.shifts.filter(function(s) { return s.id !== shiftId; });
+      saveShifts();
+    }
+
+    /* ---- パターン適用 ---- */
+
+    /* パターン選択時に時刻入力へ反映 */
+    function applyShiftPattern(patternId) {
+      var startEl = document.getElementById('modal-start-time');
+      var endEl = document.getElementById('modal-end-time');
+      if (!patternId || !startEl || !endEl) return;
+      for (var i = 0; i < data.shiftPatterns.length; i++) {
+        if (data.shiftPatterns[i].id === patternId) {
+          startEl.value = data.shiftPatterns[i].startTime;
+          endEl.value = data.shiftPatterns[i].endTime;
+          return;
+        }
+      }
+    }
+
+    /* ---- 一括登録 ---- */
+
+    /* 一括登録モード起動 */
+    function openBulkRegisterMode() {
+      isBulkMode = true;
+      bulkSelectedDates = [];
+
+      /* パターン選択肢を構築（innerHTML使用のためesc()必須） */
+      var bulkPatternSelect = document.getElementById('bulk-pattern-select');
+      if (bulkPatternSelect) {
+        var opts = '<option value="">（パターンなし）</option>';
+        data.shiftPatterns.forEach(function(p) {
+          opts += '<option value="' + esc(p.id) + '">' + esc(p.name) +
+            ' (' + esc(p.startTime) + '-' + esc(p.endTime) + ')</option>';
+        });
+        bulkPatternSelect.innerHTML = opts;
+      }
+
+      var panel = document.getElementById('bulk-panel');
+      if (panel) panel.classList.remove('hidden');
+      var countEl = document.getElementById('bulk-selected-count');
+      if (countEl) countEl.textContent = '0日選択中';
+      renderShiftCalendar();
+    }
+
+    /* 一括登録モード終了 */
+    function closeBulkRegisterMode() {
+      isBulkMode = false;
+      bulkSelectedDates = [];
+      var panel = document.getElementById('bulk-panel');
+      if (panel) panel.classList.add('hidden');
+      renderShiftCalendar();
+    }
+
+    /* 一括シフト適用 */
+    function applyBulkShifts() {
+      if (bulkSelectedDates.length === 0) {
+        showToast('日付を選択してください');
+        return;
+      }
+
+      var statusSelect = document.getElementById('bulk-status-select');
+      var patternSelect = document.getElementById('bulk-pattern-select');
+      var status = statusSelect ? statusSelect.value : 'working';
+      var patternId = patternSelect ? patternSelect.value : '';
+
+      /* 出勤かつパターン未選択はブロック */
+      if (status === 'working' && !patternId) {
+        showToast('出勤時はシフトパターンを選択してください');
+        return;
+      }
+
+      /* パターンから時刻を取得 */
+      var startTime = null;
+      var endTime = null;
+      if (status === 'working' && patternId) {
+        for (var i = 0; i < data.shiftPatterns.length; i++) {
+          if (data.shiftPatterns[i].id === patternId) {
+            startTime = data.shiftPatterns[i].startTime;
+            endTime = data.shiftPatterns[i].endTime;
+            break;
+          }
+        }
+      }
+
+      var userId = data.currentUser ? data.currentUser.userId : '';
+      var applied = 0;
+
+      bulkSelectedDates.forEach(function(dateStr) {
+        if (!isEditableDate(dateStr)) return;
+
+        /* 同ユーザー・同日の既存シフトを検索 */
+        var existing = null;
+        for (var j = 0; j < data.shifts.length; j++) {
+          if (data.shifts[j].date === dateStr && data.shifts[j].userId === userId) {
+            existing = data.shifts[j];
+            break;
+          }
+        }
+
+        var fd = {
+          userId: userId,
+          date: dateStr,
+          patternId: patternId || null,
+          startTime: startTime,
+          endTime: endTime,
+          status: status,
+          notes: existing ? (existing.notes || '') : ''
+        };
+
+        if (existing) {
+          updateShiftRecord(existing.id, fd);
+        } else {
+          createShiftRecord(fd);
+        }
+        applied++;
+      });
+
+      if (applied > 0) {
+        showToast(applied + '日分のシフトを登録しました');
+      }
+      closeBulkRegisterMode();
+    }
+
+    /* ---- カレンダー描画 ---- */
+
+    /* 月切替 */
+    function navigateMonth(delta) {
+      shiftCalendarMonth += delta;
+      if (shiftCalendarMonth < 0) {
+        shiftCalendarMonth = 11;
+        shiftCalendarYear--;
+      } else if (shiftCalendarMonth > 11) {
+        shiftCalendarMonth = 0;
+        shiftCalendarYear++;
+      }
+      renderShiftCalendar();
+    }
+
+    /* 日付セル内にシフトチップを描画 */
+    function renderShiftDayCell(dateStr, cell) {
+      var dayShifts = data.shifts.filter(function(s) { return s.date === dateStr; });
+      dayShifts.forEach(function(s) {
+        /* ユーザー名取得 */
+        var userName = '';
+        for (var i = 0; i < data.users.length; i++) {
+          if (data.users[i].userId === s.userId) {
+            userName = data.users[i].name;
+            break;
+          }
+        }
+        var chip = document.createElement('div');
+        chip.className = 'shift-day-chip ' + (s.status === 'off' ? 'chip-off' : 'chip-working');
+        /* textContent使用でXSS安全 */
+        chip.textContent = s.status === 'off'
+          ? (userName || '?') + ' 休'
+          : (userName || '?') + (s.startTime ? ' ' + s.startTime : '');
+        cell.appendChild(chip);
+      });
+    }
+
+    /* 月間カレンダー全体を描画 */
+    function renderShiftCalendar() {
+      var labelEl = document.getElementById('shift-month-label');
+      var grid = document.getElementById('shift-cal-grid');
+      if (!labelEl || !grid) return;
+
+      /* 月ラベル更新 */
+      labelEl.textContent = shiftCalendarYear + '年' + (shiftCalendarMonth + 1) + '月';
+
+      /* グリッドをクリアして再描画 */
+      grid.innerHTML = '';
+
+      var today = getTodayString();
+      var firstDay = new Date(shiftCalendarYear, shiftCalendarMonth, 1);
+      var lastDayNum = new Date(shiftCalendarYear, shiftCalendarMonth + 1, 0).getDate();
+      var startDow = firstDay.getDay(); /* 0=日曜 */
+
+      /* 前月末尾の空セル */
+      for (var e = 0; e < startDow; e++) {
+        var empty = document.createElement('div');
+        empty.className = 'shift-day-cell other-month';
+        grid.appendChild(empty);
+      }
+
+      /* 当月セル */
+      for (var d = 1; d <= lastDayNum; d++) {
+        var dateStr = shiftCalendarYear + '-' +
+          String(shiftCalendarMonth + 1).padStart(2, '0') + '-' +
+          String(d).padStart(2, '0');
+
+        var dow = new Date(dateStr).getDay();
+        var editable = isEditableDate(dateStr);
+        var cell = document.createElement('div');
+        cell.className = 'shift-day-cell';
+        cell.dataset.date = dateStr;
+
+        if (dateStr === today) cell.classList.add('today');
+        if (!editable) cell.classList.add('not-editable');
+        if (isBulkMode && bulkSelectedDates.indexOf(dateStr) !== -1) {
+          cell.classList.add('bulk-selected');
+        }
+
+        /* 日付番号（textContent使用でXSS安全） */
+        var numEl = document.createElement('div');
+        numEl.className = 'shift-day-num' +
+          (dow === 0 ? ' sun' : '') + (dow === 6 ? ' sat' : '');
+        numEl.textContent = d;
+        cell.appendChild(numEl);
+
+        /* シフトチップ描画 */
+        renderShiftDayCell(dateStr, cell);
+
+        grid.appendChild(cell);
+      }
+
+      /* 末尾の空セル（7列揃え） */
+      var totalFilled = startDow + lastDayNum;
+      var tail = totalFilled % 7;
+      if (tail !== 0) {
+        for (var t = 0; t < (7 - tail); t++) {
+          var tailCell = document.createElement('div');
+          tailCell.className = 'shift-day-cell other-month';
+          grid.appendChild(tailCell);
+        }
+      }
+    }
+
+    /* ---- モーダル ---- */
+
+    /* 時刻・パターン入力の有効/無効切替 */
+    function toggleTimeInputs(enabled) {
+      var startEl = document.getElementById('modal-start-time');
+      var endEl = document.getElementById('modal-end-time');
+      var patEl = document.getElementById('modal-pattern-id');
+      if (startEl) startEl.disabled = !enabled;
+      if (endEl) endEl.disabled = !enabled;
+      if (patEl) patEl.disabled = !enabled;
+    }
+
+    /* モーダルを開く（新規: existingShiftId=null、編集: existingShiftId=id） */
+    function openShiftModal(dateStr, existingShiftId) {
+      var overlay = document.getElementById('shift-modal-overlay');
+      if (!overlay) return;
+
+      var titleEl = document.getElementById('modal-title');
+      var shiftIdEl = document.getElementById('modal-shift-id');
+      var shiftDateEl = document.getElementById('modal-shift-date');
+      var userSelect = document.getElementById('modal-user-id');
+      var statusSelect = document.getElementById('modal-status');
+      var patternSelect = document.getElementById('modal-pattern-id');
+      var startEl = document.getElementById('modal-start-time');
+      var endEl = document.getElementById('modal-end-time');
+      var notesEl = document.getElementById('modal-notes');
+      var deleteBtn = document.getElementById('modal-delete-btn');
+      var errorEl = document.getElementById('modal-error');
+
+      if (errorEl) errorEl.textContent = '';
+
+      /* ユーザー選択肢を構築（innerHTML使用のためesc()必須） */
+      if (userSelect) {
+        var uOpts = '';
+        data.users.forEach(function(u) {
+          uOpts += '<option value="' + esc(u.userId) + '">' + esc(u.name) + '</option>';
+        });
+        userSelect.innerHTML = uOpts;
+      }
+
+      /* パターン選択肢を構築 */
+      if (patternSelect) {
+        var pOpts = '<option value="">（手動入力）</option>';
+        data.shiftPatterns.forEach(function(p) {
+          pOpts += '<option value="' + esc(p.id) + '">' + esc(p.name) +
+            ' (' + esc(p.startTime) + '-' + esc(p.endTime) + ')</option>';
+        });
+        patternSelect.innerHTML = pOpts;
+      }
+
+      if (existingShiftId) {
+        /* 編集モード：既存値を復元 */
+        var existing = null;
+        for (var i = 0; i < data.shifts.length; i++) {
+          if (data.shifts[i].id === existingShiftId) { existing = data.shifts[i]; break; }
+        }
+        if (!existing) return;
+
+        if (titleEl) titleEl.textContent = dateStr + ' シフト編集';
+        if (shiftIdEl) shiftIdEl.value = existingShiftId;
+        if (shiftDateEl) shiftDateEl.value = dateStr;
+        if (userSelect) userSelect.value = existing.userId;
+        if (statusSelect) statusSelect.value = existing.status;
+        if (patternSelect) patternSelect.value = existing.patternId || '';
+        if (startEl) startEl.value = existing.startTime || '';
+        if (endEl) endEl.value = existing.endTime || '';
+        if (notesEl) notesEl.value = existing.notes || '';
+        if (deleteBtn) deleteBtn.classList.remove('hidden');
+        toggleTimeInputs(existing.status === 'working');
+
+      } else {
+        /* 新規登録モード */
+        if (titleEl) titleEl.textContent = dateStr + ' シフト登録';
+        if (shiftIdEl) shiftIdEl.value = '';
+        if (shiftDateEl) shiftDateEl.value = dateStr;
+        if (userSelect && data.currentUser) userSelect.value = data.currentUser.userId;
+        if (statusSelect) statusSelect.value = 'working';
+        if (patternSelect) patternSelect.value = '';
+        if (startEl) startEl.value = '';
+        if (endEl) endEl.value = '';
+        if (notesEl) notesEl.value = '';
+        if (deleteBtn) deleteBtn.classList.add('hidden');
+        toggleTimeInputs(true);
+      }
+
+      overlay.classList.remove('hidden');
+    }
+
+    /* モーダルを閉じる */
+    function closeShiftModal() {
+      var overlay = document.getElementById('shift-modal-overlay');
+      if (overlay) overlay.classList.add('hidden');
+    }
+
+    /* モーダルの保存処理 */
+    function saveShiftModal() {
+      var shiftIdEl = document.getElementById('modal-shift-id');
+      var shiftDateEl = document.getElementById('modal-shift-date');
+      var userSelect = document.getElementById('modal-user-id');
+      var statusSelect = document.getElementById('modal-status');
+      var patternSelect = document.getElementById('modal-pattern-id');
+      var startEl = document.getElementById('modal-start-time');
+      var endEl = document.getElementById('modal-end-time');
+      var notesEl = document.getElementById('modal-notes');
+      var errorEl = document.getElementById('modal-error');
+
+      var formData = {
+        userId: userSelect ? userSelect.value : '',
+        date: shiftDateEl ? shiftDateEl.value : '',
+        patternId: patternSelect ? patternSelect.value : '',
+        startTime: startEl ? startEl.value : '',
+        endTime: endEl ? endEl.value : '',
+        status: statusSelect ? statusSelect.value : 'working',
+        notes: notesEl ? notesEl.value : ''
+      };
+
+      var err = validateShiftInput(formData);
+      if (err) {
+        if (errorEl) errorEl.textContent = err;
+        return;
+      }
+
+      var shiftId = shiftIdEl ? shiftIdEl.value : '';
+      if (shiftId) {
+        updateShiftRecord(shiftId, formData);
+        showToast('シフトを更新しました');
+      } else {
+        createShiftRecord(formData);
+        showToast('シフトを登録しました');
+      }
+
+      closeShiftModal();
+      renderShiftCalendar();
+    }
+
+    /* モーダルの削除処理（確認ダイアログ必須） */
+    function deleteShiftModal() {
+      var shiftIdEl = document.getElementById('modal-shift-id');
+      var shiftId = shiftIdEl ? shiftIdEl.value : '';
+      if (!shiftId) return;
+      if (!confirm('このシフトを削除しますか？')) return;
+      deleteShiftRecord(shiftId);
+      showToast('シフトを削除しました');
+      closeShiftModal();
+      renderShiftCalendar();
+    }
+
+    /* ============================================================
+       DOMContentLoaded: イベント登録 + 初期ルーティング
+    ============================================================ */
+    document.addEventListener('DOMContentLoaded', function() {
+      /* アプリ状態読み込み */
+      loadAppState();
+      ensureTaskCompletionsShape();
+
+      /* ---- ボトムナビ ---- */
+      document.querySelectorAll('.nav-item').forEach(function(item) {
+        item.addEventListener('click', function() {
+          showScreen(this.dataset.screen);
+        });
+      });
+
+      /* ---- ログイン画面 ---- */
+      var loginBtn = document.getElementById('login-btn');
+      if (loginBtn) {
+        loginBtn.addEventListener('click', function() {
+          doLogin();
+        });
+      }
+
+      /* PINフィールドでEnterキー押下時もログイン実行 */
+      var loginPin = document.getElementById('login-pin');
+      if (loginPin) {
+        loginPin.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') doLogin();
+        });
+      }
+
+      /* ---- ウィザード Step1 次へ ---- */
+      var step1Next = document.getElementById('wizard-step1-next');
+      if (step1Next) {
+        step1Next.addEventListener('click', function() {
+          var nameInput = document.getElementById('wizard-name');
+          var nameError = document.getElementById('wizard-name-error');
+          var trimmed = nameInput.value.trim();
+
+          if (trimmed.length === 0) {
+            nameError.textContent = '名前を入力してください（空白のみは使用できません）';
+            return;
+          }
+          if (trimmed.length > 10) {
+            nameError.textContent = '名前は10文字以内で入力してください';
+            return;
+          }
+          nameError.textContent = '';
+          wizardName = trimmed;
+          showWizardStep(2);
+        });
+      }
+
+      /* ---- ウィザード Step2 次へ ---- */
+      var step2Next = document.getElementById('wizard-step2-next');
+      if (step2Next) {
+        step2Next.addEventListener('click', function() {
+          var pinInput = document.getElementById('wizard-pin');
+          var pinConfirm = document.getElementById('wizard-pin-confirm');
+          var pinError = document.getElementById('wizard-pin-error');
+          var pin = pinInput.value;
+          var confirm = pinConfirm.value;
+
+          if (!validatePinFormat(pin)) {
+            pinError.textContent = 'PINは4桁の数字で入力してください';
+            return;
+          }
+          if (pin !== confirm) {
+            pinError.textContent = 'PINが一致しません。もう一度入力してください';
+            return;
+          }
+          pinError.textContent = '';
+          wizardPin = pin;
+          showWizardStep(3);
+        });
+      }
+
+      /* ---- ウィザード 始めるボタン ---- */
+      var wizardFinish = document.getElementById('wizard-finish');
+      if (wizardFinish) {
+        wizardFinish.addEventListener('click', function() {
+          completeWizard();
+        });
+      }
+
+      /* ---- ホーム: 業務開始ボタン ---- */
+      var startBtn = document.getElementById('business-start-btn');
+      if (startBtn) {
+        startBtn.addEventListener('click', function() {
+          /* 当日タスク完了状態を初期化（他営業日キーは保持） */
+          resetTaskCompletionsForCurrentBusinessDay();
+          data.businessStatus.date = getTodayString();
+          data.businessStatus.started = true;
+          data.businessStatus.startedAt = new Date().toISOString();
+          data.businessStatus.ended = false;
+          data.businessStatus.endedAt = null;
+          saveAppState();
+          renderBusinessBtn();
+          renderHomeTaskSummary();
+          if (typeof renderTaskScreen === 'function') renderTaskScreen();
+          showToast('業務を開始しました');
+        });
+      }
+
+      /* ---- ホーム: 業務終了ボタン ---- */
+      var endBtn = document.getElementById('business-end-btn');
+      if (endBtn) {
+        endBtn.addEventListener('click', function() {
+          if (confirm('本日の業務を終了しますか？')) {
+            /* session-10で本格処理実装 */
+            console.log('業務終了:', new Date().toISOString());
+            data.businessStatus.ended = true;
+            data.businessStatus.endedAt = new Date().toISOString();
+            saveAppState();
+            renderBusinessBtn();
+            showToast('業務を終了しました');
+          }
+        });
+      }
+
+      /* ---- ホーム: シフト画面リンク ---- */
+      var shiftLink = document.getElementById('shift-link');
+      if (shiftLink) {
+        shiftLink.addEventListener('click', function() {
+          showScreen('shift');
+        });
+      }
+
+      /* ---- シフト画面イベント（session-05） ---- */
+
+      /* 前月ボタン */
+      var shiftPrevBtn = document.getElementById('shift-prev-btn');
+      if (shiftPrevBtn) {
+        shiftPrevBtn.addEventListener('click', function() { navigateMonth(-1); });
+      }
+
+      /* 次月ボタン */
+      var shiftNextBtn = document.getElementById('shift-next-btn');
+      if (shiftNextBtn) {
+        shiftNextBtn.addEventListener('click', function() { navigateMonth(1); });
+      }
+
+      /* カレンダーグリッドへのイベントデリゲート */
+      var shiftCalGrid = document.getElementById('shift-cal-grid');
+      if (shiftCalGrid) {
+        shiftCalGrid.addEventListener('click', function(e) {
+          var cell = e.target.closest('.shift-day-cell');
+          if (!cell || cell.classList.contains('other-month')) return;
+
+          var dateStr = cell.dataset.date;
+          if (!dateStr) return;
+
+          if (!isEditableDate(dateStr)) {
+            showToast('過去7日より前のシフトは操作できません');
+            return;
+          }
+
+          if (isBulkMode) {
+            /* 一括モード：日付トグル選択 */
+            var idx = bulkSelectedDates.indexOf(dateStr);
+            if (idx === -1) {
+              bulkSelectedDates.push(dateStr);
+            } else {
+              bulkSelectedDates.splice(idx, 1);
+            }
+            var isNowSelected = bulkSelectedDates.indexOf(dateStr) !== -1;
+            cell.classList.toggle('bulk-selected', isNowSelected);
+            var countEl = document.getElementById('bulk-selected-count');
+            if (countEl) countEl.textContent = bulkSelectedDates.length + '日選択中';
+            return;
+          }
+
+          /* 通常モード：当ユーザーの既存シフトを検索してモーダルを開く */
+          var userId = data.currentUser ? data.currentUser.userId : null;
+          var existing = null;
+          for (var i = 0; i < data.shifts.length; i++) {
+            if (data.shifts[i].date === dateStr && data.shifts[i].userId === userId) {
+              existing = data.shifts[i];
+              break;
+            }
+          }
+          openShiftModal(dateStr, existing ? existing.id : null);
+        });
+      }
+
+      /* 一括登録モード起動ボタン */
+      var bulkBtn = document.getElementById('bulk-register-btn');
+      if (bulkBtn) {
+        bulkBtn.addEventListener('click', function() {
+          openBulkRegisterMode();
+        });
+      }
+
+      /* 一括登録：キャンセル */
+      var bulkCancelBtn = document.getElementById('bulk-cancel-btn');
+      if (bulkCancelBtn) {
+        bulkCancelBtn.addEventListener('click', function() {
+          closeBulkRegisterMode();
+        });
+      }
+
+      /* 一括登録：適用 */
+      var bulkApplyBtn = document.getElementById('bulk-apply-btn');
+      if (bulkApplyBtn) {
+        bulkApplyBtn.addEventListener('click', function() {
+          applyBulkShifts();
+        });
+      }
+
+      /* モーダル：閉じるボタン */
+      var modalCloseBtn = document.getElementById('modal-close-btn');
+      if (modalCloseBtn) {
+        modalCloseBtn.addEventListener('click', function() {
+          closeShiftModal();
+        });
+      }
+
+      /* モーダル：オーバーレイ背景クリックで閉じる */
+      var modalOverlay = document.getElementById('shift-modal-overlay');
+      if (modalOverlay) {
+        modalOverlay.addEventListener('click', function(e) {
+          if (e.target === this) closeShiftModal();
+        });
+      }
+
+      /* モーダル：保存ボタン */
+      var modalSaveBtn = document.getElementById('modal-save-btn');
+      if (modalSaveBtn) {
+        modalSaveBtn.addEventListener('click', function() {
+          saveShiftModal();
+        });
+      }
+
+      /* モーダル：削除ボタン */
+      var modalDeleteBtn = document.getElementById('modal-delete-btn');
+      if (modalDeleteBtn) {
+        modalDeleteBtn.addEventListener('click', function() {
+          deleteShiftModal();
+        });
+      }
+
+      /* モーダル：status変更で時刻入力を有効/無効切替 */
+      var modalStatus = document.getElementById('modal-status');
+      if (modalStatus) {
+        modalStatus.addEventListener('change', function() {
+          var isWorking = this.value === 'working';
+          toggleTimeInputs(isWorking);
+          if (!isWorking) {
+            var startEl = document.getElementById('modal-start-time');
+            var endEl = document.getElementById('modal-end-time');
+            var patEl = document.getElementById('modal-pattern-id');
+            if (startEl) startEl.value = '';
+            if (endEl) endEl.value = '';
+            if (patEl) patEl.value = '';
+          }
+        });
+      }
+
+      /* モーダル：パターン変更で時刻に反映 */
+      var modalPatternSel = document.getElementById('modal-pattern-id');
+      if (modalPatternSel) {
+        modalPatternSel.addEventListener('change', function() {
+          applyShiftPattern(this.value);
+        });
+      }
+
+      /* ---- タスク一覧：チェック変更（session-12） ---- */
+      var taskListContainer = document.getElementById('task-list-container');
+      if (taskListContainer) {
+        taskListContainer.addEventListener('change', function(e) {
+          var cb = e.target;
+          if (!cb || cb.type !== 'checkbox') return;
+          var taskId = cb.getAttribute('data-task-id');
+          if (!taskId) return;
+          setTaskCompletion(taskId, cb.checked);
+          renderHomeTaskSummary();
+        });
+      }
+
+      /* ---- 初期ルーティング ---- */
+      var route = getRouteState();
+      if (route === 'wizard') {
+        showScreen('wizard');
+      } else if (route === 'login') {
+        /* ロック中の場合はカウントダウンを即時開始 */
+        showScreen('login');
+        if (isAuthLocked()) {
+          var errorEl = document.getElementById('login-error');
+          if (errorEl) errorEl.textContent = 'PINが3回間違えられました。しばらくお待ちください。';
+          startLockCountdown(data.auth.lockedUntilEpochMs);
+        }
+      } else {
+        showScreen('home');
+      }
+    });
+  </script>
+</body>
+</html>
