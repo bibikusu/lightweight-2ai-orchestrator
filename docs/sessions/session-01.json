@@ -1,51 +1,178 @@
 {
   "session_id": "session-01",
-  "phase_id": "A02_fina-phase-a",
-  "title": "A02_fina Phase A — HTML+JS MVP（構成JSONのみ）",
-  "goal": "金融・法務・アフィリエイト縦割りポリシーを反映し、入力から title/meta/slug/H2・H3/CTA/risk_notes の構成JSONを GPT-4o-mini 経由で返す MVP を成立させる（本文は生成しない）",
-  "objective": "phase_a_mvp に index.html・vertical policy JSON・api_proxy.php を置き、POST→JSON が安定して動く状態にする",
+  "phase_id": "phase-a",
+  "title": "first vertical 向け記事構成生成MVPを単一HTML+JSで固定する",
+  "goal": "A02_fina を汎用コンテンツマーケティング基盤として設計しつつ、first vertical である finance_legal_affiliate に対して、単一HTML+JS と api_proxy.php を用い、本文生成を行わず、記事構成・メタ・CTA方針・公開候補を返す最小MVPを実装できる状態にする。",
   "scope": [
-    "実装先: /Users/kunihideyamane/AI_Team/projects/A02_fina/phase_a_mvp/",
-    "index.html: primary_keyword, secondary_keywords, target_reader, search_intent 入力と API 呼び出し、結果表示（本文は表示しない）",
-    "config/vertical.finance_legal_affiliate.json: 禁止表現・CTAテンプレ・比較軸・YMYL注意",
-    "api_proxy.php: POST 受信、GPT-4o-mini 呼び出し、JSON 返却、APIキーは環境変数または仮直書き",
-    "オーケストレーター側 docs に本セッション定義・受入 YAML を保存する"
+    "phase_a_mvp/index.html の新規作成",
+    "phase_a_mvp/config/vertical.finance_legal_affiliate.json の新規作成",
+    "phase_a_mvp/api_proxy.php の新規作成",
+    "finance_legal_affiliate 用 vertical policy の読込",
+    "検索意図整理",
+    "記事タイプ判定",
+    "タイトル生成",
+    "メタディスクリプション生成",
+    "slug生成",
+    "H2/H3構成生成",
+    "CTA配置方針出力",
+    "公開候補ステータス出力",
+    "risk_notes 出力",
+    "本文生成禁止の制御",
+    "入力不足時の安全処理"
   ],
   "out_of_scope": [
-    "本文生成・本文表示",
-    "UI の作り込み",
-    "DB・認証",
-    "オーケストレーター repo 内の他ディレクトリ変更（本 session/acceptance 定義を除く）",
-    "本番デプロイ・複数拠点運用"
+    "記事本文生成",
+    "自動公開",
+    "画像生成",
+    "SNS自動配信",
+    "AI API設定基盤",
+    "キュー",
+    "スケジューラ",
+    "複数 vertical の同時運用",
+    "認証機能",
+    "DB構築",
+    "管理画面の作り込み",
+    "session-02 以降の先行実装"
   ],
   "constraints": [
-    "出力スキーマは構成要素のみ（title, meta, slug, h2_h3, cta, risk_notes）。本文フィールドを含めない",
-    "vertical policy をプロンプトに含め、禁止表現・YMYL・CTA 方針を反映する",
-    "エラー時もプロセスを落とさず JSON でエラー内容を返す",
-    "ログに API キーや個人情報を出さない",
-    "1セッション1目的"
+    "1セッション1目的を厳守すること",
+    "変更ファイル数は最大5ファイル以内に収めること",
+    "実装先は /Users/kunihideyamane/AI_Team/projects/A02_fina/phase_a_mvp/ とすること",
+    "単一HTML+JS構成を維持すること",
+    "API呼び出しは api_proxy.php 経由とすること",
+    "本文生成は禁止すること",
+    "構成・メタ・CTA・公開候補までに限定すること",
+    "業種固有ロジックは vertical policy JSON として外出しすること",
+    "first vertical は finance_legal_affiliate に限定すること",
+    "AI呼び出しは現行 GPT/Claude 前提でよいが、Phase A では GPT-4o-mini 相当の単一路線で十分とすること",
+    "AI API設定基盤・キュー・スケジューラは Phase B に分離すること",
+    "YMYL領域として断定表現を避けること",
+    "review_points は固定4軸を使用すること",
+    "completion_criteria.type は document_rule, artifact, non_regression, state_transition_consistent, side_effect_free のみ使用すること",
+    "acceptance_ref は repository 相対パスとすること"
   ],
-  "acceptance_ref": "acceptance/session-01.yaml",
-  "acceptance_criteria": [
-    {
-      "id": "AC-A02-01",
-      "description": "session-01.json / session-01.yaml が A02_fina Phase A 仕様を記述している",
-      "test_function": "manual_review"
-    },
-    {
-      "id": "AC-A02-02",
-      "description": "phase_a_mvp で入力から構成 JSON が取得できる",
-      "test_function": "browser_or_curl"
-    },
-    {
-      "id": "AC-A02-03",
-      "description": "本文が応答・画面に含まれない",
-      "test_function": "manual_review"
-    }
-  ],
-  "implementation_paths": [
+  "acceptance_ref": "docs/acceptance/session-01.yaml",
+  "allowed_changes": [
     "/Users/kunihideyamane/AI_Team/projects/A02_fina/phase_a_mvp/index.html",
     "/Users/kunihideyamane/AI_Team/projects/A02_fina/phase_a_mvp/config/vertical.finance_legal_affiliate.json",
-    "/Users/kunihideyamane/AI_Team/projects/A02_fina/phase_a_mvp/api_proxy.php"
+    "/Users/kunihideyamane/AI_Team/projects/A02_fina/phase_a_mvp/api_proxy.php",
+    "docs/sessions/session-01.json",
+    "docs/acceptance/session-01.yaml"
+  ],
+  "allowed_changes_detail": [
+    "/Users/kunihideyamane/AI_Team/projects/A02_fina/phase_a_mvp/index.html: first vertical 用の入力UI、blueprint出力表示、本文生成禁止制御、入力不足時の安全処理の追加",
+    "/Users/kunihideyamane/AI_Team/projects/A02_fina/phase_a_mvp/config/vertical.finance_legal_affiliate.json: finance_legal_affiliate 用の禁止表現、CTA方針、比較軸、risk_notes ルールの定義追加",
+    "/Users/kunihideyamane/AI_Team/projects/A02_fina/phase_a_mvp/api_proxy.php: article blueprint 生成のための API 呼び出し中継処理の追加",
+    "docs/sessions/session-01.json: 本セッション定義の新規作成",
+    "docs/acceptance/session-01.yaml: 本セッション用 acceptance 定義の新規作成"
+  ],
+  "forbidden_changes": [
+    "/Users/kunihideyamane/AI_Team/projects/A02_fina/info_set01/ 配下の変更",
+    "/Users/kunihideyamane/AI_Team/projects/A02_fina/info_set02/ 配下の変更",
+    "/Users/kunihideyamane/AI_Team/projects/A02_fina/media-os/ 配下の変更",
+    "backend/ 配下の変更",
+    "orchestration/ 配下の変更",
+    "providers 配下の変更",
+    ".github/ 配下の変更",
+    "記事本文の生成機能追加",
+    "自動公開機能の追加",
+    "画像生成機能の追加",
+    "SNS自動配信機能の追加",
+    "AI API設定基盤の実装",
+    "キューの実装",
+    "スケジューラの実装",
+    "認証機能の追加",
+    "DB接続の追加",
+    "session-02 以降の先行実装"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-01-01",
+      "type": "state_transition_consistent",
+      "condition": "primary_keyword と vertical_id を入力すると、finance_legal_affiliate 用 article blueprint を一貫して返せること。"
+    },
+    {
+      "id": "CC-01-02",
+      "type": "artifact",
+      "condition": "出力に vertical_id, search_intent_summary, article_type, proposed_title, meta_description, slug, h2_outline, h3_outline, cta_position_plan, risk_notes, publish_candidate_status が含まれること。"
+    },
+    {
+      "id": "CC-01-03",
+      "type": "side_effect_free",
+      "condition": "記事本文を出力せず、構成・メタ・CTA・公開候補に限定されていること。"
+    },
+    {
+      "id": "CC-01-04",
+      "type": "artifact",
+      "condition": "finance_legal_affiliate 用 vertical policy が JSON 設定としてコアロジックから分離されていること。"
+    },
+    {
+      "id": "CC-01-05",
+      "type": "non_regression",
+      "condition": "必須入力不足や不正値があってもクラッシュせず、安全に入力不足状態として扱えること。"
+    },
+    {
+      "id": "CC-01-06",
+      "type": "artifact",
+      "condition": "index.html, vertical policy JSON, api_proxy.php の3点が phase_a_mvp 配下に存在すること。"
+    },
+    {
+      "id": "CC-01-07",
+      "type": "document_rule",
+      "condition": "本セッション定義が allowed_changes_detail, forbidden_changes, completion_criteria, acceptance_criteria, review_points を含む構造化JSONとして保存されていること。"
+    },
+    {
+      "id": "CC-01-08",
+      "type": "artifact",
+      "condition": "docs/acceptance/session-01.yaml に本セッションの acceptance 定義が保存されていること。"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-01-01",
+      "description": "finance_legal_affiliate の vertical policy JSON を読み込んで article blueprint を生成できる。",
+      "test_name": "test_generate_blueprint_with_vertical_policy_json"
+    },
+    {
+      "id": "AC-01-02",
+      "description": "出力に proposed_title, meta_description, slug, H2/H3構成, CTA配置方針が含まれる。",
+      "test_name": "test_output_contains_blueprint_meta_outline_and_cta"
+    },
+    {
+      "id": "AC-01-03",
+      "description": "記事本文は出力されず、構成・メタ・公開候補のみが返る。",
+      "test_name": "test_body_content_is_not_generated"
+    },
+    {
+      "id": "AC-01-04",
+      "description": "risk_notes が finance_legal_affiliate の YMYL注意を反映して出力される。",
+      "test_name": "test_risk_notes_reflect_vertical_policy"
+    },
+    {
+      "id": "AC-01-05",
+      "description": "必須入力が不足している場合でもクラッシュせず、安全に入力不足として扱える。",
+      "test_name": "test_missing_required_input_is_handled_safely"
+    },
+    {
+      "id": "AC-01-06",
+      "description": "業種固有ルールが index.html にハードコードされず、vertical policy JSON から参照される構造になっている。",
+      "test_name": "test_vertical_specific_rules_are_externalized_to_json"
+    },
+    {
+      "id": "AC-01-07",
+      "description": "phase_a_mvp/index.html, phase_a_mvp/config/vertical.finance_legal_affiliate.json, phase_a_mvp/api_proxy.php が存在する。",
+      "test_name": "test_phase_a_mvp_required_files_exist"
+    },
+    {
+      "id": "AC-01-08",
+      "description": "docs/sessions/session-01.json と docs/acceptance/session-01.yaml が repository 相対パスで保存対象として定義されている。",
+      "test_name": "test_session_01_spec_and_acceptance_paths_are_defined"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "実装過不足なし"
   ]
 }

@@ -1,25 +1,33 @@
-session_id: session-01
-
+session_id: "session-01"
 acceptance:
-  - id: AC-A02-01
-    description: docs/sessions/session-01.json が session_id・phase_id・goal・scope・acceptance_ref を含み A02_fina Phase A MVP を定義している
+  - id: "AC-01-01"
+    description: "finance_legal_affiliate の vertical policy JSON を読み込んで article blueprint を生成できる。"
+    test_name: "test_generate_blueprint_with_vertical_policy_json"
 
-  - id: AC-A02-02
-    description: docs/acceptance/session-01.yaml の session_id が session-01 と一致する
+  - id: "AC-01-02"
+    description: "出力に proposed_title, meta_description, slug, H2/H3構成, CTA配置方針が含まれる。"
+    test_name: "test_output_contains_blueprint_meta_outline_and_cta"
 
-  - id: AC-A02-03
-    description: phase_a_mvp/index.html から primary_keyword 等を入力し api_proxy.php へ POST できる
+  - id: "AC-01-03"
+    description: "記事本文は出力されず、構成・メタ・公開候補のみが返る。"
+    test_name: "test_body_content_is_not_generated"
 
-  - id: AC-A02-04
-    description: 応答 JSON に title, meta, slug, H2/H3 構成, CTA, risk_notes が含まれる（本文用フィールドは含めない）
+  - id: "AC-01-04"
+    description: "risk_notes が finance_legal_affiliate の YMYL注意を反映して出力される。"
+    test_name: "test_risk_notes_reflect_vertical_policy"
 
-  - id: AC-A02-05
-    description: vertical.finance_legal_affiliate.json の禁止表現・CTA・比較軸・YMYL がプロンプト方針として反映される
+  - id: "AC-01-05"
+    description: "必須入力が不足している場合でもクラッシュせず、安全に入力不足として扱える。"
+    test_name: "test_missing_required_input_is_handled_safely"
 
-  - id: AC-A02-06
-    description: API 失敗・入力不正時も PHP が致命エラーで終了せず JSON でエラーを返す
+  - id: "AC-01-06"
+    description: "業種固有ルールが index.html にハードコードされず、vertical policy JSON から参照される構造になっている。"
+    test_name: "test_vertical_specific_rules_are_externalized_to_json"
 
-notes:
-  - 実装リポジトリ外パス /Users/kunihideyamane/AI_Team/projects/A02_fina/phase_a_mvp/ を正とする
-  - ブラウザ確認は同一オリジンとなるよう PHP ビルトインサーバ等で index.html と api_proxy.php を配信すること
-  - API キーは OPENAI_API_KEY 環境変数を推奨（未設定時はプレースホルダで 502 相当の JSON エラー）
+  - id: "AC-01-07"
+    description: "phase_a_mvp/index.html, phase_a_mvp/config/vertical.finance_legal_affiliate.json, phase_a_mvp/api_proxy.php が存在する。"
+    test_name: "test_phase_a_mvp_required_files_exist"
+
+  - id: "AC-01-08"
+    description: "docs/sessions/session-01.json と docs/acceptance/session-01.yaml が repository 相対パスで保存対象として定義されている。"
+    test_name: "test_session_01_spec_and_acceptance_paths_are_defined"
