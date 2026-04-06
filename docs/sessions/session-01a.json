@@ -1,0 +1,101 @@
+{
+  "session_id": "session-01a",
+  "phase_id": "phase-a",
+  "title": "HTML base layout and mobile-first CSS skeleton",
+  "execution_mode": "cursor_manual",
+  "goal": "A02_fina の base.html に最小限のレイアウト骨格を整え、style.css にモバイルファーストの基本スタイルを追加する。",
+  "scope": [
+    "src/templates/base.html の既存 HTML5 骨格を維持したまま、最小限のレイアウト用セクションとクラス構造を追加する",
+    "src/assets/css/style.css にモバイルファーストの基本 CSS を追加する",
+    "header / main / footer の意味構造を維持する",
+    "主要画面幅でレイアウト破綻しない最小構成を整える"
+  ],
+  "out_of_scope": [
+    "JavaScript の追加",
+    "JSON-LD の追加",
+    "OGP / canonical の追加",
+    "docs 配下の変更",
+    "session 定義ファイルの変更",
+    "A02_fina 以外のリポジトリ変更",
+    "画像最適化",
+    "本文コンテンツの本格投入"
+  ],
+  "constraints": [
+    "1セッション1目的",
+    "実行方式は cursor_manual とする",
+    "変更ファイル数は最大2ファイル",
+    "既存の HTML5 骨格を再作成しない",
+    "重複タグを作らない",
+    "モバイルファーストで実装する",
+    "最小限のブレークポイントのみ使用する",
+    "既存文言・機能を壊さない"
+  ],
+  "acceptance_ref": "docs/acceptance/session-01a.yaml",
+  "allowed_changes": [
+    "src/templates/base.html",
+    "src/assets/css/style.css"
+  ],
+  "allowed_changes_detail": [
+    "src/templates/base.html: 既存 HTML5 骨格を維持しつつ、最小限のレイアウト用クラス・コンテナ・セクションを追加するのみ",
+    "src/assets/css/style.css: モバイルファーストの基本スタイル、余白、タイポグラフィ、コンテナ幅、基本ブレークポイントを追加するのみ"
+  ],
+  "forbidden_changes": [
+    "docs/",
+    "artifacts/",
+    "orchestration/",
+    "src/snippets/",
+    "src/pages/",
+    "JavaScript の新規追加",
+    "JSON-LD / OGP / canonical の追加"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-01A-01",
+      "type": "artifact",
+      "condition": "base.html の HTML5 骨格が維持されたまま、最小限のレイアウト構造が追加されている"
+    },
+    {
+      "id": "CC-01A-02",
+      "type": "artifact",
+      "condition": "style.css にモバイルファーストの基本スタイルが追加されている"
+    },
+    {
+      "id": "CC-01A-03",
+      "type": "non_regression",
+      "condition": "重複タグや HTML 骨格破壊が発生していない"
+    },
+    {
+      "id": "CC-01A-04",
+      "type": "side_effect_free",
+      "condition": "scope 外ファイルに変更が発生していない"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-01A-01",
+      "description": "base.html の HTML5 骨格が維持され、重複タグがない",
+      "test_name": "test_base_html_keeps_html5_skeleton"
+    },
+    {
+      "id": "AC-01A-02",
+      "description": "style.css にモバイルファーストの基本スタイルが追加されている",
+      "test_name": "test_style_css_has_mobile_first_foundation"
+    },
+    {
+      "id": "AC-01A-03",
+      "description": "主要画面幅でレイアウト破綻がない最小構成になっている",
+      "test_name": "test_layout_has_no_major_breakage_on_key_widths"
+    },
+    {
+      "id": "AC-01A-04",
+      "description": "JavaScript / JSON-LD / OGP / canonical は追加されていない",
+      "test_name": "test_no_out_of_scope_markup_or_js_added"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "実装過不足なし"
+  ]
+}

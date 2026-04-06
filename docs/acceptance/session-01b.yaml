@@ -1,0 +1,97 @@
+session_id: "session-01b"
+phase_id: "phase-a"
+title: "JSON-LD, OGP, canonical and head metadata foundation"
+execution_mode: "cursor_manual"
+goal: "A02_fina の base.html に JSON-LD / OGP / canonical / 基本 head メタデータの土台を追加し、Phase A の静的HTML公開に必要な最小SEO基盤を整える。"
+
+scope:
+  - "src/templates/base.html の head 内に canonical を追加する"
+  - "src/templates/base.html の head 内に OGP 基本タグを追加する"
+  - "src/templates/base.html の head 内に Article / FAQ 用 JSON-LD の差し込み土台を追加する"
+  - "src/snippets/jsonld_article.json を作成する"
+  - "src/snippets/jsonld_faq.json を作成する"
+  - "既存の HTML5 骨格と session-01a のレイアウト構造を壊さない"
+
+out_of_scope:
+  - "JavaScript の追加"
+  - "CSS の再設計"
+  - "本文コンテンツの本格投入"
+  - "画像生成"
+  - "deploy 処理"
+  - "docs 配下の変更"
+  - "OGP画像の本番生成"
+  - "Search Console 連携"
+  - "IndexNow 実装"
+
+constraints:
+  - "1セッション1目的"
+  - "実行方式は cursor_manual とする"
+  - "変更ファイル数は最大3ファイル"
+  - "既存の HTML5 骨格を壊さない"
+  - "session-01a で整えた layout / CSS には触れない"
+  - "JSON-LD は最小構造でよいが、Article と FAQ の2種類を用意する"
+  - "canonical は placeholder でよいが head 内に正式タグとして置く"
+  - "OGP は最低限 title / description / type / url を置く"
+  - "A02_fina 固有の仮URLや仮文言は placeholder として明示する"
+
+acceptance:
+  - id: "AC-01B-01"
+    description: "base.html の head 内に canonical と OGP 基本タグが追加されている"
+    test_name: "test_base_html_has_canonical_and_ogp_tags"
+    verification:
+      - "link rel=\"canonical\" が存在する"
+      - "og:title が存在する"
+      - "og:description が存在する"
+      - "og:type が存在する"
+      - "og:url が存在する"
+
+  - id: "AC-01B-02"
+    description: "Article 用 JSON-LD テンプレートが存在し、最低限のキーを持つ"
+    test_name: "test_article_jsonld_template_exists_with_min_keys"
+    verification:
+      - "src/snippets/jsonld_article.json が存在する"
+      - "@context が存在する"
+      - "@type が Article または Article系である"
+      - "headline または同等の見出しキーがある"
+      - "dateModified など更新系キーの placeholder がある"
+
+  - id: "AC-01B-03"
+    description: "FAQ 用 JSON-LD テンプレートが存在し、最低限のキーを持つ"
+    test_name: "test_faq_jsonld_template_exists_with_min_keys"
+    verification:
+      - "src/snippets/jsonld_faq.json が存在する"
+      - "@context が存在する"
+      - "@type が FAQPage である"
+      - "mainEntity の placeholder がある"
+
+  - id: "AC-01B-04"
+    description: "既存 HTML 骨格と session-01a のレイアウト構造が壊れていない"
+    test_name: "test_html_skeleton_and_layout_remain_intact"
+    verification:
+      - "<!DOCTYPE html> が維持されている"
+      - "html / head / body の重複がない"
+      - "header / main / footer が維持されている"
+      - "style.css を触っていない"
+
+completion_criteria:
+  - id: "CC-01B-01"
+    type: "artifact"
+    condition: "base.html の head 内に canonical と OGP 基本タグが追加されている"
+
+  - id: "CC-01B-02"
+    type: "artifact"
+    condition: "jsonld_article.json と jsonld_faq.json が作成され、最小構造を持つ"
+
+  - id: "CC-01B-03"
+    type: "non_regression"
+    condition: "HTML5 骨格と session-01a のレイアウト構造が壊れていない"
+
+  - id: "CC-01B-04"
+    type: "side_effect_free"
+    condition: "scope 外ファイルに変更が発生していない"
+
+review_points:
+  - "仕様一致（AC達成）"
+  - "変更範囲遵守"
+  - "副作用なし（既存破壊なし）"
+  - "実装過不足なし"
