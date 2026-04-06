@@ -1,23 +1,100 @@
 {
   "session_id": "session-02",
-  "phase_id": "phase-02",
-  "title": "provider 最小実装と prepared_spec 到達",
-  "goal": "orchestration/providers を配置し、通常実行で prepared_spec 呼び出し（import 以降）まで到達できる",
+  "phase_id": "phase-a",
+  "title": "Blueprint generation spec",
+  "execution_mode": "cursor_manual",
+  "goal": "A02_fina の記事生成前段として、検索意図・タイトル・見出し構造・CTA・構造化データ前提を持つ blueprint 仕様書を作成する。",
   "scope": [
-    "providers.openai_client / claude_client / llm_json の最小実装",
-    "session-02.json と acceptance/session-02.yaml の配置",
-    "artifacts/session-02/ へのプロンプト・応答保存の前提"
+    "docs/blueprint_spec.md を新規作成する",
+    "blueprint の目的、入力、出力、必須項目、任意項目を定義する",
+    "Phase A に必要な最小 blueprint 項目を定義する",
+    "A02_fina の YMYL 前提に沿った注意事項を blueprint 仕様に含める",
+    "session-01a / session-01b で整備した HTML / head 構造に接続できる blueprint 項目を定義する"
   ],
   "out_of_scope": [
-    "本番デプロイ",
-    "patch 本適用",
-    "retry の Claude 再投入ループ",
-    "複数セッション並列"
+    "blueprint 自動生成ロジックの実装",
+    "HTML 出力ロジックの実装",
+    "クラスター判定ロジックの実装",
+    "JSON-LD の実データ注入ロジック",
+    "session 定義ファイルの変更",
+    "A02_fina 以外のリポジトリ変更",
+    "JavaScript の追加",
+    "deploy 処理"
   ],
   "constraints": [
     "1セッション1目的",
-    "main/master を直接変更しない",
-    "API キーは環境変数で渡す"
+    "実行方式は cursor_manual とする",
+    "変更ファイル数は最大1ファイル",
+    "blueprint は Phase A の最小仕様に限定する",
+    "A02_fina の publish target は primary 前提で記述する",
+    "本文自動生成は Phase C 有効化前提のため、Phase A では blueprint は本文そのものを持たない",
+    "YMYL 前提のため、事実確認・出典確認・免責の観点を仕様内に明記する",
+    "過剰な DB 設計や API 設計には進まない"
   ],
-  "acceptance_ref": "acceptance/session-02.yaml"
+  "acceptance_ref": "docs/acceptance/session-02.yaml",
+  "allowed_changes": [
+    "docs/blueprint_spec.md"
+  ],
+  "allowed_changes_detail": [
+    "docs/blueprint_spec.md: Phase A 用 blueprint の目的、入力、出力、項目定義、YMYL 注意事項、運用前提を新規作成するのみ"
+  ],
+  "forbidden_changes": [
+    "docs/master_spec_a02_fina.md",
+    "docs/roadmap_a02_fina.yaml",
+    "docs/shared/",
+    "orchestration/",
+    "artifacts/",
+    "src/",
+    "JavaScript の新規追加"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-02-01",
+      "type": "artifact",
+      "condition": "docs/blueprint_spec.md が作成され、Phase A 用 blueprint の目的・入力・出力・必須項目を定義している"
+    },
+    {
+      "id": "CC-02-02",
+      "type": "artifact",
+      "condition": "blueprint が session-01a / session-01b の HTML / head 構造と接続可能な仕様になっている"
+    },
+    {
+      "id": "CC-02-03",
+      "type": "document_rule",
+      "condition": "YMYL 前提の注意事項と免責・事実確認観点が仕様内に明記されている"
+    },
+    {
+      "id": "CC-02-04",
+      "type": "side_effect_free",
+      "condition": "scope 外ファイルに変更が発生していない"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-02-01",
+      "description": "docs/blueprint_spec.md に blueprint の目的、入力、出力が定義されている",
+      "test_name": "test_blueprint_spec_defines_purpose_inputs_outputs"
+    },
+    {
+      "id": "AC-02-02",
+      "description": "blueprint の必須項目として検索意図、タイトル、見出し構造、CTA、canonical/OGP/JSON-LD 前提が含まれている",
+      "test_name": "test_blueprint_spec_includes_required_phase_a_fields"
+    },
+    {
+      "id": "AC-02-03",
+      "description": "Phase A では本文自動生成を含めないことが明記されている",
+      "test_name": "test_blueprint_spec_excludes_ai_body_generation_in_phase_a"
+    },
+    {
+      "id": "AC-02-04",
+      "description": "YMYL 前提の事実確認、免責、出典確認観点が明記されている",
+      "test_name": "test_blueprint_spec_includes_ymyl_safeguards"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "実装過不足なし"
+  ]
 }
