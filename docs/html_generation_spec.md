@@ -8,7 +8,8 @@
 ## 2. Input Preconditions（入力前提）
 - `html_generation` は `cluster_check` の判定結果が `採用可` の `blueprint` のみを受け取る。
 - 受領する `blueprint` は `docs/blueprint_spec.md` の固定出力契約（`search_intent`, `target_keyword`, `title`, `description`, `heading_structure`, `cta`, `slug`, `jsonld_type`）を満たしていることを前提とする。
-- 受領必須項目は `title`, `description`, `heading_structure`, `cta`, `slug`, `jsonld_type` とする。
+- 受領必須項目（入力チェーン上の存在確認）は上記8項目すべてとする。
+- 実行時の必須マッピング対象は `title`, `description`, `heading_structure`, `cta`, `slug`, `jsonld_type` の6項目とする。
 - `blueprint` の再設計、`cluster_check` の再判定は `html_generation` の責務外とする。
 - テンプレートは `base.html` を前提とし、出力対象は静的HTML1ページのみとする。
 

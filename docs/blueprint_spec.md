@@ -59,6 +59,8 @@
 
 ## 9. Usage Flow
 - `blueprint` 作成
+- `cluster_check` で判定（`採用可 / 修正要 / 作成中止`）
+- `採用可` のみを `html_generation` に引き渡し
 - 人間による本文編集
 - HTMLテンプレートへ反映（session-01a / session-01b 構造に接続）
 - publish
