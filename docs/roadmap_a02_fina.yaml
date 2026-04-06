@@ -1,0 +1,218 @@
+project: a02-fina
+version: v1.1
+master_spec_ref: docs/master_spec_a02_fina.md
+
+global_rules_ref:
+  repo: lightweight-2ai-orchestrator
+  path: docs/global_rules.md
+
+# リポジトリ配置方針
+repository_policy:
+  control_repo: lightweight-2ai-orchestrator
+  control_repo_contents:
+    - docs/sessions/session-*.json
+    - docs/acceptance/session-*.yaml
+    - artifacts/session-*/
+    - docs/master_spec_a02_fina.md
+    - docs/master_spec_a02_fina.yaml
+    - docs/roadmap_a02_fina.yaml
+    - docs/blueprint_spec.md
+    - docs/cluster_check_rules.md
+  target_repo: A02_fina
+  target_repo_path: /Users/kunihideyamane/AI_Team/projects/A02_fina/
+  target_repo_contents:
+    - src/templates/
+    - src/pages/
+    - src/assets/css/
+    - src/snippets/
+
+# 技術構成
+tech_stack:
+  phase_a:
+    output_format: multiple_static_html
+    css: single_shared_css
+    structured_data: embedded_json_ld
+    database: none
+    localStorage: none
+    server_side: none
+    hosting: xserver_or_cloudflare_pages
+    javascript: minimal_only
+  phase_b:
+    additions:
+      - indexnow
+      - lighthouse_cli
+      - search_console_api
+    hosting: cloudflare_pages_recommended
+  phase_c:
+    additions:
+      - hugo_if_over_100_pages
+      - knowledge_base_injection
+      - content_inspector
+
+# 検証方針
+checks_policy:
+  phase-0: skip_all_checks
+  phase-a: skip_checks_use_manual_validation
+  phase-b: introduce_html_and_jsonld_validation
+  phase-c: full_automated_validation
+
+# Phase定義
+phases:
+  - id: phase-0
+    name: Bootstrap
+    goals:
+      - A02_fina repository clean state
+      - control vs target repo separation confirmed
+      - patch_apply target path verified
+      - skip-checks live-run verified
+    sessions:
+      - session-bootstrap
+    exit_criteria:
+      - dry-run success for session-bootstrap
+      - live-run minimum verification with skip-checks
+      - patch_apply modified target_repo files successfully
+      - changed_files points to A02_fina target paths
+      - A02_fina repo contains only src/ directory
+    approver: human
+
+  - id: phase-a
+    name: MVP static publishing
+    goals:
+      - static html 5 pages published
+      - search console connected
+      - blueprint to html pipeline reproduced twice
+      - primary target only
+      - human writes body text
+    sessions:
+      - session-01a
+      - session-01b
+      - session-02
+      - session-03
+      - session-04
+      - session-05
+    exit_criteria:
+      - 5 or more static html pages published on primary
+      - search console connected and verified
+      - blueprint to html output reproduced 2 or more times
+    approver: human
+
+  - id: phase-b
+    name: Operation enhancement
+    goals:
+      - rewrite triggers enabled
+      - platforms publish target added
+      - measurement loop active
+      - indexnow introduced
+    sessions:
+      - session-06
+      - session-07
+      - session-08
+      - session-09
+      - session-10
+    exit_criteria:
+      - search console data accumulated 30 days or more
+      - rewrite candidate extraction executed at least once
+      - cannibalization monitoring active
+    approver: human
+
+  - id: phase-c
+    name: Expansion and AI generation
+    goals:
+      - ai body generation enabled
+      - satellites added
+      - knowledge_base and content_inspector active
+      - freshness trigger active
+    sessions:
+      - session-11
+      - session-12
+      - session-13
+      - session-14
+      - session-15
+    exit_criteria:
+      - ctr improvement loop active
+      - ai body generation producing accepted content
+      - satellites publishing with independent design
+    approver: human
+
+# session依存順（Phase A詳細）
+# target_files のパスについて:
+#   - src/ で始まるパス → A02_fina リポジトリ内のファイル
+#   - docs/ で始まるパス → オーケストレーターリポジトリ内のファイル
+session_dependencies:
+  phase_a:
+    session-01a:
+      title: HTML base template and shared CSS skeleton
+      depends_on: "none"
+      target_files:
+        - src/templates/base.html
+        - src/assets/css/style.css
+      target_repo: A02_fina
+      checks: skip
+
+    session-01b:
+      title: JSON-LD, OGP, canonical, sitemap policy
+      depends_on: session-01a
+      target_files:
+        - src/templates/base.html
+        - src/snippets/jsonld_article.json
+        - src/snippets/jsonld_faq.json
+      target_repo: A02_fina
+      checks: skip
+
+    session-02:
+      title: Blueprint generation spec
+      depends_on: session-01a
+      target_files:
+        - docs/blueprint_spec.md
+      target_repo: lightweight-2ai-orchestrator
+      checks: skip
+
+    session-03:
+      title: Lightweight cluster check
+      depends_on: session-02
+      target_files:
+        - docs/cluster_check_rules.md
+      target_repo: lightweight-2ai-orchestrator
+      checks: skip
+
+    session-04:
+      title: HTML output from blueprint
+      depends_on:
+        - session-01a
+        - session-01b
+        - session-02
+      target_files:
+        - src/pages/
+      target_repo: A02_fina
+      checks: skip
+
+    session-05:
+      title: Deploy to primary
+      depends_on: session-04
+      target_files: []
+      target_repo: "none"
+      notes: "デプロイは手動運用。rsync or Cloudflare Pages git push。session定義でファイル変更は発生しない。"
+      checks: skip
+
+# vertical policy（消費者金融×弁護士）
+vertical_policy:
+  vertical_id: fina_saimu
+  ymyl: true
+  risk_level: high
+  prohibited_expressions:
+    - 確実に借金がなくなる
+    - 絶対に審査が通る
+    - 必ず減額できる
+    - 弁護士が保証する
+  required_disclaimers:
+    - 本記事は法的助言ではありません
+    - 具体的な相談は弁護士・司法書士にお問い合わせください
+  tone: 専門的かつ冷静、不安を煽らない
+  cta_policy:
+    - 無料相談への誘導を主CTA
+    - 緊急性の演出は禁止
+    - 比較表による自然な選択誘導を推奨
+  entity_rules:
+    - 弁護士事務所名は実在確認済みのもののみ使用
+    - 金利・限度額等の数値は公式サイトから取得
+    - 最終更新日を明記
