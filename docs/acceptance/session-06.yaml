@@ -1,115 +1,50 @@
 session_id: "session-06"
-goal: "テンプレートA/B/Cを使用して、現行オーケストレーター互換の session-06 定義と対応 acceptance YAML を生成・検証・保存する。"
-
-scope:
-  - "docs/session-06_input_set.md を入力として使用する。"
-  - "docs/templates/session_json_generate.md を使用して docs/sessions/session-06.json の内容を生成する。"
-  - "生成した session JSON をもとに docs/templates/acceptance_yaml_generate.md を使用して docs/acceptance/session-06.yaml の内容を生成する。"
-  - "生成した JSON と YAML を docs/templates/generation_selfcheck.md により整合性・互換性チェックする。"
-  - "pass した生成物を docs/sessions/session-06.json と docs/acceptance/session-06.yaml に保存する。"
-
-out_of_scope:
-  - "orchestration/run_session.py の変更"
-  - "providers 配下の変更"
-  - "backend 配下の変更"
-  - ".github 配下の変更"
-  - "docs/templates 配下の新規作成・更新・削除"
-  - "roadmap.yaml の追加変更"
-  - "session-07 以降の生成"
-  - "Bootstrap 実装コードの追加"
+type: "docs-only"
 
 acceptance:
-  - id: "AC-01"
-    requirement: "session-06.json に現行オーケストレーター required keys（session_id, phase_id, title, goal, scope, out_of_scope, constraints, acceptance_ref）がすべて存在する。"
-    test_name: "test_session_06_required_keys_present"
-    type: "automated"
-    manual_check: false
-    verification:
-      - "session-06.json をパースし、session_id, phase_id, title, goal, scope, out_of_scope, constraints, acceptance_ref の8キーがすべて存在することを確認する。"
+  - id: "AC-06-01"
+    description: "docs/blueprint_spec.md に blueprint の必須出力項目が列挙されている"
+    test_name: "docs_review_blueprint_required_fields_defined"
 
-  - id: "AC-02"
-    requirement: "session-06.json の phase_id が phase-07 であり、roadmap.yaml と整合する。"
-    test_name: "test_session_06_phase_id_matches_roadmap"
-    type: "automated"
-    manual_check: false
-    verification:
-      - "session-06.json の phase_id が phase-07 であることを確認する。"
-      - "docs/roadmap.yaml に phase-07 が定義されていることを確認する。"
+  - id: "AC-06-02"
+    description: "必須出力項目ごとに型または制約が明記されている"
+    test_name: "docs_review_blueprint_field_constraints_defined"
 
-  - id: "AC-03"
-    requirement: "session-06.json の acceptance_ref が docs/acceptance/session-06.yaml と一致する。"
-    test_name: "test_session_06_acceptance_ref_matches_path"
-    type: "automated"
-    manual_check: false
-    verification:
-      - "session-06.json の acceptance_ref の値が docs/acceptance/session-06.yaml であることを確認する。"
+  - id: "AC-06-03"
+    description: "blueprint 生成時の禁止事項が明記され、責務越境が防止されている"
+    test_name: "docs_review_blueprint_forbidden_scope_defined"
 
-  - id: "AC-04"
-    requirement: "session-06.yaml のトップレベルに session_id があり、session-06 と一致する。"
-    test_name: "test_session_06_yaml_top_level_session_id"
-    type: "automated"
-    manual_check: false
-    verification:
-      - "session-06.yaml をパースし、トップレベルの session_id が session-06 であることを確認する。"
+  - id: "AC-06-04"
+    description: "cluster_check へ渡す完成条件が明記されている"
+    test_name: "docs_review_blueprint_handoff_condition_defined"
 
-  - id: "AC-05"
-    requirement: "session-06.yaml のトップレベルに acceptance, completion_checks, change_guardrails が存在する。"
-    test_name: "test_session_06_yaml_required_template_sections"
-    type: "automated"
-    manual_check: false
-    verification:
-      - "session-06.yaml のトップレベルに acceptance キーが存在することを確認する。"
-      - "session-06.yaml のトップレベルに completion_checks キーが存在することを確認する。"
-      - "session-06.yaml のトップレベルに change_guardrails キーが存在することを確認する。"
+  - id: "AC-06-05"
+    description: "変更範囲が docs/blueprint_spec.md と session-06 定義ファイルのみに限定されている"
+    test_name: "docs_review_blueprint_scope_and_side_effect_free"
 
-  - id: "AC-06"
-    requirement: "allowed_changes に docs/templates 配下や実装コードが含まれていない。"
-    test_name: "test_session_06_allowed_changes_restricted"
-    type: "automated"
-    manual_check: false
-    verification:
-      - "session-06.json の allowed_changes に docs/templates を含むパスがないことを確認する。"
-      - "session-06.json の allowed_changes に orchestration/ または backend/ を含むパスがないことを確認する。"
+completion_criteria:
+  - id: "CC-06-01"
+    type: "document_rule"
+    condition: "docs/blueprint_spec.md に blueprint の必須出力項目として search_intent, target_keyword, title, description, heading_structure, cta, slug, jsonld_type が明記されていること"
 
-  - id: "AC-07"
-    requirement: "forbidden_changes が run_session.py、providers、backend、.github、docs/templates を禁止している。"
-    test_name: "test_session_06_forbidden_changes_defined"
-    type: "automated"
-    manual_check: false
-    verification:
-      - "session-06.json の forbidden_changes に run_session.py 関連の記述があることを確認する。"
-      - "session-06.json の forbidden_changes に providers 関連の記述があることを確認する。"
-      - "session-06.json の forbidden_changes に backend 関連の記述があることを確認する。"
-      - "session-06.json の forbidden_changes に .github 関連の記述があることを確認する。"
-      - "session-06.json の forbidden_changes に docs/templates 関連の記述があることを確認する。"
+  - id: "CC-06-02"
+    type: "document_rule"
+    condition: "各必須出力項目について型または制約が明記され、曖昧な自由記述に依存しないこと"
 
-  - id: "AC-08"
-    requirement: "generation_selfcheck の結果が pass である。"
-    test_name: "test_session_06_generation_selfcheck_passes"
-    type: "manual"
-    manual_check: true
-    verification:
-      - "docs/templates/generation_selfcheck.md に session-06.json と session-06.yaml を投入し、出力の status が pass であることを確認する。"
+  - id: "CC-06-03"
+    type: "document_rule"
+    condition: "blueprint 生成時の禁止事項として cluster_check の責務、html_generation の責務、SEO本文生成の混入禁止が明記されていること"
 
-completion_checks:
-  - "docs/sessions/session-06.json が保存されている。"
-  - "docs/acceptance/session-06.yaml が保存されている。"
-  - "session-06.json に session_id, phase_id, title, goal, scope, out_of_scope, constraints, acceptance_ref が存在する。"
-  - "session-06.json の acceptance_ref が docs/acceptance/session-06.yaml と一致する。"
-  - "session-06.yaml のトップレベルに session_id が存在する。"
-  - "生成物が generation_selfcheck により pass 判定となる。"
-  - "変更ファイルが docs/sessions/session-06.json と docs/acceptance/session-06.yaml の2件に限定される。"
+  - id: "CC-06-04"
+    type: "state_transition_consistent"
+    condition: "cluster_check へ渡せる完成条件が明記され、session-05 で固定した input chain と矛盾していないこと"
 
-change_guardrails:
-  allowed_changes:
-    - "docs/sessions/session-06.json"
-    - "docs/acceptance/session-06.yaml"
-  forbidden_changes:
-    - "orchestration/run_session.py を変更しない。"
-    - "providers 配下を変更しない。"
-    - "backend 配下を変更しない。"
-    - ".github 配下を変更しない。"
-    - "docs/templates 配下を変更しない。"
-    - "docs/roadmap.yaml を変更しない。"
-    - "docs/sessions/session-07.json 以降を作成しない。"
-    - "docs/acceptance/session-07.yaml 以降を作成しない。"
+  - id: "CC-06-05"
+    type: "side_effect_free"
+    condition: "docs-only の範囲で完結し、docs/cluster_check_rules.md と docs/html_generation_spec.md を変更していないこと"
+
+review_points:
+  - "仕様一致（AC達成）"
+  - "変更範囲遵守"
+  - "副作用なし（既存破壊なし）"
+  - "実装過不足なし"

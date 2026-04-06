@@ -74,3 +74,55 @@
 - 後続への引き渡し条件（session-06 以降で参照する入力条件）:
   - 必須項目 `search_intent` / `title` / `description` / `heading_structure` / `cta` / `slug` / `jsonld_type` が欠けていないこと。
   - 入力チェーンは `blueprint -> cluster_check -> html_generation` の順で固定し、blueprint は先頭入力として扱う。
+
+## 11. Fixed Output Contract（session-06 固定）
+- cluster_check へ渡す `blueprint` の必須出力項目は以下8項目とする。
+  - `search_intent`
+  - `target_keyword`
+  - `title`
+  - `description`
+  - `heading_structure`
+  - `cta`
+  - `slug`
+  - `jsonld_type`
+- 本節に記載の型・制約は、曖昧な自由記述より優先される固定仕様とする。
+
+## 12. Field Types and Constraints（必須）
+- `search_intent`: `string`
+  - 1文以上、かつ検索者の目的が一意に読めること。
+- `target_keyword`: `string`
+  - 空文字禁止。主対象キーワードを1つ明記すること。
+- `title`: `string`
+  - `search_intent` と `target_keyword` の両方に整合すること。
+- `description`: `string`
+  - 記事要約として読める1文以上で、`search_intent` と矛盾しないこと。
+- `heading_structure`: `array<object>`
+  - `h2` / `h3` の階層を持つこと。
+  - 各要素は少なくとも `level`（`h2` or `h3`）と `text`（非空文字列）を持つこと。
+- `cta`: `object`
+  - 少なくとも `text`（非空文字列）と `intent`（非空文字列）を持つこと。
+  - `intent` は問い合わせ・比較・資料請求など誘導目的を判別可能であること。
+- `slug`: `string`
+  - 空文字禁止。
+  - URL想定値として小文字英数字とハイフンのみを使用し、先頭末尾ハイフンを禁止すること。
+- `jsonld_type`: `string`
+  - `article` または `faq` のいずれかのみ許可すること。
+
+## 13. Forbidden Scope（禁止事項）
+- `blueprint` 生成時に以下を混在させないこと。
+  - cluster_check の責務（重複判定・カニバリ判定・クラスタ整合判定）の定義や判定実行。
+  - html_generation の責務（HTML最終マッピング、タグ出力仕様、head組み立て手順）の定義。
+  - SEO本文生成ルール（本文自動生成、段落ルール、文体ルール）の追加。
+- 実装コード変更（`run_session.py`、`providers` 配下など）を本仕様に含めないこと。
+
+## 14. Handoff Criteria to cluster_check（完成条件）
+- `blueprint -> cluster_check -> html_generation` の入力チェーン順序を崩さないこと。
+- `search_intent` / `target_keyword` / `title` / `description` / `heading_structure` / `cta` / `slug` / `jsonld_type` がすべて存在すること。
+- 各必須項目が本仕様の型・制約を満たし、欠損・空文字・許可外値がないこと。
+- 責務越境（cluster_check責務、html_generation責務、SEO本文生成ルール）が含まれていないこと。
+
+## 15. Review Points（session-06）
+- 仕様一致（AC達成）: 必須出力項目、型・制約、禁止事項、完成条件が明記されているか。
+- 変更範囲遵守: `docs/blueprint_spec.md` と session-06 定義ファイル以外を変更していないか。
+- 副作用なし（既存破壊なし）: session-05 で固定した責務境界と入力チェーンに矛盾がないか。
+- 実装過不足なし: docs-only の範囲で、必要十分な明文化にとどめているか。
