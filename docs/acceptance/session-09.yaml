@@ -1,33 +1,50 @@
-session_id: session-09
+session_id: "session-09"
+type: "docs-only"
 
 acceptance:
-  - id: AC-09-01
-    description: allowed_changes_detail が定義されている
-    test_name: test_ac_09_01_allowed_changes_detail_defined
+  - id: "AC-09-01"
+    description: "docs/html_generation_spec.md に html_generation の入力前提が明記されている"
+    test_name: "docs_review_html_input_preconditions_defined"
 
-  - id: AC-09-02
-    description: failure_type enum + priority が定義されている
-    test_name: test_ac_09_02_failure_type_enum_priority
+  - id: "AC-09-02"
+    description: "必須マッピング項目と出力先が明記されている"
+    test_name: "docs_review_html_required_mapping_defined"
 
-  - id: AC-09-03
-    description: not_applicable が定義され skipped が使われていない
-    test_name: test_ac_09_03_not_applicable_no_skipped
+  - id: "AC-09-03"
+    description: "禁止事項が明記され、責務越境が防止されている"
+    test_name: "docs_review_html_forbidden_scope_defined"
 
-  - id: AC-09-04
-    description: review_points が4軸で固定されている
-    test_name: test_ac_09_04_review_points_four_axes
+  - id: "AC-09-04"
+    description: "完了条件が明記されている"
+    test_name: "docs_review_html_completion_condition_defined"
 
-  - id: AC-09-05
-    description: completion_criteria が object schema で定義されている
-    test_name: test_ac_09_05_completion_criteria_object_schema
+  - id: "AC-09-05"
+    description: "変更範囲が docs/html_generation_spec.md と session-09 定義ファイルのみに限定されている"
+    test_name: "docs_review_html_scope_and_side_effect_free"
 
-  - id: AC-09-06
-    description: session-09.json が作成されている
-    test_name: test_ac_09_06_session_09_json_exists
+completion_criteria:
+  - id: "CC-09-01"
+    type: "document_rule"
+    condition: "docs/html_generation_spec.md に html_generation の入力前提として cluster_check 通過済み blueprint の必須受領条件が明記されていること"
 
-  - id: AC-09-07
-    description: acceptance YAML が正しい形式で作成されている
-    test_name: test_ac_09_07_acceptance_yaml_format
+  - id: "CC-09-02"
+    type: "document_rule"
+    condition: "必須マッピング項目として title, description, heading_structure, cta, slug, jsonld_type の出力先が明記されていること"
 
-notes:
-  - test_name は定義のみとし、テスト実装は本セッションの範囲外とする
+  - id: "CC-09-03"
+    type: "document_rule"
+    condition: "禁止事項として blueprint 再設計、cluster_check 再判定、SEO本文生成ルール追加が明記されていること"
+
+  - id: "CC-09-04"
+    type: "state_transition_consistent"
+    condition: "完了条件として必須マッピング完了、Phase A 制約準拠、手動 review 完了が明記され、session-05 と session-08 の input chain と矛盾していないこと"
+
+  - id: "CC-09-05"
+    type: "side_effect_free"
+    condition: "docs-only の範囲で完結し、docs/blueprint_spec.md と docs/cluster_check_rules.md を変更していないこと"
+
+review_points:
+  - "仕様一致（AC達成）"
+  - "変更範囲遵守"
+  - "副作用なし（既存破壊なし）"
+  - "実装過不足なし"
