@@ -1,257 +1,124 @@
 {
   "session_id": "session-08",
-  "phase_id": "phase-07",
-  "title": "Normalize pipeline_spec_v0 schema and define Spec Check v0 contract",
-  "goal": "pipeline_spec_v0 と生成テンプレートを正本ルール準拠に補正し、Spec Check v0 の検査契約を固定する。",
+  "phase_id": "phase-a",
+  "title": "A02_fina cluster check execution spec fix",
+  "goal": "A02_fina の cluster_check 判定仕様を docs/cluster_check_rules.md に固定し、blueprint を受け取って採用可 / 修正要 / 作成中止を判定し、html_generation に渡せる条件を曖昧なく参照できる状態にする。",
+  "type": "docs-only",
   "scope": [
-    "docs/pipeline_spec_v0.md の session JSON 仕様を補正する。",
-    "docs/pipeline_spec_v0.json の session JSON 仕様を補正する。",
-    "docs/pipeline_spec_v0.yaml の session JSON 仕様を補正する。",
-    "docs/templates/session_json_generate.md を補正し、allowed_changes_detail を list[str]、completion_criteria を object 配列で生成するよう固定する。",
-    "docs/templates/generation_selfcheck.md を補正し、allowed_changes_detail 型と completion_criteria 型を検査対象に追加する。",
-    "Spec Check v0 の pass/fail 判定契約と failure_type=spec_missing の適用条件を明文化する。"
+    "docs/cluster_check_rules.md に cluster_check の入力前提を明記する",
+    "docs/cluster_check_rules.md に判定観点を明記する",
+    "docs/cluster_check_rules.md に判定結果の種類と意味を明記する",
+    "docs/cluster_check_rules.md に差戻し条件を明記する",
+    "docs/cluster_check_rules.md に html_generation へ渡す条件を明記する",
+    "docs/sessions/session-08.json を新規追加する",
+    "docs/acceptance/session-08.yaml を新規追加する"
   ],
   "out_of_scope": [
+    "docs/blueprint_spec.md の変更",
+    "docs/html_generation_spec.md の変更",
     "orchestration/run_session.py の変更",
     "providers 配下の変更",
-    "backend 配下の変更",
-    ".github 配下の変更",
-    "docs/templates/acceptance_yaml_generate.md の変更",
-    "docs/sessions/session-06.json の修正",
-    "docs/acceptance/session-06.yaml の修正",
-    "docs/sessions/session-07.json の修正",
-    "docs/acceptance/session-07.yaml の修正",
-    "session-09 以降の生成",
-    "Bootstrap 実装コードの追加",
-    "Spec Check v0 の実行コード実装"
+    "A02_fina の実装コード変更",
+    "SEO本文生成ルールの追加",
+    "session-09 以降の新規セッション定義作成"
   ],
   "constraints": [
-    "1セッション1目的",
-    "最大5ファイル以内で完結すること",
-    "実装コードを変更しないこと",
-    "正本ルールは master_instruction.md と global_rules.md を基準にすること",
-    "allowed_changes_detail は list[str] 形式に統一すること",
-    "completion_criteria は object 配列に統一すること",
-    "completion_criteria の各要素は id, type, condition を持つこと",
-    "generation_selfcheck は pass/fail を明示すること",
-    "schema/type 不一致は failure_type=spec_missing として扱うこと",
-    "session-06 と session-07 は比較用証跡として保持し、補正しないこと"
+    "1セッション1目的を守る",
+    "docs-only セッションとして扱う",
+    "cluster_check の責務範囲を session-05 で固定した内容から逸脱しない",
+    "blueprint 設計責務と html_generation 責務を cluster_check_rules.md に混入させない",
+    "判定結果は採用可 / 修正要 / 作成中止 の3区分で固定する",
+    "判定観点は曖昧語を避け、後続で参照しやすいように明文化する",
+    "変更ファイル数は最大3ファイル以内とする"
   ],
-  "acceptance_ref": "docs/acceptance/session-08.yaml",
   "inputs": [
-    {
-      "name": "pipeline_spec_v0_markdown",
-      "type": "file:path",
-      "required": true,
-      "description": "docs/pipeline_spec_v0.md"
-    },
-    {
-      "name": "pipeline_spec_v0_json",
-      "type": "file:path",
-      "required": true,
-      "description": "docs/pipeline_spec_v0.json"
-    },
-    {
-      "name": "pipeline_spec_v0_yaml",
-      "type": "file:path",
-      "required": true,
-      "description": "docs/pipeline_spec_v0.yaml"
-    },
-    {
-      "name": "session_json_generate_template",
-      "type": "file:path",
-      "required": true,
-      "description": "docs/templates/session_json_generate.md"
-    },
-    {
-      "name": "generation_selfcheck_template",
-      "type": "file:path",
-      "required": true,
-      "description": "docs/templates/generation_selfcheck.md"
-    },
-    {
-      "name": "global_rules_reference",
-      "type": "file:path",
-      "required": true,
-      "description": "docs/global_rules.md"
-    }
+    "docs/cluster_check_rules.md",
+    "docs/sessions/session-05.json",
+    "docs/acceptance/session-05.yaml",
+    "docs/sessions/session-06.json",
+    "docs/acceptance/session-06.yaml"
   ],
   "outputs": [
-    {
-      "name": "normalized_pipeline_spec_markdown",
-      "type": "document",
-      "required": true,
-      "description": "docs/pipeline_spec_v0.md"
-    },
-    {
-      "name": "normalized_pipeline_spec_json",
-      "type": "json",
-      "required": true,
-      "description": "docs/pipeline_spec_v0.json"
-    },
-    {
-      "name": "normalized_pipeline_spec_yaml",
-      "type": "yaml",
-      "required": true,
-      "description": "docs/pipeline_spec_v0.yaml"
-    },
-    {
-      "name": "normalized_session_json_generate_template",
-      "type": "document",
-      "required": true,
-      "description": "docs/templates/session_json_generate.md"
-    },
-    {
-      "name": "normalized_generation_selfcheck_template",
-      "type": "document",
-      "required": true,
-      "description": "docs/templates/generation_selfcheck.md"
-    }
+    "docs/cluster_check_rules.md",
+    "docs/sessions/session-08.json",
+    "docs/acceptance/session-08.yaml"
   ],
   "allowed_changes": [
-    "docs/pipeline_spec_v0.md",
-    "docs/pipeline_spec_v0.json",
-    "docs/pipeline_spec_v0.yaml",
-    "docs/templates/session_json_generate.md",
-    "docs/templates/generation_selfcheck.md"
+    "docs/cluster_check_rules.md",
+    "docs/sessions/session-08.json",
+    "docs/acceptance/session-08.yaml"
   ],
   "allowed_changes_detail": [
-    "docs/pipeline_spec_v0.md: allowed_changes_detail の正式型を list[str] と明記する。",
-    "docs/pipeline_spec_v0.md: completion_criteria の正式型を object 配列と明記し、id, type, condition を必須化する。",
-    "docs/pipeline_spec_v0.md: Spec Check v0 の pass/fail 判定契約と spec_missing 適用条件を明記する。",
-    "docs/pipeline_spec_v0.json: allowed_changes_detail を list[str] スキーマで表現する。",
-    "docs/pipeline_spec_v0.json: completion_criteria を object 配列スキーマで表現する。",
-    "docs/pipeline_spec_v0.json: Spec Check v0 の結果契約を表現する。",
-    "docs/pipeline_spec_v0.yaml: allowed_changes_detail を list[str] スキーマで表現する。",
-    "docs/pipeline_spec_v0.yaml: completion_criteria を object 配列スキーマで表現する。",
-    "docs/pipeline_spec_v0.yaml: Spec Check v0 の結果契約を表現する。",
-    "docs/templates/session_json_generate.md: allowed_changes_detail を list[str] で生成するよう固定する。",
-    "docs/templates/session_json_generate.md: completion_criteria を object 配列で生成するよう固定する。",
-    "docs/templates/session_json_generate.md: review_points を4軸固定で出力するよう維持する。",
-    "docs/templates/generation_selfcheck.md: allowed_changes_detail 型検査を追加する。",
-    "docs/templates/generation_selfcheck.md: completion_criteria の object 構造検査を追加する。",
-    "docs/templates/generation_selfcheck.md: schema/type 不一致時の failure_type=spec_missing を追加する。"
+    "docs/cluster_check_rules.md: cluster_check の入力前提、判定観点、判定結果、差戻し条件、html_generation へ渡す条件、review 観点の明文化のみ変更可",
+    "docs/sessions/session-08.json: 本セッション定義の新規追加のみ可",
+    "docs/acceptance/session-08.yaml: 本セッションの受入条件定義の新規追加のみ可"
   ],
   "forbidden_changes": [
-    "orchestration/run_session.py を変更しない。",
-    "providers 配下を変更しない。",
-    "backend 配下を変更しない。",
-    ".github 配下を変更しない。",
-    "docs/templates/acceptance_yaml_generate.md を変更しない。",
-    "docs/sessions/session-06.json を変更しない。",
-    "docs/acceptance/session-06.yaml を変更しない。",
-    "docs/sessions/session-07.json を変更しない。",
-    "docs/acceptance/session-07.yaml を変更しない。",
-    "session-09 以降を作成しない。",
-    "Spec Check v0 の実行コードを追加しない。"
+    "orchestration/",
+    "backend/",
+    "frontend/",
+    ".github/",
+    "docs/shared/",
+    "docs/blueprint_spec.md",
+    "docs/html_generation_spec.md",
+    "docs/sessions/session-05.json",
+    "docs/acceptance/session-05.yaml",
+    "docs/sessions/session-06.json",
+    "docs/acceptance/session-06.yaml"
   ],
+  "acceptance_ref": "docs/acceptance/session-08.yaml",
   "completion_criteria": [
     {
       "id": "CC-08-01",
-      "type": "artifact",
-      "condition": "docs/pipeline_spec_v0.md が更新保存されている。"
+      "type": "document_rule",
+      "condition": "docs/cluster_check_rules.md に cluster_check の入力前提として blueprint の必須受領項目と判定開始条件が明記されていること"
     },
     {
       "id": "CC-08-02",
-      "type": "artifact",
-      "condition": "docs/pipeline_spec_v0.json が更新保存されている。"
+      "type": "document_rule",
+      "condition": "判定観点として少なくとも重複、検索意図衝突、slug衝突、見出し構造の競合、CTA目的衝突が明記されていること"
     },
     {
       "id": "CC-08-03",
-      "type": "artifact",
-      "condition": "docs/pipeline_spec_v0.yaml が更新保存されている。"
+      "type": "document_rule",
+      "condition": "判定結果が採用可 / 修正要 / 作成中止 の3区分で明記され、それぞれの意味と後続アクションが定義されていること"
     },
     {
       "id": "CC-08-04",
-      "type": "artifact",
-      "condition": "docs/templates/session_json_generate.md が更新保存されている。"
+      "type": "state_transition_consistent",
+      "condition": "html_generation に渡せる条件が採用可の blueprint のみであることが明記され、session-05 で固定した input chain と矛盾していないこと"
     },
     {
       "id": "CC-08-05",
-      "type": "artifact",
-      "condition": "docs/templates/generation_selfcheck.md が更新保存されている。"
-    },
-    {
-      "id": "CC-08-06",
-      "type": "document_rule",
-      "condition": "pipeline_spec_v0 の3形式すべてで allowed_changes_detail が list[str] として定義されている。"
-    },
-    {
-      "id": "CC-08-07",
-      "type": "document_rule",
-      "condition": "pipeline_spec_v0 の3形式すべてで completion_criteria が id, type, condition を持つ object 配列として定義されている。"
-    },
-    {
-      "id": "CC-08-08",
-      "type": "document_rule",
-      "condition": "session_json_generate テンプレートが allowed_changes_detail を list[str] で生成する指示を含む。"
-    },
-    {
-      "id": "CC-08-09",
-      "type": "document_rule",
-      "condition": "session_json_generate テンプレートが completion_criteria を object 配列で生成する指示を含む。"
-    },
-    {
-      "id": "CC-08-10",
-      "type": "document_rule",
-      "condition": "generation_selfcheck テンプレートが allowed_changes_detail 型検査と completion_criteria 型検査を含む。"
-    },
-    {
-      "id": "CC-08-11",
-      "type": "document_rule",
-      "condition": "generation_selfcheck テンプレートが schema/type 不一致時の failure_type=spec_missing を返す契約を含む。"
-    },
-    {
-      "id": "CC-08-12",
       "type": "side_effect_free",
-      "condition": "session-06 と session-07 の生成済み証跡ファイルを変更していない。"
+      "condition": "docs-only の範囲で完結し、docs/blueprint_spec.md と docs/html_generation_spec.md を変更していないこと"
     }
   ],
   "acceptance_criteria": [
     {
       "id": "AC-08-01",
-      "text": "pipeline_spec_v0.md, pipeline_spec_v0.json, pipeline_spec_v0.yaml の3形式すべてで allowed_changes_detail が list[str] として定義されている。",
-      "test_name": "test_pipeline_spec_v0_allowed_changes_detail_is_list_str"
+      "description": "docs/cluster_check_rules.md に cluster_check の入力前提が明記されている",
+      "test_name": "docs_review_cluster_input_preconditions_defined"
     },
     {
       "id": "AC-08-02",
-      "text": "pipeline_spec_v0.md, pipeline_spec_v0.json, pipeline_spec_v0.yaml の3形式すべてで completion_criteria が id, type, condition を持つ object 配列として定義されている。",
-      "test_name": "test_pipeline_spec_v0_completion_criteria_is_object_array"
+      "description": "判定観点が列挙されており、重複と衝突の基準が明記されている",
+      "test_name": "docs_review_cluster_judgement_rules_defined"
     },
     {
       "id": "AC-08-03",
-      "text": "session_json_generate テンプレートが allowed_changes_detail を list[str] として生成する指示を含む。",
-      "test_name": "test_session_json_generate_template_emits_allowed_changes_detail_list"
+      "description": "判定結果の3区分と各区分の後続アクションが明記されている",
+      "test_name": "docs_review_cluster_result_actions_defined"
     },
     {
       "id": "AC-08-04",
-      "text": "session_json_generate テンプレートが completion_criteria を object 配列として生成する指示を含む。",
-      "test_name": "test_session_json_generate_template_emits_completion_criteria_objects"
+      "description": "html_generation へ渡せる条件が明記されている",
+      "test_name": "docs_review_cluster_handoff_condition_defined"
     },
     {
       "id": "AC-08-05",
-      "text": "generation_selfcheck テンプレートが allowed_changes_detail 型検査を含む。",
-      "test_name": "test_generation_selfcheck_includes_allowed_changes_detail_type_check"
-    },
-    {
-      "id": "AC-08-06",
-      "text": "generation_selfcheck テンプレートが completion_criteria の object 構造検査を含む。",
-      "test_name": "test_generation_selfcheck_includes_completion_criteria_structure_check"
-    },
-    {
-      "id": "AC-08-07",
-      "text": "generation_selfcheck テンプレートが schema/type 不一致時の failure_type=spec_missing を定義している。",
-      "test_name": "test_generation_selfcheck_defines_spec_missing_failure_type"
-    },
-    {
-      "id": "AC-08-08",
-      "text": "変更ファイルが docs/pipeline_spec_v0.md, docs/pipeline_spec_v0.json, docs/pipeline_spec_v0.yaml, docs/templates/session_json_generate.md, docs/templates/generation_selfcheck.md の5件以内に限定される。",
-      "test_name": "test_session_08_changed_files_within_allowed_scope"
-    },
-    {
-      "id": "AC-08-09",
-      "text": "docs/sessions/session-06.json, docs/acceptance/session-06.yaml, docs/sessions/session-07.json, docs/acceptance/session-07.yaml が変更されていない。",
-      "test_name": "test_session_08_does_not_modify_session_06_or_07_artifacts"
+      "description": "変更範囲が docs/cluster_check_rules.md と session-08 定義ファイルのみに限定されている",
+      "test_name": "docs_review_cluster_scope_and_side_effect_free"
     }
   ],
   "review_points": [
