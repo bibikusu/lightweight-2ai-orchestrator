@@ -1,17 +1,61 @@
-session_id: session-03
+session_id: "session-03"
+phase_id: "phase-a"
+title: "Lightweight cluster check spec"
+execution_mode: "cursor_manual"
+goal: "A02_fina において blueprint 同士の検索意図衝突を防ぐための最小クラスターチェック仕様を定義する。"
+
+scope:
+  - "docs/cluster_check_rules.md を新規作成する"
+  - "検索意図の分類ルールを定義する"
+  - "重複・類似判定ルールを定義する"
+  - "Phase A の手動チェック手順を定義する"
+  - "blueprint_spec と接続可能な仕様にする"
+
+out_of_scope:
+  - "自動クラスタリング"
+  - "AI分類"
+  - "DB設計"
+  - "API設計"
+  - "高度アルゴリズム"
+  - "JavaScript追加"
+
+constraints:
+  - "1セッション1目的"
+  - "1ファイルのみ変更"
+  - "手動チェック前提"
+  - "過剰設計禁止"
+  - "blueprint_specとの整合"
 
 acceptance:
-  - id: AC-03-01
-    description: orchestration.providers から OpenAI / Claude の Config・Wrapper および parse_json_object を import できる
-    test_name: test_providers_import_surface
+  - id: "AC-03-01"
+    description: "検索意図分類が定義されている"
+    test_name: "test_cluster_rules_define_search_intent_types"
+  - id: "AC-03-02"
+    description: "重複判定ルールがある"
+    test_name: "test_cluster_rules_define_overlap_detection"
+  - id: "AC-03-03"
+    description: "手動チェック手順がある"
+    test_name: "test_cluster_rules_define_manual_check_flow"
+  - id: "AC-03-04"
+    description: "blueprint_specと整合している"
+    test_name: "test_cluster_rules_align_with_blueprint_spec"
 
-  - id: AC-03-02
-    description: OPENAI_API_KEY / ANTHROPIC_API_KEY 名を維持し、既存の responses.create / messages.create 呼び出し形式を維持する
-    test_name: test_provider_env_names_and_api_calls
+completion_criteria:
+  - id: "CC-03-01"
+    type: "artifact"
+    condition: "検索意図分類ルールが定義されている"
+  - id: "CC-03-02"
+    type: "artifact"
+    condition: "重複判定ルールが定義されている"
+  - id: "CC-03-03"
+    type: "document_rule"
+    condition: "手動チェック手順がある"
+  - id: "CC-03-04"
+    type: "side_effect_free"
+    condition: "scope外変更なし"
 
-  - id: AC-03-03
-    description: 実装結果の changed_files が orchestration/providers 配下4ファイルのみに収まる
-    test_name: test_changed_files_limited_to_providers
-
-notes:
-  - session-04（セッションレポート自動生成）および session-05（retry 最小実装）は roadmap 上の後続であり、本 session-03 のスコープ外とする。
+review_points:
+  - "仕様一致"
+  - "変更範囲遵守"
+  - "副作用なし"
+  - "過不足なし"

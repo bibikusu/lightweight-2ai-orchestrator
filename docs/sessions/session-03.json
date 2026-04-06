@@ -1,63 +1,98 @@
 {
   "session_id": "session-03",
-  "objective": "orchestration/providers の最小実装を完了する。本セッションの範囲にセッションレポート自動生成および retry ループの実装を含めない。",
-  "inputs": [
-    "docs/master_instruction.md",
-    "docs/roadmap.yaml",
-    "docs/session_post_process.md",
-    "docs/sessions/session-03a.json",
-    "docs/acceptance/session-03a.yaml",
-    "docs/sessions/session-03.json",
-    "docs/acceptance/session-03.yaml",
-    "docs/templates/cursor_run_session-03.md"
+  "phase_id": "phase-a",
+  "title": "Lightweight cluster check spec",
+  "execution_mode": "cursor_manual",
+  "goal": "A02_fina において blueprint 同士の検索意図衝突（カニバリ）を防ぐための最小クラスターチェック仕様を定義する。",
+  "scope": [
+    "docs/cluster_check_rules.md を新規作成する",
+    "検索意図の分類ルールを定義する",
+    "重複・類似判定の最小ロジックを定義する",
+    "Phase A で実行可能な手動チェック手順を定義する",
+    "session-02 の blueprint_spec と接続可能なルールにする"
   ],
-  "outputs": [
-    "artifacts/reports/session-03-report.json",
-    "orchestration/providers/__init__.py",
-    "orchestration/providers/openai_client.py",
-    "orchestration/providers/claude_client.py",
-    "orchestration/providers/llm_json.py"
+  "out_of_scope": [
+    "クラスタリングの自動化ロジック",
+    "ベクトル検索・AI分類",
+    "DB設計",
+    "API設計",
+    "スコアリングアルゴリズムの高度化",
+    "他プロジェクト対応",
+    "JavaScript追加",
+    "deploy処理"
   ],
+  "constraints": [
+    "1セッション1目的",
+    "変更ファイルは1ファイルのみ",
+    "Phase Aでは手動チェック前提",
+    "過剰なアルゴリズム設計禁止",
+    "blueprint_spec.md と整合すること",
+    "YMYL観点を維持すること"
+  ],
+  "acceptance_ref": "docs/acceptance/session-03.yaml",
   "allowed_changes": [
-    "orchestration/providers/__init__.py",
-    "orchestration/providers/openai_client.py",
-    "orchestration/providers/claude_client.py",
-    "orchestration/providers/llm_json.py"
+    "docs/cluster_check_rules.md"
   ],
   "allowed_changes_detail": [
-    "OpenAIClientConfig / OpenAIClientWrapper および Claude 側の同等 dataclass・Wrapper を維持する",
-    "環境変数 OPENAI_API_KEY / ANTHROPIC_API_KEY を維持する",
-    "既存 run_session が import・呼び出す API シグネチャを破壊しない"
+    "docs/cluster_check_rules.md: 検索意図分類・重複判定・手動チェック手順を定義するのみ"
   ],
   "forbidden_changes": [
-    "orchestration/run_session.py の変更",
-    "セッションレポート自動生成機能の追加",
-    "retry ループの追加",
-    "docs/master_instruction.md",
-    "docs/roadmap.yaml",
-    "docs/session_post_process.md",
-    "docs/sessions/session-03a.json",
-    "docs/acceptance/session-03a.yaml",
-    "docs/templates/cursor_run_session-03a.md",
-    "docs/sessions/session-04.json",
-    "docs/sessions/session-05.json",
-    "docs/acceptance/session-04.yaml",
-    "docs/acceptance/session-05.yaml"
+    "docs/master_spec_a02_fina.md",
+    "docs/roadmap_a02_fina.yaml",
+    "docs/blueprint_spec.md",
+    "docs/shared/",
+    "orchestration/",
+    "artifacts/",
+    "src/"
   ],
   "completion_criteria": [
-    "orchestration/providers の4ファイルが acceptance を満たす",
-    "patch_validation（件数・禁止パス）に抵触しない proposed_patch / changed_files に収める",
-    "artifacts/reports/session-03-report.json が保存契約に従い生成される",
-    "境界: docs/roadmap.yaml の session-04＝セッションレポート自動生成、session-05＝retry 最小実装であり、本 session-03 ではいずれも実装しない（後続セッションに委ねる）"
+    {
+      "id": "CC-03-01",
+      "type": "artifact",
+      "condition": "cluster_check_rules.md に検索意図分類ルールが定義されている"
+    },
+    {
+      "id": "CC-03-02",
+      "type": "artifact",
+      "condition": "重複判定ルールが定義されている"
+    },
+    {
+      "id": "CC-03-03",
+      "type": "document_rule",
+      "condition": "Phase A 用の手動チェック手順が明記されている"
+    },
+    {
+      "id": "CC-03-04",
+      "type": "side_effect_free",
+      "condition": "scope 外ファイルに変更がない"
+    }
   ],
   "acceptance_criteria": [
-    "AC-03-01",
-    "AC-03-02",
-    "AC-03-03"
+    {
+      "id": "AC-03-01",
+      "description": "検索意図の分類ルールが定義されている",
+      "test_name": "test_cluster_rules_define_search_intent_types"
+    },
+    {
+      "id": "AC-03-02",
+      "description": "重複または類似記事の判定基準が定義されている",
+      "test_name": "test_cluster_rules_define_overlap_detection"
+    },
+    {
+      "id": "AC-03-03",
+      "description": "手動で実行可能なチェック手順が定義されている",
+      "test_name": "test_cluster_rules_define_manual_check_flow"
+    },
+    {
+      "id": "AC-03-04",
+      "description": "blueprint_spec と整合している",
+      "test_name": "test_cluster_rules_align_with_blueprint_spec"
+    }
   ],
   "review_points": [
-    "allowed_changes が providers 配下のみか",
-    "report 自動生成・retry が objective / forbidden に含まれていないか",
-    "session-03a で固定した境界と矛盾しないか"
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし",
+    "実装過不足なし"
   ]
 }

@@ -1,0 +1,104 @@
+{
+  "session_id": "session-04",
+  "phase_id": "phase-a",
+  "title": "Blueprint to static HTML generation spec",
+  "execution_mode": "cursor_manual",
+  "goal": "A02_fina の blueprint を base.html ベースの静的HTMLページへ変換するための最小生成仕様を定義し、Phase A の primary 公開前提に接続する。",
+  "scope": [
+    "docs/html_generation_spec.md を新規作成する",
+    "blueprint から HTML へ変換する入力と出力を定義する",
+    "base.html のどの要素に blueprint 各項目を反映するかを定義する",
+    "session-01a / session-01b / session-02 / session-03 と整合する生成ルールを定義する",
+    "Phase A の静的HTML1ページ生成を想定した最小手順を定義する"
+  ],
+  "out_of_scope": [
+    "HTML自動生成スクリプトの実装",
+    "テンプレートエンジン導入",
+    "複数ページ一括生成",
+    "CMS連携",
+    "DB設計",
+    "API設計",
+    "JavaScript追加",
+    "deploy処理",
+    "Search Console連携",
+    "IndexNow実装"
+  ],
+  "constraints": [
+    "1セッション1目的",
+    "実行方式は cursor_manual とする",
+    "変更ファイル数は最大1ファイル",
+    "Phase A の最小仕様に限定する",
+    "生成対象は primary の静的HTML1ページ前提とする",
+    "本文自動生成は含めない",
+    "base.html を唯一のテンプレート前提とする",
+    "YMYL 前提の免責・事実確認・出典確認観点を維持する",
+    "過剰な自動化設計に進まない"
+  ],
+  "acceptance_ref": "docs/acceptance/session-04.yaml",
+  "allowed_changes": [
+    "docs/html_generation_spec.md"
+  ],
+  "allowed_changes_detail": [
+    "docs/html_generation_spec.md: blueprint から static HTML へ変換する目的、入力、出力、マッピング、生成手順、Phase A 制約を定義するのみ"
+  ],
+  "forbidden_changes": [
+    "docs/master_spec_a02_fina.md",
+    "docs/roadmap_a02_fina.yaml",
+    "docs/shared/",
+    "docs/blueprint_spec.md",
+    "docs/cluster_check_rules.md",
+    "orchestration/",
+    "artifacts/",
+    "src/"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-04-01",
+      "type": "artifact",
+      "condition": "docs/html_generation_spec.md が作成され、blueprint から HTML への入力・出力・変換方針を定義している"
+    },
+    {
+      "id": "CC-04-02",
+      "type": "artifact",
+      "condition": "base.html の要素と blueprint 項目のマッピングが明記されている"
+    },
+    {
+      "id": "CC-04-03",
+      "type": "document_rule",
+      "condition": "Phase A では本文自動生成なし・静的HTML1ページ前提・primary対象であることが明記されている"
+    },
+    {
+      "id": "CC-04-04",
+      "type": "side_effect_free",
+      "condition": "scope 外ファイルに変更が発生していない"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-04-01",
+      "description": "html_generation_spec.md に目的、入力、出力が定義されている",
+      "test_name": "test_html_generation_spec_defines_purpose_inputs_outputs"
+    },
+    {
+      "id": "AC-04-02",
+      "description": "blueprint の title / description / heading_structure / cta / slug / jsonld_type が HTML 出力先と対応付けられている",
+      "test_name": "test_html_generation_spec_maps_blueprint_fields_to_html"
+    },
+    {
+      "id": "AC-04-03",
+      "description": "Phase A 制約として本文自動生成なし、base.html 使用、primaryのみ対象が明記されている",
+      "test_name": "test_html_generation_spec_respects_phase_a_constraints"
+    },
+    {
+      "id": "AC-04-04",
+      "description": "YMYL 前提の免責・事実確認・出典確認観点が維持されている",
+      "test_name": "test_html_generation_spec_includes_ymyl_safeguards"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "実装過不足なし"
+  ]
+}
