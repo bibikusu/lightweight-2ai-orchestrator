@@ -3,6 +3,7 @@
   "phase_id": "phase-07",
   "title": "Reproduce pipeline v0 generation flow with session-07 to verify template reusability",
   "goal": "session-06 と同一のパイプライン v0 型で session-07 定義と acceptance YAML を生成・検証・保存し、テンプレートの再現性を確認する。",
+  "type": "docs-only",
   "scope": [
     "docs/session-07_input_set.md を入力として使用する。",
     "docs/templates/session_json_generate.md を使用して docs/sessions/session-07.json の内容を生成する。",
@@ -180,5 +181,11 @@
       "text": "session-06.json と session-07.json のトップレベルキー構成が一致する。",
       "test_name": "test_session_07_schema_matches_session_06"
     }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "実装過不足なし"
   ]
 }
