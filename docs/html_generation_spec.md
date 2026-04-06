@@ -6,7 +6,8 @@
 - 対象は docs-only の仕様明文化であり、実装コード変更は対象外とする。
 
 ## 2. Input Preconditions（入力前提）
-- `html_generation` は `cluster_check` 通過済み `blueprint` のみを受け取る。
+- `html_generation` は `cluster_check` の判定結果が `採用可` の `blueprint` のみを受け取る。
+- 受領する `blueprint` は `docs/blueprint_spec.md` の固定出力契約（`search_intent`, `target_keyword`, `title`, `description`, `heading_structure`, `cta`, `slug`, `jsonld_type`）を満たしていることを前提とする。
 - 受領必須項目は `title`, `description`, `heading_structure`, `cta`, `slug`, `jsonld_type` とする。
 - `blueprint` の再設計、`cluster_check` の再判定は `html_generation` の責務外とする。
 - テンプレートは `base.html` を前提とし、出力対象は静的HTML1ページのみとする。
@@ -38,7 +39,7 @@
 - 必須マッピング6項目の反映が完了していること。
 - Phase A 制約（手動運用・静的HTML1ページ・docs-only）に準拠していること。
 - 手動 review が完了していること。
-- session-05 および session-08 で固定された input chain と矛盾しないこと。
+- session-05 / session-06 / session-08 で固定された input chain と受領条件に矛盾しないこと。
 
 ## 7. Review Points（review 観点）
 - 仕様一致（AC達成）
