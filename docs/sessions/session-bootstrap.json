@@ -1,0 +1,96 @@
+{
+  "session_id": "session-bootstrap",
+  "phase_id": "phase-0",
+  "title": "A02_fina patch_apply target path verification",
+  "goal": "patch_apply が A02_fina リポジトリの src/templates/base.html に正しく適用されるかを最小差分で検証する。",
+  "scope": [
+    "src/templates/base.html に HTML コメントを1行追加する",
+    "patch_apply の適用先が A02_fina リポジトリであることを検証する",
+    "changed_files に A02_fina 側の対象ファイルが記録されることを確認する",
+    "--skip-checks で live-run が完走することを確認する"
+  ],
+  "out_of_scope": [
+    "オーケストレーター側ファイルの変更",
+    "src/templates/base.html 以外のファイル変更",
+    "HTML テンプレート本体の実装",
+    "CSS 追加",
+    "JSON-LD 追加",
+    "デプロイ処理",
+    "checks の自動化",
+    "run_session.py の改修"
+  ],
+  "constraints": [
+    "1セッション1目的",
+    "変更ファイルは1ファイルのみ",
+    "実装内容は最小とし、HTMLコメント1行追加で十分とする",
+    "既存ファイルへの差分適用形式で実施する",
+    "オーケストレーター側のファイルは変更しない",
+    "--skip-checks 前提で live-run を行う",
+    "scope 外の整形・リファクタ・命名変更を行わない"
+  ],
+  "acceptance_ref": "docs/acceptance/session-bootstrap.yaml",
+  "allowed_changes": [
+    "src/templates/base.html"
+  ],
+  "allowed_changes_detail": [
+    "src/templates/base.html: 先頭または安全な位置に patch_apply 検証用の HTML コメントを1行追加するのみ"
+  ],
+  "forbidden_changes": [
+    "docs/",
+    "artifacts/",
+    "orchestration/",
+    "src/assets/css/",
+    "src/pages/",
+    "src/snippets/"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-SB-01",
+      "type": "artifact",
+      "condition": "patch_apply 後に A02_fina リポジトリの src/templates/base.html にコメント1行が追加されている"
+    },
+    {
+      "id": "CC-SB-02",
+      "type": "artifact",
+      "condition": "report または execution record の changed_files に A02_fina 側の src/templates/base.html が記録されている"
+    },
+    {
+      "id": "CC-SB-03",
+      "type": "non_regression",
+      "condition": "--skip-checks を付けた live-run が fail-stop せず完走する"
+    },
+    {
+      "id": "CC-SB-04",
+      "type": "side_effect_free",
+      "condition": "オーケストレーター側ファイルおよび scope 外ファイルに変更が発生していない"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-SB-01",
+      "description": "patch_apply が A02_fina 側の src/templates/base.html を変更する",
+      "test_name": "test_patch_apply_modifies_target_repo_base_html"
+    },
+    {
+      "id": "AC-SB-02",
+      "description": "changed_files に A02_fina 側の src/templates/base.html が記録される",
+      "test_name": "test_changed_files_records_target_repo_path"
+    },
+    {
+      "id": "AC-SB-03",
+      "description": "--skip-checks で live-run が完走する",
+      "test_name": "test_live_run_completes_with_skip_checks"
+    },
+    {
+      "id": "AC-SB-04",
+      "description": "オーケストレーター側ファイルは変更されない",
+      "test_name": "test_no_control_repo_file_changes"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "実装過不足なし"
+  ]
+}
