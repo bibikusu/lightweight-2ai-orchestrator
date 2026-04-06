@@ -1,0 +1,50 @@
+session_id: "session-05"
+type: "docs-only"
+
+acceptance:
+  - id: "AC-05-01"
+    description: "blueprint_spec.md に blueprint の責務と非責務が明記されている"
+    test_name: "docs_review_blueprint_boundary_defined"
+
+  - id: "AC-05-02"
+    description: "cluster_check_rules.md に cluster check の責務と前後依存が明記されている"
+    test_name: "docs_review_cluster_boundary_defined"
+
+  - id: "AC-05-03"
+    description: "html_generation_spec.md に HTML生成の責務、必要入力、出力条件が明記されている"
+    test_name: "docs_review_html_generation_boundary_defined"
+
+  - id: "AC-05-04"
+    description: "3文書を通して input chain が blueprint -> cluster_check -> html_generation の順に矛盾なく読める"
+    test_name: "docs_review_input_chain_consistent"
+
+  - id: "AC-05-05"
+    description: "変更範囲が docs-only に限定され、session-02/03/04 の既存定義を変更していない"
+    test_name: "docs_review_scope_and_side_effect_free"
+
+completion_criteria:
+  - id: "CC-05-01"
+    type: "document_rule"
+    condition: "blueprint_spec.md に blueprint の責務範囲と非責務が明記されていること"
+
+  - id: "CC-05-02"
+    type: "document_rule"
+    condition: "cluster_check_rules.md に cluster check の責務範囲と依存関係が明記されていること"
+
+  - id: "CC-05-03"
+    type: "document_rule"
+    condition: "html_generation_spec.md に HTML生成の責務と出力条件が明記されていること"
+
+  - id: "CC-05-04"
+    type: "state_transition_consistent"
+    condition: "input chain が blueprint -> cluster_check -> html_generation の順で一貫していること"
+
+  - id: "CC-05-05"
+    type: "side_effect_free"
+    condition: "既存 session 定義に変更がないこと"
+
+review_points:
+  - "仕様一致（AC達成）"
+  - "変更範囲遵守"
+  - "副作用なし（既存破壊なし）"
+  - "実装過不足なし"

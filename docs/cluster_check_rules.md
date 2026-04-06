@@ -37,3 +37,16 @@
 ## 6. 適用範囲
 - 本仕様は session-03 の範囲に限定する。
 - DB設計、API設計、実装自動化、スコアリング高度化には拡張しない。
+
+## 7. Responsibility Boundary（session-05 固定）
+- 責務:
+  - `blueprint` を入力として、既存 blueprint 群との重複・衝突を判定する。
+  - 判定結果として「採用可/修正要/作成中止」の判断根拠を明確化する。
+- 非責務:
+  - 新規 blueprint の内容（タイトル、見出し、CTA）を新規設計しない。
+  - HTML反映、メタ情報反映、JSON-LD選択は行わない（`docs/html_generation_spec.md` の責務）。
+  - SEO本文生成ルールの定義は行わない。
+- 前後依存（入力チェーン固定）:
+  - 前段入力は `docs/blueprint_spec.md` に準拠した blueprint とする。
+  - 後段の `docs/html_generation_spec.md` に渡せるのは「重複なしと判断された blueprint」のみとする。
+  - 入力チェーンは `blueprint -> cluster_check -> html_generation` の順で固定する。

@@ -1,0 +1,132 @@
+{
+  "session_id": "session-05",
+  "phase_id": "phase-a",
+  "title": "A02_fina docs responsibility boundary and input chain fix",
+  "goal": "A02_fina の blueprint_spec.md / cluster_check_rules.md / html_generation_spec.md の責務境界・参照順序・依存関係を固定し、session-06以降の入力チェーンを曖昧なく参照できる状態にする。",
+  "type": "docs-only",
+  "scope": [
+    "docs/blueprint_spec.md の責務を明文化する",
+    "docs/cluster_check_rules.md の責務を明文化する",
+    "docs/html_generation_spec.md の責務を明文化する",
+    "3文書の参照順序と依存関係を整合させる",
+    "A02_fina session-06 以降で使う入力チェーンを文書上で固定する"
+  ],
+  "out_of_scope": [
+    "orchestration/run_session.py の変更",
+    "providers 配下の変更",
+    "A02_fina の実装コード変更",
+    "shared_context ファイルの新規導入",
+    "session-06 以降の新規セッション定義作成",
+    "SEO本文の生成ルール詳細追加"
+  ],
+  "constraints": [
+    "1セッション1目的を守る",
+    "docs-only セッションとして扱う",
+    "既存文書の責務整理のみを行い、新しい大項目の乱立を避ける",
+    "shared_context を前提にした記述を追加しない",
+    "3文書で同じ役割を重複定義しない",
+    "session-06 以降が参照できる入力順序を文書中に明記する",
+    "変更ファイル数は最大5ファイル以内とする"
+  ],
+  "inputs": [
+    "docs/blueprint_spec.md",
+    "docs/cluster_check_rules.md",
+    "docs/html_generation_spec.md",
+    "docs/sessions/session-02.json",
+    "docs/sessions/session-03.json",
+    "docs/sessions/session-04.json"
+  ],
+  "outputs": [
+    "docs/blueprint_spec.md",
+    "docs/cluster_check_rules.md",
+    "docs/html_generation_spec.md"
+  ],
+  "allowed_changes": [
+    "docs/blueprint_spec.md",
+    "docs/cluster_check_rules.md",
+    "docs/html_generation_spec.md",
+    "docs/sessions/session-05.json",
+    "docs/acceptance/session-05.yaml"
+  ],
+  "allowed_changes_detail": [
+    "docs/blueprint_spec.md: blueprint の責務範囲、入出力、session-06以降への引き渡し条件の明文化のみ変更可",
+    "docs/cluster_check_rules.md: cluster check の責務範囲、blueprint との関係、html_generation へ渡す前提条件の明文化のみ変更可",
+    "docs/html_generation_spec.md: HTML生成の責務範囲、入力前提、出力条件、他文書へ持たせるべきでない責務の明文化のみ変更可",
+    "docs/sessions/session-05.json: 本セッション定義の新規追加のみ可",
+    "docs/acceptance/session-05.yaml: 本セッションの受入条件定義の新規追加のみ可"
+  ],
+  "forbidden_changes": [
+    "orchestration/",
+    "backend/",
+    "frontend/",
+    ".github/",
+    "docs/shared/",
+    "docs/sessions/session-02.json",
+    "docs/sessions/session-03.json",
+    "docs/sessions/session-04.json",
+    "docs/acceptance/session-02.yaml",
+    "docs/acceptance/session-03.yaml",
+    "docs/acceptance/session-04.yaml"
+  ],
+  "acceptance_ref": "docs/acceptance/session-05.yaml",
+  "completion_criteria": [
+    {
+      "id": "CC-05-01",
+      "type": "document_rule",
+      "condition": "blueprint_spec.md に blueprint の責務範囲と非責務が明記され、cluster_check_rules.md および html_generation_spec.md と役割が重複していないこと"
+    },
+    {
+      "id": "CC-05-02",
+      "type": "document_rule",
+      "condition": "cluster_check_rules.md に cluster check の責務範囲と入力前提が明記され、blueprint から受け取る情報と html_generation へ渡す条件が定義されていること"
+    },
+    {
+      "id": "CC-05-03",
+      "type": "document_rule",
+      "condition": "html_generation_spec.md に HTML生成の責務範囲、必要入力、出力条件が明記され、SEO本文生成など out_of_scope が混入していないこと"
+    },
+    {
+      "id": "CC-05-04",
+      "type": "state_transition_consistent",
+      "condition": "3文書に共通して、A02_fina の入力チェーンが blueprint -> cluster_check -> html_generation の順で読めること"
+    },
+    {
+      "id": "CC-05-05",
+      "type": "side_effect_free",
+      "condition": "session-02/03/04 の既存定義を変更せず、docs-only の範囲で完結していること"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-05-01",
+      "description": "blueprint_spec.md に blueprint の責務と非責務が明記されている",
+      "test_name": "docs_review_blueprint_boundary_defined"
+    },
+    {
+      "id": "AC-05-02",
+      "description": "cluster_check_rules.md に cluster check の責務と前後依存が明記されている",
+      "test_name": "docs_review_cluster_boundary_defined"
+    },
+    {
+      "id": "AC-05-03",
+      "description": "html_generation_spec.md に HTML生成の責務、必要入力、出力条件が明記されている",
+      "test_name": "docs_review_html_generation_boundary_defined"
+    },
+    {
+      "id": "AC-05-04",
+      "description": "3文書を通して input chain が blueprint -> cluster_check -> html_generation の順に矛盾なく読める",
+      "test_name": "docs_review_input_chain_consistent"
+    },
+    {
+      "id": "AC-05-05",
+      "description": "変更範囲が docs-only に限定され、session-02/03/04 の既存定義を変更していない",
+      "test_name": "docs_review_scope_and_side_effect_free"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "実装過不足なし"
+  ]
+}

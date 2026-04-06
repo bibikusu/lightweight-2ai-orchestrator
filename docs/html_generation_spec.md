@@ -63,3 +63,16 @@
   - `slug`: `chiba-cast-haken-guide`
   - `jsonld_type`: `faq`
   - 出力先: `<title>`, `<meta name="description">`, `<main>` 見出し群, CTA領域, canonical想定URL, FAQ JSON-LD
+
+## 10. Responsibility Boundary（session-05 固定）
+- 責務:
+  - cluster check 通過済み blueprint を `base.html` に反映し、静的HTML1ページとして出力する。
+  - `title` / `description` / `heading_structure` / `cta` / `slug` / `jsonld_type` の出力条件を保証する。
+- 非責務:
+  - blueprint の重複判定や採用判定は行わない（`docs/cluster_check_rules.md` の責務）。
+  - blueprint 項目自体の再設計は行わない（`docs/blueprint_spec.md` の責務）。
+  - SEO本文の自動生成や生成ルール詳細追加は行わない。
+- 入力前提と受け渡し:
+  - 前段で `blueprint -> cluster_check` を完了し、重複なし判定の blueprint を受け取る。
+  - 入力チェーンは `blueprint -> cluster_check -> html_generation` の順で固定する。
+  - HTML生成の完了条件は「必須マッピング完了」「Phase A 制約準拠」「YMYL観点の手動確認完了」とする。

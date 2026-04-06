@@ -62,3 +62,15 @@
 - 人間による本文編集
 - HTMLテンプレートへ反映（session-01a / session-01b 構造に接続）
 - publish
+
+## 10. Responsibility Boundary（session-05 固定）
+- 責務:
+  - `search_intent` / `target_keyword` をもとに、`title` / `description` / `heading_structure` / `cta` / `slug` / `jsonld_type` を定義する。
+  - 後続の cluster check が判定可能な最小情報（検索意図、見出し構造、CTA目的）をそろえる。
+- 非責務:
+  - 重複判定（カニバリ判定）は行わない（`docs/cluster_check_rules.md` の責務）。
+  - HTML出力先への最終マッピングは行わない（`docs/html_generation_spec.md` の責務）。
+  - SEO本文の自動生成・詳細ルール定義は行わない。
+- 後続への引き渡し条件（session-06 以降で参照する入力条件）:
+  - 必須項目 `search_intent` / `title` / `description` / `heading_structure` / `cta` / `slug` / `jsonld_type` が欠けていないこと。
+  - 入力チェーンは `blueprint -> cluster_check -> html_generation` の順で固定し、blueprint は先頭入力として扱う。
