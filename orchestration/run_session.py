@@ -28,6 +28,7 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 DOCS_DIR = ROOT_DIR / "docs"
 ARTIFACTS_DIR = ROOT_DIR / "artifacts"
 CONFIG_PATH = ROOT_DIR / "orchestration" / "config.yaml"
+PROVIDER_POLICY_PATH = ROOT_DIR / "orchestration" / "provider_policy.yaml"
 DEFAULT_TARGET_REPO = "LIGHTWEIGHT_2AI_ORCHESTRATOR"
 REPO_REGISTRY: Dict[str, str] = {
     "LIGHTWEIGHT_2AI_ORCHESTRATOR": str(ROOT_DIR),
@@ -170,6 +171,136 @@ def load_yaml_as_text(path: Path) -> str:
 
 def load_runtime_config() -> Dict[str, Any]:
     return load_yaml(CONFIG_PATH)
+
+
+def load_provider_policy() -> Dict[str, Any]:
+    """provider_policy.yaml を読み込む。失敗時は空辞書を返す。"""
+    policy_path = get_active_repo_root() / "orchestration" / "provider_policy.yaml"
+    if not policy_path.exists():
+        return {}
+    try:
+        raw = load_yaml(policy_path)
+    except Exception as e:
+        logger.warning("provider policy load failed: %s", e)
+        return {}
+    if not isinstance(raw, dict):
+        logger.warning("provider policy root must be object")
+        return {}
+    providers = raw.get("providers")
+    if not isinstance(providers, dict):
+        logger.warning("provider policy missing providers object")
+        return {}
+    return {"providers": providers}
+
+
+def _normalize_provider_name(name: Any) -> str:
+    provider = str(name or "").strip().lower()
+    aliases = {"anthropic": "claude"}
+    return aliases.get(provider, provider)
+
+
+def _legacy_stage_provider_config(runtime_config: Dict[str, Any], stage: str) -> Dict[str, Any]:
+    providers_cfg = runtime_config.get("providers", {}) if isinstance(runtime_config, dict) else {}
+    openai_cfg = providers_cfg.get("openai", {}) if isinstance(providers_cfg, dict) else {}
+    claude_cfg = providers_cfg.get("claude", {}) if isinstance(providers_cfg, dict) else {}
+    if stage in ("prepared_spec", "retry_instruction", "validation"):
+        return {
+            "provider": "openai",
+            "model": str(openai_cfg.get("model") or "gpt-4o"),
+            "transport": None,
+        }
+    if stage == "implementation":
+        return {
+            "provider": "claude",
+            "model": str(claude_cfg.get("model") or "claude-sonnet"),
+            "transport": None,
+        }
+    return {
+        "provider": "openai",
+        "model": str(openai_cfg.get("model") or "gpt-4o"),
+        "transport": None,
+    }
+
+
+def resolve_stage_provider_transport_model(
+    ctx: SessionContext,
+    stage: str,
+    use_fallback: bool = False,
+) -> Dict[str, Any]:
+    """stage ごとの provider/transport/model を policy 優先で解決する。"""
+    legacy = _legacy_stage_provider_config(ctx.runtime_config, stage)
+    policy = load_provider_policy()
+    providers = policy.get("providers", {}) if isinstance(policy, dict) else {}
+    stage_cfg = providers.get(stage)
+    if not isinstance(stage_cfg, dict):
+        return legacy
+    slot = "fallback" if use_fallback else "primary"
+    chosen = stage_cfg.get(slot)
+    if chosen is None:
+        return legacy
+    if not isinstance(chosen, dict):
+        return legacy
+    provider = _normalize_provider_name(chosen.get("provider"))
+    model = str(chosen.get("model") or "").strip()
+    transport_raw = chosen.get("transport")
+    transport = str(transport_raw).strip() if transport_raw is not None else None
+    if not provider or not model:
+        return legacy
+    if provider != "google":
+        transport = None
+    return {"provider": provider, "model": model, "transport": transport}
+
+
+def _request_stage_json(
+    stage: str,
+    system_prompt: str,
+    user_prompt: str,
+    ctx: SessionContext,
+) -> Dict[str, Any]:
+    """stage policy に応じて provider クライアントを呼び分ける。"""
+    resolved = resolve_stage_provider_transport_model(ctx, stage)
+    provider = resolved.get("provider")
+    model = str(resolved.get("model") or "")
+    if provider == "openai":
+        from orchestration.providers.openai_client import OpenAIClientConfig, OpenAIClientWrapper
+
+        openai_cfg = ctx.runtime_config.get("providers", {}).get("openai", {})
+        openai_client = OpenAIClientWrapper(
+            OpenAIClientConfig(
+                model=model,
+                timeout_sec=openai_cfg.get("timeout_sec", 120),
+                max_output_tokens=openai_cfg.get("max_output_tokens", 4000),
+            )
+        )
+        if stage == "retry_instruction":
+            return openai_client.request_retry_instruction(system_prompt, user_prompt)
+        return openai_client.request_prepared_spec(system_prompt, user_prompt)
+
+    if provider == "claude":
+        from orchestration.providers.claude_client import ClaudeClientConfig, ClaudeClientWrapper
+
+        claude_cfg = ctx.runtime_config.get("providers", {}).get("claude", {})
+        claude_client = ClaudeClientWrapper(
+            ClaudeClientConfig(
+                model=model,
+                timeout_sec=claude_cfg.get("timeout_sec", 180),
+                max_output_tokens=claude_cfg.get("max_output_tokens", 6000),
+            )
+        )
+        return claude_client.request_implementation(system_prompt, user_prompt)
+
+    if provider == "google":
+        from orchestration.providers.google_client import GoogleClientConfig, GoogleClientWrapper
+
+        google_client = GoogleClientWrapper(
+            GoogleClientConfig(
+                model=model,
+                transport=resolved.get("transport") or "developer_api",
+            )
+        )
+        return google_client.request_json(system_prompt, user_prompt)
+
+    raise ValueError(f"unsupported provider for stage {stage}: {provider}")
 
 
 def detect_duplicate_top_level_function_names(source: str) -> List[str]:
@@ -2388,19 +2519,9 @@ Known failure_type (canonical): {canonical.get("failure_type")} (priority={canon
 
 
 def call_chatgpt_for_prepared_spec(ctx: SessionContext) -> Dict[str, Any]:
-    from orchestration.providers.openai_client import OpenAIClientConfig, OpenAIClientWrapper
-
-    openai_cfg = ctx.runtime_config["providers"]["openai"]
-    client = OpenAIClientWrapper(
-        OpenAIClientConfig(
-            model=openai_cfg["model"],
-            timeout_sec=openai_cfg.get("timeout_sec", 120),
-            max_output_tokens=openai_cfg.get("max_output_tokens", 4000),
-        )
-    )
     # prepared_spec は Builder 契約反映済み prompt を用いて生成する。
     system_prompt, user_prompt = build_prepared_spec_prompts(ctx)
-    return client.request_prepared_spec(system_prompt, user_prompt)
+    return _request_stage_json("prepared_spec", system_prompt, user_prompt, ctx)
 
 
 def call_chatgpt_for_retry_instruction(
@@ -2423,20 +2544,10 @@ def call_chatgpt_for_retry_instruction(
             merged["retry_skipped_same_cause"] = True
             return merged
 
-    from orchestration.providers.openai_client import OpenAIClientConfig, OpenAIClientWrapper
-
-    openai_cfg = ctx.runtime_config["providers"]["openai"]
-    client = OpenAIClientWrapper(
-        OpenAIClientConfig(
-            model=openai_cfg["model"],
-            timeout_sec=openai_cfg.get("timeout_sec", 120),
-            max_output_tokens=openai_cfg.get("max_output_tokens", 4000),
-        )
-    )
     system_prompt, user_prompt = build_retry_prompts(
         ctx, prepared_spec, impl_result, check_results
     )
-    raw = client.request_retry_instruction(system_prompt, user_prompt)
+    raw = _request_stage_json("retry_instruction", system_prompt, user_prompt, ctx)
     merged = _merge_retry_instruction(raw, ctx, prepared_spec, impl_result, check_results)
     merged["cause_fingerprint"] = cause_fp
     return merged
@@ -3856,20 +3967,10 @@ def call_claude_for_implementation(
     ctx: SessionContext,
     retry_instruction: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
-    from orchestration.providers.claude_client import ClaudeClientConfig, ClaudeClientWrapper
-
-    claude_cfg = ctx.runtime_config["providers"]["claude"]
-    client = ClaudeClientWrapper(
-        ClaudeClientConfig(
-            model=claude_cfg["model"],
-            timeout_sec=claude_cfg.get("timeout_sec", 180),
-            max_output_tokens=claude_cfg.get("max_output_tokens", 6000),
-        )
-    )
     system_prompt, user_prompt = build_implementation_prompts(
         prepared_spec, ctx, retry_instruction
     )
-    return client.request_implementation(system_prompt, user_prompt)
+    return _request_stage_json("implementation", system_prompt, user_prompt, ctx)
 
 
 def run_command(command: str, timeout_sec: int = 300) -> Dict[str, Any]:
@@ -4393,6 +4494,8 @@ def _run_single_session_impl(args: argparse.Namespace) -> int:
         )
         try:
             _report = load_json(session_dir / "report.json")
+            # validation stage の provider/transport/model は policy で解決する（live routing 接続は補助段階）。
+            _ = resolve_stage_provider_transport_model(ctx, "validation")
             run_gpt_review_stage(session_dir, _report)
         except Exception:
             pass  # 補助ステージ：失敗してもセッション判定に影響させない

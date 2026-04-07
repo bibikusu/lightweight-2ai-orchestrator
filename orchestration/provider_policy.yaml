@@ -1,0 +1,60 @@
+providers:
+  prepared_spec:
+    primary:
+      provider: openai
+      model: gpt-4o-mini
+    fallback: null
+
+  implementation:
+    primary:
+      provider: anthropic
+      model: claude-sonnet
+    fallback:
+      provider: google
+      transport: developer_api
+      model: gemini-3.1-pro-preview
+
+  retry_instruction:
+    primary:
+      provider: openai
+      model: gpt-4o-mini
+    fallback: null
+
+  validation:
+    primary:
+      provider: google
+      transport: developer_api
+      model: gemini-3.1-pro-preview
+    fallback:
+      provider: openai
+      model: gpt-4o
+
+  grounding_check:
+    primary:
+      provider: google
+      transport: developer_api
+      model: gemini-3.1-pro-preview
+    fallback: null
+
+  repo_audit:
+    primary:
+      provider: google
+      transport: vertex_ai
+      model: gemini-3.1-pro-preview
+    fallback:
+      provider: anthropic
+      model: claude-sonnet
+
+  heavy_analysis:
+    primary:
+      provider: google
+      transport: vertex_ai
+      model: gemini-3.1-pro-preview
+    fallback: null
+
+  long_context:
+    primary:
+      provider: google
+      transport: vertex_ai
+      model: gemini-3.1-pro-preview
+    fallback: null
