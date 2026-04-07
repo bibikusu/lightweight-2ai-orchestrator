@@ -51,7 +51,7 @@
     "docs/acceptance/session-12.yaml"
   ],
   "allowed_changes_detail": [
-    "index.html: タスク管理セクションに関連する JavaScript の状態保存・復元・日次リセット・業務開始時初期化・businessStartTime 自動フォールバック初期化の処理追加または整理",
+    "index.html: タスク管理セクションの状態保存・復元・日次リセット処理 (section: screen-task)",
     "index.html: taskCompletions 相当の状態オブジェクトの読込・保存・整合チェック処理の追加または整理",
     "index.html: タスク状態管理に必要な最小限の data 属性、id、補助表示文言の追加",
     "docs/sessions/session-12.json: 本セッション定義の新規作成",
