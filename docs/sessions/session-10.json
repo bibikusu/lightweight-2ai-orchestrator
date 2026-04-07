@@ -1,0 +1,154 @@
+{
+  "session_id": "session-10",
+  "phase_id": "phase-a",
+  "title": "A02_fina phase-a input output chain selfcheck",
+  "goal": "A02_fina の Phase A における blueprint_spec.md / cluster_check_rules.md / html_generation_spec.md の input/output chain を横断確認し、矛盾・欠落・用語不統一を最小修正で解消して、一貫した参照チェーンとして読める状態にする。",
+  "type": "docs-only",
+  "target_repo": "/Users/kunihideyamane/AI_Team/projects/A02_fina",
+
+  "scope": [
+    "docs/blueprint_spec.md と docs/cluster_check_rules.md の接続点を確認する",
+    "docs/cluster_check_rules.md と docs/html_generation_spec.md の接続点を確認する",
+    "3文書のフィールド名・判定結果名・用語の表記揺れを確認する",
+    "3文書の責務 / 非責務の整合を確認する",
+    "矛盾・欠落・用語不統一があれば最小修正する",
+    "docs/sessions/session-10.json を新規追加する",
+    "docs/acceptance/session-10.yaml を新規追加する"
+  ],
+
+  "out_of_scope": [
+    "新しい仕様項目の追加",
+    "A02_fina の実装コード変更",
+    "orchestration/run_session.py の変更",
+    "providers 配下の変更",
+    "Phase B / Phase C の仕様追加",
+    "session-11 以降の新規セッション定義作成"
+  ],
+
+  "constraints": [
+    "1セッション1目的を守る",
+    "docs-only セッションとして扱う",
+    "新しい機能仕様を追加せず、既存3文書の整合確認と最小修正のみに限定する",
+    "field 名は既存固定仕様を優先し、不要な別名追加を行わない",
+    "判定結果名は既存固定仕様を優先し、表記揺れを残さない",
+    "責務 / 非責務の修正は他文書との整合に必要な最小限に留める",
+    "変更ファイル数は最大5ファイル以内とする"
+  ],
+
+  "inputs": [
+    "docs/blueprint_spec.md",
+    "docs/cluster_check_rules.md",
+    "docs/html_generation_spec.md",
+    "docs/sessions/session-06.json",
+    "docs/acceptance/session-06.yaml",
+    "docs/sessions/session-08.json",
+    "docs/acceptance/session-08.yaml",
+    "docs/sessions/session-09.json",
+    "docs/acceptance/session-09.yaml"
+  ],
+
+  "outputs": [
+    "docs/blueprint_spec.md",
+    "docs/cluster_check_rules.md",
+    "docs/html_generation_spec.md",
+    "docs/sessions/session-10.json",
+    "docs/acceptance/session-10.yaml"
+  ],
+
+  "allowed_changes": [
+    "docs/blueprint_spec.md",
+    "docs/cluster_check_rules.md",
+    "docs/html_generation_spec.md",
+    "docs/sessions/session-10.json",
+    "docs/acceptance/session-10.yaml"
+  ],
+
+  "allowed_changes_detail": [
+    "docs/blueprint_spec.md: cluster_check へ渡す必須出力項目、用語、責務 / 非責務の整合に必要な最小修正のみ可",
+    "docs/cluster_check_rules.md: blueprint 受領条件、採用可 / 修正要 / 作成中止、html_generation への handoff 条件、用語整合に必要な最小修正のみ可",
+    "docs/html_generation_spec.md: cluster_check 通過済み blueprint の受領条件、必須マッピング、用語整合、責務 / 非責務の整合に必要な最小修正のみ可",
+    "docs/sessions/session-10.json: 本セッション定義の新規追加のみ可",
+    "docs/acceptance/session-10.yaml: 本セッションの受入条件定義の新規追加のみ可"
+  ],
+
+  "forbidden_changes": [
+    "orchestration/",
+    "backend/",
+    "frontend/",
+    ".github/",
+    "docs/shared/",
+    "docs/sessions/session-05.json",
+    "docs/acceptance/session-05.yaml",
+    "docs/sessions/session-06.json",
+    "docs/acceptance/session-06.yaml",
+    "docs/sessions/session-08.json",
+    "docs/acceptance/session-08.yaml",
+    "docs/sessions/session-09.json",
+    "docs/acceptance/session-09.yaml"
+  ],
+
+  "acceptance_ref": "docs/acceptance/session-10.yaml",
+
+  "completion_criteria": [
+    {
+      "id": "CC-10-01",
+      "type": "document_rule",
+      "condition": "docs/blueprint_spec.md で固定した blueprint の必須出力項目が docs/cluster_check_rules.md の入力前提に全て列挙されていること"
+    },
+    {
+      "id": "CC-10-02",
+      "type": "state_transition_consistent",
+      "condition": "docs/cluster_check_rules.md の 採用可 条件が docs/html_generation_spec.md の入力前提と一致していること"
+    },
+    {
+      "id": "CC-10-03",
+      "type": "document_rule",
+      "condition": "3文書で使われるフィールド名、判定結果名、主要用語に表記揺れがないこと"
+    },
+    {
+      "id": "CC-10-04",
+      "type": "document_rule",
+      "condition": "各文書の責務 / 非責務が他文書と矛盾せず、input/output chain が blueprint -> cluster_check -> html_generation の順で一貫して読めること"
+    },
+    {
+      "id": "CC-10-05",
+      "type": "side_effect_free",
+      "condition": "既存 session 定義ファイルを変更せず、docs-only の範囲で最小修正に留まっていること"
+    }
+  ],
+
+  "acceptance_criteria": [
+    {
+      "id": "AC-10-01",
+      "description": "blueprint の必須出力項目が cluster_check の入力前提に全て反映されている",
+      "test_name": "docs_review_phase_a_blueprint_to_cluster_chain_complete"
+    },
+    {
+      "id": "AC-10-02",
+      "description": "cluster_check の 採用可 条件が html_generation の入力前提と一致している",
+      "test_name": "docs_review_phase_a_cluster_to_html_chain_complete"
+    },
+    {
+      "id": "AC-10-03",
+      "description": "3文書でフィールド名・判定結果名・主要用語に表記揺れがない",
+      "test_name": "docs_review_phase_a_terms_consistent"
+    },
+    {
+      "id": "AC-10-04",
+      "description": "3文書の責務 / 非責務が相互に矛盾していない",
+      "test_name": "docs_review_phase_a_boundaries_consistent"
+    },
+    {
+      "id": "AC-10-05",
+      "description": "変更範囲が 3文書 と session-10 定義ファイルのみに限定されている",
+      "test_name": "docs_review_phase_a_scope_and_side_effect_free"
+    }
+  ],
+
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ]
+}

@@ -1,0 +1,51 @@
+session_id: "session-10"
+type: "docs-only"
+target_repo: "/Users/kunihideyamane/AI_Team/projects/A02_fina"
+
+acceptance:
+  - id: "AC-10-01"
+    description: "blueprint の必須出力項目が cluster_check の入力前提に全て反映されている"
+    test_name: "docs_review_phase_a_blueprint_to_cluster_chain_complete"
+
+  - id: "AC-10-02"
+    description: "cluster_check の 採用可 条件が html_generation の入力前提と一致している"
+    test_name: "docs_review_phase_a_cluster_to_html_chain_complete"
+
+  - id: "AC-10-03"
+    description: "3文書でフィールド名・判定結果名・主要用語に表記揺れがない"
+    test_name: "docs_review_phase_a_terms_consistent"
+
+  - id: "AC-10-04"
+    description: "3文書の責務 / 非責務が相互に矛盾していない"
+    test_name: "docs_review_phase_a_boundaries_consistent"
+
+  - id: "AC-10-05"
+    description: "変更範囲が 3文書 と session-10 定義ファイルのみに限定されている"
+    test_name: "docs_review_phase_a_scope_and_side_effect_free"
+
+completion_criteria:
+  - id: "CC-10-01"
+    type: "document_rule"
+    condition: "docs/blueprint_spec.md で固定した blueprint の必須出力項目が docs/cluster_check_rules.md の入力前提に全て列挙されていること"
+
+  - id: "CC-10-02"
+    type: "state_transition_consistent"
+    condition: "docs/cluster_check_rules.md の 採用可 条件が docs/html_generation_spec.md の入力前提と一致していること"
+
+  - id: "CC-10-03"
+    type: "document_rule"
+    condition: "3文書で使われるフィールド名、判定結果名、主要用語に表記揺れがないこと"
+
+  - id: "CC-10-04"
+    type: "document_rule"
+    condition: "各文書の責務 / 非責務が他文書と矛盾せず、input/output chain が blueprint -> cluster_check -> html_generation の順で一貫して読めること"
+
+  - id: "CC-10-05"
+    type: "side_effect_free"
+    condition: "既存 session 定義ファイルを変更せず、docs-only の範囲で最小修正に留まっていること"
+
+review_points:
+  - "仕様一致（AC達成）"
+  - "変更範囲遵守"
+  - "副作用なし（既存破壊なし）"
+  - "検証十分性"
