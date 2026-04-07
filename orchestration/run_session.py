@@ -28,6 +28,14 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 DOCS_DIR = ROOT_DIR / "docs"
 ARTIFACTS_DIR = ROOT_DIR / "artifacts"
 CONFIG_PATH = ROOT_DIR / "orchestration" / "config.yaml"
+DEFAULT_TARGET_REPO = "LIGHTWEIGHT_2AI_ORCHESTRATOR"
+REPO_REGISTRY: Dict[str, str] = {
+    "LIGHTWEIGHT_2AI_ORCHESTRATOR": str(ROOT_DIR),
+    "A02_fina": str(ROOT_DIR.parent / "A02_fina"),
+    "A02_FINA": str(ROOT_DIR.parent / "A02_fina"),
+}
+ACTIVE_REPO_ROOT: Optional[Path] = None
+ACTIVE_REPO_ROOT_EXPLICIT = False
 
 MASTER_INSTRUCTION_PATH = DOCS_DIR / "master_instruction.md"
 GLOBAL_RULES_PATH = DOCS_DIR / "global_rules.md"
@@ -46,6 +54,55 @@ IMPLEMENTATION_PROMPT_FUNCTION_CONTEXT_LINES = 5
 # Git 保護で拒否するブランチ名（小文字比較）
 FORBIDDEN_BRANCHES = frozenset({"main", "master"})
 VERDICT_STATUS_ENUM = frozenset({"pass", "conditional_pass", "fail"})
+
+
+def set_active_repo_root(repo_root: Path) -> None:
+    """対象リポジトリの実行基準パスを更新する。"""
+    global ACTIVE_REPO_ROOT, ACTIVE_REPO_ROOT_EXPLICIT
+    resolved = repo_root.resolve()
+    if resolved == ROOT_DIR.resolve():
+        ACTIVE_REPO_ROOT = None
+        ACTIVE_REPO_ROOT_EXPLICIT = False
+        return
+    ACTIVE_REPO_ROOT = resolved
+    ACTIVE_REPO_ROOT_EXPLICIT = True
+
+
+def get_active_repo_root() -> Path:
+    """現在の対象リポジトリの基準パスを返す。"""
+    if ACTIVE_REPO_ROOT_EXPLICIT and ACTIVE_REPO_ROOT is not None:
+        return ACTIVE_REPO_ROOT
+    return ROOT_DIR
+
+
+def get_active_docs_dir() -> Path:
+    return get_active_repo_root() / "docs"
+
+
+def get_active_artifacts_dir() -> Path:
+    # 既存テスト/既存運用では ARTIFACTS_DIR の差し替えを尊重する。
+    if get_active_repo_root() == ROOT_DIR:
+        return ARTIFACTS_DIR
+    return get_active_repo_root() / "artifacts"
+
+
+def resolve_target_repo(session: dict) -> str:
+    """
+    session の target_repo を解決して、対象リポジトリ絶対パス文字列を返す。
+    未指定時は DEFAULT_TARGET_REPO へ後方互換フォールバックする。
+    """
+    raw_repo = session.get("target_repo")
+    target_repo = str(raw_repo).strip() if raw_repo is not None else DEFAULT_TARGET_REPO
+    if not target_repo:
+        target_repo = DEFAULT_TARGET_REPO
+    resolved = REPO_REGISTRY.get(target_repo)
+    if not resolved:
+        known = ", ".join(sorted(REPO_REGISTRY.keys()))
+        raise ValueError(f"unknown target_repo: {target_repo} (known: {known})")
+    path = Path(resolved).resolve()
+    if not path.exists() or not path.is_dir():
+        raise FileNotFoundError(f"target_repo path not found: {target_repo} -> {path}")
+    return str(path)
 
 
 def _ensure_repo_root_on_sys_path() -> None:
@@ -486,8 +543,10 @@ def build_implementation_prompt_file_context_block(
 def load_session_context(session_id: str) -> SessionContext:
     runtime_config = load_runtime_config()
 
-    session_path = SESSIONS_DIR / f"{session_id}.json"
+    session_path = (get_active_docs_dir() / "sessions") / f"{session_id}.json"
     session_data = load_json(session_path)
+    resolved_root = Path(resolve_target_repo(session_data))
+    docs_dir = resolved_root / "docs"
 
     acceptance_ref = session_data.get("acceptance_ref")
     if not acceptance_ref:
@@ -497,9 +556,9 @@ def load_session_context(session_id: str) -> SessionContext:
 
     # docs/ 始まりはプロジェクトルート基準、それ以外は docs/ 配下基準
     if acceptance_ref_str.startswith("docs/"):
-        acceptance_path = ROOT_DIR / acceptance_ref_str
+        acceptance_path = resolved_root / acceptance_ref_str
     else:
-        acceptance_path = DOCS_DIR / acceptance_ref_str
+        acceptance_path = docs_dir / acceptance_ref_str
 
     acceptance_text = load_yaml_as_text(acceptance_path)
     acceptance_data = {
@@ -511,9 +570,9 @@ def load_session_context(session_id: str) -> SessionContext:
         session_id=session_id,
         session_data=session_data,
         acceptance_data=acceptance_data,
-        master_instruction=load_text(MASTER_INSTRUCTION_PATH),
-        global_rules=load_text(GLOBAL_RULES_PATH),
-        roadmap_text=load_text(ROADMAP_PATH),
+        master_instruction=load_text(docs_dir / "master_instruction.md"),
+        global_rules=load_text(docs_dir / "global_rules.md"),
+        roadmap_text=load_text(docs_dir / "roadmap.yaml"),
         runtime_config=runtime_config,
     )
 
@@ -584,7 +643,7 @@ def validate_session_context(ctx: SessionContext) -> None:
 
 
 def ensure_artifact_dirs(session_id: str) -> Path:
-    session_dir = ARTIFACTS_DIR / session_id
+    session_dir = get_active_artifacts_dir() / session_id
     for sub in ["prompts", "responses", "patches", "test_results", "logs", "reports"]:
         (session_dir / sub).mkdir(parents=True, exist_ok=True)
     return session_dir
@@ -890,7 +949,7 @@ def _git_run(args: List[str], *, check: bool = False) -> subprocess.CompletedPro
     """Git サブプロセス（shell 不使用）。"""
     return subprocess.run(
         ["git", *args],
-        cwd=ROOT_DIR,
+        cwd=get_active_repo_root(),
         text=True,
         capture_output=True,
         check=check,
@@ -1167,7 +1226,7 @@ def _apply_proposed_patch_and_capture_artifacts_with_artifacts(
 
     def _artifact_path_str(path: Path) -> str:
         try:
-            return str(path.relative_to(ROOT_DIR))
+            return str(path.relative_to(get_active_repo_root()))
         except ValueError:
             return str(path)
 
@@ -1206,7 +1265,7 @@ def _apply_proposed_patch_and_capture_artifacts_with_artifacts(
     expected = _expected_existing_files_from_patch(patch_text)
     missing: List[str] = []
     for rel in expected:
-        fp = ROOT_DIR / rel
+        fp = get_active_repo_root() / rel
         if not fp.exists():
             missing.append(rel)
     if missing:
@@ -1270,7 +1329,7 @@ def preflight_cleanup() -> List[str]:
         path = line[3:].strip()
         for pattern in _RESIDUE_PATTERNS:
             if path.startswith(pattern):
-                full = ROOT_DIR / path
+                full = get_active_repo_root() / path
                 if full.exists():
                     full.unlink()
                     removed.append(path)
@@ -1858,7 +1917,7 @@ def apply_proposed_patch_and_capture_artifacts(
             "patch_apply_context_mismatch_reason": "",
         }
 
-    smart_out = _apply_patch_smart(patch_path, ROOT_DIR)
+    smart_out = _apply_patch_smart(patch_path, get_active_repo_root())
     patch_applied = smart_out.applied
     git_apply_stderr = (smart_out.existing_files_git_apply_stderr or "").strip()
     if not patch_applied:
@@ -2234,7 +2293,7 @@ If implementation is not possible, explain in JSON.
         # ワイルドカードやディレクトリは除外
         if "*" in path_str or "?" in path_str or path_str.endswith("/"):
             continue
-        full_path = ROOT_DIR / path_str
+        full_path = get_active_repo_root() / path_str
         if full_path.exists() and full_path.is_file():
             try:
                 content = full_path.read_text(encoding="utf-8")
@@ -2352,7 +2411,7 @@ def call_chatgpt_for_retry_instruction(
 ) -> Dict[str, Any]:
     # 同一原因のリトライ抑止（過去 retry_instruction.json の fingerprint と一致する場合）
     cause_fp = _compute_retry_cause_fingerprint(check_results)
-    prev_path = ARTIFACTS_DIR / ctx.session_id / "responses" / "retry_instruction.json"
+    prev_path = get_active_artifacts_dir() / ctx.session_id / "responses" / "retry_instruction.json"
     if prev_path.is_file():
         try:
             prev = json.loads(prev_path.read_text(encoding="utf-8"))
@@ -3839,7 +3898,7 @@ def run_command(command: str, timeout_sec: int = 300) -> Dict[str, Any]:
         proc = subprocess.run(
             command,
             shell=True,
-            cwd=ROOT_DIR,
+            cwd=get_active_repo_root(),
             text=True,
             capture_output=True,
             timeout=timeout_sec,
@@ -3982,7 +4041,13 @@ def generate_report(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--session-id", required=True, help="e.g. session-01")
+    parser.add_argument("--session-id", default=None, help="e.g. session-01（--batch 未指定時は必須）")
+    parser.add_argument(
+        "--batch",
+        default=None,
+        metavar="IDS",
+        help='複数 session を順実行（カンマ区切り、例: "session-01,session-02"）。--session-id と併用不可。',
+    )
     parser.add_argument("--max-retries", type=int, default=None)
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--skip-build", action="store_true")
@@ -3998,8 +4063,26 @@ def _max_changed_files_from_config(cfg: Dict[str, Any]) -> int:
 
 
 def main() -> int:
+    """CLI エントリ: 単体実行または --batch 順次実行に振り分ける。"""
     _ensure_repo_root_on_sys_path()
+    set_active_repo_root(ROOT_DIR)
     args = parse_args()
+    if args.batch is not None:
+        batch_csv = args.batch.strip()
+        if not batch_csv:
+            print("[ERROR] --batch の値が空です。", file=sys.stderr)
+            return 2
+        if args.session_id:
+            print("[ERROR] --batch と --session-id は同時に指定できません。", file=sys.stderr)
+            return 2
+        return _run_batch(args, batch_csv)
+    if not args.session_id:
+        print("[ERROR] --session-id が必要です（--batch 未指定時）。", file=sys.stderr)
+        return 2
+    return _run_single_session_impl(args)
+
+
+def _run_single_session_impl(args: argparse.Namespace) -> int:
     session_dir = ensure_artifact_dirs(args.session_id)
     started_at = _iso_utc_now()
     stage = "init"
@@ -4010,6 +4093,8 @@ def main() -> int:
         stage = "loading"
         log_stage_event(session_id=args.session_id, stage=stage, event="start")
         ctx = load_session_context(args.session_id)
+        set_active_repo_root(Path(resolve_target_repo(ctx.session_data)))
+        session_dir = ensure_artifact_dirs(args.session_id)
         log_stage_event(session_id=args.session_id, stage=stage, event="end")
         stage = "validating"
         log_stage_event(session_id=args.session_id, stage=stage, event="start")
@@ -4085,6 +4170,7 @@ def main() -> int:
                 branch=_git_branch_safe(),
                 stream=sys.stdout,
             )
+            set_active_repo_root(ROOT_DIR)
             return 0
 
         stage = "prepared_spec"
@@ -4321,6 +4407,7 @@ def main() -> int:
             stream=sys.stdout,
         )
 
+        set_active_repo_root(ROOT_DIR)
         return 0 if overall_success else 1
 
     except Exception as e:
@@ -4409,7 +4496,73 @@ def main() -> int:
             )
         except Exception:
             pass
+        set_active_repo_root(ROOT_DIR)
         return 1
+
+
+def _run_batch(args: argparse.Namespace, batch_session_ids_csv: str) -> int:
+    """--batch: 複数 session を順次実行。失敗時は実行を止め後続を skipped として記録する。"""
+    session_ids = [s.strip() for s in batch_session_ids_csv.split(",") if s.strip()]
+    if not session_ids:
+        print("[ERROR] --batch に有効な session_id が1つもありません。", file=sys.stderr)
+        return 2
+
+    try:
+        validate_before_run()
+    except RuntimeError as e:
+        print(f"[ERROR] {e}", file=sys.stderr)
+        return 1
+
+    batch_id = f"batch-{_utc_timestamp_compact()}"
+    batch_root = get_active_artifacts_dir() / batch_id
+    batch_root.mkdir(parents=True, exist_ok=True)
+
+    results: List[Dict[str, Any]] = []
+    overall_rc = 0
+    failed_before: Optional[str] = None
+
+    for sid in session_ids:
+        if failed_before is not None:
+            results.append(
+                {
+                    "session_id": sid,
+                    "status": "skipped",
+                    "reason": f"stopped_after_failure:{failed_before}",
+                }
+            )
+            continue
+
+        one = argparse.Namespace(
+            session_id=sid,
+            max_retries=args.max_retries,
+            dry_run=args.dry_run,
+            skip_build=args.skip_build,
+            batch=None,
+        )
+        rc = _run_single_session_impl(one)
+        if rc == 0:
+            results.append({"session_id": sid, "status": "executed", "exit_code": 0})
+        else:
+            failed_before = sid
+            overall_rc = 1
+            results.append({"session_id": sid, "status": "failed", "exit_code": int(rc)})
+
+    executed = [r["session_id"] for r in results if r["status"] == "executed"]
+    failed = [r["session_id"] for r in results if r["status"] == "failed"]
+    skipped = [r["session_id"] for r in results if r["status"] == "skipped"]
+
+    summary: Dict[str, Any] = {
+        "batch_id": batch_id,
+        "ordered_session_ids": session_ids,
+        "executed": executed,
+        "failed": failed,
+        "skipped": skipped,
+        "results": results,
+        "overall_exit_code": overall_rc,
+        "finished_at": _iso_utc_now(),
+    }
+    save_json(batch_root / "batch_summary.json", summary)
+    return overall_rc
 
 
 if __name__ == "__main__":
