@@ -45,6 +45,7 @@ IMPLEMENTATION_PROMPT_FUNCTION_CONTEXT_LINES = 5
 
 # Git 保護で拒否するブランチ名（小文字比較）
 FORBIDDEN_BRANCHES = frozenset({"main", "master"})
+VERDICT_STATUS_ENUM = frozenset({"pass", "conditional_pass", "fail"})
 
 
 def _ensure_repo_root_on_sys_path() -> None:
@@ -3647,6 +3648,48 @@ def persist_session_reports(
     save_json(session_dir / "report.json", payload)
 
 
+def run_gpt_review_stage(session_dir: Path, report_payload: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    report.json を入力に補助判定（gpt_verdict）を作成して保存する。
+    補助ステージのため main 判定は変更しない。
+    """
+    checks = report_payload.get("checks") if isinstance(report_payload, dict) else {}
+    if not isinstance(checks, dict):
+        checks = {}
+    completion_status = str(report_payload.get("completion_status") or "")
+    acceptance_results = report_payload.get("acceptance_results")
+    if not isinstance(acceptance_results, list):
+        acceptance_results = []
+
+    check_success = bool(checks.get("success") is True)
+    all_checks_passed = check_success and all(
+        str((checks.get(k) or {}).get("status") or "") == "passed"
+        for k in ("test", "lint", "typecheck", "build")
+    )
+    all_ac_passed = bool(acceptance_results) and all(
+        isinstance(item, dict) and str(item.get("result") or "") == "passed"
+        for item in acceptance_results
+    )
+
+    if (not check_success) or completion_status in ("failed", "stopped"):
+        verdict_status = "fail"
+    elif all_ac_passed and all_checks_passed:
+        verdict_status = "pass"
+    else:
+        verdict_status = "conditional_pass"
+
+    if verdict_status not in VERDICT_STATUS_ENUM:
+        verdict_status = "conditional_pass"
+
+    verdict: Dict[str, Any] = {
+        "session_id": str(report_payload.get("session_id") or session_dir.name),
+        "verdict_status": verdict_status,
+        "human_review_needed": True,
+    }
+    save_json(session_dir / "gpt_verdict.json", verdict)
+    return verdict
+
+
 def _persist_guard_failure_artifacts(
     session_dir: Path,
     impl_result: Dict[str, Any],
@@ -4262,6 +4305,11 @@ def main() -> int:
             api_usage={"openai": openai_usage, "claude": claude_usage},
             api_call_count={"openai": 1, "claude": claude_call_count},
         )
+        try:
+            _report = load_json(session_dir / "report.json")
+            run_gpt_review_stage(session_dir, _report)
+        except Exception:
+            pass  # 補助ステージ：失敗してもセッション判定に影響させない
 
         print(f"[OK] session processed: {args.session_id}")
         print(f"[INFO] artifacts saved under: {session_dir}")
