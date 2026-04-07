@@ -3,7 +3,7 @@
   "phase_id": "phase1-f",
   "title": "AI設定トグルを追加しOFF時100%動作を担保する",
   "goal": "設定画面にAI有効/無効トグルを追加し、AI無効時は既存機能が完全に継続動作する状態を確立する。",
-  "target_repo": "軽量2AIオーケストレーター方式",
+  "target_repo": "LIGHTWEIGHT_2AI_ORCHESTRATOR",
   "scope": [
     "index.html の設定画面にAI有効/無効トグルを追加する",
     "AI利用可否を localStorage で保持し、再読込時に復元する",
