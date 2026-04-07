@@ -1,0 +1,29 @@
+session_id: session-18
+phase_id: phase6
+title: "--batch 順次実行と batch_summary.json の記録"
+
+acceptance:
+  - id: AC-18-01
+    description: "--batch で複数 session が指定順に順次実行される"
+    test_name: test_batch_runs_multiple_sessions
+    completion_criteria_refs:
+      - CC-18-01
+
+  - id: AC-18-02
+    description: "途中失敗時は後続実行を中止し、未実行分を skipped として記録する"
+    test_name: test_batch_stops_on_failure
+    completion_criteria_refs:
+      - CC-18-02
+      - CC-18-03
+
+  - id: AC-18-03
+    description: "batch_summary.json に executed / failed / skipped / overall_exit_code が出力される"
+    test_name: test_batch_summary_output
+    completion_criteria_refs:
+      - CC-18-04
+
+  - id: AC-18-04
+    description: "--batch 未指定時は従来どおり単体フローが1回だけ実行される"
+    test_name: test_single_run_unchanged
+    completion_criteria_refs:
+      - CC-18-05
