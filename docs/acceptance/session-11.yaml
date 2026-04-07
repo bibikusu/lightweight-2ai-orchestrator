@@ -1,0 +1,44 @@
+session_id: session-11
+title: "AI設定トグルを追加しOFF時100%動作を担保する"
+goal: "設定画面にAI有効/無効トグルを追加し、AI無効時は既存機能が完全に継続動作する状態を確立する"
+
+acceptance_tests:
+  - id: AC-11-01
+    name: test_ai_toggle_is_visible_and_operable
+    description: "設定画面にAI有効/無効トグルが表示され、操作できる"
+    steps:
+      - "設定画面を開く"
+      - "AI有効/無効トグルが表示されることを確認"
+      - "トグルをON/OFFして表示が更新されることを確認"
+    expected: "トグルが操作可能で状態が切り替わる"
+
+  - id: AC-11-02
+    name: test_ai_toggle_state_persist_and_restore
+    description: "AIトグル状態が localStorage に保存され、再読込後に復元される"
+    steps:
+      - "AIトグルをOFFに切り替える"
+      - "ページを再読込する"
+      - "AIトグルがOFFのまま復元されることを確認"
+    expected: "AIトグル状態が永続化・復元される"
+
+  - id: AC-11-03
+    name: test_ai_disabled_skips_calls_and_preserves_existing_features
+    description: "AI無効時はAI呼び出しをスキップし、既存機能が継続動作する"
+    steps:
+      - "AIトグルをOFFに設定する"
+      - "AI関連導線を実行する"
+      - "AI呼び出しが行われないことを確認する"
+      - "既存機能が正常動作することを確認する"
+    expected: "AI無効時に既存機能を維持しつつAI呼び出しを抑止できる"
+
+completion_criteria:
+  - state_transition_consistent: "AIトグル状態の保存・復元が一貫している"
+  - non_regression: "AI無効時も既存機能の挙動が破壊されない"
+  - side_effect_free: "AI無効時に不要なAI呼び出しが発生しない"
+  - artifact: "session-11 の仕様定義と受入定義が保存されている"
+
+review_points:
+  - "仕様一致（AC達成）"
+  - "変更範囲遵守"
+  - "副作用なし（既存破壊なし）"
+  - "検証十分性"

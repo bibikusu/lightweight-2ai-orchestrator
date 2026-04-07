@@ -1,0 +1,93 @@
+{
+  "session_id": "session-11",
+  "phase_id": "phase1-f",
+  "title": "AI設定トグルを追加しOFF時100%動作を担保する",
+  "goal": "設定画面にAI有効/無効トグルを追加し、AI無効時は既存機能が完全に継続動作する状態を確立する。",
+  "target_repo": "軽量2AIオーケストレーター方式",
+  "scope": [
+    "index.html の設定画面にAI有効/無効トグルを追加する",
+    "AI利用可否を localStorage で保持し、再読込時に復元する",
+    "AI無効時はAI呼び出し処理を実行しないガードを追加する",
+    "AI無効時でも既存機能が破壊されないことを確認する"
+  ],
+  "out_of_scope": [
+    "AIプロンプト設計の全面改修",
+    "外部APIプロバイダの追加",
+    "バックエンド構成変更",
+    "認証方式の変更"
+  ],
+  "constraints": [
+    "変更ファイル数は5件以内とする",
+    "単一HTML構成を維持する",
+    "外部依存を追加しない",
+    "既存機能の挙動を破壊しない",
+    "機密情報をログへ出力しない"
+  ],
+  "acceptance_ref": "docs/acceptance/session-11.yaml",
+  "allowed_changes": [
+    "index.html",
+    "docs/sessions/session-11.json",
+    "docs/acceptance/session-11.yaml"
+  ],
+  "forbidden_changes": [
+    "orchestration/run_session.py",
+    "providers/",
+    "backend/",
+    ".github/"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-11-01",
+      "type": "state_transition_consistent",
+      "condition": "AIトグルのON/OFF状態が保存・復元されること。"
+    },
+    {
+      "id": "CC-11-02",
+      "type": "non_regression",
+      "condition": "AI無効時に既存機能が通常動作すること。"
+    },
+    {
+      "id": "CC-11-03",
+      "type": "side_effect_free",
+      "condition": "AI無効時にAI呼び出しが行われないこと。"
+    },
+    {
+      "id": "CC-11-04",
+      "type": "artifact",
+      "condition": "session-11 定義と acceptance 定義が保存されていること。"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-11-01",
+      "text": "設定画面でAI有効/無効トグルが表示され、操作できる。",
+      "test_name": "test_ai_toggle_is_visible_and_operable",
+      "completion_criteria_refs": [
+        "CC-11-01"
+      ]
+    },
+    {
+      "id": "AC-11-02",
+      "text": "AIトグル状態が localStorage に保存され、再読込後も復元される。",
+      "test_name": "test_ai_toggle_state_persist_and_restore",
+      "completion_criteria_refs": [
+        "CC-11-01"
+      ]
+    },
+    {
+      "id": "AC-11-03",
+      "text": "AI無効時はAI呼び出しをスキップし、既存機能が継続動作する。",
+      "test_name": "test_ai_disabled_skips_calls_and_preserves_existing_features",
+      "completion_criteria_refs": [
+        "CC-11-02",
+        "CC-11-03"
+      ]
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ]
+}
