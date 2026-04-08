@@ -1,0 +1,122 @@
+{
+  "session_id": "session-22",
+  "phase_id": "phase7",
+  "project_id": "lightweight_2ai_orchestrator",
+  "title": "session 命名規則の prefix 強制と project_id required 化",
+  "goal": "session_id の project prefix を強制し、project_id を required keys に昇格させて、session 識別と project 解決を一貫化する",
+  "type": "code",
+  "scope": [
+    "orchestration/run_session.py の session required keys 検証更新",
+    "project_id を required keys に追加",
+    "session_id の prefix 形式検証を追加",
+    "session_id prefix と project_id の一致検証を追加",
+    "batch 実行時の prefix 混在停止を追加または強化",
+    "legacy session の移行終了条件を定義する",
+    "命名規則と required keys 強制を検証するテスト追加",
+    "docs/sessions/session-22.json の新規追加",
+    "docs/acceptance/session-22.yaml の新規追加"
+  ],
+  "out_of_scope": [
+    "project_registry.yaml の構造変更",
+    "legacy_session_project_map.yaml の全面書き換え",
+    "docs-only セッション制御",
+    "acceptance と completion の品質固定",
+    "provider / model / transport policy の変更",
+    "retry 制御の変更",
+    "patch_apply ロジックの変更",
+    "project 固有アプリの実装変更",
+    "既存 session JSON の一括書き換え"
+  ],
+  "constraints": [
+    "1セッション1目的を守ること",
+    "変更ファイル数は最大4ファイル以内とすること",
+    "project_id は required keys に昇格させること",
+    "new session は session JSON の project_id を必須とすること",
+    "session_id は project prefix を持つ命名規則に従うこと",
+    "prefix と project_id は registry 上の project 識別子と一致すること",
+    "legacy session は mapping 経由の互換を維持するが、新規 session には適用しないこと",
+    "batch 実行では prefix 混在または project_id 混在時に fail-fast 停止すること",
+    "session-20a と session-21 の fail-fast 挙動を壊さないこと",
+    "既存の正常系実行フローを壊さないこと",
+    "エラー理由は差戻し判断に使える粒度で明示すること"
+  ],
+  "acceptance_ref": "docs/acceptance/session-22.yaml",
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "backend/tests/test_session_naming_and_project_id.py",
+    "docs/sessions/session-22.json",
+    "docs/acceptance/session-22.yaml"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/run_session.py: required keys 検証、session_id prefix 検証、project_id required 化、batch 混在検証に必要な範囲のみ変更可",
+    "backend/tests/test_session_naming_and_project_id.py: session-22 の acceptance を満たすテスト追加のみ可",
+    "docs/sessions/session-22.json: 本セッション定義の新規追加のみ可",
+    "docs/acceptance/session-22.yaml: 本セッション受入条件の新規追加のみ可"
+  ],
+  "forbidden_changes": [
+    "orchestration/providers/",
+    "orchestration/config.yaml",
+    ".github/",
+    "docs/project_registry.yaml",
+    "docs/legacy_session_project_map.yaml",
+    "docs/sessions/ 既存ファイル",
+    "docs/acceptance/ 既存ファイル",
+    "artifacts/ 既存成果物",
+    "project 固有アプリのソースコード"
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-22-01",
+      "type": "state_transition_consistent",
+      "condition": "new session は project_id を required keys として持ち、session_id prefix と project_id が一貫して検証される"
+    },
+    {
+      "id": "CC-22-02",
+      "type": "artifact",
+      "condition": "命名規則違反や prefix / project_id 不一致時に fail-fast が明示的なエラー理由を返す"
+    },
+    {
+      "id": "CC-22-03",
+      "type": "non_regression",
+      "condition": "session-20a と session-21 の fail-fast および既存の正常系実行フローを壊さず、関連テストが通る"
+    },
+    {
+      "id": "CC-22-04",
+      "type": "side_effect_free",
+      "condition": "registry 構造や project 固有実装を変更せず、命名規則と required keys 強制の範囲に限定する"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-22-01",
+      "description": "new session で project_id が欠落している場合、required keys 検証で fail-fast 停止する",
+      "test_name": "test_new_session_requires_project_id"
+    },
+    {
+      "id": "AC-22-02",
+      "description": "session_id が project prefix を持たない場合、命名規則違反として fail-fast 停止する",
+      "test_name": "test_session_id_requires_project_prefix"
+    },
+    {
+      "id": "AC-22-03",
+      "description": "session_id prefix と project_id が不一致の場合、fail-fast 停止し不一致が明示される",
+      "test_name": "test_session_prefix_must_match_project_id"
+    },
+    {
+      "id": "AC-22-04",
+      "description": "batch 実行で prefix または project_id が混在する場合、fail-fast 停止する",
+      "test_name": "test_batch_rejects_mixed_prefix_or_project_id"
+    },
+    {
+      "id": "AC-22-05",
+      "description": "legacy session は mapping 経由の互換を維持しつつ、新規 session には mapping fallback を適用しない",
+      "test_name": "test_legacy_mapping_only_applies_to_legacy_sessions"
+    }
+  ]
+}

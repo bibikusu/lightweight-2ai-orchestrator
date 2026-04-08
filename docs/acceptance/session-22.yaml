@@ -1,0 +1,21 @@
+session_id: session-22
+acceptance:
+  - id: AC-22-01
+    description: new session で project_id が欠落している場合、required keys 検証で fail-fast 停止する
+    test_name: test_new_session_requires_project_id
+
+  - id: AC-22-02
+    description: session_id が project prefix を持たない場合、命名規則違反として fail-fast 停止する
+    test_name: test_session_id_requires_project_prefix
+
+  - id: AC-22-03
+    description: session_id prefix と project_id が不一致の場合、fail-fast 停止し不一致が明示される
+    test_name: test_session_prefix_must_match_project_id
+
+  - id: AC-22-04
+    description: batch 実行で prefix または project_id が混在する場合、fail-fast 停止する
+    test_name: test_batch_rejects_mixed_prefix_or_project_id
+
+  - id: AC-22-05
+    description: legacy session は mapping 経由の互換を維持しつつ、新規 session には mapping fallback を適用しない
+    test_name: test_legacy_mapping_only_applies_to_legacy_sessions

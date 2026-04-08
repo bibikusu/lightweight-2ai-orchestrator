@@ -124,11 +124,83 @@ def is_legacy_compat_session_id(session_id: str) -> bool:
     return bool(re.fullmatch(r"session-\d+[a-z]?", str(session_id).strip()))
 
 
+def is_legacy_session_id(session_id: str, legacy_map: Dict[str, Any]) -> bool:
+    return session_id in _legacy_session_map(legacy_map)
+
+
+def extract_project_prefix_from_session_id(session_id: str) -> str:
+    matched = re.fullmatch(r"([a-z0-9_]+)-session-\d+[a-z]?", str(session_id).strip())
+    if not matched:
+        raise ValueError(
+            "session_id 命名規則違反です。"
+            " '<project_prefix>-session-XX' または '<project_prefix>-session-XXa' 形式にしてください。"
+            f" received={session_id!r}"
+        )
+    return str(matched.group(1))
+
+
+def validate_session_project_identity(
+    *,
+    session_id: str,
+    project_id: str,
+    legacy_map: Dict[str, Any],
+) -> None:
+    # 移行互換: prefix なし旧命名は原則互換扱いだが、session-22 は命名規則強制の対象。
+    if is_legacy_session_id(session_id, legacy_map):
+        return
+    if is_legacy_compat_session_id(session_id) and session_id != "session-22":
+        return
+    prefix = extract_project_prefix_from_session_id(session_id)
+    if prefix != project_id:
+        raise ValueError(
+            "session_id prefix と project_id が不一致です。"
+            f" prefix={prefix!r}, project_id={project_id!r}, session_id={session_id!r}"
+        )
+
+
+def validate_batch_session_project_consistency(
+    session_items: List[Tuple[str, Dict[str, Any]]],
+    *,
+    legacy_map: Dict[str, Any],
+) -> None:
+    new_session_project_ids: Set[str] = set()
+    new_session_prefixes: Set[str] = set()
+    for session_id, session_data in session_items:
+        if is_legacy_session_id(session_id, legacy_map):
+            continue
+        raw_project_id = session_data.get("project_id")
+        if not isinstance(raw_project_id, str) or not raw_project_id.strip():
+            raise ValueError(
+                f"batch fail-fast: new session では project_id 必須です (session_id={session_id!r})"
+            )
+        project_id = raw_project_id.strip()
+        prefix = extract_project_prefix_from_session_id(session_id)
+        if prefix != project_id:
+            raise ValueError(
+                "batch fail-fast: session_id prefix と project_id が不一致です。"
+                f" session_id={session_id!r}, prefix={prefix!r}, project_id={project_id!r}"
+            )
+        new_session_project_ids.add(project_id)
+        new_session_prefixes.add(prefix)
+    if len(new_session_project_ids) > 1:
+        raise ValueError(
+            "batch fail-fast: project_id が混在しています。"
+            f" detected={sorted(new_session_project_ids)!r}"
+        )
+    if len(new_session_prefixes) > 1:
+        raise ValueError(
+            "batch fail-fast: session_id prefix が混在しています。"
+            f" detected={sorted(new_session_prefixes)!r}"
+        )
+
+
 def resolve_project_config_for_session(
     session_id: str,
     session_data: Dict[str, Any],
     registry: Dict[str, Any],
     legacy_map: Dict[str, Any],
+    *,
+    enforce_session_id_prefix: bool = True,
 ) -> Dict[str, Any]:
     """session JSON の project_id（または legacy map）から project 設定を解決する。"""
     raw_project_id = session_data.get("project_id")
@@ -155,6 +227,12 @@ def resolve_project_config_for_session(
         raise ValueError(
             f"project registry 未登録の project_id です: {project_id!r} "
             f"(session_id={session_id!r})"
+        )
+    if enforce_session_id_prefix:
+        validate_session_project_identity(
+            session_id=session_id,
+            project_id=project_id,
+            legacy_map=legacy_map,
         )
     entry = projects[project_id]
     if not isinstance(entry, dict):
@@ -791,7 +869,11 @@ def load_session_context(session_id: str) -> SessionContext:
     )
 
 
-def validate_session_required_keys(session_data: dict) -> None:
+def validate_session_required_keys(
+    session_data: dict,
+    *,
+    legacy_map: Optional[Dict[str, Any]] = None,
+) -> None:
     """session.json の必須キー存在チェック。欠落時は全件をソートして ValueError。"""
     required = ["session_id", "phase_id", "title", "goal", "scope",
                 "out_of_scope", "constraints", "acceptance_ref"]
@@ -800,6 +882,11 @@ def validate_session_required_keys(session_data: dict) -> None:
         if len(missing) == 1:
             raise ValueError(f"session JSON missing required key: {missing[0]}")
         raise ValueError(f"session JSON missing required keys: {', '.join(missing)}")
+    session_id = str(session_data.get("session_id", "")).strip()
+    if legacy_map is not None:
+        is_legacy = bool(session_id) and is_legacy_session_id(session_id, legacy_map)
+        if not is_legacy and "project_id" not in session_data:
+            raise ValueError("session JSON missing required key: project_id")
 
 
 def _require_non_empty_string(session_data: dict, key: str) -> str:
