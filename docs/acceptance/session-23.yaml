@@ -1,0 +1,25 @@
+session_id: session-23
+acceptance:
+  - id: AC-23-01
+    description: review_points が4項目でない場合、または第4軸が検証十分性でない場合、spec 品質検証で fail-fast 停止する
+    test_name: test_review_points_fourth_axis_must_be_verification_sufficiency
+
+  - id: AC-23-02
+    description: completion_criteria の各要素が id / type / condition を持たない場合、spec 品質検証で fail-fast 停止する
+    test_name: test_completion_criteria_requires_id_type_condition
+
+  - id: AC-23-03
+    description: completion_criteria の type が許可 enum 外の場合、spec 品質検証で fail-fast 停止する
+    test_name: test_completion_criteria_type_must_be_allowed_enum
+
+  - id: AC-23-04
+    description: code session で acceptance_criteria の各要素に test_name が無い場合、spec 品質検証で fail-fast 停止する
+    test_name: test_code_session_acceptance_requires_test_name
+
+  - id: AC-23-05
+    description: docs-only session では docs-only completion ルールで検証し、code session 前提の completion を強制しない
+    test_name: test_docs_only_session_uses_docs_only_completion_rule
+
+  - id: AC-23-06
+    description: acceptance_criteria または completion_criteria が空の場合、spec 品質検証で fail-fast 停止する
+    test_name: test_session_spec_requires_non_empty_acceptance_and_completion

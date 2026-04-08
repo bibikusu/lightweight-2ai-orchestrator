@@ -1,0 +1,130 @@
+{
+  "session_id": "session-23",
+  "phase_id": "phase7",
+  "project_id": "lightweight_2ai_orchestrator",
+  "title": "spec品質固定（acceptance / completion / review_points / docs-only）",
+  "goal": "session定義の仕様品質を実行前に検証し、acceptance・completion・review_points・docs-only completion のブレを fail-fast で防止する",
+  "type": "code",
+  "scope": [
+    "orchestration/run_session.py に session spec 品質検証ロジックを追加",
+    "acceptance_criteria と completion_criteria の整合検証を追加",
+    "review_points 第4軸が検証十分性であることの検証を追加",
+    "docs-only セッション用 completion ルールの検証を追加",
+    "acceptance_criteria の test_name 構造検証を追加",
+    "completion_criteria の id / type / condition 構造検証を追加",
+    "spec 品質検証のテスト追加",
+    "docs/sessions/session-23.json の新規追加",
+    "docs/acceptance/session-23.yaml の新規追加"
+  ],
+  "out_of_scope": [
+    "project_registry.yaml の変更",
+    "legacy_session_project_map.yaml の変更",
+    "session 命名規則の prefix 強制",
+    "project_id required keys の変更",
+    "docs-only セッションの patch_apply / patch_validation 制御",
+    "provider / model / transport policy の変更",
+    "retry 制御の変更",
+    "patch_apply ロジックの変更",
+    "project 固有アプリの実装変更",
+    "既存 session JSON の一括書き換え"
+  ],
+  "constraints": [
+    "1セッション1目的を守ること",
+    "変更ファイル数は最大4ファイル以内とすること",
+    "spec 品質検証は run_session.py の実行前 fail-fast に限定すること",
+    "review_points は4項目必須とし、第4軸は検証十分性で固定すること",
+    "acceptance_criteria は id / description / test_name を必須とすること",
+    "completion_criteria は id / type / condition を必須とすること",
+    "completion_criteria の type は document_rule / artifact / non_regression / state_transition_consistent / side_effect_free のみ許可すること",
+    "code session では acceptance_criteria の各項目に test_name が必要であること",
+    "docs-only session では completion を docs-only 向けルールで検証し、code session 前提の artifact 必須を強制しないこと",
+    "acceptance と completion は少なくとも1つ以上存在すること",
+    "session-20a / session-21 / session-22 の fail-fast 挙動を壊さないこと",
+    "既存の正常系実行フローを壊さないこと",
+    "エラー理由は差戻し判断に使える粒度で明示すること"
+  ],
+  "acceptance_ref": "docs/acceptance/session-23.yaml",
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "backend/tests/test_session_spec_quality.py",
+    "docs/sessions/session-23.json",
+    "docs/acceptance/session-23.yaml"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/run_session.py: session spec 品質検証、review_points 検証、acceptance / completion 検証、docs-only completion 検証に必要な範囲のみ変更可",
+    "backend/tests/test_session_spec_quality.py: session-23 の acceptance を満たすテスト追加のみ可",
+    "docs/sessions/session-23.json: 本セッション定義の新規追加のみ可",
+    "docs/acceptance/session-23.yaml: 本セッション受入条件の新規追加のみ可"
+  ],
+  "forbidden_changes": [
+    "orchestration/providers/",
+    "orchestration/config.yaml",
+    ".github/",
+    "docs/project_registry.yaml",
+    "docs/legacy_session_project_map.yaml",
+    "docs/sessions/ 既存ファイル",
+    "docs/acceptance/ 既存ファイル",
+    "artifacts/ 既存成果物",
+    "project 固有アプリのソースコード"
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-23-01",
+      "type": "state_transition_consistent",
+      "condition": "session 定義の spec 品質が実行前に検証され、acceptance・completion・review_points・docs-only completion の不整合が fail-fast で停止する"
+    },
+    {
+      "id": "CC-23-02",
+      "type": "artifact",
+      "condition": "spec 品質違反時に差戻し判断に使える粒度のエラーメッセージが返る"
+    },
+    {
+      "id": "CC-23-03",
+      "type": "non_regression",
+      "condition": "session-20a / session-21 の fail-fast と既存正常系実行フローを壊さず、session-22 が導入済みの場合はその fail-fast も壊さず、関連テストが通る"
+    },
+    {
+      "id": "CC-23-04",
+      "type": "side_effect_free",
+      "condition": "registry・naming・docs-only 実行制御・project 固有実装には影響を与えず、spec 品質検証の範囲に限定する"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-23-01",
+      "description": "review_points が4項目でない場合、または第4軸が検証十分性でない場合、spec 品質検証で fail-fast 停止する",
+      "test_name": "test_review_points_fourth_axis_must_be_verification_sufficiency"
+    },
+    {
+      "id": "AC-23-02",
+      "description": "completion_criteria の各要素が id / type / condition を持たない場合、spec 品質検証で fail-fast 停止する",
+      "test_name": "test_completion_criteria_requires_id_type_condition"
+    },
+    {
+      "id": "AC-23-03",
+      "description": "completion_criteria の type が許可 enum 外の場合、spec 品質検証で fail-fast 停止する",
+      "test_name": "test_completion_criteria_type_must_be_allowed_enum"
+    },
+    {
+      "id": "AC-23-04",
+      "description": "code session で acceptance_criteria の各要素に test_name が無い場合、spec 品質検証で fail-fast 停止する",
+      "test_name": "test_code_session_acceptance_requires_test_name"
+    },
+    {
+      "id": "AC-23-05",
+      "description": "docs-only session では docs-only completion ルールで検証し、code session 前提の completion を強制しない",
+      "test_name": "test_docs_only_session_uses_docs_only_completion_rule"
+    },
+    {
+      "id": "AC-23-06",
+      "description": "acceptance_criteria または completion_criteria が空の場合、spec 品質検証で fail-fast 停止する",
+      "test_name": "test_session_spec_requires_non_empty_acceptance_and_completion"
+    }
+  ]
+}
