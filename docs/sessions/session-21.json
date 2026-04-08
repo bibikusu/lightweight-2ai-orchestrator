@@ -1,0 +1,60 @@
+{
+  "session_id": "session-21",
+  "phase_id": "phase6",
+  "title": "project_registry による project 解決の一元化を導入する",
+  "goal": "session JSON の project_id を正本として target_repo・project_root・docs_root・artifact_namespace を一元解決し、legacy session は明示マッピング経由のみ許可する。",
+  "scope": [
+    "docs/project_registry.yaml の追加",
+    "docs/legacy_session_project_map.yaml の追加",
+    "run_session.py への registry / legacy map 解決追加",
+    "project_id 解決の fail-fast 追加",
+    "artifact namespace 配下への artifacts 出力分離",
+    "registry 解決・実在パス検証・legacy 制約のテスト追加"
+  ],
+  "out_of_scope": [
+    "docs-only 制御",
+    "session 命名規則の prefix 強制",
+    "acceptance と completion の品質固定",
+    "provider / model / transport policy の変更",
+    "retry 制御の変更",
+    "patch_apply ロジックの変更",
+    "project 固有アプリの実装変更",
+    "既存 session JSON の一括書き換え",
+    "artifacts 既存成果物の移動やリネーム"
+  ],
+  "constraints": [
+    "1セッション1目的",
+    "変更ファイル数は最大6ファイル以内",
+    "project_registry.yaml を単一正本とする",
+    "new session は session JSON 内の project_id を正本とする",
+    "legacy session は legacy_session_project_map.yaml 経由でのみ許可し暗黙 fallback を禁止する",
+    "project_id は session-21 では required keys に昇格しない",
+    "registry 未登録 project_id は fail-fast 停止とする",
+    "project_root と docs_root は実在パスであることを検証する",
+    "artifact_namespace は非空文字列で衝突しないことを検証する"
+  ],
+  "acceptance_ref": "docs/acceptance/session-21.yaml",
+  "project_id": "lightweight_2ai_orchestrator",
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "backend/tests/test_project_registry_resolution.py",
+    "docs/project_registry.yaml",
+    "docs/legacy_session_project_map.yaml",
+    "docs/sessions/session-21.json",
+    "docs/acceptance/session-21.yaml"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/run_session.py: project registry 読み込み、project_id/legacy 解決、artifact namespace 解決の最小追加のみ",
+    "backend/tests/test_project_registry_resolution.py: registry 解決、パス実在検証、legacy 制約のテスト追加のみ",
+    "docs/project_registry.yaml: project 定義正本の追加のみ",
+    "docs/legacy_session_project_map.yaml: legacy session 明示マッピングの追加のみ",
+    "docs/sessions/session-21.json: 本セッション定義の追加のみ",
+    "docs/acceptance/session-21.yaml: AC-21-01〜06 定義の追加のみ"
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ]
+}

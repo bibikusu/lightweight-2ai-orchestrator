@@ -106,6 +106,89 @@ def resolve_target_repo(session: dict) -> str:
     return str(path)
 
 
+def _legacy_session_map(legacy_map: Dict[str, Any]) -> Dict[str, str]:
+    raw = legacy_map.get("session_to_project", {}) if isinstance(legacy_map, dict) else {}
+    if not isinstance(raw, dict):
+        return {}
+    mapped: Dict[str, str] = {}
+    for key, value in raw.items():
+        sid = str(key).strip()
+        pid = str(value).strip()
+        if sid and pid:
+            mapped[sid] = pid
+    return mapped
+
+
+def is_legacy_compat_session_id(session_id: str) -> bool:
+    """旧命名の session-id（prefix なし）を legacy 互換対象として扱う。"""
+    return bool(re.fullmatch(r"session-\d+[a-z]?", str(session_id).strip()))
+
+
+def resolve_project_config_for_session(
+    session_id: str,
+    session_data: Dict[str, Any],
+    registry: Dict[str, Any],
+    legacy_map: Dict[str, Any],
+) -> Dict[str, Any]:
+    """session JSON の project_id（または legacy map）から project 設定を解決する。"""
+    raw_project_id = session_data.get("project_id")
+    legacy_session_map = _legacy_session_map(legacy_map)
+    resolved_via_legacy_map = False
+    if raw_project_id is None or str(raw_project_id).strip() == "":
+        if session_id in legacy_session_map:
+            project_id = str(legacy_session_map[session_id]).strip()
+            resolved_via_legacy_map = True
+        elif is_legacy_compat_session_id(session_id):
+            raise ValueError(
+                "project_id が session JSON に無く、legacy_session_project_map.yaml にも "
+                f"session_id={session_id!r} の明示マッピングがありません。"
+            )
+        else:
+            raise ValueError("new session では project_id が必須です。")
+    else:
+        if not isinstance(raw_project_id, str) or not raw_project_id.strip():
+            raise ValueError("session JSON の project_id は空でない文字列である必要があります。")
+        project_id = raw_project_id.strip()
+
+    projects = registry.get("projects", {})
+    if not isinstance(projects, dict) or project_id not in projects:
+        raise ValueError(
+            f"project registry 未登録の project_id です: {project_id!r} "
+            f"(session_id={session_id!r})"
+        )
+    entry = projects[project_id]
+    if not isinstance(entry, dict):
+        raise ValueError(f"project registry の project_id={project_id!r} の定義形式が不正です。")
+
+    if str(entry.get("project_id", "")).strip() != project_id:
+        raise ValueError(f"project registry の projects.{project_id}.project_id が不一致です。")
+
+    target_repo = Path(str(entry["target_repo"])).expanduser().resolve()
+    project_root = Path(str(entry["project_root"])).expanduser().resolve()
+    docs_root = Path(str(entry["docs_root"])).expanduser().resolve()
+    artifact_namespace = str(entry["artifact_namespace"]).strip()
+
+    if not project_root.exists():
+        raise FileNotFoundError(
+            f"project_root が存在しません: project_id={project_id!r}, path={project_root}"
+        )
+    if not docs_root.exists():
+        raise FileNotFoundError(
+            f"docs_root が存在しません: project_id={project_id!r}, path={docs_root}"
+        )
+    if not artifact_namespace:
+        raise ValueError(f"artifact_namespace が空です: project_id={project_id!r}")
+
+    return {
+        "project_id": project_id,
+        "target_repo": target_repo,
+        "project_root": project_root,
+        "docs_root": docs_root,
+        "artifact_namespace": artifact_namespace,
+        "resolved_via_legacy_map": resolved_via_legacy_map,
+    }
+
+
 def _ensure_repo_root_on_sys_path() -> None:
     """
     互換レイヤー: 実行時のみ ROOT_DIR を sys.path に追加する。
@@ -832,8 +915,15 @@ def validate_session_context(ctx: SessionContext) -> None:
         raise ValueError("out_of_scope must be a list")
 
 
-def ensure_artifact_dirs(session_id: str) -> Path:
-    session_dir = get_active_artifacts_dir() / session_id
+def resolve_session_artifacts_dir(session_id: str, artifact_namespace: str = "") -> Path:
+    ns = str(artifact_namespace or "").strip()
+    if ns:
+        return get_active_artifacts_dir() / ns / session_id
+    return get_active_artifacts_dir() / session_id
+
+
+def ensure_artifact_dirs(session_id: str, artifact_namespace: str = "") -> Path:
+    session_dir = resolve_session_artifacts_dir(session_id, artifact_namespace)
     for sub in ["prompts", "responses", "patches", "test_results", "logs", "reports"]:
         (session_dir / sub).mkdir(parents=True, exist_ok=True)
     return session_dir

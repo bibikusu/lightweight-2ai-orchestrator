@@ -1,0 +1,5 @@
+version: 1
+session_to_project:
+  session-01: lightweight_2ai_orchestrator
+  session-20a: lightweight_2ai_orchestrator
+  session-12: a01_card_task

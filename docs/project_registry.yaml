@@ -1,0 +1,20 @@
+version: 1
+projects:
+  lightweight_2ai_orchestrator:
+    project_id: lightweight_2ai_orchestrator
+    target_repo: "/Users/kunihideyamane/AI_Team/軽量2AIオーケストレーター方式"
+    project_root: "/Users/kunihideyamane/AI_Team/軽量2AIオーケストレーター方式"
+    docs_root: "/Users/kunihideyamane/AI_Team/軽量2AIオーケストレーター方式/docs"
+    artifact_namespace: "lightweight_2ai_orchestrator"
+  a01_card_task:
+    project_id: a01_card_task
+    target_repo: "/Users/kunihideyamane/AI_Team/軽量2AIオーケストレーター方式"
+    project_root: "/Users/kunihideyamane/AI_Team/軽量2AIオーケストレーター方式"
+    docs_root: "/Users/kunihideyamane/AI_Team/軽量2AIオーケストレーター方式/docs"
+    artifact_namespace: "a01_card_task"
+  a02_fina:
+    project_id: a02_fina
+    target_repo: "/Users/kunihideyamane/AI_Team/軽量2AIオーケストレーター方式"
+    project_root: "/Users/kunihideyamane/AI_Team/軽量2AIオーケストレーター方式"
+    docs_root: "/Users/kunihideyamane/AI_Team/軽量2AIオーケストレーター方式/docs"
+    artifact_namespace: "a02_fina"
