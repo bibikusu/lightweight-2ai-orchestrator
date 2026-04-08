@@ -1,0 +1,121 @@
+{
+  "session_id": "session-20a",
+  "phase_id": "phase7",
+  "title": "fail-fast 実行前検証の強化",
+  "goal": "通常実行前に target_repo・project_root・acceptance_ref・required keys・batch同一project制約を fail-fast で一括検証し、誤実行を停止できる状態にする",
+  "type": "code",
+  "scope": [
+    "run_session.py の実行前検証ロジック強化",
+    "session JSON の required keys 一括検証",
+    "acceptance_ref の存在確認",
+    "target_repo 必須チェック",
+    "project_root 実在確認",
+    "batch 実行時の同一project制約追加",
+    "検証失敗時のエラーメッセージ明確化",
+    "fail-fast を検証するテスト追加"
+  ],
+  "out_of_scope": [
+    "docs-only セッションの patch_apply / patch_validation スキップ",
+    "project_registry.yaml の導入",
+    "session 命名移行",
+    "Template C 強制チェックの追加",
+    "providers 配下の変更",
+    "retry 制御の変更",
+    "patch_apply ロジックの変更",
+    "report.json スキーマ変更"
+  ],
+  "constraints": [
+    "1セッション1目的を守ること",
+    "変更ファイル数は最大5ファイル以内",
+    "通常実行の fail-fast に限定し、dry-run の基本挙動を壊さないこと",
+    "required keys 欠落時は最初の1件で止めず、欠落キー全件をソートして報告すること",
+    "batch 実行では session 群の project 識別子が混在している場合に停止すること",
+    "acceptance_ref はパス文字列の存在確認だけでなく、実ファイル存在まで検証すること",
+    "project_root は空文字不可かつ実在ディレクトリであることを確認すること",
+    "target_repo は空文字不可とし、通常実行時は未指定を許可しないこと",
+    "既存の成功ケースを壊さないこと",
+    "エラー理由は人間が差戻し判断できる粒度で明示すること"
+  ],
+  "acceptance_ref": "docs/acceptance/session-20a.yaml",
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "backend/tests/test_fail_fast_validation.py",
+    "docs/sessions/session-20a.json",
+    "docs/acceptance/session-20a.yaml"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/run_session.py: 実行前検証関数と通常実行開始前の fail-fast 呼び出し部分のみ変更可",
+    "backend/tests/test_fail_fast_validation.py: session-20a の受入条件を満たすテスト追加のみ可",
+    "docs/sessions/session-20a.json: 本セッション定義の新規追加のみ可",
+    "docs/acceptance/session-20a.yaml: 本セッション受入条件の新規追加のみ可"
+  ],
+  "forbidden_changes": [
+    "orchestration/providers/",
+    "orchestration/config.yaml",
+    ".github/",
+    "docs/sessions/ 既存ファイル",
+    "docs/acceptance/ 既存ファイル",
+    "artifacts/",
+    "project 固有アプリのソースコード"
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-20A-01",
+      "type": "state_transition_consistent",
+      "condition": "通常実行前に target_repo・project_root・acceptance_ref・required keys・batch同一project制約が一括検証され、違反時は実行開始前に停止する"
+    },
+    {
+      "id": "CC-20A-02",
+      "type": "artifact",
+      "condition": "required keys 欠落時は欠落キー全件がソート済みで報告される"
+    },
+    {
+      "id": "CC-20A-03",
+      "type": "non_regression",
+      "condition": "既存の正常系 fail-fast と通常実行の前提を壊さず、関連テストが通る"
+    },
+    {
+      "id": "CC-20A-04",
+      "type": "side_effect_free",
+      "condition": "docs-only 制御・patch_apply・retry・provider 実装には影響を与えない"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-20A-01",
+      "description": "通常実行で target_repo が未指定または空文字の場合、fail-fast で停止し理由が明示される",
+      "test_name": "test_fail_fast_requires_target_repo_for_normal_run"
+    },
+    {
+      "id": "AC-20A-02",
+      "description": "project_root が未指定・空文字・非実在ディレクトリのいずれかの場合、fail-fast で停止する",
+      "test_name": "test_fail_fast_requires_existing_project_root"
+    },
+    {
+      "id": "AC-20A-03",
+      "description": "acceptance_ref が未指定または参照先ファイルが存在しない場合、fail-fast で停止する",
+      "test_name": "test_fail_fast_requires_existing_acceptance_ref"
+    },
+    {
+      "id": "AC-20A-04",
+      "description": "required keys 欠落時は欠落キー全件がソート済みで一括報告される",
+      "test_name": "test_fail_fast_reports_all_missing_required_keys_sorted"
+    },
+    {
+      "id": "AC-20A-05",
+      "description": "batch 実行で複数 session の project 識別子が混在している場合、fail-fast で停止する",
+      "test_name": "test_fail_fast_rejects_mixed_projects_in_batch"
+    },
+    {
+      "id": "AC-20A-06",
+      "description": "正常な session 定義では新規 fail-fast 検証を通過し既存フローを妨げない",
+      "test_name": "test_fail_fast_allows_valid_session_inputs"
+    }
+  ]
+}

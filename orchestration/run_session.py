@@ -709,12 +709,71 @@ def load_session_context(session_id: str) -> SessionContext:
 
 
 def validate_session_required_keys(session_data: dict) -> None:
-    """session.json の必須キー存在チェック。欠落時は ValueError。"""
+    """session.json の必須キー存在チェック。欠落時は全件をソートして ValueError。"""
     required = ["session_id", "phase_id", "title", "goal", "scope",
                 "out_of_scope", "constraints", "acceptance_ref"]
-    for key in required:
-        if key not in session_data:
-            raise ValueError(f"session JSON missing required key: {key}")
+    missing = sorted([key for key in required if key not in session_data])
+    if missing:
+        if len(missing) == 1:
+            raise ValueError(f"session JSON missing required key: {missing[0]}")
+        raise ValueError(f"session JSON missing required keys: {', '.join(missing)}")
+
+
+def _require_non_empty_string(session_data: dict, key: str) -> str:
+    """指定キーが非空文字列であることを検証する。"""
+    raw = session_data.get(key)
+    if raw is None:
+        raise ValueError(f"session JSON must contain non-empty '{key}'")
+    value = str(raw).strip()
+    if not value:
+        raise ValueError(f"session JSON must contain non-empty '{key}'")
+    return value
+
+
+def validate_normal_run_session_inputs(session_data: dict) -> None:
+    """通常実行用 fail-fast 検証。必須キー・repo/root/acceptance の整合を先に確認する。"""
+    validate_session_required_keys(session_data)
+    has_project_controls = "target_repo" in session_data or "project_root" in session_data
+    resolved_root = Path(resolve_target_repo(session_data))
+
+    if has_project_controls:
+        acceptance_ref = _require_non_empty_string(session_data, "acceptance_ref")
+        target_repo = _require_non_empty_string(session_data, "target_repo")
+        project_root_ref = _require_non_empty_string(session_data, "project_root")
+        # target_repo 名の妥当性と紐づく実ディレクトリを検証する。
+        resolved_root = Path(resolve_target_repo({"target_repo": target_repo}))
+
+        project_root = Path(project_root_ref).expanduser()
+        if not project_root.is_absolute():
+            project_root = (resolved_root / project_root).resolve()
+        if not project_root.exists() or not project_root.is_dir():
+            raise ValueError(f"project_root must be an existing directory: {project_root}")
+
+        acceptance_path = resolve_acceptance_path(
+            acceptance_ref=acceptance_ref,
+            root_dir=resolved_root,
+            docs_dir=resolved_root / "docs",
+        )
+        if not acceptance_path.exists() or not acceptance_path.is_file():
+            raise FileNotFoundError(f"acceptance file not found: {acceptance_path}")
+
+
+def validate_batch_same_project(session_data_by_id: Dict[str, dict]) -> None:
+    """batch 実行の session 群が同一 project 識別子かを検証する。"""
+    id_to_project: Dict[str, str] = {}
+    for sid, session_data in session_data_by_id.items():
+        if "target_repo" not in session_data and "project_root" not in session_data:
+            continue
+        target_repo = _require_non_empty_string(session_data, "target_repo")
+        project_root = _require_non_empty_string(session_data, "project_root")
+        id_to_project[sid] = f"{target_repo}::{project_root}"
+
+    unique_projects = sorted(set(id_to_project.values()))
+    if len(unique_projects) <= 1:
+        return
+
+    details = ", ".join(f"{sid}={id_to_project[sid]}" for sid in sorted(id_to_project.keys()))
+    raise ValueError(f"batch sessions must target a single project: {details}")
 
 
 def resolve_acceptance_path(acceptance_ref: str, root_dir: Path, docs_dir: Path) -> Path:
@@ -4194,6 +4253,8 @@ def _run_single_session_impl(args: argparse.Namespace) -> int:
         stage = "loading"
         log_stage_event(session_id=args.session_id, stage=stage, event="start")
         ctx = load_session_context(args.session_id)
+        if not bool(args.dry_run):
+            validate_normal_run_session_inputs(ctx.session_data)
         set_active_repo_root(Path(resolve_target_repo(ctx.session_data)))
         session_dir = ensure_artifact_dirs(args.session_id)
         log_stage_event(session_id=args.session_id, stage=stage, event="end")
@@ -4615,6 +4676,21 @@ def _run_batch(args: argparse.Namespace, batch_session_ids_csv: str) -> int:
     except RuntimeError as e:
         print(f"[ERROR] {e}", file=sys.stderr)
         return 1
+
+    if not bool(args.dry_run):
+        session_data_by_id: Dict[str, dict] = {}
+        try:
+            for sid in session_ids:
+                session_path = (get_active_docs_dir() / "sessions") / f"{sid}.json"
+                if not session_path.exists():
+                    continue
+                session_data_by_id[sid] = load_json(session_path)
+                validate_normal_run_session_inputs(session_data_by_id[sid])
+            if session_data_by_id:
+                validate_batch_same_project(session_data_by_id)
+        except (ValueError, FileNotFoundError) as e:
+            print(f"[ERROR] fail-fast validation failed: {e}", file=sys.stderr)
+            return 1
 
     batch_id = f"batch-{_utc_timestamp_compact()}"
     batch_root = get_active_artifacts_dir() / batch_id

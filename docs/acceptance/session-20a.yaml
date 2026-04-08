@@ -1,0 +1,25 @@
+session_id: session-20a
+acceptance:
+  - id: AC-20A-01
+    description: 通常実行で target_repo が未指定または空文字の場合、fail-fast で停止し理由が明示される
+    test_name: test_fail_fast_requires_target_repo_for_normal_run
+
+  - id: AC-20A-02
+    description: project_root が未指定・空文字・非実在ディレクトリのいずれかの場合、fail-fast で停止する
+    test_name: test_fail_fast_requires_existing_project_root
+
+  - id: AC-20A-03
+    description: acceptance_ref が未指定または参照先ファイルが存在しない場合、fail-fast で停止する
+    test_name: test_fail_fast_requires_existing_acceptance_ref
+
+  - id: AC-20A-04
+    description: required keys 欠落時は欠落キー全件がソート済みで一括報告される
+    test_name: test_fail_fast_reports_all_missing_required_keys_sorted
+
+  - id: AC-20A-05
+    description: batch 実行で複数 session の project 識別子が混在している場合、fail-fast で停止する
+    test_name: test_fail_fast_rejects_mixed_projects_in_batch
+
+  - id: AC-20A-06
+    description: 正常な session 定義では新規 fail-fast 検証を通過し既存フローを妨げない
+    test_name: test_fail_fast_allows_valid_session_inputs
