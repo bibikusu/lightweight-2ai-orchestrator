@@ -55,6 +55,9 @@ IMPLEMENTATION_PROMPT_FUNCTION_CONTEXT_LINES = 5
 # Git 保護で拒否するブランチ名（小文字比較）
 FORBIDDEN_BRANCHES = frozenset({"main", "master"})
 VERDICT_STATUS_ENUM = frozenset({"pass", "conditional_pass", "fail"})
+SPEC_COMPLETION_TYPE_ENUM = frozenset(
+    {"document_rule", "artifact", "non_regression", "state_transition_consistent", "side_effect_free"}
+)
 
 
 def set_active_repo_root(repo_root: Path) -> None:
@@ -974,6 +977,87 @@ def run_preflight_validation(session_data: dict, acceptance_parsed: dict,
     validate_session_id_consistency(session_data, acceptance_parsed)
 
 
+def validate_session_spec_quality(session_data: Dict[str, Any]) -> None:
+    """
+    session spec の品質を実行前に fail-fast 検証する。
+    旧スキーマ互換のため、対象キー未定義時は検証をスキップする。
+    """
+    session_id = str(session_data.get("session_id", "")).strip()
+    if is_legacy_compat_session_id(session_id) and session_id != "session-23":
+        return
+
+    has_acceptance_key = "acceptance_criteria" in session_data
+    has_completion_key = "completion_criteria" in session_data
+    if not has_acceptance_key and not has_completion_key:
+        return
+
+    acceptance_items = session_data.get("acceptance_criteria")
+    completion_items = session_data.get("completion_criteria")
+    if not isinstance(acceptance_items, list) or len(acceptance_items) == 0:
+        raise ValueError("session spec quality: acceptance_criteria は 1 件以上の list 必須です。")
+    if not isinstance(completion_items, list) or len(completion_items) == 0:
+        raise ValueError("session spec quality: completion_criteria は 1 件以上の list 必須です。")
+
+    review_points = session_data.get("review_points")
+    if not isinstance(review_points, list) or len(review_points) != 4:
+        raise ValueError("session spec quality: review_points は 4 項目必須です。")
+    if str(review_points[3]).strip() != "検証十分性":
+        raise ValueError("session spec quality: review_points の第4軸は『検証十分性』固定です。")
+
+    session_type = str(session_data.get("type") or "code").strip()
+    is_docs_only = session_type == "docs-only"
+
+    for idx, item in enumerate(acceptance_items):
+        if not isinstance(item, dict):
+            raise ValueError(f"session spec quality: acceptance_criteria[{idx}] は object 必須です。")
+        for key in ("id", "description"):
+            val = item.get(key)
+            if not isinstance(val, str) or not val.strip():
+                raise ValueError(
+                    f"session spec quality: acceptance_criteria[{idx}] に {key} が必要です。"
+                )
+        if not is_docs_only:
+            test_name = item.get("test_name")
+            if not isinstance(test_name, str) or not test_name.strip():
+                raise ValueError(
+                    f"session spec quality: acceptance_criteria[{idx}] に test_name が必要です。"
+                )
+
+    has_document_rule = False
+    has_artifact = False
+    for idx, item in enumerate(completion_items):
+        if not isinstance(item, dict):
+            raise ValueError(f"session spec quality: completion_criteria[{idx}] は object 必須です。")
+        for key in ("id", "type", "condition"):
+            val = item.get(key)
+            if not isinstance(val, str) or not val.strip():
+                raise ValueError(
+                    f"session spec quality: completion_criteria[{idx}] に {key} が必要です。"
+                )
+        ctype = str(item.get("type")).strip()
+        if ctype not in SPEC_COMPLETION_TYPE_ENUM:
+            raise ValueError(
+                "session spec quality: completion_criteria.type が許可値外です。"
+                f" got={ctype!r}, allowed={sorted(SPEC_COMPLETION_TYPE_ENUM)!r}"
+            )
+        if ctype == "document_rule":
+            has_document_rule = True
+        if ctype == "artifact":
+            has_artifact = True
+
+    if is_docs_only:
+        if not has_document_rule:
+            raise ValueError(
+                "session spec quality: docs-only session では "
+                "completion_criteria に document_rule が 1 件以上必要です。"
+            )
+    elif not has_artifact:
+        raise ValueError(
+            "session spec quality: code session では "
+            "completion_criteria に artifact が 1 件以上必要です。"
+        )
+
+
 def validate_session_context(ctx: SessionContext) -> None:
     required_keys = [
         "session_id",
@@ -1000,6 +1084,7 @@ def validate_session_context(ctx: SessionContext) -> None:
 
     if not isinstance(ctx.session_data["out_of_scope"], list):
         raise ValueError("out_of_scope must be a list")
+    validate_session_spec_quality(ctx.session_data)
 
 
 def resolve_session_artifacts_dir(session_id: str, artifact_namespace: str = "") -> Path:
