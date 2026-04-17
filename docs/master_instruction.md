@@ -369,3 +369,20 @@ drift detector は段階的に適用レベルを引き上げる。
 - fail-fast を最優先とする
 - drift を許容する運用は禁止する
 - 実測前に default-on 移行判断を行わない
+
+## legacy 凍結と新規厳格化
+
+- 過去の全面修正ではなく、未来の品質固定を優先する
+- 既存 session は legacy として凍結(書き換えない)
+- 新規 session は canonical 前提で生成
+- legacy は whitelist 管理とする
+- 整理対象は現役 session のみとする(session-128 で選別)
+
+### Phase ロードマップ
+
+- Phase 1 (session-127): 運用方針固定 / legacy whitelist 初期版作成
+- Phase 1b (session-127b): drift_detector.py への legacy 除外ロジック実装
+- Phase 2 (session-128): 現役参照対象 session の選別
+- Phase 3 (session-129 以降): 現役 session の canonical 整理
+
+legacy の詳細運用ルールは global_rules.md の「new / legacy session 運用ルール」セクションを参照すること。

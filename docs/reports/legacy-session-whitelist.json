@@ -1,0 +1,37 @@
+{
+  "version": "v1",
+  "description": "legacy session whitelist (default-on 対象外)",
+  "created_by": "session-127",
+  "status": "initial_draft",
+  "sessions": [
+    "session-01",
+    "session-08",
+    "session-09",
+    "session-45",
+    "session-57",
+    "session-58",
+    "session-60",
+    "session-61",
+    "session-66",
+    "session-67",
+    "session-68",
+    "session-69",
+    "session-73",
+    "session-74",
+    "session-75",
+    "session-77",
+    "session-79",
+    "session-80",
+    "session-101",
+    "session-116",
+    "session-120",
+    "session-122",
+    "session-123"
+  ],
+  "notes": [
+    "このリストは初期版である(session-127 時点)",
+    "session-128 で session-126 drift baseline report に基づき精査・確定する",
+    "listed sessions are excluded from default-on enforcement",
+    "legacy session は履歴として保持し書き換えない"
+  ]
+}
