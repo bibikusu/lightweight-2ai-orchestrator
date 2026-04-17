@@ -1,0 +1,88 @@
+{
+  "session_id": "session-125",
+  "phase_id": "phase6",
+  "title": "drift detector default-on 移行条件と既存session準拠化方針の固定",
+  "goal": "drift detector を opt-in から default-on へ移行するための条件、既存sessionの準拠要件、段階移行ルールを正本として定義する",
+  "scope": [
+    "docs/sessions/session-125.json の新規作成",
+    "docs/acceptance/session-125.yaml の新規作成",
+    "docs/global_rules.md への default-on 移行条件と段階移行ルールの追記",
+    "docs/master_instruction.md への drift detector 適用レベルと運用原則の追記"
+  ],
+  "out_of_scope": [
+    "orchestration/ 配下のコード変更",
+    "backend/ 配下のコード変更",
+    "drift_detector.py のロジック変更",
+    "run_session.py の変更",
+    "既存sessionファイルの修正",
+    "閾値の具体数値確定",
+    "CI / GitHub Actions 導入",
+    "M03 / M04 の実装"
+  ],
+  "constraints": [
+    "docs-only セッションとする",
+    "1セッション1目的を厳守する",
+    "変更ファイル数は最大4ファイル以内とする",
+    "default-on 条件は項目のみ定義し、数値は session-126 実測後に確定する",
+    "既存sessionを直ちに破壊しない段階移行方針とする",
+    "global_rules.md と master_instruction.md の記述を矛盾させない",
+    "runtime コードには一切触れない",
+    "review_points は現行固定4軸に完全一致させる"
+  ],
+  "acceptance_ref": "docs/acceptance/session-125.yaml",
+  "allowed_changes": [
+    "docs/sessions/session-125.json",
+    "docs/acceptance/session-125.yaml",
+    "docs/global_rules.md",
+    "docs/master_instruction.md"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/session-125.json: session-125 定義の新規追加のみ",
+    "docs/acceptance/session-125.yaml: session-125 の acceptance 定義の新規追加のみ",
+    "docs/global_rules.md: default-on 移行条件、閾値確定プロセス、段階移行ルール、fail時の挙動の追記のみ",
+    "docs/master_instruction.md: drift detector の適用レベルと運用原則の追記のみ"
+  ],
+  "forbidden_changes": [
+    "orchestration/",
+    "backend/",
+    "docs/sessions/ 配下の既存ファイル",
+    "docs/acceptance/ 配下の既存ファイル",
+    ".github/",
+    "run_session.py",
+    "drift_detector.py",
+    "docs/reports/"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-125-01",
+      "type": "document_rule",
+      "condition": "default-on 移行条件が項目ベースで定義され、数値は session-126 実測後に確定する方針が明記されている"
+    },
+    {
+      "id": "CC-125-02",
+      "type": "document_rule",
+      "condition": "既存sessionの準拠要件が明文化されている"
+    },
+    {
+      "id": "CC-125-03",
+      "type": "document_rule",
+      "condition": "段階移行ルールと fail時の挙動が定義されている"
+    },
+    {
+      "id": "CC-125-04",
+      "type": "side_effect_free",
+      "condition": "runtime コードおよび既存テストに変更が発生していない"
+    },
+    {
+      "id": "CC-125-05",
+      "type": "state_transition_consistent",
+      "condition": "global_rules.md と master_instruction.md の drift default-on 方針が矛盾なく記載されている"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性（テスト・証跡・再現性により、受入判断に足る根拠があること）"
+  ]
+}

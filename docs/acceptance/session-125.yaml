@@ -1,0 +1,17 @@
+session_id: session-125
+acceptance:
+  - id: AC-01
+    description: default-on 移行条件が曖昧性なく項目ベースで定義され、数値は session-126 実測後に確定する方針が明記されている
+    test_name: test_default_on_condition_defined_without_fixed_thresholds
+  - id: AC-02
+    description: 既存sessionの準拠条件が定義されている
+    test_name: test_existing_session_requirements_defined
+  - id: AC-03
+    description: 段階移行ルールが定義されている
+    test_name: test_migration_strategy_defined
+  - id: AC-04
+    description: コード変更が一切発生していない
+    test_name: test_no_code_changes
+  - id: AC-05
+    description: global_rules.md と master_instruction.md の drift default-on 方針が矛盾なく記載されている
+    test_name: test_default_on_policy_consistency_across_docs
