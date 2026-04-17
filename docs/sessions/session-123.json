@@ -1,0 +1,90 @@
+{
+  "session_id": "session-123",
+  "phase_id": "phase6",
+  "title": "session definition drift detector の最小実装",
+  "goal": "session JSON と acceptance YAML の構造・固定値・運用違反を実行前に fail-fast で検知し、危険な session 定義を prepared_spec 前に停止できるようにする",
+  "scope": [
+    "orchestration/drift_detector.py の新規実装",
+    "orchestration/run_session.py への drift check ステージ追加",
+    "session JSON の required keys・review_points 固定値・allowed_changes_detail 必須チェック",
+    "acceptance YAML の test_name 必須・一意性チェック",
+    "completion_criteria 型検証と completion_status ルール検証",
+    "backend/tests/test_drift_detector.py の新規追加"
+  ],
+  "out_of_scope": [
+    "providers 配下の変更",
+    "retry ループの変更",
+    "report.json の既存スキーマ変更",
+    "patch_apply ロジックの変更",
+    "prepared_spec / implementation プロンプト内容の変更",
+    "Card_task_02 側のファイル変更",
+    "CI / GitHub Actions 導入",
+    "M03 / M04 の実装"
+  ],
+  "constraints": [
+    "1セッション1目的を厳守する",
+    "変更ファイル数は最大3ファイル以内とする",
+    "本セッションは run_session.py を変更するため Cursor 手動実行とし、orchestrator 経由実行は行わない",
+    "drift check は prepared_spec より前に実行する",
+    "required keys 欠落時は最初の1件で止めず、欠落キー全件をソートして一括報告する",
+    "review_points は現行 global_rules.md の固定4軸に完全一致させる",
+    "allowed_changes_detail は session JSON の必須フィールドとして扱う",
+    "code session では acceptance の各項目に test_name を必須とする",
+    "completion_status は usable_for_self / review_required / failed の3値のみ許可する",
+    "既存の git_guard・dry-run・checks の挙動を壊さない"
+  ],
+  "acceptance_ref": "docs/acceptance/session-123.yaml",
+  "allowed_changes": [
+    "orchestration/drift_detector.py",
+    "orchestration/run_session.py",
+    "backend/tests/test_drift_detector.py"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/drift_detector.py: 新規関数 run_drift_check, _load_session_json, _load_acceptance_yaml, _validate_required_keys, _validate_review_points, _validate_allowed_changes_detail, _validate_acceptance_test_names, _validate_completion_criteria, _validate_completion_status, _build_drift_result の追加のみ",
+    "orchestration/run_session.py: prepared_spec 実行直前に run_drift_check 呼び出しを追加する箇所のみ変更。drift fail 時の artifact 保存と停止処理の追加のみ",
+    "backend/tests/test_drift_detector.py: 新規テスト関数 test_required_keys_missing_reported_all_at_once, test_review_points_must_match_fixed_four_axes, test_allowed_changes_detail_is_required_and_mapped, test_acceptance_items_require_test_name_for_code_session, test_valid_session_and_acceptance_pass_drift_check の追加のみ"
+  ],
+  "forbidden_changes": [
+    "orchestration/providers/",
+    "orchestration/config.yaml",
+    "docs/sessions/ 配下の既存ファイル",
+    "docs/acceptance/ 配下の既存ファイル",
+    ".github/",
+    "Card_task_02 側の全ファイル",
+    "retry / classification の既存仕様",
+    "report.json の既存 required keys 定義"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-123-01",
+      "type": "artifact",
+      "condition": "drift check 失敗時に artifacts/<session_id>/drift_check.json が保存され、違反一覧・failure_type・summary を含む"
+    },
+    {
+      "id": "CC-123-02",
+      "type": "document_rule",
+      "condition": "required keys・review_points 固定4軸・allowed_changes_detail 必須・completion_status 3値の現行ルールに一致しない session 定義を fail-fast で停止できる"
+    },
+    {
+      "id": "CC-123-03",
+      "type": "non_regression",
+      "condition": "drift check が pass の正常な session では既存の run_session フローが継続し、既存テストを壊さない"
+    },
+    {
+      "id": "CC-123-04",
+      "type": "side_effect_free",
+      "condition": "drift check 追加により providers 配下、retry ループ、patch_apply ロジック、report.json の既存仕様へ副作用を与えない"
+    },
+    {
+      "id": "CC-123-05",
+      "type": "state_transition_consistent",
+      "condition": "drift check fail 時は prepared_spec 以降に進まず停止し、pass 時のみ prepared_spec に進む制御が一貫している"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "実装過不足なし"
+  ]
+}
