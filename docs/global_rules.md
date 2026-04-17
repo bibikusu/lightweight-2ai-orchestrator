@@ -834,3 +834,17 @@ session 定義ファイルは、少なくとも以下のいずれかの方式で
   2. 1に該当せず、risks または open_issues が1件以上ある場合は `review_required`
   3. 1と2のいずれにも該当しない場合は `usable_for_self`
 - human_review_needed は completion_status が `review_required` のときのみ true、それ以外は false
+
+## drift detector v0.1 の適用方針
+
+- drift detector v0.1 は session-123 で導入された。
+- 現時点では temporary compatibility mode として運用する。
+- temporary compatibility mode では、session JSON に `drift_check_v01: true` を持つ session のみ drift check を実行する。
+- 新規に起票する session は、原則として `drift_check_v01: true` を付与する。
+- 既存 session は直ちに default-on 化せず、段階移行とする。
+- default-on への切替は、既存 session 群が以下の準拠状況を満たしたうえで、人間承認を経て行う。
+  - required keys の充足
+  - review_points の固定4軸完全一致
+  - allowed_changes_detail の形式準拠
+  - acceptance.test_name の必須項目充足
+- temporary compatibility mode の恒久化は禁止する。後続 session で移行方針を定期的に見直すこと。

@@ -339,3 +339,10 @@ v1.2 の目的は、壊さず・追跡可能で・再試行可能な最小司令
 - Cursor は実際の作業実行と検証を担う
 
 この分業を保つこと自体を、安全性と速度の両立条件とする。
+
+### drift detector の位置付け
+
+drift detector は、危険な session 定義を prepared_spec 前に停止する fail-fast 安全弁である。
+session-123 時点では、既存 session との互換性維持のため temporary compatibility mode を採用する。
+ただしこれは恒久仕様ではなく、default-on への移行を前提とした暫定運用とする。
+global_rules.md の「drift detector v0.1 の適用方針」セクションと合わせて参照すること。

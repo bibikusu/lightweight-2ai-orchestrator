@@ -1,0 +1,28 @@
+{
+  "session_id": "session-123",
+  "status": "review_required",
+  "summary": "drift detector v0.1 was implemented and validated with no regression, but adopted in opt-in mode for compatibility with existing sessions",
+  "confirmed_facts": [
+    "drift detector v0.1 was implemented in orchestration/drift_detector.py",
+    "run_session.py was updated to invoke drift check before prepared_spec",
+    "backend/tests/test_drift_detector.py was added",
+    "ruff, pytest, mypy, and compileall all passed",
+    "full backend test suite passed with 433 passed and 1 skipped",
+    "runtime regression was not observed"
+  ],
+  "interpretation": [
+    "session-123 is acceptable as v0.1",
+    "opt-in mode is a temporary compatibility decision rather than the final target state",
+    "default-on transition should be handled in a follow-up session"
+  ],
+  "open_issues": [
+    "drift_check_v01 is opt-in rather than default-on",
+    "existing session definitions may not yet satisfy drift v0.1 requirements"
+  ],
+  "adopted_decisions": [
+    "completion_status is review_required",
+    "opt-in mode is accepted as temporary compatibility mode",
+    "new sessions should adopt drift_check_v01: true by default",
+    "default-on migration must be decided separately"
+  ]
+}
