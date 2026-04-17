@@ -1,0 +1,97 @@
+{
+  "session_id": "session-124",
+  "phase_id": "phase6",
+  "title": "drift detector 適用方針固定と既存 session 移行戦略の正本化",
+  "goal": "session-123 で導入した drift detector v0.1 の適用方針を正本化し、opt-in mode の位置付け、新規 session の既定運用、既存 session の移行条件、default-on への移行判断条件を明文化する",
+  "scope": [
+    "docs/sessions/session-124.json の新規作成",
+    "docs/acceptance/session-124.yaml の新規作成",
+    "docs/global_rules.md への drift detector 適用方針の追記",
+    "docs/master_instruction.md への temporary compatibility mode の位置付け追記",
+    "docs/reports/session-123-completion-report.json の新規作成"
+  ],
+  "out_of_scope": [
+    "orchestration/run_session.py の変更",
+    "orchestration/drift_detector.py の変更",
+    "backend/tests/ の変更",
+    "既存 session JSON の一括修正",
+    "default-on への即時切替",
+    "M03 / M04 の実装",
+    "CI / GitHub Actions 導入",
+    "Card_task_02 側の変更"
+  ],
+  "constraints": [
+    "1セッション1目的を厳守する",
+    "docs-only セッションとして扱う",
+    "run_session.py を含む runtime コードには触れない",
+    "session-123 の opt-in 実装を temporary compatibility mode として明文化する",
+    "新規 session は原則 drift_check_v01: true とする方針を明記する",
+    "既存 session は直ちに default-on へ切り替えず、段階移行とする",
+    "default-on へ切り替えるための条件を明文化する",
+    "review_points は現行 global_rules.md の固定4軸に完全一致させる",
+    "completion_status は usable_for_self / review_required / failed の3値のみ許可する",
+    "変更ファイル数は最大5ファイル以内とする"
+  ],
+  "acceptance_ref": "docs/acceptance/session-124.yaml",
+  "allowed_changes": [
+    "docs/sessions/session-124.json",
+    "docs/acceptance/session-124.yaml",
+    "docs/global_rules.md",
+    "docs/master_instruction.md",
+    "docs/reports/session-123-completion-report.json"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/session-124.json: 新規セッション定義の追加のみ",
+    "docs/acceptance/session-124.yaml: session-124 に対応する acceptance 定義の追加のみ",
+    "docs/global_rules.md: drift detector v0.1 の適用方針、新規 session の原則、既存 session の段階移行条件、default-on 移行条件の追記のみ。既存セクション変更なし",
+    "docs/master_instruction.md: temporary compatibility mode と drift detector の位置付けに関する短い追記のみ。既存セクション変更なし",
+    "docs/reports/session-123-completion-report.json: session-123 の completion_status と opt-in mode の位置付けを記録する新規 report の作成のみ"
+  ],
+  "forbidden_changes": [
+    "orchestration/",
+    "backend/",
+    ".github/",
+    "docs/sessions/ 配下の既存ファイル",
+    "docs/acceptance/ 配下の既存ファイル",
+    "Card_task_02 側の全ファイル",
+    "provider / retry / patch_apply / report schema の既存仕様"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-124-01",
+      "type": "document_rule",
+      "condition": "drift detector v0.1 の opt-in mode が temporary compatibility mode として docs に明文化されている"
+    },
+    {
+      "id": "CC-124-02",
+      "type": "document_rule",
+      "condition": "新規 session は原則 drift_check_v01: true とする方針が docs に明文化されている"
+    },
+    {
+      "id": "CC-124-03",
+      "type": "document_rule",
+      "condition": "既存 session は段階移行とし、default-on へ切り替える条件が docs に明文化されている"
+    },
+    {
+      "id": "CC-124-04",
+      "type": "artifact",
+      "condition": "docs/reports/session-123-completion-report.json が作成され、session-123 が review_required であることと opt-in mode の採用理由を記録している"
+    },
+    {
+      "id": "CC-124-05",
+      "type": "side_effect_free",
+      "condition": "runtime コードと既存テストに変更を加えず、docs-only で完結している"
+    },
+    {
+      "id": "CC-124-06",
+      "type": "document_rule",
+      "condition": "drift detector の適用方針が global_rules.md と master_instruction.md の両方に矛盾なく記載されている"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性（テスト・証跡・再現性により、受入判断に足る根拠があること）"
+  ]
+}

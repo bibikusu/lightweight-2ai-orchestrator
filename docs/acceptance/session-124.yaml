@@ -1,0 +1,23 @@
+session_id: session-124
+acceptance:
+  - id: AC-01
+    description: drift detector v0.1 の opt-in mode が temporary compatibility mode として global_rules.md または master_instruction.md に明記されている
+    test_name: test_drift_v01_temporary_compatibility_mode_documented
+  - id: AC-02
+    description: 新規 session は原則 drift_check_v01 true とする方針が docs に明記されている
+    test_name: test_new_sessions_default_to_opt_in_policy_documented
+  - id: AC-03
+    description: 既存 session は直ちに default-on へ切り替えず、段階移行とする方針が docs に明記されている
+    test_name: test_existing_sessions_staged_migration_policy_documented
+  - id: AC-04
+    description: default-on へ移行するための条件が docs に明記されている
+    test_name: test_default_on_transition_conditions_documented
+  - id: AC-05
+    description: session-123 completion report に review_required と opt-in mode の採用理由が記録されている
+    test_name: test_session_123_completion_report_records_review_required_and_opt_in_reason
+  - id: AC-06
+    description: drift detector の適用方針が global_rules.md と master_instruction.md の両方に矛盾なく記載されている
+    test_name: test_drift_policy_consistency_across_docs
+  - id: AC-07
+    description: session-124 が docs-only として完結し、runtime コードに変更がない
+    test_name: test_session_124_is_docs_only_and_runtime_unchanged
