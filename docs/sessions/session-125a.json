@@ -1,0 +1,91 @@
+{
+  "session_id": "session-125a",
+  "phase_id": "phase6",
+  "title": "drift detector の review_points 正本回復(EXPECTED_REVIEW_POINTS 修正)",
+  "goal": "drift_detector.py の EXPECTED_REVIEW_POINTS を正本 global_rules.md 準拠の『検証十分性』に修正し、正本 / 実装 / drift 検査基準の三者整合を回復する",
+  "scope": [
+    "docs/sessions/session-125a.json の新規作成",
+    "docs/acceptance/session-125a.yaml の新規作成",
+    "orchestration/drift_detector.py の EXPECTED_REVIEW_POINTS 定数修正",
+    "backend/tests/test_drift_detector.py の対応テスト更新"
+  ],
+  "out_of_scope": [
+    "run_session.py の変更",
+    "既存 session JSON 35件の一括書き換え",
+    "docs/global_rules.md の変更(正本は既に正しい)",
+    "docs/master_instruction.md の変更",
+    "drift_check_v01 の default-on 化・閾値確定・session-126 実測・M03/M04 実装",
+    "CI / GitHub Actions 導入",
+    "Card_task_02 側のファイル変更"
+  ],
+  "constraints": [
+    "1セッション1目的を厳守する",
+    "変更ファイル数は最大4ファイル以内とする",
+    "run_session.py には一切触れない",
+    "docs/global_rules.md には一切触れない(正本は既に正しい)",
+    "EXPECTED_REVIEW_POINTS 第4軸を『検証十分性（テスト・証跡・再現性により、受入判断に足る根拠があること）』に修正する",
+    "既存 session 35件(実装過不足なし採用)は履歴として保持し書き換えない",
+    "review_points は現行 global_rules.md の固定4軸『検証十分性』に完全一致させる",
+    "completion_status は usable_for_self / review_required / failed の3値のみ許可する",
+    "sandbox/session-125a ブランチで作業し、main 直接運用を避ける"
+  ],
+  "acceptance_ref": "docs/acceptance/session-125a.yaml",
+  "allowed_changes": [
+    "docs/sessions/session-125a.json",
+    "docs/acceptance/session-125a.yaml",
+    "orchestration/drift_detector.py",
+    "backend/tests/test_drift_detector.py"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/session-125a.json: session-125a 定義の新規追加のみ",
+    "docs/acceptance/session-125a.yaml: session-125a の acceptance 定義の新規追加のみ",
+    "orchestration/drift_detector.py: EXPECTED_REVIEW_POINTS 定数の第4要素のみを『実装過不足なし』から『検証十分性（テスト・証跡・再現性により、受入判断に足る根拠があること）』へ修正。他関数・他定数の変更なし",
+    "backend/tests/test_drift_detector.py: test_review_points_must_match_fixed_four_axes および関連テストの期待値を『検証十分性』に更新。追加テスト test_review_points_rejects_old_jisso_kabusoku_nashi で過去の誤値『実装過不足なし』が fail することを確認。他テストの変更なし"
+  ],
+  "forbidden_changes": [
+    "orchestration/run_session.py",
+    "orchestration/providers/",
+    "orchestration/config.yaml",
+    "docs/sessions/ 配下の既存ファイル",
+    "docs/acceptance/ 配下の既存ファイル",
+    "docs/global_rules.md",
+    "docs/master_instruction.md",
+    ".github/",
+    "Card_task_02 側の全ファイル",
+    "既存 session 35件の review_points"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-125A-01",
+      "type": "document_rule",
+      "condition": "drift_detector.py の EXPECTED_REVIEW_POINTS 第4要素が『検証十分性（テスト・証跡・再現性により、受入判断に足る根拠があること）』になっている"
+    },
+    {
+      "id": "CC-125A-02",
+      "type": "non_regression",
+      "condition": "test_drift_detector.py の既存5テストが全て PASS し、新規の過去誤値拒否テストも PASS する"
+    },
+    {
+      "id": "CC-125A-03",
+      "type": "non_regression",
+      "condition": "backend/tests/ 全体が回帰なく PASS する(既存 433 passed, 1 skipped を維持)"
+    },
+    {
+      "id": "CC-125A-04",
+      "type": "side_effect_free",
+      "condition": "run_session.py および docs/global_rules.md / docs/master_instruction.md に変更が発生していない"
+    },
+    {
+      "id": "CC-125A-05",
+      "type": "state_transition_consistent",
+      "condition": "正本 global_rules.md と drift_detector.py の EXPECTED_REVIEW_POINTS が完全一致する"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性（テスト・証跡・再現性により、受入判断に足る根拠があること）"
+  ],
+  "drift_check_v01": true
+}
