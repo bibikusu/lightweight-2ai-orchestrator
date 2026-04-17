@@ -848,3 +848,31 @@ session 定義ファイルは、少なくとも以下のいずれかの方式で
   - allowed_changes_detail の形式準拠
   - acceptance.test_name の必須項目充足
 - temporary compatibility mode の恒久化は禁止する。後続 session で移行方針を定期的に見直すこと。
+
+## drift detector default-on 移行条件
+
+drift detector は以下の条件をすべて満たした場合に default-on に移行する。
+
+### 必須条件（項目のみ定義・数値は session-126 実測後に確定）
+
+- 全 session の required keys 充足率が閾値（session-126 で決定）を超えていること
+- review_points が固定4軸に完全一致している session の比率が閾値（session-126 で決定）を超えていること
+- allowed_changes_detail の形式違反率が閾値（session-126 で決定）未満であること
+- acceptance.test_name 欠落が存在しないこと
+
+### 閾値確定プロセス
+
+- session-126 で既存 session 群の実測を行う
+- 実測結果を踏まえて default-on 移行閾値の具体数値を事後追記する
+- 実測前に default-on 移行判断を行わない
+
+### 段階移行ルール
+
+- Phase 1: 新規 session のみ原則 drift_check_v01 を付与する
+- Phase 2: 準拠確認済みの既存 session に適用する
+- Phase 3: 全 session に強制適用する
+
+### fail 時の挙動
+
+- default-on 適用後は drift fail の場合、必ず fail-fast で停止する
+- override は行わない
