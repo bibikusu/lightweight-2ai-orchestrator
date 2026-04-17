@@ -1,0 +1,91 @@
+{
+  "session_id": "session-126",
+  "phase_id": "phase6",
+  "title": "既存 session 群の drift 準拠率実測と default-on 閾値候補 report 化",
+  "goal": "既存 session 群に対して drift detector v0.1 の基準で実測を行い、required keys、review_points、allowed_changes_detail、acceptance.test_name の準拠状況を report として保存する",
+  "scope": [
+    "docs/sessions/session-126.json の新規作成",
+    "docs/acceptance/session-126.yaml の新規作成",
+    "docs/reports/session-126-drift-baseline-report.json の新規作成",
+    "docs/reports/session-126-drift-baseline-report.md の新規作成"
+  ],
+  "out_of_scope": [
+    "orchestration/ 配下のコード変更",
+    "backend/ 配下のコード変更",
+    "drift_detector.py の変更",
+    "run_session.py の変更",
+    "既存 session JSON の修正",
+    "global_rules.md の変更",
+    "default-on の実装切替 / M03 / M04 実装 / CI 導入"
+  ],
+  "constraints": [
+    "docs-only セッションとする",
+    "1セッション1目的を厳守する",
+    "変更ファイル数は最大4ファイル以内とする",
+    "実測対象は docs/sessions/ と docs/acceptance/ に存在する既存定義群とする",
+    "閾値の具体数値を正本ルールとして確定しない",
+    "既存 session 群を一切書き換えない",
+    "実測に使用するスクリプトは成果物に含めない",
+    "report は機械可読 JSON と人間可読 Markdown の両方を作成する",
+    "review_points は現行正本『検証十分性』を基準に判定する",
+    "sandbox/session-126 ブランチで作業し、main 直接運用を避ける"
+  ],
+  "acceptance_ref": "docs/acceptance/session-126.yaml",
+  "allowed_changes": [
+    "docs/sessions/session-126.json",
+    "docs/acceptance/session-126.yaml",
+    "docs/reports/session-126-drift-baseline-report.json",
+    "docs/reports/session-126-drift-baseline-report.md"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/session-126.json: session-126 定義の新規追加のみ",
+    "docs/acceptance/session-126.yaml: session-126 の acceptance 定義の新規追加のみ",
+    "docs/reports/session-126-drift-baseline-report.json: 既存 session 群の drift 実測結果を JSON で記録する新規 report 作成のみ",
+    "docs/reports/session-126-drift-baseline-report.md: 実測結果の要約と解釈を Markdown で記録する新規 report 作成のみ"
+  ],
+  "forbidden_changes": [
+    "orchestration/",
+    "backend/",
+    "docs/sessions/ 配下の既存ファイル",
+    "docs/acceptance/ 配下の既存ファイル",
+    "docs/global_rules.md",
+    "docs/master_instruction.md",
+    ".github/",
+    "run_session.py",
+    "drift_detector.py"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-126-01",
+      "type": "artifact",
+      "condition": "既存 session 群の drift 実測結果が JSON report として保存されている"
+    },
+    {
+      "id": "CC-126-02",
+      "type": "artifact",
+      "condition": "実測結果の要約・解釈・次アクション候補が Markdown report として保存されている"
+    },
+    {
+      "id": "CC-126-03",
+      "type": "document_rule",
+      "condition": "required keys、review_points、allowed_changes_detail、acceptance.test_name の4観点で集計されている"
+    },
+    {
+      "id": "CC-126-04",
+      "type": "side_effect_free",
+      "condition": "既存 session 定義、runtime コード、既存テストに変更が発生していない"
+    },
+    {
+      "id": "CC-126-05",
+      "type": "state_transition_consistent",
+      "condition": "default-on 閾値候補の判断材料は report に含むが、正本ルールとしての確定値は書かれていない"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性（テスト・証跡・再現性により、受入判断に足る根拠があること）"
+  ],
+  "drift_check_v01": true
+}

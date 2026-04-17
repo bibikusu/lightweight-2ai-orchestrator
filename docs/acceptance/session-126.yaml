@@ -1,0 +1,17 @@
+session_id: session-126
+acceptance:
+  - id: AC-01
+    description: docs/reports/session-126-drift-baseline-report.json が存在し、既存 session 群の drift 実測結果を含んでいる
+    test_name: test_drift_baseline_json_report_exists
+  - id: AC-02
+    description: docs/reports/session-126-drift-baseline-report.md が存在し、実測結果の要約と解釈を含んでいる
+    test_name: test_drift_baseline_markdown_report_exists
+  - id: AC-03
+    description: report が required keys、review_points、allowed_changes_detail、acceptance.test_name の4観点で集計している
+    test_name: test_report_covers_four_drift_dimensions
+  - id: AC-04
+    description: 既存 session 群・runtime コード・テストコードに変更が発生していない
+    test_name: test_no_existing_definitions_or_runtime_changed
+  - id: AC-05
+    description: report は default-on 判断材料を含むが、具体閾値を正本ルールとして確定していない
+    test_name: test_report_does_not_finalize_thresholds
