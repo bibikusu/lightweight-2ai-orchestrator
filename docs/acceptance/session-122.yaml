@@ -1,0 +1,26 @@
+session_id: session-122
+acceptance:
+  - id: AC-122-01
+    description: docs/project_registry.yaml は lightweight_2ai_orchestrator を含む 10プロジェクトを version 2 として定義する
+    test_name: test_project_registry_defines_ten_projects_in_version_2
+  - id: AC-122-02
+    description: project_registry の target_repo は実パスではなく論理名として表現される
+    test_name: test_project_registry_uses_logical_target_repo_names
+  - id: AC-122-03
+    description: run_session.py の REPO_REGISTRY は A01〜A10 の論理名を project 実ディレクトリへ解決できる
+    test_name: test_repo_registry_resolves_a01_to_a10_projects
+  - id: AC-122-04
+    description: lightweight_2ai_orchestrator の既存解決は維持される
+    test_name: test_repo_registry_preserves_orchestrator_resolution
+  - id: AC-122-05
+    description: legacy alias が必要な project は最小限の互換を維持する
+    test_name: test_repo_registry_preserves_required_legacy_aliases
+  - id: AC-122-06
+    description: registry 正本化は retry / patch / report / execution フローに影響を与えない
+    test_name: test_registry_canonicalization_does_not_modify_executor_flow
+  - id: AC-122-07
+    description: 実在確認済みの 10プロジェクト directory と project_root 定義が一致する
+    test_name: test_project_registry_paths_match_existing_project_directories
+  - id: AC-122-08
+    description: 4コマンド検証が PASS する
+    test_name: test_existing_checks_pass_for_session_122

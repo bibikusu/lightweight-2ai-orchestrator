@@ -1,0 +1,94 @@
+{
+  "session_id": "session-122",
+  "project_id": "lightweight_2ai_orchestrator",
+  "target_repo": "bibikusu/lightweight-2ai-orchestrator",
+  "phase_id": "master_orchestrator_phase1",
+  "title": "Canonicalize project registry and repo registry for 10-project support",
+  "goal": "10プロジェクト横断運用の前提として、docs/project_registry.yaml と orchestration/run_session.py の論理名ベース registry を正本化し、project_id / target_repo / project_root の整合を固定する",
+  "scope": [
+    "docs/project_registry.yaml の version 2 化と 10プロジェクト定義の正本化",
+    "orchestration/run_session.py の REPO_REGISTRY を 10プロジェクト対応に拡張",
+    "target_repo を論理名で解決する前提の最小整合修正",
+    "registry 正本化に対する最小テスト追加"
+  ],
+  "out_of_scope": [
+    "run_session.py の retry ロジック変更",
+    "run_session.py の patch_apply / report / execution フロー変更",
+    "Master Orchestrator M03 resume/checkpoint 実装",
+    "Master Orchestrator M04 backlog→session bridge 実装",
+    "provider 挙動変更",
+    "project 個別仕様書の修正",
+    "A02_fina 量産投入",
+    "CLI 仕様追加"
+  ],
+  "constraints": [
+    "1セッション1目的を厳守すること",
+    "変更対象は docs/project_registry.yaml と orchestration/run_session.py を中心に閉じること",
+    "10プロジェクトの project_root は確認済み実ディレクトリに一致させること",
+    "target_repo は実パスではなく論理名を正本として扱うこと",
+    "既存 lightweight_2ai_orchestrator の project_id / target_repo は壊さないこと",
+    "legacy alias が必要なものは最小限だけ維持すること",
+    "run_session.py の既存 executor / retry / patch / report 責務は変更しないこと",
+    "通常コードセッションとして4コマンド検証対象にすること",
+    "review_points 第4軸は実装過不足なしとすること",
+    "着手前に git status --short で working tree clean を確認すること",
+    "変更ファイル数は最大5ファイル以内とすること"
+  ],
+  "acceptance_ref": "docs/acceptance/session-122.yaml",
+  "allowed_changes": [
+    "docs/project_registry.yaml",
+    "orchestration/run_session.py",
+    "backend/tests/test_project_registry_canonicalization.py",
+    "docs/reports/session-122-report.md"
+  ],
+  "allowed_changes_detail": [
+    "docs/project_registry.yaml: version 2 化、10プロジェクトの project_id / target_repo / project_root / docs_root / artifact_namespace の正本定義のみ",
+    "orchestration/run_session.py: REPO_REGISTRY の論理名→実パス対応追加、および registry 解決の最小整合修正のみ",
+    "backend/tests/test_project_registry_canonicalization.py: session-122 acceptance に対応する最小テストのみ追加",
+    "docs/reports/session-122-report.md: session-122 完了報告の新規追加のみ"
+  ],
+  "forbidden_changes": [
+    "orchestration/plan_schema.py",
+    "orchestration/run_plan.py",
+    "orchestration/providers/",
+    "docs/sessions/",
+    "docs/acceptance/",
+    ".github/",
+    "orchestration/config.yaml",
+    "docs/plans/",
+    "docs/backlogs/"
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "実装過不足なし"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-122-01",
+      "type": "document_rule",
+      "condition": "docs/project_registry.yaml が 10プロジェクトを論理名ベースで一貫して表現する"
+    },
+    {
+      "id": "CC-122-02",
+      "type": "artifact",
+      "condition": "run_session.py が target_repo 論理名から各 project_root を解決できる"
+    },
+    {
+      "id": "CC-122-03",
+      "type": "state_transition_consistent",
+      "condition": "lightweight_2ai_orchestrator を含む既存 project 解決が壊れていない"
+    },
+    {
+      "id": "CC-122-04",
+      "type": "non_regression",
+      "condition": "retry / patch_apply / session executor の既存挙動に影響を与えない"
+    },
+    {
+      "id": "CC-122-05",
+      "type": "side_effect_free",
+      "condition": "変更は registry 正本化に限定され、M03/M04 や project 個別仕様へ波及しない"
+    }
+  ]
+}
