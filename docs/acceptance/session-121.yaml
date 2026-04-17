@@ -1,0 +1,34 @@
+session_id: session-121
+
+acceptance:
+  - id: AC-M02-01
+    description: validated plan の explicit_list に含まれる session_ids を順次処理できる
+    test_name: test_run_plan_executes_explicit_list_sessions_in_order
+
+  - id: AC-M02-02
+    description: run_session.py の呼び出しは subprocess 経由で行われ、Master 自身は session 実装責務を持たない
+    test_name: test_run_plan_uses_subprocess_to_invoke_session_executor
+
+  - id: AC-M02-03
+    description: stop_policy が stop_on_fail の場合、失敗した session の時点で後続 session 実行を停止する
+    test_name: test_run_plan_stops_on_first_failed_session_when_stop_on_fail
+
+  - id: AC-M02-04
+    description: すべて成功した場合、最小 aggregate report を生成できる
+    test_name: test_run_plan_generates_minimal_aggregate_report_on_success
+
+  - id: AC-M02-05
+    description: aggregate report は各 session の status と changed_files と checks を最低限保持する
+    test_name: test_aggregate_report_contains_minimum_session_fields
+
+  - id: AC-M02-06
+    description: M02 では checkpoint/resume を実装しない
+    test_name: test_run_plan_m02_does_not_implement_resume_or_checkpoint
+
+  - id: AC-M02-07
+    description: run_session.py の retry 責務に影響を与えない
+    test_name: test_m02_does_not_modify_retry_logic
+
+  - id: AC-M02-08
+    description: 4コマンド検証が PASS する
+    test_name: test_existing_checks_pass_for_m02

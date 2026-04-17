@@ -1,0 +1,27 @@
+{
+  "session_id": "session-121",
+  "project_id": "lightweight_2ai_orchestrator",
+  "target_repo": "bibikusu/lightweight-2ai-orchestrator",
+  "phase_id": "master_orchestrator_phase1",
+  "title": "Master Orchestrator M02: sequential executor",
+  "goal": "M01 で検証済みの plan を入力として、session_source.session_ids に列挙された session を run_session.py に順次渡し、最小の停止条件と結果集約を実装する",
+  "scope": [
+    "validated plan を入力として explicit_list の session_ids を順次処理する最小実行フロー",
+    "run_session.py を subprocess 経由で順次呼び出す最小導線",
+    "stop_policy=stop_on_fail の最小実装",
+    "各 session 実行後の report.json の最小読込と aggregate report 生成",
+    "M02 対応テストの追加"
+  ],
+  "out_of_scope": "project registry / repo registry の正本化"
+  ],
+  "constraints": [
+    "1セッション1目的を厳守すること",
+    "Master Orchestrator は run_session.py の上位ラッパ前提とし、session executor の責務を侵食しないこと",
+    "M02 では session_source.type=explicit_list のみ扱うこと",
+    "M02 では stop_policy は stop_on_fail のみ最小実装し、continue_non_blocking は未対応としてよい",
+    "M02 では checkpoint / resume を実装しないこと",
+    "M02 では project registry 
+    "通常コードセッションとして4コマンド検証対象にすること",
+    "着手前に git status --short で working tree clean を確認すること",
+
+EOM
