@@ -1,0 +1,5 @@
+backlog_id: backlog-01
+items:
+  - id: task-001
+    title: M01 validation scaffold
+    status: open
