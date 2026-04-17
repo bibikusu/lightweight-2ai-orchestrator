@@ -1,0 +1,17 @@
+session_id: session-127
+acceptance:
+  - id: AC-01
+    description: 新規 session に canonical review_points 必須ルールが global_rules.md に定義されている
+    test_name: test_new_sessions_require_canonical_review_points
+  - id: AC-02
+    description: legacy session が whitelist によって明示管理される方針が global_rules.md に定義されている
+    test_name: test_legacy_sessions_are_whitelisted
+  - id: AC-03
+    description: docs/reports/legacy-session-whitelist.json が存在し legacy session ID 一覧を含む
+    test_name: test_legacy_whitelist_exists
+  - id: AC-04
+    description: runtime コードおよび既存 session に変更が発生していない
+    test_name: test_no_runtime_changes
+  - id: AC-05
+    description: global_rules.md と master_instruction.md の方針が矛盾なく記載されている
+    test_name: test_policy_consistency

@@ -1,0 +1,98 @@
+{
+  "session_id": "session-127",
+  "phase_id": "phase6",
+  "title": "新規 session 厳格化と legacy session 凍結方針の固定（whitelist方式）",
+  "goal": "既存 session 群を legacy としてホワイトリスト管理し、新規 session に canonical review_points と drift_check_v01 を原則適用する運用方針を正本として定義する",
+  "scope": [
+    "docs/sessions/session-127.json の新規作成",
+    "docs/acceptance/session-127.yaml の新規作成",
+    "docs/global_rules.md への new/legacy session 運用ルール追記",
+    "docs/master_instruction.md への legacy 凍結と新規厳格化方針追記",
+    "docs/reports/legacy-session-whitelist.json の新規作成"
+  ],
+  "out_of_scope": [
+    "orchestration/ 配下のコード変更",
+    "backend/ 配下のコード変更",
+    "drift_detector.py の変更",
+    "run_session.py の変更",
+    "既存 session JSON の修正",
+    "default-on の全面切替",
+    "session-127b の runtime 実装",
+    "session-128 の実施"
+  ],
+  "constraints": [
+    "docs-only セッションとする",
+    "1セッション1目的を厳守する",
+    "変更ファイル数は最大5ファイル以内とする",
+    "既存 session 群は履歴として保持し書き換えない",
+    "legacy session は whitelist(JSON) により明示管理する",
+    "session-127 は docs-only とし、runtime 実装を含めない",
+    "legacy session の識別は docs/reports/legacy-session-whitelist.json に明示列挙する",
+    "drift detector への legacy 除外ロジック実装は session-127b で扱う",
+    "session-128 は session-127 完了後の次優先セッションとして起票する",
+    "新規 session は canonical review_points と drift_check_v01 を原則必須とする",
+    "legacy session は default-on 強制対象外とする",
+    "review_points は正本『検証十分性』に一致させる",
+    "completion_status は usable_for_self / review_required / failed の3値のみ許可する",
+    "sandbox/session-127 ブランチで作業し、main 直接運用を避ける"
+  ],
+  "acceptance_ref": "docs/acceptance/session-127.yaml",
+  "allowed_changes": [
+    "docs/sessions/session-127.json",
+    "docs/acceptance/session-127.yaml",
+    "docs/global_rules.md",
+    "docs/master_instruction.md",
+    "docs/reports/legacy-session-whitelist.json"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/session-127.json: 新規追加のみ",
+    "docs/acceptance/session-127.yaml: 新規追加のみ",
+    "docs/global_rules.md: new/legacy 定義と運用ルールの末尾追記のみ。既存セクション変更なし",
+    "docs/master_instruction.md: legacy 凍結と新規厳格化方針の末尾追記のみ。既存セクション変更なし",
+    "docs/reports/legacy-session-whitelist.json: legacy session ID一覧の新規作成のみ"
+  ],
+  "forbidden_changes": [
+    "orchestration/",
+    "backend/",
+    "docs/sessions/ 配下の既存ファイル",
+    "docs/acceptance/ 配下の既存ファイル",
+    "docs/reports/ 配下の既存ファイル",
+    ".github/",
+    "run_session.py",
+    "drift_detector.py"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-127-01",
+      "type": "document_rule",
+      "condition": "new session の canonical review_points 必須 / drift_check_v01 原則必須ルールが global_rules.md に明記されている"
+    },
+    {
+      "id": "CC-127-02",
+      "type": "document_rule",
+      "condition": "legacy session が whitelist 管理される方針が global_rules.md に明記されている"
+    },
+    {
+      "id": "CC-127-03",
+      "type": "artifact",
+      "condition": "docs/reports/legacy-session-whitelist.json が作成され legacy session ID 一覧を含む"
+    },
+    {
+      "id": "CC-127-04",
+      "type": "side_effect_free",
+      "condition": "runtime コードおよび既存 session に変更が発生していない"
+    },
+    {
+      "id": "CC-127-05",
+      "type": "state_transition_consistent",
+      "condition": "global_rules.md と master_instruction.md の方針が矛盾なく記載されている"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性（テスト・証跡・再現性により、受入判断に足る根拠があること）"
+  ],
+  "drift_check_v01": true
+}
