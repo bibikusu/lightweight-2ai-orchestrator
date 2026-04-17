@@ -4547,6 +4547,30 @@ def _run_single_session_impl(args: argparse.Namespace) -> int:
             log_stage_progress(args.session_id, "git_guard", "完了 → 以降は API 呼び出し")
             log_stage_event(session_id=args.session_id, stage=stage, event="end")
 
+        # drift v0.1 は session に drift_check_v01 が真のときのみ（既存セッションとテストモックとの整合）。
+        # main() 冒頭で sys.path が整備済みであることだけが import の前提。
+        if bool(ctx.session_data.get("drift_check_v01")):
+            from orchestration.drift_detector import run_drift_check
+
+            drift_session_path = session_dir / "_drift_session.json"
+            drift_acceptance_path = session_dir / "_drift_acceptance.yaml"
+            save_json(drift_session_path, ctx.session_data)
+            parsed_ad = ctx.acceptance_data.get("parsed")
+            if not isinstance(parsed_ad, dict):
+                parsed_ad = {}
+            with drift_acceptance_path.open("w", encoding="utf-8") as df:
+                yaml.safe_dump(parsed_ad, df, allow_unicode=True, default_flow_style=False)
+            drift_result = run_drift_check(
+                str(drift_session_path.resolve()),
+                str(drift_acceptance_path.resolve()),
+            )
+            if not drift_result["ok"]:
+                drift_path = session_dir / "drift_check.json"
+                with drift_path.open("w", encoding="utf-8") as f:
+                    json.dump(drift_result, f, ensure_ascii=False, indent=2)
+                print("Drift check failed")
+                sys.exit(1)
+
         spec_system, spec_user = build_prepared_spec_prompts(ctx)
         save_text(session_dir / "prompts" / "prepared_spec_system.txt", spec_system)
         save_text(session_dir / "prompts" / "prepared_spec_user.txt", spec_user)
