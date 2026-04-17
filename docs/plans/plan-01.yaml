@@ -1,0 +1,7 @@
+plan_id: plan-01
+execution_mode: run_existing_sessions
+session_source:
+  type: explicit_list
+  session_ids:
+    - session-120
+backlog_ref: docs/backlogs/backlog-01.yaml
