@@ -1,0 +1,70 @@
+{
+  "session_id": "session-120",
+  "project_id": "lightweight_2ai_orchestrator",
+  "target_repo": "bibikusu/lightweight-2ai-orchestrator",
+  "phase_id": "master_orchestrator_phase1",
+  "title": "Master Orchestrator M01: plan loader and validation",
+  "goal": "Master Orchestrator の最小入口として plan.yaml を読み込み、required keys・配置標準・execution_mode 制約・dry-run 安全確認を fail-fast で検証できる状態にする",
+  "scope": [
+    "docs/plans/plan-01.yaml を前提とした plan 入力の最小スキーマ検証",
+    "docs/backlogs/backlog-01.yaml 参照形式の検証",
+    "M04 未完成時点で execution_mode=run_existing_sessions のみ許可するバリデーション",
+    "Master plan 全体の dry-run 構造検証の最小導線追加",
+    "M01 対応テストの追加"
+  ],
+  "out_再定義"
+  ],
+  "constraints": [
+    "1セッション1目的を厳守すること",
+    "Master Orchestrator は run_session.py の上位ラッパ前提とし、session executor の責務を侵食しないこと",
+    "M04 未完成時点では execution_mode は run_existing_sessions のみ許可すること",
+    "plan.yaml の標準配置は docs/plans/plan-01.yaml とすること",
+    "backlog-01 の標準配置は docs/backlogs/backlog-01.yaml とすること",
+    "allowed_changes_detail は list[str] で記述すること",
+    "review_points 第4軸は実装過不足なしとすること",
+    "通常コードセッションとして4コマンド検証対象にすること",
+    "変更ファイル数は最大5ファイル以内とすること"
+  ],
+  "acceptance_ref": "docs/acceptance/session-120.yaml",
+  "allowed_changes": [
+    "orchestration/run_plan.py",
+    "orchestration/plan_schema.py",
+    "backend/tests/test_run_plan_loader_validation.py",
+    "docs/plans/plan-01.yaml",
+    "docs/backlnd/tests/test_run_plan_loader_validation.py: M01 受入条件に対応する単体テストのみ追加",
+    "docs/plans/plan-01.yaml: Master plan 雛形の新規追加のみ",
+    "docs/backlogs/backlog-01.yaml: backlog 雛形の新規追加のみ"
+  ],
+  "forbidden_changes": [
+    "orchestration/run_session.py",
+    "orchestration/providers/",
+    "docs/sessions/",
+    "docs/acceptance/",
+    ".github/",
+    "orchestration/config.yaml"
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "実装過不足なし"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-M01-01",
+      "type": "document_rule",
+      "condition": "docs/plans/plan-01.yaml および docs/backlogs/backlog-01.yaml の標準配置が一貫して参照される"
+    },
+    {
+      "id": "CC-M01-02",
+      "type": "artifact",
+      "condition": "plan loader が required keys を fail-fast 検証し、dry-run で session 実行を行わず構造確認の  "type": "non_regression",
+      "condition": "run_session.py の retry_loop に影響を与えない"
+    },
+    {
+      "id": "CC-M01-05",
+      "type": "side_effect_free",
+      "condition": "M01 の変更が loader/validation に限定される"
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+session_id: session-120
+
+acceptance:
+  - id: AC-M01-01
+    description: plan loader は docs/plans/plan-01.yaml を標準入力として読み込める
+    test_name: test_plan_loader_reads_standard_plan_path
+
+  - id: AC-M01-02
+    description: backlog 参照は docs/backlogs/backlog-01.yaml を標準配置として扱える
+    test_name: test_plan_loader_accepts_standard_backlog_path
+
+  - id: AC-M01-03
+    description: plan.yaml の required keys が欠落した場合 fail-fast で報告される
+    test_name: test_plan_loader_reports_missing_required_keys_fail_fast
+
+  - id: AC-M01-04
+    description: M04 未完成時点では execution_mode=run_existing_sessions のみ許可される
+    test_nラーになる
+    test_name: test_plan_loader_rejects_generate_or_mixed_before_m04
+
+  - id: AC-M01-06
+    description: --dry-run は構造検証のみを行い session 実行を行わない
+    test_name: test_run_plan_dry_run_does_not_execute_sessions
+
+  - id: AC-M01-07
+    description: run_session.py の retry 責務に影響を与えない
+    test_name: test_m01_does_not_modify_retry_logic
+
+  - id: AC-M01-08
+    description: 4コマンド検証が PASS する
+    test_name: test_existing_checks_pass_for_m01
