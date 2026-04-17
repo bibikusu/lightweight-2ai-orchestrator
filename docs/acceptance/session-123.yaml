@@ -1,0 +1,26 @@
+session_id: session-123
+acceptance:
+  - id: AC-01
+    description: session JSON の required keys 欠落時に、欠落キー全件をソートして fail-fast で報告できる
+    test_name: test_required_keys_missing_reported_all_at_once
+  - id: AC-02
+    description: review_points が現行固定4軸と1件でも不一致の場合に drift violation として fail にできる
+    test_name: test_review_points_must_match_fixed_four_axes
+  - id: AC-03
+    description: allowed_changes_detail が未指定または allowed_changes と対応しない場合に fail にできる
+    test_name: test_allowed_changes_detail_is_required_and_mapped
+  - id: AC-04
+    description: code session で acceptance の各項目に test_name がない場合に fail にできる
+    test_name: test_acceptance_items_require_test_name_for_code_session
+  - id: AC-05
+    description: completion_criteria の型不整合または completion_status の不正値を fail にできる
+    test_name: test_completion_rules_are_validated
+  - id: AC-06
+    description: 妥当な session JSON と acceptance YAML の組み合わせでは drift check が pass し、run_session の後続フローを継続できる
+    test_name: test_valid_session_and_acceptance_pass_drift_check
+  - id: AC-07
+    description: drift check 失敗時に artifacts 配下へ drift_check.json が保存され、failure_type と violations を含む
+    test_name: test_drift_check_artifact_written_on_failure
+  - id: AC-08
+    description: 既存テストが全て PASS し、drift check 追加による回帰がない
+    test_name: test_existing_tests_pass
