@@ -1,0 +1,462 @@
+{
+  "session_id": "session-126",
+  "report_type": "drift_baseline",
+  "canonical_review_points_fourth_axis": "検証十分性（テスト・証跡・再現性により、受入判断に足る根拠があること）",
+  "measured_at": "2026-04-18",
+  "population": {
+    "sessions_scanned": 91,
+    "acceptance_files_scanned": 81
+  },
+  "required_keys": {
+    "compliant_count": 40,
+    "non_compliant_count": 51,
+    "missing_keys_by_session": {
+      "block3-retry-01": [
+        "acceptance_ref",
+        "constraints",
+        "goal",
+        "out_of_scope",
+        "phase_id",
+        "scope",
+        "title"
+      ],
+      "block3-retry-01a": [
+        "acceptance_ref",
+        "constraints",
+        "goal",
+        "out_of_scope",
+        "phase_id",
+        "scope",
+        "title"
+      ],
+      "block3-retry-01b": [
+        "acceptance_ref",
+        "constraints",
+        "goal",
+        "out_of_scope",
+        "phase_id",
+        "scope",
+        "title"
+      ],
+      "block3-retry-02": [
+        "acceptance_ref",
+        "allowed_changes_detail",
+        "constraints",
+        "goal",
+        "out_of_scope",
+        "phase_id",
+        "scope",
+        "title"
+      ],
+      "block3-retry-03a": [
+        "acceptance_ref",
+        "allowed_changes_detail",
+        "constraints",
+        "goal",
+        "out_of_scope",
+        "phase_id",
+        "scope",
+        "title"
+      ],
+      "block4-completion-01": [
+        "acceptance_ref",
+        "allowed_changes_detail",
+        "completion_criteria",
+        "constraints",
+        "forbidden_changes",
+        "out_of_scope",
+        "phase_id",
+        "review_points",
+        "scope"
+      ],
+      "block4-report-01": [
+        "acceptance_ref",
+        "allowed_changes_detail",
+        "completion_criteria",
+        "constraints",
+        "forbidden_changes",
+        "out_of_scope",
+        "phase_id",
+        "review_points",
+        "scope"
+      ],
+      "real-run-safe-01": [
+        "allowed_changes",
+        "allowed_changes_detail",
+        "completion_criteria",
+        "forbidden_changes",
+        "review_points"
+      ],
+      "real-run-safe-02": [
+        "allowed_changes_detail",
+        "completion_criteria",
+        "forbidden_changes",
+        "review_points"
+      ],
+      "session-02": [
+        "allowed_changes",
+        "allowed_changes_detail",
+        "completion_criteria",
+        "forbidden_changes",
+        "review_points"
+      ],
+      "session-03": [
+        "acceptance_ref",
+        "constraints",
+        "goal",
+        "out_of_scope",
+        "phase_id",
+        "scope",
+        "title"
+      ],
+      "session-03a": [
+        "acceptance_ref",
+        "constraints",
+        "goal",
+        "out_of_scope",
+        "phase_id",
+        "scope",
+        "title"
+      ],
+      "session-06": [
+        "review_points"
+      ],
+      "session-07": [
+        "review_points"
+      ],
+      "session-09": [
+        "constraints",
+        "goal",
+        "out_of_scope",
+        "phase_id",
+        "scope",
+        "title"
+      ],
+      "session-106": [
+        "allowed_changes_detail",
+        "completion_criteria",
+        "review_points"
+      ],
+      "session-107": [
+        "completion_criteria",
+        "review_points"
+      ],
+      "session-107b": [
+        "completion_criteria",
+        "review_points"
+      ],
+      "session-108": [
+        "completion_criteria",
+        "review_points"
+      ],
+      "session-109a": [
+        "completion_criteria",
+        "review_points"
+      ],
+      "session-11-duration": [
+        "allowed_changes_detail",
+        "completion_criteria",
+        "review_points"
+      ],
+      "session-120": [
+        "<json_load_failed>"
+      ],
+      "session-21": [
+        "completion_criteria",
+        "forbidden_changes"
+      ],
+      "session-31": [
+        "acceptance_ref",
+        "allowed_changes",
+        "allowed_changes_detail",
+        "completion_criteria",
+        "constraints",
+        "forbidden_changes",
+        "goal",
+        "out_of_scope",
+        "phase_id",
+        "review_points",
+        "scope",
+        "title"
+      ],
+      "session-31a": [
+        "allowed_changes_detail",
+        "completion_criteria",
+        "forbidden_changes",
+        "review_points"
+      ],
+      "session-45": [
+        "acceptance_ref",
+        "constraints",
+        "goal",
+        "out_of_scope",
+        "phase_id",
+        "scope",
+        "title"
+      ],
+      "session-46": [
+        "acceptance_ref",
+        "constraints",
+        "goal",
+        "out_of_scope",
+        "phase_id",
+        "scope",
+        "title"
+      ],
+      "session-47": [
+        "acceptance_ref",
+        "constraints",
+        "goal",
+        "out_of_scope",
+        "phase_id",
+        "scope",
+        "title"
+      ],
+      "session-60": [
+        "acceptance_ref",
+        "constraints",
+        "goal",
+        "out_of_scope",
+        "phase_id",
+        "scope",
+        "title"
+      ],
+      "session-61": [
+        "acceptance_ref",
+        "constraints",
+        "goal",
+        "out_of_scope",
+        "phase_id",
+        "scope",
+        "title"
+      ],
+      "session-65": [
+        "allowed_changes",
+        "allowed_changes_detail",
+        "completion_criteria",
+        "forbidden_changes",
+        "review_points"
+      ],
+      "session-70": [
+        "allowed_changes_detail",
+        "completion_criteria",
+        "review_points"
+      ],
+      "session-80": [
+        "constraints",
+        "goal"
+      ],
+      "session-81": [
+        "completion_criteria",
+        "review_points"
+      ],
+      "session-81a": [
+        "completion_criteria",
+        "review_points"
+      ],
+      "session-82": [
+        "completion_criteria",
+        "review_points"
+      ],
+      "session-83": [
+        "completion_criteria",
+        "review_points"
+      ],
+      "session-84": [
+        "completion_criteria",
+        "review_points"
+      ],
+      "session-85": [
+        "completion_criteria",
+        "review_points"
+      ],
+      "session-86": [
+        "completion_criteria",
+        "review_points"
+      ],
+      "session-87": [
+        "completion_criteria",
+        "review_points"
+      ],
+      "session-88": [
+        "completion_criteria",
+        "review_points"
+      ],
+      "session-89": [
+        "completion_criteria",
+        "review_points"
+      ],
+      "session-90": [
+        "completion_criteria",
+        "review_points"
+      ],
+      "session-91": [
+        "completion_criteria",
+        "review_points"
+      ],
+      "session-92": [
+        "completion_criteria",
+        "review_points"
+      ],
+      "session-93": [
+        "completion_criteria",
+        "review_points"
+      ],
+      "session-94": [
+        "completion_criteria",
+        "review_points"
+      ],
+      "session-95": [
+        "completion_criteria",
+        "review_points"
+      ],
+      "session-96": [
+        "completion_criteria",
+        "review_points"
+      ],
+      "session-97": [
+        "completion_criteria",
+        "review_points"
+      ]
+    },
+    "notes": [
+      "session-120.json は JSON パースに失敗したため、欠落キー一覧の代わりに <json_load_failed> を記録した",
+      "13 必須キーは orchestration/drift_detector.py の SESSION_REQUIRED_KEYS と同一定義に基づく"
+    ]
+  },
+  "review_points": {
+    "canonical_count": 4,
+    "non_canonical_count": 87,
+    "legacy_jisso_kabusoku_count": 31,
+    "other_variant_count": 56,
+    "sessions_with_legacy_value": [
+      "block3-retry-01",
+      "block3-retry-01a",
+      "block3-retry-01b",
+      "block3-retry-02",
+      "phase2-real-01",
+      "phase2-real-02",
+      "session-01",
+      "session-08",
+      "session-09",
+      "session-101",
+      "session-116",
+      "session-122",
+      "session-123",
+      "session-45",
+      "session-46",
+      "session-47",
+      "session-57",
+      "session-58",
+      "session-60",
+      "session-61",
+      "session-66",
+      "session-67",
+      "session-68",
+      "session-69",
+      "session-73",
+      "session-74",
+      "session-75",
+      "session-77",
+      "session-79",
+      "session-80",
+      "session-canary-01"
+    ],
+    "sessions_with_canonical_value": [
+      "session-124",
+      "session-125",
+      "session-125a",
+      "session-126"
+    ],
+    "notes": [
+      "第4軸は review_points[3] を対象とし、正本文字列との完全一致を canonical とした",
+      "legacy は第4軸文字列に「実装過不足なし」を含む場合（session-123 は legacy、session-124/125/125a は canonical）",
+      "drift detector 4部作のうち定義が揃っている session-124/125/125a/126 は第4軸が正本に一致"
+    ]
+  },
+  "allowed_changes_detail": {
+    "compliant_count": 53,
+    "non_compliant_count": 38,
+    "non_compliant_sessions": [
+      "block3-retry-01 (no allowed_changes_detail line for: backend/tests/test_block3_retry_canonical_failure_type.py; no allowed_changes_detail line for: backend/tests/test_block3_retry_json_contract.py)",
+      "block3-retry-01b (no allowed_changes_detail line for: backend/tests/test_retry_instruction_generation.py; no allowed_changes_detail line for: backend/tests/test_failure_type_priority.py)",
+      "phase2-real-01 (each entry must be \"path: description\" (missing \":\"); each entry must be \"path: description\" (missing \":\"); no allowed_changes_detail line for: docs/sessions/phase2-real-01.json; ... (+1 more))",
+      "phase2-real-02 (each entry must be \"path: description\" (missing \":\"); no allowed_changes_detail line for: docs/phase2_operation_guide.md)",
+      "session-03 (each entry must be \"path: description\" (missing \":\"); each entry must be \"path: description\" (missing \":\"); each entry must be \"path: description\" (missing \":\"); ... (+4 more))",
+      "session-03a (each entry must be \"path: description\" (missing \":\"); each entry must be \"path: description\" (missing \":\"); each entry must be \"path: description\" (missing \":\"); ... (+3 more))",
+      "session-06 (allowed_changes_detail must be a list of strings)",
+      "session-07 (allowed_changes_detail must be a list of strings)",
+      "session-102 (no allowed_changes_detail line for: orchestration/run_session.py)",
+      "session-103 (no allowed_changes_detail line for: orchestration/run_session.py; no allowed_changes_detail line for: backend/tests/test_patch_safety.py)",
+      "session-104 (no allowed_changes_detail line for: orchestration/run_session.py; no allowed_changes_detail line for: backend/tests/test_forbidden_paths_v2.py)",
+      "session-105 (no allowed_changes_detail line for: orchestration/run_session.py; no allowed_changes_detail line for: backend/tests/test_logging_v2.py)",
+      "session-120 (session JSON load failed)",
+      "session-45 (each entry must be a non-empty string; each entry must be a non-empty string; no allowed_changes_detail line for: docs/sessions/session-45.json; ... (+1 more))",
+      "session-46 (each entry must be a non-empty string; each entry must be a non-empty string; no allowed_changes_detail line for: docs/sessions/session-46.json; ... (+1 more))",
+      "session-47 (each entry must be a non-empty string; each entry must be a non-empty string; no allowed_changes_detail line for: docs/sessions/session-47.json; ... (+1 more))",
+      "session-57 (each entry must be a non-empty string; no allowed_changes_detail line for: backend/tests/test_live_api_validation.py)",
+      "session-58 (each entry must be a non-empty string; each entry must be a non-empty string; no allowed_changes_detail line for: orchestration/run_session.py; ... (+1 more))",
+      "session-60 (each entry must be a non-empty string; each entry must be a non-empty string; no allowed_changes_detail line for: orchestration/run_session.py; ... (+1 more))",
+      "session-61 (each entry must be a non-empty string; each entry must be a non-empty string; no allowed_changes_detail line for: docs/sessions/session-57.json; ... (+1 more))",
+      "session-81 (no allowed_changes_detail line for: backend/tests/)",
+      "session-81a (no allowed_changes_detail line for: backend/tests/)",
+      "session-82 (no allowed_changes_detail line for: backend/tests/)",
+      "session-83 (no allowed_changes_detail line for: backend/tests/)",
+      "session-84 (no allowed_changes_detail line for: backend/tests/)",
+      "session-85 (no allowed_changes_detail line for: backend/tests/)",
+      "session-86 (no allowed_changes_detail line for: orchestration/providers/; no allowed_changes_detail line for: backend/tests/)",
+      "session-87 (no allowed_changes_detail line for: backend/tests/)",
+      "session-88 (no allowed_changes_detail line for: docs/reports/; no allowed_changes_detail line for: backend/tests/)",
+      "session-89 (no allowed_changes_detail line for: backend/tests/)",
+      "session-90 (no allowed_changes_detail line for: backend/tests/)",
+      "session-91 (no allowed_changes_detail line for: backend/tests/)",
+      "session-92 (no allowed_changes_detail line for: docs/reports/; no allowed_changes_detail line for: backend/tests/)",
+      "session-93 (no allowed_changes_detail line for: orchestration/providers/; no allowed_changes_detail line for: backend/tests/)",
+      "session-94 (no allowed_changes_detail line for: docs/sessions/; no allowed_changes_detail line for: docs/acceptance/; no allowed_changes_detail line for: docs/reports/)",
+      "session-95 (no allowed_changes_detail line for: docs/reports/; no allowed_changes_detail line for: backend/tests/)",
+      "session-96 (no allowed_changes_detail line for: orchestration/providers/; no allowed_changes_detail line for: backend/tests/; no allowed_changes_detail line for: docs/reports/)",
+      "session-97 (no allowed_changes_detail line for: docs/reports/)"
+    ],
+    "notes": [
+      "準拠判定は drift_detector の _validate_allowed_changes_detail と同じ規則（list[str]、コロン区切り、allowed_changes 各行のマッピング）に基づく",
+      "session-120.json がパース不能の場合も非準拠としてカウントする"
+    ]
+  },
+  "acceptance_test_name": {
+    "compliant_count": 63,
+    "non_compliant_count": 18,
+    "missing_sessions": [
+      "session-02",
+      "session-101",
+      "session-102",
+      "session-103",
+      "session-104",
+      "session-105",
+      "session-106",
+      "session-107",
+      "session-107b",
+      "session-108",
+      "session-109a",
+      "session-116",
+      "session-120 (yaml_load_failed)"
+    ],
+    "duplicate_sessions": [
+      "session-11-duration",
+      "session-canary-01"
+    ],
+    "notes": [
+      "ファイル単位で、各 acceptance 要素に test_name があり・同一ファイル内で test_name が重複しないことを準拠とした（drift_detector の _validate_acceptance_test_names と同等）",
+      "session-120.yaml は YAML としてパースできなかったため missing_sessions に yaml_load_failed として含めた"
+    ]
+  },
+  "summary": {
+    "default_on_readiness": "undetermined",
+    "recommended_next_session": "session-127",
+    "recommended_action": "decide threshold candidates and transition strategy based on measured distribution",
+    "key_observations": [
+      "required keys 準拠率が最も低く（40/91）、review_points 正本一致は 4/91 と限定的",
+      "legacy 第4軸「実装過不足なし」は 31 セッションに残存（session-123 を含む）",
+      "session-124・session-125・session-125a・session-126 は第4軸が正本どおりで、ポリシー記述系は揃っている一方、古い命名系 session では非準拠が集中"
+    ]
+  }
+}
