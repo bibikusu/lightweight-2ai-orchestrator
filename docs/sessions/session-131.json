@@ -1,0 +1,84 @@
+{
+  "session_id": "session-131",
+  "phase_id": "M03",
+  "title": "run_session.py に state checkpoint 保存を最小実装する",
+  "goal": "run_session.py の stage 実行状態を JSON で保存し、completed_stages と failure state を記録できる最小 checkpoint 基盤を実装する。resume 読込や実行制御は scope 外とし、書き込み機能のみを導入する",
+  "scope": [
+    "run_session.py への state checkpoint 書き込み処理追加",
+    "completed_stages 更新処理追加",
+    "failure_stage / failure_type 保存追加",
+    "state 保存に関する単体テスト追加"
+  ],
+  "out_of_scope": [
+    "resume 読込処理",
+    "resume 実行処理",
+    "Master 側 state 利用",
+    "整合性チェック強化",
+    "DB 導入",
+    "並列実行",
+    "provider / config 変更"
+  ],
+  "constraints": [
+    "1セッション1目的を厳守する",
+    "state は JSON 形式で保存する",
+    "M03-A で定義した最小 schema(session_id, current_stage, completed_stages, status, timestamp_utc, failure_stage, failure_type)を逸脱しない",
+    "checkpoint 保存のみを実装し resume 実行は入れない",
+    "既存通常実行フローを壊さない",
+    "dry-run と通常実行の差分を壊さない",
+    "変更ファイル数は5以内を目安とする"
+  ],
+  "acceptance_ref": "docs/acceptance/session-131.yaml",
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "backend/tests/test_session_state_checkpoint.py"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/run_session.py: state checkpoint 保存関数の追加、completed_stages 更新処理、failure state 記録に限定して変更可。resume 関連処理の追加や既存 stage ロジック本体の書き換えは禁止",
+    "backend/tests/test_session_state_checkpoint.py: checkpoint 保存と failure state 記録の単体テスト新規追加のみ可"
+  ],
+  "forbidden_changes": [
+    "orchestration/providers/ 配下",
+    "orchestration/config.yaml",
+    ".github/ 配下",
+    "docs/ 配下",
+    "backend/tests/ 配下の他ファイル",
+    "resume 実行ロジックの追加",
+    "Master 側ロジック",
+    "既存 stage 実行ロジック本体の変更"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-01",
+      "type": "artifact",
+      "condition": "state JSON が stage 実行に応じて保存される"
+    },
+    {
+      "id": "CC-02",
+      "type": "state_transition_consistent",
+      "condition": "completed_stages が stage 完了に応じて正しく更新される"
+    },
+    {
+      "id": "CC-03",
+      "type": "state_transition_consistent",
+      "condition": "failure 時に failure_stage と failure_type が保存される"
+    },
+    {
+      "id": "CC-04",
+      "type": "non_regression",
+      "condition": "既存通常実行フローと dry-run の主要フローを壊さない"
+    },
+    {
+      "id": "CC-05",
+      "type": "side_effect_free",
+      "condition": "resume / Master / provider へ scope 外波及がない"
+    }
+  ],
+  "review_points": [
+    "仕様一致(AC達成)",
+    "変更範囲遵守",
+    "副作用なし(既存破壊なし)",
+    "検証十分性"
+  ],
+  "drift_check_v01": true,
+  "verification": "test_based"
+}

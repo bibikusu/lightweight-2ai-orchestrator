@@ -1,0 +1,27 @@
+session_id: session-131
+acceptance:
+  - id: AC-01
+    description: stage 実行後に state JSON が生成または更新される
+    test_name: test_state_checkpoint_written_after_stage
+    completion_criteria_refs:
+      - CC-01
+  - id: AC-02
+    description: stage 完了時に completed_stages が正しく更新される
+    test_name: test_completed_stages_updated_correctly
+    completion_criteria_refs:
+      - CC-02
+  - id: AC-03
+    description: failure 時に failure_stage と failure_type が保存される
+    test_name: test_failure_state_persisted
+    completion_criteria_refs:
+      - CC-03
+  - id: AC-04
+    description: dry-run と通常実行の既存主要フローが壊れていない
+    test_name: test_checkpoint_does_not_break_existing_flow
+    completion_criteria_refs:
+      - CC-04
+  - id: AC-05
+    description: resume 実行や Master 側ロジックなど scope 外変更が混入していない
+    test_name: test_checkpoint_scope_is_preserved
+    completion_criteria_refs:
+      - CC-05
