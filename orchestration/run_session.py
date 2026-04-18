@@ -59,6 +59,40 @@ SPEC_COMPLETION_TYPE_ENUM = frozenset(
     {"document_rule", "artifact", "non_regression", "state_transition_consistent", "side_effect_free"}
 )
 
+# M03-C: pipeline stage 正式リスト (global_rules.md session-132-pre で正本化)
+PIPELINE_STAGES: List[str] = [
+    "loading",
+    "validating",
+    "git_guard",
+    "prepared_spec",
+    "implementation",
+    "patch_apply",
+    "retry_instruction",
+    "implementation_retry",
+    "drift_check",
+    "completed",
+]
+
+RESUME_SKIP_ELIGIBLE_STAGES: Set[str] = {
+    "git_guard",
+    "prepared_spec",
+    "implementation",
+    "patch_apply",
+    "retry_instruction",
+    "implementation_retry",
+    "drift_check",
+}
+
+_RESUME_TIMESTAMP_UTC_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
+
+
+class SessionStateMissingError(Exception):
+    """resume 指定で state.json が存在しないとき raise する。"""
+
+
+class SessionStateInconsistentError(Exception):
+    """resume 指定で state.json の schema または論理整合性に違反があるとき raise する。"""
+
 
 def set_active_repo_root(repo_root: Path) -> None:
     """対象リポジトリの実行基準パスを更新する。"""
@@ -1183,6 +1217,91 @@ def _checkpoint_stage_complete(
         failure_stage=None,
         failure_type=None,
     )
+
+
+def _should_skip_stage_in_resume(stage_name: str, completed_stages: List[str]) -> bool:
+    """git_guard 以降のみ skip 対象（loading / validating は常に実行）。"""
+    if stage_name not in RESUME_SKIP_ELIGIBLE_STAGES:
+        return False
+    return stage_name in completed_stages
+
+
+def _resume_load_state(session_id: str) -> Dict[str, Any]:
+    path = get_active_artifacts_dir() / session_id / "state.json"
+    if not path.is_file():
+        raise SessionStateMissingError(str(path))
+    try:
+        raw = path.read_text(encoding="utf-8")
+        data = json.loads(raw)
+    except json.JSONDecodeError as e:
+        raise SessionStateInconsistentError(str(e)) from e
+    if not isinstance(data, dict):
+        raise SessionStateInconsistentError("state root must be a JSON object")
+    return data
+
+
+def _resume_validate_state(state: Dict[str, Any], cli_session_id: str) -> None:
+    required = (
+        "session_id",
+        "current_stage",
+        "completed_stages",
+        "status",
+        "timestamp_utc",
+        "failure_stage",
+        "failure_type",
+    )
+    for key in required:
+        if key not in state:
+            raise SessionStateInconsistentError(f"missing key: {key}")
+
+    if state["session_id"] != cli_session_id:
+        raise SessionStateInconsistentError("session_id mismatch with CLI")
+
+    ts = state["timestamp_utc"]
+    if not isinstance(ts, str) or not _RESUME_TIMESTAMP_UTC_RE.match(ts):
+        raise SessionStateInconsistentError("timestamp_utc format invalid")
+
+    cs = state["completed_stages"]
+    if not isinstance(cs, list):
+        raise SessionStateInconsistentError("completed_stages must be a list")
+    if any(not isinstance(x, str) for x in cs):
+        raise SessionStateInconsistentError("completed_stages entries must be strings")
+    if len(cs) != len(set(cs)):
+        raise SessionStateInconsistentError("completed_stages must not contain duplicates")
+    if "completed" in cs:
+        raise SessionStateInconsistentError('completed_stages must not contain "completed"')
+    for s in cs:
+        if s not in PIPELINE_STAGES:
+            raise SessionStateInconsistentError("completed_stages contains unknown stage")
+
+    st = state["status"]
+    if st == "completed":
+        if state["failure_stage"] is not None or state["failure_type"] is not None:
+            raise SessionStateInconsistentError("failure fields must be null when status is completed")
+    if st == "running":
+        cur = state["current_stage"]
+        if not isinstance(cur, str) or cur not in PIPELINE_STAGES:
+            raise SessionStateInconsistentError("current_stage invalid for running status")
+    if st == "failed":
+        fs = state["failure_stage"]
+        if fs is None or fs not in PIPELINE_STAGES:
+            raise SessionStateInconsistentError("failure_stage required when status is failed")
+
+    cur_stage = state["current_stage"]
+    if not isinstance(cur_stage, str) or cur_stage not in PIPELINE_STAGES:
+        raise SessionStateInconsistentError("current_stage invalid")
+
+    if cur_stage != "completed":
+        cur_idx = PIPELINE_STAGES.index(cur_stage)
+        for item in cs:
+            if PIPELINE_STAGES.index(item) >= cur_idx:
+                raise SessionStateInconsistentError("order")
+
+
+def _resume_determine_start_stage(state: Dict[str, Any]) -> str:
+    if state.get("status") == "completed":
+        return "completed"
+    return str(state["current_stage"])
 
 
 def _utc_timestamp_compact() -> str:
@@ -4547,7 +4666,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-retries", type=int, default=None)
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--skip-build", action="store_true")
-    return parser.parse_args()
+    parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="Resume a previously started session from its last checkpoint. Requires --session-id.",
+    )
+    args = parser.parse_args()
+    if args.resume and not args.session_id:
+        parser.error("--resume requires --session-id")
+    return args
 
 
 def _max_changed_files_from_config(cfg: Dict[str, Any]) -> int:
@@ -4584,13 +4711,46 @@ def _run_single_session_impl(args: argparse.Namespace) -> int:
     stage = "init"
     ctx: Optional[SessionContext] = None
     checkpoint_completed: List[str] = []
+    resume_mode = False
+    resume_completed_stages: List[str] = []
 
     try:
         enforce_run_session_duplicate_definition_preflight(Path(__file__).resolve())
+
+        # M03-C: resume 分岐
+        if args.resume:
+            try:
+                state = _resume_load_state(args.session_id)
+                _resume_validate_state(state, args.session_id)
+            except SessionStateMissingError as e:
+                print(
+                    "[ERROR] resume requested but state.json not found for session "
+                    f"{args.session_id}: {e}",
+                    file=sys.stderr,
+                )
+                return 1
+            except SessionStateInconsistentError as e:
+                print(
+                    f"[ERROR] inconsistent state.json for session {args.session_id}: {e}",
+                    file=sys.stderr,
+                )
+                return 1
+            resume_mode = True
+            checkpoint_completed = list(state["completed_stages"])
+            resume_completed_stages = checkpoint_completed
+            start_stage = _resume_determine_start_stage(state)
+            if start_stage == "completed":
+                print(
+                    f"[INFO] session {args.session_id} is already completed, nothing to resume"
+                )
+                return 0
+
         stage = "loading"
-        _checkpoint_stage_begin(
-            args, session_dir, args.session_id, checkpoint_completed, stage
-        )
+        _loading_ckpt = not (resume_mode and "loading" in resume_completed_stages)
+        if _loading_ckpt:
+            _checkpoint_stage_begin(
+                args, session_dir, args.session_id, checkpoint_completed, stage
+            )
         log_stage_event(session_id=args.session_id, stage=stage, event="start")
         ctx = load_session_context(args.session_id)
         if not bool(args.dry_run):
@@ -4598,19 +4758,23 @@ def _run_single_session_impl(args: argparse.Namespace) -> int:
         set_active_repo_root(Path(resolve_target_repo(ctx.session_data)))
         session_dir = ensure_artifact_dirs(args.session_id)
         log_stage_event(session_id=args.session_id, stage=stage, event="end")
-        _checkpoint_stage_complete(
-            args, session_dir, args.session_id, checkpoint_completed, "loading"
-        )
+        if _loading_ckpt:
+            _checkpoint_stage_complete(
+                args, session_dir, args.session_id, checkpoint_completed, "loading"
+            )
         stage = "validating"
-        _checkpoint_stage_begin(
-            args, session_dir, args.session_id, checkpoint_completed, stage
-        )
+        _valid_ckpt = not (resume_mode and "validating" in resume_completed_stages)
+        if _valid_ckpt:
+            _checkpoint_stage_begin(
+                args, session_dir, args.session_id, checkpoint_completed, stage
+            )
         log_stage_event(session_id=args.session_id, stage=stage, event="start")
         validate_session_context(ctx)
         log_stage_event(session_id=args.session_id, stage=stage, event="end")
-        _checkpoint_stage_complete(
-            args, session_dir, args.session_id, checkpoint_completed, "validating"
-        )
+        if _valid_ckpt:
+            _checkpoint_stage_complete(
+                args, session_dir, args.session_id, checkpoint_completed, "validating"
+            )
 
         max_retries = (
             args.max_retries
@@ -4628,51 +4792,59 @@ def _run_single_session_impl(args: argparse.Namespace) -> int:
             record_dry_run_git_warnings(session_dir, args.session_id)
         else:
             stage = "git_guard"
-            _checkpoint_stage_begin(
-                args, session_dir, args.session_id, checkpoint_completed, stage
-            )
-            log_stage_event(session_id=args.session_id, stage=stage, event="start")
-            log_stage_progress(args.session_id, stage, "ブランチ検証・sandbox へ切替")
-            enforce_git_sandbox_branch(args.session_id)
-            log_stage_progress(args.session_id, "git_guard", "完了 → 以降は API 呼び出し")
-            log_stage_event(session_id=args.session_id, stage=stage, event="end")
-            _checkpoint_stage_complete(
-                args, session_dir, args.session_id, checkpoint_completed, "git_guard"
-            )
+            if resume_mode and _should_skip_stage_in_resume(stage, resume_completed_stages):
+                pass
+            else:
+                _checkpoint_stage_begin(
+                    args, session_dir, args.session_id, checkpoint_completed, stage
+                )
+                log_stage_event(session_id=args.session_id, stage=stage, event="start")
+                log_stage_progress(args.session_id, stage, "ブランチ検証・sandbox へ切替")
+                enforce_git_sandbox_branch(args.session_id)
+                log_stage_progress(args.session_id, "git_guard", "完了 → 以降は API 呼び出し")
+                log_stage_event(session_id=args.session_id, stage=stage, event="end")
+                _checkpoint_stage_complete(
+                    args, session_dir, args.session_id, checkpoint_completed, "git_guard"
+                )
 
         # drift v0.1 は session に drift_check_v01 が真のときのみ（既存セッションとテストモックとの整合）。
         # main() 冒頭で sys.path が整備済みであることだけが import の前提。
         if bool(ctx.session_data.get("drift_check_v01")):
-            from orchestration.drift_detector import run_drift_check
+            if resume_mode and _should_skip_stage_in_resume(
+                "drift_check", resume_completed_stages
+            ):
+                pass
+            else:
+                from orchestration.drift_detector import run_drift_check
 
-            drift_session_path = session_dir / "_drift_session.json"
-            drift_acceptance_path = session_dir / "_drift_acceptance.yaml"
-            save_json(drift_session_path, ctx.session_data)
-            parsed_ad = ctx.acceptance_data.get("parsed")
-            if not isinstance(parsed_ad, dict):
-                parsed_ad = {}
-            with drift_acceptance_path.open("w", encoding="utf-8") as df:
-                yaml.safe_dump(parsed_ad, df, allow_unicode=True, default_flow_style=False)
-            drift_result = run_drift_check(
-                str(drift_session_path.resolve()),
-                str(drift_acceptance_path.resolve()),
-            )
-            if not drift_result["ok"]:
-                drift_path = session_dir / "drift_check.json"
-                with drift_path.open("w", encoding="utf-8") as f:
-                    json.dump(drift_result, f, ensure_ascii=False, indent=2)
-                print("Drift check failed")
-                if _checkpoint_should_record(args):
-                    _write_session_state_checkpoint(
-                        session_dir,
-                        args.session_id,
-                        current_stage="drift_check",
-                        completed_stages=checkpoint_completed,
-                        status="failed",
-                        failure_stage="drift_check",
-                        failure_type="DriftCheckFailed",
-                    )
-                sys.exit(1)
+                drift_session_path = session_dir / "_drift_session.json"
+                drift_acceptance_path = session_dir / "_drift_acceptance.yaml"
+                save_json(drift_session_path, ctx.session_data)
+                parsed_ad = ctx.acceptance_data.get("parsed")
+                if not isinstance(parsed_ad, dict):
+                    parsed_ad = {}
+                with drift_acceptance_path.open("w", encoding="utf-8") as df:
+                    yaml.safe_dump(parsed_ad, df, allow_unicode=True, default_flow_style=False)
+                drift_result = run_drift_check(
+                    str(drift_session_path.resolve()),
+                    str(drift_acceptance_path.resolve()),
+                )
+                if not drift_result["ok"]:
+                    drift_path = session_dir / "drift_check.json"
+                    with drift_path.open("w", encoding="utf-8") as f:
+                        json.dump(drift_result, f, ensure_ascii=False, indent=2)
+                    print("Drift check failed")
+                    if _checkpoint_should_record(args):
+                        _write_session_state_checkpoint(
+                            session_dir,
+                            args.session_id,
+                            current_stage="drift_check",
+                            completed_stages=checkpoint_completed,
+                            status="failed",
+                            failure_stage="drift_check",
+                            failure_type="DriftCheckFailed",
+                        )
+                    sys.exit(1)
 
         spec_system, spec_user = build_prepared_spec_prompts(ctx)
         save_text(session_dir / "prompts" / "prepared_spec_system.txt", spec_system)
@@ -4725,20 +4897,24 @@ def _run_single_session_impl(args: argparse.Namespace) -> int:
             return 0
 
         stage = "prepared_spec"
-        _checkpoint_stage_begin(
-            args, session_dir, args.session_id, checkpoint_completed, stage
-        )
-        log_stage_event(session_id=args.session_id, stage=stage, event="start")
-        log_stage_progress(
-            args.session_id, stage, "OpenAI（Builder契約反映の仕様整形）呼び出し開始"
-        )
-        prepared_spec = call_chatgpt_for_prepared_spec(ctx)
-        save_json(session_dir / "responses" / "prepared_spec.json", prepared_spec)
-        openai_usage = extract_api_usage(prepared_spec)  # usage 抽出（なければ空辞書）
-        log_stage_event(session_id=args.session_id, stage=stage, event="end")
-        _checkpoint_stage_complete(
-            args, session_dir, args.session_id, checkpoint_completed, "prepared_spec"
-        )
+        if resume_mode and _should_skip_stage_in_resume(stage, resume_completed_stages):
+            prepared_spec = load_json(session_dir / "responses" / "prepared_spec.json")
+            openai_usage = extract_api_usage(prepared_spec)  # usage 抽出（なければ空辞書）
+        else:
+            _checkpoint_stage_begin(
+                args, session_dir, args.session_id, checkpoint_completed, stage
+            )
+            log_stage_event(session_id=args.session_id, stage=stage, event="start")
+            log_stage_progress(
+                args.session_id, stage, "OpenAI（Builder契約反映の仕様整形）呼び出し開始"
+            )
+            prepared_spec = call_chatgpt_for_prepared_spec(ctx)
+            save_json(session_dir / "responses" / "prepared_spec.json", prepared_spec)
+            openai_usage = extract_api_usage(prepared_spec)  # usage 抽出（なければ空辞書）
+            log_stage_event(session_id=args.session_id, stage=stage, event="end")
+            _checkpoint_stage_complete(
+                args, session_dir, args.session_id, checkpoint_completed, "prepared_spec"
+            )
 
         impl_system, impl_user = build_implementation_prompts(prepared_spec, ctx, None)
         save_text(session_dir / "prompts" / "implementation_system.txt", impl_system)
@@ -4746,48 +4922,56 @@ def _run_single_session_impl(args: argparse.Namespace) -> int:
 
         # 実装＋チェック（初回）
         stage = "implementation"
-        _checkpoint_stage_begin(
-            args, session_dir, args.session_id, checkpoint_completed, stage
-        )
-        log_stage_event(session_id=args.session_id, stage=stage, event="start")
-        log_stage_progress(args.session_id, stage, "Claude（実装案）呼び出し開始")
-        impl_result = call_claude_for_implementation(prepared_spec, ctx, None)
-        claude_usage = extract_api_usage(impl_result)  # usage 抽出（なければ空辞書）
-        claude_call_count = 1
-        try:
-            validate_impl_result(impl_result)
-        except ValueError as guard_err:
-            _persist_guard_failure_artifacts(session_dir, impl_result, guard_err, stage)
-            raise
-        save_json(session_dir / "responses" / "implementation_result.json", impl_result)
-        log_stage_event(session_id=args.session_id, stage=stage, event="end")
-        _checkpoint_stage_complete(
-            args, session_dir, args.session_id, checkpoint_completed, "implementation"
-        )
+        if resume_mode and _should_skip_stage_in_resume(stage, resume_completed_stages):
+            impl_result = load_json(session_dir / "responses" / "implementation_result.json")
+            claude_usage = extract_api_usage(impl_result)  # usage 抽出（なければ空辞書）
+            claude_call_count = 1
+        else:
+            _checkpoint_stage_begin(
+                args, session_dir, args.session_id, checkpoint_completed, stage
+            )
+            log_stage_event(session_id=args.session_id, stage=stage, event="start")
+            log_stage_progress(args.session_id, stage, "Claude（実装案）呼び出し開始")
+            impl_result = call_claude_for_implementation(prepared_spec, ctx, None)
+            claude_usage = extract_api_usage(impl_result)  # usage 抽出（なければ空辞書）
+            claude_call_count = 1
+            try:
+                validate_impl_result(impl_result)
+            except ValueError as guard_err:
+                _persist_guard_failure_artifacts(session_dir, impl_result, guard_err, stage)
+                raise
+            save_json(session_dir / "responses" / "implementation_result.json", impl_result)
+            log_stage_event(session_id=args.session_id, stage=stage, event="end")
+            _checkpoint_stage_complete(
+                args, session_dir, args.session_id, checkpoint_completed, "implementation"
+            )
 
         stage = "patch_apply"
-        _checkpoint_stage_begin(
-            args, session_dir, args.session_id, checkpoint_completed, stage
-        )
-        log_stage_event(session_id=args.session_id, stage=stage, event="start")
-        log_stage_progress(
-            args.session_id,
-            stage,
-            "patch 抽出→実ファイル適用→artifact 保存→実ファイル存在確認→git diff 再取得",
-        )
-        check_results = _apply_patch_validate_and_run_local_checks(
-            session_dir=session_dir,
-            ctx=ctx,
-            impl_result=impl_result,
-            prepared_spec=prepared_spec,
-            max_changed_files=max_changed_files,
-            skip_build=args.skip_build,
-            session_id=args.session_id,
-        )
-        log_stage_event(session_id=args.session_id, stage=stage, event="end")
-        _checkpoint_stage_complete(
-            args, session_dir, args.session_id, checkpoint_completed, "patch_apply"
-        )
+        if resume_mode and _should_skip_stage_in_resume(stage, resume_completed_stages):
+            check_results = load_json(session_dir / "test_results" / "checks.json")
+        else:
+            _checkpoint_stage_begin(
+                args, session_dir, args.session_id, checkpoint_completed, stage
+            )
+            log_stage_event(session_id=args.session_id, stage=stage, event="start")
+            log_stage_progress(
+                args.session_id,
+                stage,
+                "patch 抽出→実ファイル適用→artifact 保存→実ファイル存在確認→git diff 再取得",
+            )
+            check_results = _apply_patch_validate_and_run_local_checks(
+                session_dir=session_dir,
+                ctx=ctx,
+                impl_result=impl_result,
+                prepared_spec=prepared_spec,
+                max_changed_files=max_changed_files,
+                skip_build=args.skip_build,
+                session_id=args.session_id,
+            )
+            log_stage_event(session_id=args.session_id, stage=stage, event="end")
+            _checkpoint_stage_complete(
+                args, session_dir, args.session_id, checkpoint_completed, "patch_apply"
+            )
 
         retry_instruction: Optional[Dict[str, Any]] = None
         retry_stopped_same_cause = False
@@ -4855,22 +5039,27 @@ def _run_single_session_impl(args: argparse.Namespace) -> int:
 
             # retry 指示を生成（関数内で同一原因は抑止される）
             stage = "retry_instruction"
-            _checkpoint_stage_begin(
-                args, session_dir, args.session_id, checkpoint_completed, stage
-            )
-            log_stage_event(session_id=args.session_id, stage=stage, event="start")
-            log_stage_progress(
-                args.session_id,
-                stage,
-                "チェック失敗 → OpenAI で Reviewer契約反映済みのリトライ指示を生成",
-            )
-            retry_instruction = call_chatgpt_for_retry_instruction(
-                ctx, prepared_spec, impl_result, check_results
-            )
-            log_stage_event(session_id=args.session_id, stage=stage, event="end")
-            _checkpoint_stage_complete(
-                args, session_dir, args.session_id, checkpoint_completed, "retry_instruction"
-            )
+            if resume_mode and _should_skip_stage_in_resume(stage, resume_completed_stages):
+                retry_instruction = load_json(
+                    session_dir / "responses" / "retry_instruction.json"
+                )
+            else:
+                _checkpoint_stage_begin(
+                    args, session_dir, args.session_id, checkpoint_completed, stage
+                )
+                log_stage_event(session_id=args.session_id, stage=stage, event="start")
+                log_stage_progress(
+                    args.session_id,
+                    stage,
+                    "チェック失敗 → OpenAI で Reviewer契約反映済みのリトライ指示を生成",
+                )
+                retry_instruction = call_chatgpt_for_retry_instruction(
+                    ctx, prepared_spec, impl_result, check_results
+                )
+                log_stage_event(session_id=args.session_id, stage=stage, event="end")
+                _checkpoint_stage_complete(
+                    args, session_dir, args.session_id, checkpoint_completed, "retry_instruction"
+                )
             retry_instruction["failure_type"] = decision["failure_type"]
             retry_instruction["cause_summary"] = decision["cause_summary"]
             # 同一原因抑止の場合は retry_count を増やさない
@@ -4900,34 +5089,43 @@ def _run_single_session_impl(args: argparse.Namespace) -> int:
 
             # Claude retry を実行
             stage = "implementation_retry"
-            _checkpoint_stage_begin(
-                args, session_dir, args.session_id, checkpoint_completed, stage
-            )
-            log_stage_event(session_id=args.session_id, stage=stage, event="start")
-            log_stage_progress(args.session_id, stage, f"retry_count={retry_count}")
-            impl_result = call_claude_for_implementation(
-                prepared_spec, ctx, retry_instruction
-            )
-            claude_usage = extract_api_usage(impl_result)  # retry usage を上書き更新
-            claude_call_count += 1
-            try:
-                validate_impl_result(impl_result)
-            except ValueError as guard_err:
-                _persist_guard_failure_artifacts(session_dir, impl_result, guard_err, stage)
-                raise
-            save_json(
-                session_dir / "responses" / "implementation_result.json",
-                impl_result,
-            )
-            log_stage_event(session_id=args.session_id, stage=stage, event="end")
-            _checkpoint_stage_complete(
-                args,
-                session_dir,
-                args.session_id,
-                checkpoint_completed,
-                "implementation_retry",
-            )
+            if resume_mode and _should_skip_stage_in_resume(stage, resume_completed_stages):
+                impl_result = load_json(
+                    session_dir / "responses" / "implementation_result.json"
+                )
+                claude_usage = extract_api_usage(impl_result)  # retry usage を上書き更新
+                claude_call_count += 1
+            else:
+                _checkpoint_stage_begin(
+                    args, session_dir, args.session_id, checkpoint_completed, stage
+                )
+                log_stage_event(session_id=args.session_id, stage=stage, event="start")
+                log_stage_progress(args.session_id, stage, f"retry_count={retry_count}")
+                impl_result = call_claude_for_implementation(
+                    prepared_spec, ctx, retry_instruction
+                )
+                claude_usage = extract_api_usage(impl_result)  # retry usage を上書き更新
+                claude_call_count += 1
+                try:
+                    validate_impl_result(impl_result)
+                except ValueError as guard_err:
+                    _persist_guard_failure_artifacts(session_dir, impl_result, guard_err, stage)
+                    raise
+                save_json(
+                    session_dir / "responses" / "implementation_result.json",
+                    impl_result,
+                )
+                log_stage_event(session_id=args.session_id, stage=stage, event="end")
+                _checkpoint_stage_complete(
+                    args,
+                    session_dir,
+                    args.session_id,
+                    checkpoint_completed,
+                    "implementation_retry",
+                )
 
+            # completed_stages は patch_apply を一度だけ記録するため、リトライループ内の 2 回目は
+            # skip 判定と衝突しないよう常に実行する（M03-C）。
             stage = "patch_apply"
             _checkpoint_stage_begin(
                 args, session_dir, args.session_id, checkpoint_completed, stage
