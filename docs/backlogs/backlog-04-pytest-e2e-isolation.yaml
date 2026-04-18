@@ -1,0 +1,25 @@
+backlog_id: backlog-04-pytest-e2e-isolation
+title: pytest e2e テストの実ファイル依存排除(docs変更干渉の除去)
+status: backlog
+priority: high
+summary: test_run_session_phase12_e2e.py が docs/global_rules.md 等の実ファイル変更に干渉する問題を解消し、テストの安定性と再現性を担保する
+problem:
+  - 実ファイル(docs/global_rules.md)を直接参照している
+  - 未コミット変更状態でテスト結果が変わる
+  - CI / ローカルで false fail が発生する
+scope:
+  - test_run_session_phase12_e2e.py の修正
+  - ファイル参照の mock 化または fixture 化
+  - テスト実行時の isolation 確保
+out_of_scope:
+  - run_session.py の仕様変更
+  - state handoff 実装
+  - provider / config 変更
+acceptance_criteria:
+  - id: AC-01
+    description: docs 配下ファイル変更の有無に関わらずテスト結果が変わらない
+  - id: AC-02
+    description: mock または fixture により実ファイル依存が排除されている
+  - id: AC-03
+    description: pytest がクリーンツリー・未コミット状態どちらでも同一結果となる
+depends_on: []

@@ -1,0 +1,81 @@
+{
+  "session_id": "session-130",
+  "phase_id": "M03",
+  "title": "pytest e2e の実ファイル依存排除(テスト isolation)",
+  "goal": "test_run_session_phase12_e2e.py の実ファイル依存を排除し、docs 配下ファイル変更によるテスト干渉を解消することで、M03-B 以降の runtime 改修セッションが安定して検収できる基盤を整える",
+  "scope": [
+    "test_run_session_phase12_e2e.py の修正",
+    "docs/global_rules.md 等への実ファイル参照の mock 化または fixture 化",
+    "テスト実行時の isolation 確保",
+    "テストの安定性確認"
+  ],
+  "out_of_scope": [
+    "run_session.py のロジック変更",
+    "state handoff 実装",
+    "Master ロジック変更",
+    "provider / config 変更",
+    "docs 配下の変更"
+  ],
+  "constraints": [
+    "1セッション1目的を厳守する",
+    "run_session.py 側のロジックに逃がさない",
+    "既存テストの意味(何を検証するか)を変えない",
+    "mock は最小範囲に限定する",
+    "変更ファイル数は5以内を目安とする",
+    "テストが通るためだけの雑な緩和は禁止"
+  ],
+  "acceptance_ref": "docs/acceptance/session-130.yaml",
+  "allowed_changes": [
+    "backend/tests/test_run_session_phase12_e2e.py",
+    "backend/tests/conftest.py"
+  ],
+  "allowed_changes_detail": [
+    "backend/tests/test_run_session_phase12_e2e.py: 実ファイル参照を mock / fixture に置換する変更のみ許可。テストケースの意味変更や削除は禁止",
+    "backend/tests/conftest.py: テスト isolation 用 fixture の追加のみ許可"
+  ],
+  "forbidden_changes": [
+    "orchestration/run_session.py",
+    "orchestration/providers/ 配下",
+    "orchestration/config.yaml",
+    ".github/ 配下",
+    "docs/ 配下",
+    "backend/tests/ 配下の他ファイル(allowed_changes に列挙した2ファイル以外)",
+    "既存テストケースの削除",
+    "既存テストケースの意味変更"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-01",
+      "type": "non_regression",
+      "condition": "docs 配下のファイル変更の有無に関わらず pytest 結果が変わらない"
+    },
+    {
+      "id": "CC-02",
+      "type": "side_effect_free",
+      "condition": "実ファイル依存が mock または fixture により排除されている"
+    },
+    {
+      "id": "CC-03",
+      "type": "state_transition_consistent",
+      "condition": "pytest がクリーンツリーと未コミット状態の双方で同一結果を返す"
+    },
+    {
+      "id": "CC-04",
+      "type": "non_regression",
+      "condition": "既存テストケースの検証意味が保持されている"
+    },
+    {
+      "id": "CC-05",
+      "type": "side_effect_free",
+      "condition": "run_session.py 本体および docs 配下に変更が入っていない"
+    }
+  ],
+  "review_points": [
+    "仕様一致(AC達成)",
+    "変更範囲遵守",
+    "副作用なし(既存破壊なし)",
+    "検証十分性"
+  ],
+  "drift_check_v01": true,
+  "verification": "test_based"
+}

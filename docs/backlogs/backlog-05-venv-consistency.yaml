@@ -1,0 +1,21 @@
+backlog_id: backlog-05-venv-consistency
+title: .venv と検証コマンドの整合性回復
+status: backlog
+priority: low
+summary: .venv/bin/python が存在しない状態と、検証コマンドの正本が乖離している問題を解消する
+problem:
+  - .venv が存在しない / 不完全
+  - 検証コマンドが .venv 前提
+  - system python3 で代替されている
+scope:
+  - .venv 再構築 または
+  - 検証コマンド正本の更新
+out_of_scope:
+  - run_session.py の変更
+  - テストロジックの変更
+acceptance_criteria:
+  - id: AC-01
+    description: 検証コマンドが正本通りに実行できる
+  - id: AC-02
+    description: 開発環境で再現性が担保される
+depends_on: []

@@ -8,6 +8,7 @@ scope:
   - whitelist 参照形式の固定
   - machine-readable schema の定義
   - validation 導線の追加
+  - canonical 文言の単一参照化(global_rules.md を唯一の参照元とする)
 out_of_scope:
   - M03 state handoff / resume
   - M04 backlog bridge

@@ -1,0 +1,27 @@
+session_id: session-130
+acceptance:
+  - id: AC-01
+    description: docs 配下ファイル変更の有無に関わらずテスト結果が変わらない
+    test_name: test_e2e_isolation_independent_of_docs
+    completion_criteria_refs:
+      - CC-01
+  - id: AC-02
+    description: 実ファイル参照が mock または fixture に置き換えられている
+    test_name: test_e2e_uses_mock_instead_of_real_files
+    completion_criteria_refs:
+      - CC-02
+  - id: AC-03
+    description: pytest がクリーンツリー・未コミット状態で同一結果になる
+    test_name: test_e2e_stable_between_states
+    completion_criteria_refs:
+      - CC-03
+  - id: AC-04
+    description: 既存テストの意味が維持されている
+    test_name: test_e2e_semantics_preserved
+    completion_criteria_refs:
+      - CC-04
+  - id: AC-05
+    description: run_session.py や docs 配下に scope 外変更が混入していない
+    test_name: test_session_130_scope_preserved
+    completion_criteria_refs:
+      - CC-05
