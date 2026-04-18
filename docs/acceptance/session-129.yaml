@@ -1,0 +1,27 @@
+session_id: session-129
+acceptance:
+  - id: AC-01
+    description: state handoff / resume の責任境界が run_session.py と Master の間で明確に分離されている
+    test_name: test_state_handoff_boundary_documented
+    completion_criteria_refs:
+      - CC-01
+  - id: AC-02
+    description: 永続化 state JSON の最小 schema に必須キーが定義されている
+    test_name: test_state_schema_minimum_keys_documented
+    completion_criteria_refs:
+      - CC-02
+  - id: AC-03
+    description: resume の開始条件、停止条件、不整合時の扱いが文書として定義されている
+    test_name: test_resume_rules_documented
+    completion_criteria_refs:
+      - CC-03
+  - id: AC-04
+    description: retry と resume の責務分離が文書として明文化されている
+    test_name: test_retry_resume_responsibility_separated
+    completion_criteria_refs:
+      - CC-04
+  - id: AC-05
+    description: docs-only セッションとして scope 外の実装仕様や M04 の混入がない
+    test_name: test_docs_only_scope_preserved
+    completion_criteria_refs:
+      - CC-05

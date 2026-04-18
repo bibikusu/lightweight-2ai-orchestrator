@@ -1,0 +1,89 @@
+{
+  "session_id": "session-129",
+  "phase_id": "M03",
+  "title": "state handoff / resume 永続化フォーマットと責任境界の正本化",
+  "goal": "run_session.py と Master 間で共有する state handoff / resume の永続化フォーマット、責任境界、再開条件を docs-only で定義し、以後の実装 session の正本基準を固定する",
+  "scope": [
+    "state handoff の目的と対象範囲の定義",
+    "永続化 state JSON の最小 schema 定義",
+    "run_session.py と Master の責任境界定義",
+    "resume 開始条件と禁止条件の定義",
+    "M03-B 以降の実装前提の固定"
+  ],
+  "out_of_scope": [
+    "run_session.py のコード実装",
+    "Master のコード実装",
+    "checkpoint 書き込み処理の追加",
+    "resume 実行処理の追加",
+    "整合性チェック実装",
+    "DB 導入",
+    "並列実行",
+    "backlog bridge 実装"
+  ],
+  "constraints": [
+    "1セッション1目的を厳守する",
+    "docs-only で完結する",
+    "retry と resume の責務を混同しない",
+    "run_session.py は session 内 stage 実行責務、Master は session 間の停止/継続判断責務を原則とする",
+    "resume は安全側に倒す",
+    "state 不整合時は自動続行せず停止候補とする",
+    "永続化フォーマットは JSON とし、実装が容易な最小 schema に留める",
+    "既存仕様書の正本一貫性を崩さない"
+  ],
+  "acceptance_ref": "docs/acceptance/session-129.yaml",
+  "allowed_changes": [
+    "docs/master_instruction.md",
+    "docs/global_rules.md"
+  ],
+  "allowed_changes_detail": [
+    "docs/master_instruction.md: M03-A の state handoff / resume 方針、責任境界、永続化フォーマット定義の追記のみ許可",
+    "docs/global_rules.md: state / resume 実行ルール、禁止条件、責任分離ルールの追記のみ許可"
+  ],
+  "forbidden_changes": [
+    "orchestration/run_session.py",
+    "orchestration/providers/ 配下",
+    "orchestration/config.yaml",
+    ".github/ 配下",
+    "docs/sessions/ 配下の既存ファイル",
+    "docs/acceptance/ 配下の既存ファイル",
+    "docs/reports/ 配下の既存ファイル",
+    "docs/backlogs/ 配下の既存ファイル",
+    "DB 導入に関する記述追加",
+    "M04 backlog bridge の実装仕様混入"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-01",
+      "type": "document_rule",
+      "condition": "state handoff / resume の責任境界が run_session.py と Master に分離して明文化されている"
+    },
+    {
+      "id": "CC-02",
+      "type": "document_rule",
+      "condition": "永続化 state JSON の最小 schema が定義されている"
+    },
+    {
+      "id": "CC-03",
+      "type": "document_rule",
+      "condition": "resume 開始条件、停止条件、不整合時の扱いが明文化されている"
+    },
+    {
+      "id": "CC-04",
+      "type": "state_transition_consistent",
+      "condition": "retry と resume の責務分離が文書上で矛盾なく定義されている"
+    },
+    {
+      "id": "CC-05",
+      "type": "side_effect_free",
+      "condition": "実装や scope 外仕様を先行混入せず docs-only の範囲に収まっている"
+    }
+  ],
+  "review_points": [
+    "仕様一致(AC達成)",
+    "変更範囲遵守",
+    "副作用なし(既存破壊なし)",
+    "検証十分性"
+  ],
+  "drift_check_v01": true,
+  "verification": "human_review"
+}
