@@ -1,0 +1,122 @@
+{
+  "session_id": "session-132-pre",
+  "phase_id": "M03",
+  "title": "M03-C 着手前の正本整備(failure_type / stage 名 / completed_stages 定義の固定)",
+  "goal": "session-131 (M03-B) 実装で暗黙的に導入された failure_type 追加値・stage 名列挙・completed_stages の意味を global_rules.md に正本化し、M03-C (resume 読込) 実装が参照可能な仕様基盤を確立する",
+  "scope": [
+    "failure_type enum の扱いを global_rules.md に正本化する(既存 enum 拡張 or 別 enum 新設の方針決定を含む)",
+    "run_session.py 実行パイプラインの stage 名正式リストを global_rules.md に追記する",
+    "completed_stages の意味定義(完了 stage / checkpoint 到達 stage)を global_rules.md に追記する",
+    "retry 早期 break 時の state 記録仕様を global_rules.md に追記する"
+  ],
+  "out_of_scope": [
+    "run_session.py のコード変更",
+    "テストコードの変更",
+    "resume 読込実装",
+    "Master 側実装",
+    "M03-C の実装スコープ先取り",
+    "failure_type enum の意味を変える破壊的変更",
+    "checkpoint_failure_type の実装反映(方針決定のみで実装は別 session)"
+  ],
+  "constraints": [
+    "1セッション1目的を厳守する",
+    "docs-only で完結する",
+    "定義の主戦場は docs/global_rules.md とし、docs/master_instruction.md は M03-C 前提の補足方針に限定する",
+    "既存の failure_type enum 列挙を削除しない",
+    "既存 session / acceptance / backlog を一切変更しない",
+    "session-131 実装の挙動を正本側に取り込む形とし、実装は改修しない",
+    "新たな実装要件を正本に追加しない(M03-C 用仕様は別 session で扱う)",
+    "docs 追記は master_instruction.md / global_rules.md のみとする"
+  ],
+  "acceptance_ref": "docs/acceptance/session-132-pre.yaml",
+  "allowed_changes": [
+    "docs/master_instruction.md",
+    "docs/global_rules.md"
+  ],
+  "allowed_changes_detail": [
+    "docs/global_rules.md: failure_type enum 扱い(拡張 or checkpoint_failure_type 新設)、pipeline stage 名正式リスト、completed_stages 意味定義、retry 早期 break 時の state 記録仕様の追記のみ許可(定義本体の置き場)",
+    "docs/master_instruction.md: M03-C 前提としての補足方針の追記のみ許可(定義本体は global_rules.md 側に置くため、ここは方針への参照と位置づけに留める)"
+  ],
+  "forbidden_changes": [
+    "orchestration/run_session.py",
+    "orchestration/providers/ 配下",
+    "orchestration/config.yaml",
+    ".github/ 配下",
+    "backend/tests/ 配下",
+    "docs/sessions/ 配下の既存ファイル",
+    "docs/acceptance/ 配下の既存ファイル",
+    "docs/reports/ 配下の既存ファイル",
+    "docs/backlogs/ 配下の既存ファイル",
+    "docs/templates/ 配下",
+    "M03-C resume 実装仕様の先行記述",
+    "既存 failure_type 値(build_error / import_error / type_mismatch / test_failure / scope_violation / regression / spec_missing)の削除または意味変更"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-01",
+      "type": "document_rule",
+      "condition": "failure_type enum の扱いが global_rules.md に明記されている(既存 enum 拡張 or checkpoint 用別 enum 新設のどちらを採るか確定している)"
+    },
+    {
+      "id": "CC-02",
+      "type": "document_rule",
+      "condition": "run_session.py の pipeline stage 名正式リストが global_rules.md に列挙されている"
+    },
+    {
+      "id": "CC-03",
+      "type": "document_rule",
+      "condition": "completed_stages の意味(完了 stage / checkpoint 到達 stage)が global_rules.md に定義されている"
+    },
+    {
+      "id": "CC-04",
+      "type": "document_rule",
+      "condition": "retry 早期 break 時の state 記録仕様が global_rules.md に定義されている"
+    },
+    {
+      "id": "CC-05",
+      "type": "side_effect_free",
+      "condition": "実装コードや既存 session / acceptance / backlog への変更が一切なく、docs-only の範囲に収まっている"
+    }
+  ],
+  "review_points": [
+    "仕様一致(AC達成)",
+    "変更範囲遵守",
+    "副作用なし(既存破壊なし)",
+    "検証十分性"
+  ],
+  "drift_check_v01": true,
+  "verification": "human_review",
+  "decision_points_for_gpt": [
+    {
+      "id": "DP-01",
+      "topic": "failure_type enum の扱い",
+      "context": "session-131 実装で DriftCheckFailed / SessionFailed が導入されたが、既存 failure_type enum (build_error / import_error / type_mismatch / test_failure / scope_violation / regression / spec_missing) に含まれていない。既存 failure_type は session 検収時の差戻し分類、checkpoint の failure_type は stage 実行時の例外分類で、意味論が別の可能性がある",
+      "options": [
+        "A) 既存 enum を拡張し DriftCheckFailed / SessionFailed を正式値として追加する",
+        "B) checkpoint_failure_type という別 enum を新設し、既存 failure_type とは意味論的に分離する。global_rules.md 上で両者の役割を明確に区別して記述する",
+        "C) 既存 enum にマップする方針を採る。ただし実装反映は別 session とし、本 session では方針決定のみ行う"
+      ],
+      "claude_recommendation": "B。既存 failure_type は session 検収時の差戻し分類、checkpoint failure_type は stage 実行時の例外分類で意味論が別。混在は保守性を下げる。ただし新設する場合は global_rules.md で両者の役割境界を明示する必要がある"
+    },
+    {
+      "id": "DP-02",
+      "topic": "pipeline stage 名の正式リスト",
+      "context": "session-131 実装は loading, validating, git_guard, prepared_spec, implementation, patch_apply, retry_instruction, implementation_retry, drift_check, completed の 10 値を使っているが docs に列挙なし。completed や drift_check を『pipeline stage』と呼ぶか『state 用内部 stage』と呼ぶかの用語統一も必要",
+      "options": [
+        "A) 全 10 値を正本とし global_rules.md に列挙する。用語は『pipeline stage』で統一する",
+        "B) 主要 6 stage (git_guard, prepared_spec, implementation, patch_apply, checks, report) のみを正本とし、残りは実装内部扱い(state 用内部 stage)として別扱い"
+      ],
+      "claude_recommendation": "A。resume 読込時には全 stage が対象になる可能性があるため、実装で実在する 10 値を正本に含めるべき。用語は『pipeline stage』で統一"
+    },
+    {
+      "id": "DP-03",
+      "topic": "completed_stages の意味定義",
+      "context": "session-131 の実装では checkpoint フックが走った stage のみが completed_stages に入る。retry 早期 break(同一原因停止など)では retry_instruction に到達せず completed_stages が短縮される",
+      "options": [
+        "A) 『checkpoint 到達 stage』を正式定義とし、retry 途中断の場合 completed_stages が短いことを仕様として認める",
+        "B) 『完了 stage』を正式定義とし、retry 早期 break でも実際に完了した stage を追記する実装補正を M03-C 以降で追加する"
+      ],
+      "claude_recommendation": "A。B は実装補正を伴うため session-132-pre の scope を逸脱する。A で仕様を明示し、M03-C 以降で必要なら別 session で補正する"
+    }
+  ]
+}

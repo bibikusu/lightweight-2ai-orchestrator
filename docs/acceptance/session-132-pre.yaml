@@ -1,0 +1,27 @@
+session_id: session-132-pre
+acceptance:
+  - id: AC-01
+    description: failure_type enum の扱いが global_rules.md に明記され、既存 enum 拡張 or 新 enum 新設のどちらを採るかが GPT 判定により確定している
+    test_name: test_failure_type_policy_documented
+    completion_criteria_refs:
+      - CC-01
+  - id: AC-02
+    description: run_session.py の pipeline stage 名正式リストが global_rules.md に列挙されている
+    test_name: test_pipeline_stage_list_documented
+    completion_criteria_refs:
+      - CC-02
+  - id: AC-03
+    description: completed_stages の意味(完了 stage / checkpoint 到達 stage)が global_rules.md に定義されている
+    test_name: test_completed_stages_semantics_documented
+    completion_criteria_refs:
+      - CC-03
+  - id: AC-04
+    description: retry 早期 break 時の state 記録仕様が global_rules.md に定義されている
+    test_name: test_retry_early_break_state_rule_documented
+    completion_criteria_refs:
+      - CC-04
+  - id: AC-05
+    description: 実装コードや既存 session / acceptance / backlog への変更が一切なく、docs-only の範囲に収まっている
+    test_name: test_session_132_pre_scope_preserved
+    completion_criteria_refs:
+      - CC-05
