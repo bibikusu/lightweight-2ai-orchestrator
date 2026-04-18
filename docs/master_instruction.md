@@ -386,3 +386,28 @@ drift detector は段階的に適用レベルを引き上げる。
 - Phase 3 (session-129 以降): 現役 session の canonical 整理
 
 legacy の詳細運用ルールは global_rules.md の「new / legacy session 運用ルール」セクションを参照すること。
+
+---
+
+## M03: state handoff / resume
+
+### 目的
+
+途中失敗または中断時に、run_session.py と Master が共有可能な最小 state を保持し、安全に再開できる基盤を段階的に整備する。
+
+### M03-A の範囲
+
+- state handoff の責任境界定義
+- 永続化 state JSON の最小 schema 定義
+- resume 開始条件 / 停止条件 / 不整合時の扱い定義
+
+### 責任境界
+
+- **run_session.py**: session 内 stage 実行、checkpoint 記録、failure state 記録
+- **Master**: session 間の継続判断、resume 要否判断、次 session 起票判断
+
+### 原則
+
+- retry と resume は別責務
+- state 不整合時は安全側に倒して停止候補とする
+- M03-A は docs-only とし、実装は後続 session (M03-B 以降) で行う
