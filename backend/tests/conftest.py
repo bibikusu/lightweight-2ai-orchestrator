@@ -1,6 +1,10 @@
+from pathlib import Path
+from typing import List
+
 import pytest
 from unittest.mock import patch
-from typing import List
+
+import orchestration.run_session as _phase12_rs
 
 # Git command mock registry with default responses
 GIT_COMMAND_REGISTRY = {
@@ -89,3 +93,86 @@ def mock_git_command():
 def git_mock_registry():
     """Fixture providing access to git command registry for test customization."""
     return GIT_COMMAND_REGISTRY.copy()
+
+
+# --- Phase12 E2E: isolate canonical docs reads (session-130) ---
+# load_session_context 以外の経路や将来のテスト変更でも、repo の docs 実ファイル変更で結果がぶれないよう
+# global_rules / master_instruction / roadmap の実パスに対する load_text のみ決定論的スタブへ差し替える。
+
+_ORIGINAL_LOAD_TEXT = _phase12_rs.load_text
+_ORIGINAL_APPLY_PATCH_CAPTURE = _phase12_rs.apply_proposed_patch_and_capture_artifacts
+
+PHASE12_E2E_STUB_GLOBAL_RULES = """# Global Rules (phase12 e2e stub)
+
+本スタブは pytest phase12 E2E 用。正本 `global_rules.md` の役割分担・検収思想と矛盾しない最小構成。
+
+## 2. 役割固定（要約）
+
+- GPT: 仕様整理・判定（実装担当にならない）
+- Claude: 分析・修正案（仕様の最終確定はしない）
+- Cursor: 実作業・検証（正本・スコープ順守）
+
+## Review points（4 軸の例）
+
+1. 仕様一致（AC 達成）
+2. 変更範囲遵守
+3. 副作用なし（既存破壊なし）
+4. 検証十分性
+
+---
+
+## 8. 禁止事項（抜粋）
+
+- スコープ外ファイルの変更
+- 正本ドキュメントの独断変更
+"""
+
+PHASE12_E2E_STUB_MASTER_INSTRUCTION = """# Master Instruction (phase12 e2e stub)
+
+本スタブは `global_rules.md` と整合する前提の最小本文。
+セッションは1目的、allowed_changes と forbidden_changes を尊重する。
+"""
+
+PHASE12_E2E_STUB_ROADMAP = """# Roadmap stub for phase12 e2e tests
+version: phase12-e2e-stub
+milestones: []
+"""
+
+
+def _phase12_e2e_stable_load_text(path):
+    """Return fixed text for canonical docs files; otherwise delegate to run_session.load_text."""
+    p = Path(path)
+    try:
+        resolved = p.resolve()
+    except OSError:
+        resolved = p
+    docs_root = _phase12_rs.DOCS_DIR.resolve()
+    canonical = {
+        docs_root / "global_rules.md": PHASE12_E2E_STUB_GLOBAL_RULES,
+        docs_root / "master_instruction.md": PHASE12_E2E_STUB_MASTER_INSTRUCTION,
+        docs_root / "roadmap.yaml": PHASE12_E2E_STUB_ROADMAP,
+    }
+    for doc_path, stub in canonical.items():
+        if resolved == doc_path.resolve():
+            return stub
+    return _ORIGINAL_LOAD_TEXT(p)
+
+
+def _phase12_e2e_apply_patch_ignore_docs_worktree_noise(session_dir, impl_result, *, session_id=None):
+    """git diff が作業ツリー上の docs 変更を拾うと forbidden 検証で誤検知するため除外する。"""
+    out = _ORIGINAL_APPLY_PATCH_CAPTURE(session_dir, impl_result, session_id=session_id)
+    raw = list(out.get("changed_files") or [])
+    filtered = [p for p in raw if not str(p).replace("\\", "/").startswith("docs/")]
+    out["changed_files"] = filtered
+    return out
+
+
+@pytest.fixture
+def isolate_phase12_e2e_docs_reads(monkeypatch):
+    """Isolate phase12 E2E from docs edits: stub canonical load_text + ignore docs/ in git-diff rollups."""
+    monkeypatch.setattr(_phase12_rs, "load_text", _phase12_e2e_stable_load_text)
+    monkeypatch.setattr(
+        _phase12_rs,
+        "apply_proposed_patch_and_capture_artifacts",
+        _phase12_e2e_apply_patch_ignore_docs_worktree_noise,
+    )

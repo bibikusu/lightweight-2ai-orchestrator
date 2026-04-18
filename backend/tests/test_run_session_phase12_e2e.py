@@ -5,8 +5,12 @@ import json
 import sys
 from typing import Any
 
+import pytest
+
 import orchestration.run_session as rs
 from orchestration.run_session import SessionContext, main
+
+pytestmark = pytest.mark.usefixtures("isolate_phase12_e2e_docs_reads")
 
 
 def _ctx(session_id: str = "session-53") -> SessionContext:
