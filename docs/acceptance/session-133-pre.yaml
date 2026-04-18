@@ -1,0 +1,27 @@
+session_id: session-133-pre
+acceptance:
+  - id: AC-01
+    description: resume 実行時の例外規則 (loading/validating 常時実行、retry 2 回目 patch_apply 常時実行) が global_rules.md に明記されている
+    verification: human_review
+    completion_criteria_refs:
+      - CC-01
+  - id: AC-02
+    description: artifact 欠損時の停止規則が global_rules.md に明記されている (DP-07 判定が GPT により確定している)
+    verification: human_review
+    completion_criteria_refs:
+      - CC-02
+  - id: AC-03
+    description: retry 多重 patch_apply の表現方針が global_rules.md に明記されている (DP-08 判定が GPT により確定している)
+    verification: human_review
+    completion_criteria_refs:
+      - CC-03
+  - id: AC-04
+    description: skip 対象 stage の厳密定義が global_rules.md に明記されている (DP-09 判定が GPT により確定している)
+    verification: human_review
+    completion_criteria_refs:
+      - CC-04
+  - id: AC-05
+    description: 実装コードや既存 session / acceptance / backlog への変更が一切なく、docs-only の範囲に収まっている
+    verification: human_review
+    completion_criteria_refs:
+      - CC-05

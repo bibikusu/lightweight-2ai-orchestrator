@@ -1,0 +1,127 @@
+{
+  "session_id": "session-133-pre",
+  "phase_id": "M03",
+  "title": "M03-D 着手前の正本整備 (AC-02 補正 + resume 実行整合性強化の仕様決定)",
+  "goal": "session-132 実装で明らかになった AC-02 運用上の例外 (loading/validating 常時実行、retry 2 回目 patch_apply 常時実行) を正本化し、M03-D (resume 実行整合性強化) 着手前に artifact 欠損時停止規則・retry 多重 patch_apply 表現・skip 対象 stage 厳密定義の 3 点を確定する",
+  "scope": [
+    "resume 実行時の例外規則 (loading/validating 常時実行、retry 2 回目 patch_apply 常時実行) を global_rules.md に正本化する",
+    "artifact 欠損時の停止規則を global_rules.md に正本化する",
+    "retry 多重 patch_apply の表現方針を、既存 state.json schema を破壊しない前提で正本化する",
+    "skip 対象 stage の厳密定義を正本化する",
+    "M03-D 実装前の仕様基盤を確立する"
+  ],
+  "out_of_scope": [
+    "run_session.py のコード変更",
+    "テストコードの変更",
+    "resume 実行整合性強化の実装",
+    "state schema の破壊的変更の実装 (方針決定のみ可)",
+    "Master 側実装",
+    "M04 の先取り",
+    "Card Task session-12 の状態確定 (別トラックで処理)"
+  ],
+  "constraints": [
+    "1セッション1目的を厳守する",
+    "docs-only で完結する",
+    "定義の主戦場は docs/global_rules.md とし、docs/master_instruction.md は M03-D 前提の補足方針に限定する",
+    "既存の session-132-pre 正本定義 (pipeline stage 正式リスト・checkpoint_failure_type・completed_stages 定義) を壊さない",
+    "既存 session / acceptance / backlog を一切変更しない",
+    "session-132 実装の挙動を正本側に取り込む形とし、実装は改修しない",
+    "新たな M03-D 実装要件を spec 本体に書き込まない (DP 判定後に別 session で追記)",
+    "docs 追記は master_instruction.md / global_rules.md のみとする"
+  ],
+  "acceptance_ref": "docs/acceptance/session-133-pre.yaml",
+  "allowed_changes": [
+    "docs/master_instruction.md",
+    "docs/global_rules.md"
+  ],
+  "allowed_changes_detail": [
+    "docs/global_rules.md: resume 実行例外規則 (loading/validating 常時実行・retry 2 回目 patch_apply 常時実行)、artifact 欠損時停止規則、retry 多重 patch_apply 表現、skip 対象 stage 厳密定義の追記のみ許可 (定義本体の置き場)",
+    "docs/master_instruction.md: M03-D 前提としての補足方針の追記のみ許可 (定義本体は global_rules.md 側に置くため、ここは参照方針に留める)"
+  ],
+  "forbidden_changes": [
+    "orchestration/run_session.py",
+    "orchestration/providers/ 配下",
+    "orchestration/config.yaml",
+    ".github/ 配下",
+    "tests/ 配下",
+    "docs/sessions/ 配下の既存ファイル",
+    "docs/acceptance/ 配下の既存ファイル",
+    "docs/reports/ 配下の既存ファイル",
+    "docs/backlogs/ 配下の既存ファイル",
+    "docs/templates/ 配下",
+    "既存 pipeline stage 正式リスト 10 値の変更",
+    "既存 checkpoint_failure_type enum の破壊的変更",
+    "既存 completed_stages 定義の破壊的変更"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-01",
+      "type": "document_rule",
+      "condition": "resume 実行時の例外規則 (loading/validating 常時実行、retry 2 回目 patch_apply 常時実行) が global_rules.md に明記されている"
+    },
+    {
+      "id": "CC-02",
+      "type": "document_rule",
+      "condition": "artifact 欠損時の停止規則が global_rules.md に明記されている (DP-07 判定反映)"
+    },
+    {
+      "id": "CC-03",
+      "type": "document_rule",
+      "condition": "retry 多重 patch_apply の表現方針が global_rules.md に明記されている (DP-08 判定反映)"
+    },
+    {
+      "id": "CC-04",
+      "type": "document_rule",
+      "condition": "skip 対象 stage の厳密定義が global_rules.md に明記されている (DP-09 判定反映)"
+    },
+    {
+      "id": "CC-05",
+      "type": "side_effect_free",
+      "condition": "実装コードや既存 session / acceptance / backlog への変更が一切なく、docs-only の範囲に収まっている"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ],
+  "drift_check_v01": true,
+  "verification": "human_review",
+  "decision_points_for_gpt": [
+    {
+      "id": "DP-07",
+      "topic": "artifact 欠損時の停止規則",
+      "context": "session-132 実装では skip 判定が通った stage の artifact (prepared_spec.json / implementation_result.json / checks.json / retry_instruction.json) を artifacts ディレクトリから load するが、ファイルが存在しない場合の挙動は未定義。現状は load_json で例外が投げられて落ちる",
+      "options": [
+        "A) skip 対象 stage の artifact が欠損している場合、exit 1 で停止する。エラーメッセージで欠損ファイル名を明示",
+        "B) 欠損時は該当 stage から再実行 (フォールバック)。警告ログのみ出力",
+        "C) 環境変数またはフラグで A/B を選択可能にする"
+      ],
+      "claude_recommendation": "A。resume は安全側に倒す原則に従う。state.json が completed_stages に記録していても対応 artifact が無い状態は整合性破綻であり、resume 前提そのものが崩れている。B は黙示的なフォールバックで予測可能性を損なう"
+    },
+    {
+      "id": "DP-08",
+      "topic": "retry 多重 patch_apply の表現方針",
+      "context": "session-132 実装では completed_stages が stage 名の単純リストで、同一 stage の複数回記録を表現できない。このため retry ループ内 2 回目の patch_apply は skip 判定と衝突し、常にフル実行となる。M03-D でこれをどう解決するか。前提として既存 state.json schema は session-131/132 で確立した互換性を維持する",
+      "options": [
+        "A) state schema を拡張し、completed_stages を {stage_name, attempt_index} の tuple リストに変更。既存 state.json との互換性は破壊的",
+        "B) schema は変更せず、retry 経路に入ったら completed_stages を部分クリア (retry 進入時点以降を削除)。完了 retry 分は失うが schema 互換性は維持",
+        "C) 別ファイル retry_history.json に retry 経路専用の履歴を分離保存。completed_stages は初回パイプラインのみを記録し、retry 経路は別管理。schema は non-breaking",
+        "D) 当面は現状維持 (retry 2 回目 patch_apply は常時フル実行) とし、表現力拡張は M03 完成後の別 phase に延期"
+      ],
+      "claude_recommendation": "C。state schema の破壊的変更 (A) は session-131/132 で確立した schema 互換性を壊す。B は retry 進行中の中断復帰を失うため不完全。C は non-breaking で retry 履歴を明示的に別扱いでき、設計責務も明確。D は問題を先送りするだけで M03 の完成度が下がる"
+    },
+    {
+      "id": "DP-09",
+      "topic": "skip 対象 stage の厳密定義",
+      "context": "session-132 実装では RESUME_SKIP_ELIGIBLE_STAGES という定数で 7 stage (git_guard, prepared_spec, implementation, patch_apply, retry_instruction, implementation_retry, drift_check) を skip 対象としている。loading / validating は常時実行、completed は終端値で skip 対象外。これを正本化するか、異なる定義に変えるか",
+      "options": [
+        "A) 現行実装を正本化。loading / validating / completed は skip 対象外と明記し、理由 (ctx 構築必須 / 終端値) を global_rules.md に追記",
+        "B) 全 10 stage を skip 対象とする設計に変更 (loading / validating も state から artifact を読む方式に大改修)。より理論的に純粋だが実装コストが大きい",
+        "C) A + stage ごとの skip 可否を表形式で global_rules.md に明記 (将来の stage 追加時に参照できる)"
+      ],
+      "claude_recommendation": "C。A と C の違いは記載形式のみだが、A は最小限の文章化に留まり将来の stage 追加・変更時に文章を書き直す必要がある。C は表形式のためカラムごとに差分追記できて保守性が高く、A の完全上位互換。B は大改修で M03-D scope を逸脱"
+    }
+  ]
+}
