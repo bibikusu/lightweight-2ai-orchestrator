@@ -1,0 +1,15 @@
+backlog_id: backlog-02-drift-whitelist-machine
+source_session: session-127b
+title: legacy whitelist の機械チェック化
+status: backlog
+priority: medium
+summary: legacy whitelist を人手確認ではなく機械的に参照・検査できる状態へ移行する
+scope:
+  - whitelist 参照形式の固定
+  - machine-readable schema の定義
+  - validation 導線の追加
+out_of_scope:
+  - M03 state handoff / resume
+  - M04 backlog bridge
+depends_on:
+  - session-127

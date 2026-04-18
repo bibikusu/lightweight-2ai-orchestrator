@@ -1,0 +1,15 @@
+backlog_id: backlog-03-drift-policy-enforcement
+source_session: session-128
+title: drift policy の機械強制化
+status: backlog
+priority: medium
+summary: canonical review_points と drift_check_v01 を新規 session 生成時に機械的に強制する
+scope:
+  - drift policy enforcement 条件定義
+  - selfcheck から validation への移行設計
+out_of_scope:
+  - state persistence
+  - resume execution
+depends_on:
+  - session-127
+  - backlog-02-drift-whitelist-machine

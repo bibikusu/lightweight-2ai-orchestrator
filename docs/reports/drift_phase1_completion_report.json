@@ -1,0 +1,51 @@
+{
+  "report_id": "drift-phase1-completion-report",
+  "phase_id": "drift_phase1",
+  "status": "completed_with_backlog",
+  "completion_status": "usable_for_self",
+  "summary": "drift Phase 1 は canonical policy 固定と legacy whitelist 初期版整備により、新規 session への止血ラインを成立させた。127b / 128 は改善 backlog として後続へ送る。",
+  "completed_sessions": [
+    {
+      "session_id": "session-125a",
+      "status": "usable_for_self",
+      "note": "drift 文脈の一部基礎整備"
+    },
+    {
+      "session_id": "session-127",
+      "status": "usable_for_self",
+      "note": "canonical policy 固定と whitelist 初期版により Phase 1 を閉じる基点"
+    }
+  ],
+  "review_required_sessions": [
+    "session-123",
+    "session-124",
+    "session-125",
+    "session-126"
+  ],
+  "backlog_items": [
+    {
+      "backlog_id": "backlog-02-drift-whitelist-machine",
+      "source_session": "session-127b",
+      "title": "legacy whitelist の機械チェック化",
+      "status": "backlog"
+    },
+    {
+      "backlog_id": "backlog-03-drift-policy-enforcement",
+      "source_session": "session-128",
+      "title": "drift policy の機械強制化",
+      "status": "backlog"
+    }
+  ],
+  "fixed_policy_points": [
+    "新規 session は canonical review_points を使用する",
+    "新規 session は drift_check_v01: true を原則とする",
+    "既存 legacy session は Phase 1 では凍結対象とし直接改変しない"
+  ],
+  "evidence_note": "検証十分性は文書単体で完結せず、後続 session が policy を守ることで運用上担保される。",
+  "risks": [
+    "127b / 128 未実装のため、機械強制は未成立",
+    "generation selfcheck 未反映の期間は人の目に依存する"
+  ],
+  "card_task_session_12_status": "pending_confirmation",
+  "next_step": "M03-A に進み、state handoff / resume の docs-only 正本定義を先行確定する"
+}
