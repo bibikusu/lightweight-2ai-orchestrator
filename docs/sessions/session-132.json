@@ -1,0 +1,126 @@
+{
+  "session_id": "session-132",
+  "phase_id": "M03",
+  "title": "run_session.py に state 読込と resume 開始判定を最小実装する",
+  "goal": "state.json を読み込み、current_stage / status / failure_stage / failure_type / completed_stages を基に安全な再開開始地点を判定し、resume 実行を最小限で可能にする",
+  "scope": [
+    "run_session.py に state.json 読込処理を追加",
+    "resume 指定時の state 解釈ロジックを追加",
+    "再開開始 stage の判定処理を追加",
+    "resume 実行時に completed_stages を根拠として既完了 stage をスキップする処理を追加",
+    "resume 読込と開始判定に関する単体テスト追加"
+  ],
+  "out_of_scope": [
+    "Master 側 state 利用",
+    "state schema の変更",
+    "checkpoint 書き込み仕様の変更",
+    "DB 導入",
+    "並列実行",
+    "provider / config 変更",
+    "resume UI",
+    "複数 session 横断の resume 制御",
+    "resume 実行本体(= M03-D で扱う)"
+  ],
+  "constraints": [
+    "1セッション1目的を厳守する",
+    "global_rules.md の pipeline stage 正式リスト 10値を前提とする",
+    "completed_stages は checkpoint 到達 stage として解釈する",
+    "state.json の failure_type field は checkpoint_failure_type の値を持つ前提で扱う",
+    "resume は安全側に倒す",
+    "state 不整合時は自動続行せず停止候補とする",
+    "既存通常実行フローを壊さない",
+    "dry-run の既存挙動を壊さない",
+    "変更ファイル数は5以内を目安とする",
+    "decision_points_for_gpt の未確定事項は実装前に GPT 判定を経ること"
+  ],
+  "acceptance_ref": "docs/acceptance/session-132.yaml",
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "backend/tests/test_session_state_resume.py"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/run_session.py: state 読込、resume 開始 stage 判定、既完了 stage スキップ、state 不整合時停止に限定して変更可。GPT 判定後の DP-04/05/06 確定仕様に従うこと",
+    "backend/tests/test_session_state_resume.py: state 読込 / resume 判定 / stage スキップの単体テスト新規追加のみ可"
+  ],
+  "forbidden_changes": [
+    "orchestration/providers/ 配下",
+    "orchestration/config.yaml",
+    ".github/ 配下",
+    "docs/ 配下",
+    "backend/tests/ 配下の他ファイル",
+    "checkpoint 書き込みロジックの仕様変更",
+    "Master 側ロジック",
+    "state schema の破壊的変更",
+    "resume 実行本体の実装"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-01",
+      "type": "state_transition_consistent",
+      "condition": "resume 指定時に state.json を読み込み、再開開始 stage を判定できる"
+    },
+    {
+      "id": "CC-02",
+      "type": "state_transition_consistent",
+      "condition": "completed_stages に含まれる既完了 stage を再実行せずスキップできる"
+    },
+    {
+      "id": "CC-03",
+      "type": "state_transition_consistent",
+      "condition": "state 不整合時は自動続行せず停止候補として扱える"
+    },
+    {
+      "id": "CC-04",
+      "type": "non_regression",
+      "condition": "通常実行フローと dry-run の主要挙動を壊さない"
+    },
+    {
+      "id": "CC-05",
+      "type": "side_effect_free",
+      "condition": "checkpoint schema・Master・provider へ scope 外波及がない"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ],
+  "drift_check_v01": true,
+  "verification": "test_based",
+  "decision_points_for_gpt": [
+    {
+      "id": "DP-04",
+      "topic": "--resume CLI の引数仕様",
+      "context": "resume 機能を起動する CLI 引数の形を決める必要がある。既存の --session-id, --dry-run との関係も含めて一貫性を保つ",
+      "options": [
+        "A) --resume フラグ単独。--session-id が別途必要、または auto-detect (最新 state を artifacts/ から探索)",
+        "B) --resume --session-id=XX を必須組み合わせとする (明示指定のみ、auto-detect なし)",
+        "C) A に加えて --resume-from=<stage> で人間が開始 stage を強制指定できる高度モードも許可"
+      ],
+      "claude_recommendation": "B。最小実装のため auto-detect (A) は却下、--resume-from (C) は人間介入を招くため M03-C scope 外。B が最も予測可能で安全"
+    },
+    {
+      "id": "DP-05",
+      "topic": "state.json 欠損時の扱い",
+      "context": "--resume 指定で起動したが対象 session_id の state.json が存在しない場合の挙動",
+      "options": [
+        "A) 通常実行として開始し warning log を出す (resume 失敗を黙示的に許容)",
+        "B) エラー終了 (resume 指定なのに state がない = 不整合として停止)",
+        "C) 環境変数またはフラグで A/B を選択可能にする"
+      ],
+      "claude_recommendation": "B。『resume は安全側に倒す』原則により、ユーザが resume を明示指定した状況で state 欠損は明確な異常。黙示続行は予測可能性を損なう"
+    },
+    {
+      "id": "DP-06",
+      "topic": "「state 不整合」の判定基準",
+      "context": "state 不整合時は停止候補とするルールが global_rules.md にあるが、具体的に何をもって『不整合』と判定するかは未定義",
+      "options": [
+        "A) schema 必須キー (session_id / current_stage / completed_stages / status / timestamp_utc / failure_stage / failure_type) の欠落のみを不整合とする",
+        "B) A に加え、論理的整合性 (例: status=completed なのに failure_stage!=null、completed_stages に正式リスト外の値が混入等) も検証する",
+        "C) B に加え、外部状態 (git branch 名が sandbox/<session_id> と一致するか等) も検証する"
+      ],
+      "claude_recommendation": "B。A だけでは『論理的に不整合な state』を検出できず resume が危険。C は外部依存を増やし scope を超える。B が最小限で安全"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+session_id: session-132
+acceptance:
+  - id: AC-01
+    description: resume 指定時に state.json を読み込み、再開開始 stage を判定できる
+    test_name: test_resume_loads_state_and_selects_start_stage
+    completion_criteria_refs:
+      - CC-01
+  - id: AC-02
+    description: completed_stages に含まれる stage は resume 実行時に再実行されない
+    test_name: test_resume_skips_completed_stages
+    completion_criteria_refs:
+      - CC-02
+  - id: AC-03
+    description: state 不整合時は自動続行せず停止候補として扱われる
+    test_name: test_resume_stops_on_inconsistent_state
+    completion_criteria_refs:
+      - CC-03
+  - id: AC-04
+    description: 通常実行フローと dry-run の主要挙動が壊れていない
+    test_name: test_resume_does_not_break_existing_flows
+    completion_criteria_refs:
+      - CC-04
+  - id: AC-05
+    description: checkpoint schema や Master 側ロジックなど scope 外変更が混入していない
+    test_name: test_resume_scope_is_preserved
+    completion_criteria_refs:
+      - CC-05
