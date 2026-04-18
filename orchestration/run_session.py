@@ -1111,6 +1111,80 @@ def save_text(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
+def _checkpoint_timestamp_utc() -> str:
+    """state.json 用 UTC タイムスタンプ（末尾 Z）。"""
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _checkpoint_should_record(args: argparse.Namespace) -> bool:
+    """dry-run は実ファイル変更を伴わない実行のため state checkpoint を書かない。"""
+    return not bool(args.dry_run)
+
+
+def _write_session_state_checkpoint(
+    session_dir: Path,
+    session_id: str,
+    *,
+    current_stage: str,
+    completed_stages: List[str],
+    status: str,
+    failure_stage: Optional[str] = None,
+    failure_type: Optional[str] = None,
+) -> None:
+    """session 単位の最小 state を artifacts/<session_id>/state.json に保存する（resume 読込は行わない）。"""
+    payload: Dict[str, Any] = {
+        "session_id": session_id,
+        "current_stage": current_stage,
+        "completed_stages": list(completed_stages),
+        "status": status,
+        "timestamp_utc": _checkpoint_timestamp_utc(),
+        "failure_stage": failure_stage,
+        "failure_type": failure_type,
+    }
+    save_json(session_dir / "state.json", payload)
+
+
+def _checkpoint_stage_begin(
+    args: argparse.Namespace,
+    session_dir: Path,
+    session_id: str,
+    completed_stages: List[str],
+    stage_name: str,
+) -> None:
+    if not _checkpoint_should_record(args):
+        return
+    _write_session_state_checkpoint(
+        session_dir,
+        session_id,
+        current_stage=stage_name,
+        completed_stages=completed_stages,
+        status="running",
+        failure_stage=None,
+        failure_type=None,
+    )
+
+
+def _checkpoint_stage_complete(
+    args: argparse.Namespace,
+    session_dir: Path,
+    session_id: str,
+    completed_stages: List[str],
+    stage_name: str,
+) -> None:
+    if not _checkpoint_should_record(args):
+        return
+    completed_stages.append(stage_name)
+    _write_session_state_checkpoint(
+        session_dir,
+        session_id,
+        current_stage=stage_name,
+        completed_stages=completed_stages,
+        status="running",
+        failure_stage=None,
+        failure_type=None,
+    )
+
+
 def _utc_timestamp_compact() -> str:
     """ログファイル名用 UTC タイムスタンプ（例: 20260322T051030Z）。"""
     return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
@@ -4509,10 +4583,14 @@ def _run_single_session_impl(args: argparse.Namespace) -> int:
     started_at = _iso_utc_now()
     stage = "init"
     ctx: Optional[SessionContext] = None
+    checkpoint_completed: List[str] = []
 
     try:
         enforce_run_session_duplicate_definition_preflight(Path(__file__).resolve())
         stage = "loading"
+        _checkpoint_stage_begin(
+            args, session_dir, args.session_id, checkpoint_completed, stage
+        )
         log_stage_event(session_id=args.session_id, stage=stage, event="start")
         ctx = load_session_context(args.session_id)
         if not bool(args.dry_run):
@@ -4520,10 +4598,19 @@ def _run_single_session_impl(args: argparse.Namespace) -> int:
         set_active_repo_root(Path(resolve_target_repo(ctx.session_data)))
         session_dir = ensure_artifact_dirs(args.session_id)
         log_stage_event(session_id=args.session_id, stage=stage, event="end")
+        _checkpoint_stage_complete(
+            args, session_dir, args.session_id, checkpoint_completed, "loading"
+        )
         stage = "validating"
+        _checkpoint_stage_begin(
+            args, session_dir, args.session_id, checkpoint_completed, stage
+        )
         log_stage_event(session_id=args.session_id, stage=stage, event="start")
         validate_session_context(ctx)
         log_stage_event(session_id=args.session_id, stage=stage, event="end")
+        _checkpoint_stage_complete(
+            args, session_dir, args.session_id, checkpoint_completed, "validating"
+        )
 
         max_retries = (
             args.max_retries
@@ -4541,11 +4628,17 @@ def _run_single_session_impl(args: argparse.Namespace) -> int:
             record_dry_run_git_warnings(session_dir, args.session_id)
         else:
             stage = "git_guard"
+            _checkpoint_stage_begin(
+                args, session_dir, args.session_id, checkpoint_completed, stage
+            )
             log_stage_event(session_id=args.session_id, stage=stage, event="start")
             log_stage_progress(args.session_id, stage, "ブランチ検証・sandbox へ切替")
             enforce_git_sandbox_branch(args.session_id)
             log_stage_progress(args.session_id, "git_guard", "完了 → 以降は API 呼び出し")
             log_stage_event(session_id=args.session_id, stage=stage, event="end")
+            _checkpoint_stage_complete(
+                args, session_dir, args.session_id, checkpoint_completed, "git_guard"
+            )
 
         # drift v0.1 は session に drift_check_v01 が真のときのみ（既存セッションとテストモックとの整合）。
         # main() 冒頭で sys.path が整備済みであることだけが import の前提。
@@ -4569,6 +4662,16 @@ def _run_single_session_impl(args: argparse.Namespace) -> int:
                 with drift_path.open("w", encoding="utf-8") as f:
                     json.dump(drift_result, f, ensure_ascii=False, indent=2)
                 print("Drift check failed")
+                if _checkpoint_should_record(args):
+                    _write_session_state_checkpoint(
+                        session_dir,
+                        args.session_id,
+                        current_stage="drift_check",
+                        completed_stages=checkpoint_completed,
+                        status="failed",
+                        failure_stage="drift_check",
+                        failure_type="DriftCheckFailed",
+                    )
                 sys.exit(1)
 
         spec_system, spec_user = build_prepared_spec_prompts(ctx)
@@ -4622,6 +4725,9 @@ def _run_single_session_impl(args: argparse.Namespace) -> int:
             return 0
 
         stage = "prepared_spec"
+        _checkpoint_stage_begin(
+            args, session_dir, args.session_id, checkpoint_completed, stage
+        )
         log_stage_event(session_id=args.session_id, stage=stage, event="start")
         log_stage_progress(
             args.session_id, stage, "OpenAI（Builder契約反映の仕様整形）呼び出し開始"
@@ -4630,6 +4736,9 @@ def _run_single_session_impl(args: argparse.Namespace) -> int:
         save_json(session_dir / "responses" / "prepared_spec.json", prepared_spec)
         openai_usage = extract_api_usage(prepared_spec)  # usage 抽出（なければ空辞書）
         log_stage_event(session_id=args.session_id, stage=stage, event="end")
+        _checkpoint_stage_complete(
+            args, session_dir, args.session_id, checkpoint_completed, "prepared_spec"
+        )
 
         impl_system, impl_user = build_implementation_prompts(prepared_spec, ctx, None)
         save_text(session_dir / "prompts" / "implementation_system.txt", impl_system)
@@ -4637,6 +4746,9 @@ def _run_single_session_impl(args: argparse.Namespace) -> int:
 
         # 実装＋チェック（初回）
         stage = "implementation"
+        _checkpoint_stage_begin(
+            args, session_dir, args.session_id, checkpoint_completed, stage
+        )
         log_stage_event(session_id=args.session_id, stage=stage, event="start")
         log_stage_progress(args.session_id, stage, "Claude（実装案）呼び出し開始")
         impl_result = call_claude_for_implementation(prepared_spec, ctx, None)
@@ -4649,8 +4761,14 @@ def _run_single_session_impl(args: argparse.Namespace) -> int:
             raise
         save_json(session_dir / "responses" / "implementation_result.json", impl_result)
         log_stage_event(session_id=args.session_id, stage=stage, event="end")
+        _checkpoint_stage_complete(
+            args, session_dir, args.session_id, checkpoint_completed, "implementation"
+        )
 
         stage = "patch_apply"
+        _checkpoint_stage_begin(
+            args, session_dir, args.session_id, checkpoint_completed, stage
+        )
         log_stage_event(session_id=args.session_id, stage=stage, event="start")
         log_stage_progress(
             args.session_id,
@@ -4667,6 +4785,9 @@ def _run_single_session_impl(args: argparse.Namespace) -> int:
             session_id=args.session_id,
         )
         log_stage_event(session_id=args.session_id, stage=stage, event="end")
+        _checkpoint_stage_complete(
+            args, session_dir, args.session_id, checkpoint_completed, "patch_apply"
+        )
 
         retry_instruction: Optional[Dict[str, Any]] = None
         retry_stopped_same_cause = False
@@ -4734,6 +4855,9 @@ def _run_single_session_impl(args: argparse.Namespace) -> int:
 
             # retry 指示を生成（関数内で同一原因は抑止される）
             stage = "retry_instruction"
+            _checkpoint_stage_begin(
+                args, session_dir, args.session_id, checkpoint_completed, stage
+            )
             log_stage_event(session_id=args.session_id, stage=stage, event="start")
             log_stage_progress(
                 args.session_id,
@@ -4744,6 +4868,9 @@ def _run_single_session_impl(args: argparse.Namespace) -> int:
                 ctx, prepared_spec, impl_result, check_results
             )
             log_stage_event(session_id=args.session_id, stage=stage, event="end")
+            _checkpoint_stage_complete(
+                args, session_dir, args.session_id, checkpoint_completed, "retry_instruction"
+            )
             retry_instruction["failure_type"] = decision["failure_type"]
             retry_instruction["cause_summary"] = decision["cause_summary"]
             # 同一原因抑止の場合は retry_count を増やさない
@@ -4773,6 +4900,9 @@ def _run_single_session_impl(args: argparse.Namespace) -> int:
 
             # Claude retry を実行
             stage = "implementation_retry"
+            _checkpoint_stage_begin(
+                args, session_dir, args.session_id, checkpoint_completed, stage
+            )
             log_stage_event(session_id=args.session_id, stage=stage, event="start")
             log_stage_progress(args.session_id, stage, f"retry_count={retry_count}")
             impl_result = call_claude_for_implementation(
@@ -4790,8 +4920,18 @@ def _run_single_session_impl(args: argparse.Namespace) -> int:
                 impl_result,
             )
             log_stage_event(session_id=args.session_id, stage=stage, event="end")
+            _checkpoint_stage_complete(
+                args,
+                session_dir,
+                args.session_id,
+                checkpoint_completed,
+                "implementation_retry",
+            )
 
             stage = "patch_apply"
+            _checkpoint_stage_begin(
+                args, session_dir, args.session_id, checkpoint_completed, stage
+            )
             log_stage_event(session_id=args.session_id, stage=stage, event="start")
             log_stage_progress(
                 args.session_id,
@@ -4809,6 +4949,9 @@ def _run_single_session_impl(args: argparse.Namespace) -> int:
                 retry_label="retry:",
             )
             log_stage_event(session_id=args.session_id, stage=stage, event="end")
+            _checkpoint_stage_complete(
+                args, session_dir, args.session_id, checkpoint_completed, "patch_apply"
+            )
 
             if check_results.get("success"):
                 retry_count = 0
@@ -4847,6 +4990,28 @@ def _run_single_session_impl(args: argparse.Namespace) -> int:
         except Exception:
             pass  # 補助ステージ：失敗してもセッション判定に影響させない
 
+        if _checkpoint_should_record(args):
+            if overall_success:
+                _write_session_state_checkpoint(
+                    session_dir,
+                    args.session_id,
+                    current_stage="completed",
+                    completed_stages=checkpoint_completed,
+                    status="completed",
+                    failure_stage=None,
+                    failure_type=None,
+                )
+            else:
+                _write_session_state_checkpoint(
+                    session_dir,
+                    args.session_id,
+                    current_stage=stage,
+                    completed_stages=checkpoint_completed,
+                    status="failed",
+                    failure_stage=stage,
+                    failure_type="SessionFailed",
+                )
+
         print(f"[OK] session processed: {args.session_id}")
         print(f"[INFO] artifacts saved under: {session_dir}")
         _emit_structured_log(
@@ -4862,6 +5027,16 @@ def _run_single_session_impl(args: argparse.Namespace) -> int:
 
     except Exception as e:
         br = _git_branch_safe()
+        if _checkpoint_should_record(args):
+            _write_session_state_checkpoint(
+                session_dir,
+                args.session_id,
+                current_stage=stage,
+                completed_stages=checkpoint_completed,
+                status="failed",
+                failure_stage=stage,
+                failure_type=type(e).__name__,
+            )
         save_error_log(
             session_dir,
             stage,
