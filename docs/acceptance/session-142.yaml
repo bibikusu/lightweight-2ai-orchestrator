@@ -1,0 +1,34 @@
+session_id: session-142
+phase_id: P7
+title: Fix preflight exit code contract for hook fail-fast reliability
+acceptance:
+  - id: AC-142-01
+    description: dirty worktree のとき preflight が non-zero で終了する
+    test_name: test_preflight_returns_nonzero_on_dirty_worktree
+    completion_criteria_refs: [CC-142-01]
+    priority: highest
+  - id: AC-142-02
+    description: branch sync NG のとき preflight が non-zero で終了する
+    test_name: test_preflight_returns_nonzero_on_branch_sync_failure
+    completion_criteria_refs: [CC-142-02]
+    priority: highest
+  - id: AC-142-03
+    description: .venv/bin/python 不備のとき preflight が non-zero で終了する
+    test_name: test_preflight_returns_nonzero_on_venv_failure
+    completion_criteria_refs: [CC-142-03]
+    priority: highest
+  - id: AC-142-04
+    description: session 定義不足時に preflight が non-zero で終了する
+    test_name: test_preflight_returns_nonzero_on_missing_session_files
+    completion_criteria_refs: [CC-142-04]
+    priority: highest
+  - id: AC-142-05
+    description: 正常系では preflight が exit 0 を返す
+    test_name: test_preflight_returns_zero_on_clean_valid_state
+    completion_criteria_refs: [CC-142-05]
+    priority: highest
+  - id: AC-142-06
+    description: Hook / orchestration / docs 正本に不要な変更がない
+    test_name: test_session_142_does_not_modify_core_files
+    completion_criteria_refs: [CC-142-06]
+    priority: highest

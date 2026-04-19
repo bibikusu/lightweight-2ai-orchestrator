@@ -1,0 +1,135 @@
+{
+  "session_id": "session-142",
+  "phase_id": "P7",
+  "title": "Fix preflight exit code contract for hook fail-fast reliability",
+  "goal": "scripts/preflight_session.sh の終了コード設計を補正し、dirty worktree・branch sync 不整合・venv 不備・session 定義不足を non-zero で返すようにして、PreToolUse hook の fail-fast 品質を成立させる。",
+  "scope": [
+    "scripts/preflight_session.sh の終了コード設計補正",
+    "dirty worktree 時に non-zero を返す処理の追加",
+    "branch sync NG 時に non-zero を返す処理の追加",
+    "venv health NG 時に non-zero を返す処理の追加",
+    "session file 必須不足時に non-zero を返す処理の追加",
+    "tests/hooks/test_hook_scripts.py への最小補強",
+    "session-142 用 docs/sessions / docs/acceptance 定義の追加"
+  ],
+  "out_of_scope": [
+    "Hook スクリプト本体の仕様変更",
+    ".claude/settings.json の変更",
+    ".mcp.json の変更",
+    "run_session.py の変更",
+    "queue / scheduler の仕様変更",
+    "P7-B(Custom Slash Commands)の実装"
+  ],
+  "constraints": [
+    "1セッション1目的",
+    "通常コードセッションとして sandbox/session-142 上で実施する",
+    "preflight の出力内容は極力維持し、終了コード設計のみを補正する",
+    "scripts/preflight_session.sh の既存表示フォーマットを大きく変更しない",
+    "Hook 実ブート確認は human 手動で行い、AC には含めない",
+    "変更ファイル数は最大4ファイル以内",
+    "review_points は4軸固定(仕様一致、変更範囲遵守、副作用なし、検証十分性)",
+    "4コマンド gate(ruff / pytest / mypy / compileall)を通すこと"
+  ],
+  "acceptance_ref": "docs/acceptance/session-142.yaml",
+  "allowed_changes": [
+    "scripts/preflight_session.sh",
+    "tests/hooks/test_hook_scripts.py",
+    "docs/sessions/session-142.json",
+    "docs/acceptance/session-142.yaml"
+  ],
+  "allowed_changes_detail": [
+    "scripts/preflight_session.sh: dirty worktree / branch sync / venv health / session file check の結果に応じて非ゼロ終了する終了コード設計へ補正",
+    "tests/hooks/test_hook_scripts.py: preflight fail-fast 品質に関する最小確認を追加",
+    "docs/sessions/session-142.json: 本セッション定義",
+    "docs/acceptance/session-142.yaml: acceptance 定義"
+  ],
+  "forbidden_changes": [
+    "orchestration/ 配下の全ファイル",
+    ".claude/ 配下の全ファイル",
+    ".mcp.json",
+    "tests/queue/ 配下の全ファイル",
+    "tests/scheduler/ 配下の全ファイル",
+    "docs/sessions/ 配下の session-142.json 以外",
+    "docs/acceptance/ 配下の session-142.yaml 以外",
+    "docs/config/ 配下の全ファイル",
+    "docs/specs/ 配下の全ファイル",
+    "docs/reports/ 配下の全ファイル",
+    "docs/roadmap.yaml",
+    "requirements.txt / requirements-dev.txt / pyproject.toml"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-142-01",
+      "type": "state_transition_consistent",
+      "condition": "scripts/preflight_session.sh が dirty worktree のとき non-zero で終了する"
+    },
+    {
+      "id": "CC-142-02",
+      "type": "state_transition_consistent",
+      "condition": "scripts/preflight_session.sh が branch sync NG のとき non-zero で終了する"
+    },
+    {
+      "id": "CC-142-03",
+      "type": "state_transition_consistent",
+      "condition": "scripts/preflight_session.sh が .venv/bin/python 不備のとき non-zero で終了する"
+    },
+    {
+      "id": "CC-142-04",
+      "type": "state_transition_consistent",
+      "condition": "scripts/preflight_session.sh が session 定義不足時に non-zero で終了する"
+    },
+    {
+      "id": "CC-142-05",
+      "type": "document_rule",
+      "condition": "正常時は exit 0、異常時は exit 1 以上という契約がコード上で明確である"
+    },
+    {
+      "id": "CC-142-06",
+      "type": "non_regression",
+      "condition": "Hook / orchestration / queue / scheduler / docs の既存正本に変更がない"
+    },
+    {
+      "id": "CC-142-07",
+      "type": "non_regression",
+      "condition": "4コマンド gate(ruff/pytest/mypy/compileall)が通過する"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-142-01",
+      "text": "dirty worktree のとき preflight が non-zero で終了する",
+      "test_name": "test_preflight_returns_nonzero_on_dirty_worktree"
+    },
+    {
+      "id": "AC-142-02",
+      "text": "branch sync NG のとき preflight が non-zero で終了する",
+      "test_name": "test_preflight_returns_nonzero_on_branch_sync_failure"
+    },
+    {
+      "id": "AC-142-03",
+      "text": ".venv/bin/python 不備のとき preflight が non-zero で終了する",
+      "test_name": "test_preflight_returns_nonzero_on_venv_failure"
+    },
+    {
+      "id": "AC-142-04",
+      "text": "session 定義不足時に preflight が non-zero で終了する",
+      "test_name": "test_preflight_returns_nonzero_on_missing_session_files"
+    },
+    {
+      "id": "AC-142-05",
+      "text": "正常系では preflight が exit 0 を返す",
+      "test_name": "test_preflight_returns_zero_on_clean_valid_state"
+    },
+    {
+      "id": "AC-142-06",
+      "text": "Hook / orchestration / docs 正本に不要な変更がない",
+      "test_name": "test_session_142_does_not_modify_core_files"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ]
+}
