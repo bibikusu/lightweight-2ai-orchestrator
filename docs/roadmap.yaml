@@ -132,3 +132,27 @@ phases:
     goals:
       - P6 completion report
       - P7 input conditions frozen
+
+  - id: P7-pre
+    name: responsibility canonicalization for Hooks and MCP
+    depends_on: [P6]
+    goals:
+      - hooks and mcp responsibility boundary
+      - automation and human judgment boundary
+      - phase 7-b deferral for slash commands
+
+  - id: P7
+    name: Claude Code Hooks and MCP integration
+    depends_on: [P7-pre]
+    goals:
+      - minimal hooks integration
+      - minimal mcp configuration
+      - execution guard automation baseline
+
+  - id: P7-B
+    name: custom slash commands
+    depends_on: [P7]
+    goals:
+      - session draft command
+      - spec review command
+      - cursor run command

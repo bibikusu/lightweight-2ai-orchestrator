@@ -1,0 +1,29 @@
+session_id: session-140c
+phase_id: P6
+title: Register P7-pre, P7, and P7-B phases in roadmap.yaml
+acceptance:
+  - id: AC-140C-01
+    description: roadmap.yaml に P7-pre phase が追加されている
+    test_name: test_roadmap_has_p7_pre
+    completion_criteria_refs: [CC-140C-01]
+    priority: highest
+  - id: AC-140C-02
+    description: roadmap.yaml に P7 phase が追加されている
+    test_name: test_roadmap_has_p7
+    completion_criteria_refs: [CC-140C-01]
+    priority: highest
+  - id: AC-140C-03
+    description: roadmap.yaml に P7-B phase が追加されている
+    test_name: test_roadmap_has_p7_b
+    completion_criteria_refs: [CC-140C-01]
+    priority: highest
+  - id: AC-140C-04
+    description: P7-pre / P7 / P7-B の depends_on が正しく記述されている
+    test_name: test_roadmap_p7_dependencies_defined
+    completion_criteria_refs: [CC-140C-02]
+    priority: highest
+  - id: AC-140C-05
+    description: 既存 phase の記述に変更がない
+    test_name: test_existing_phases_unchanged
+    completion_criteria_refs: [CC-140C-03]
+    priority: highest

@@ -1,0 +1,105 @@
+{
+  "session_id": "session-140c",
+  "phase_id": "P6",
+  "title": "Register P7-pre, P7, and P7-B phases in roadmap.yaml",
+  "goal": "session-141 以降の phase_id 整合性を確保するため、docs/roadmap.yaml に P7-pre / P7 / P7-B を追記し、P7 系フェーズ登録を正本として完成させる。",
+  "scope": [
+    "docs/roadmap.yaml に P7-pre, P7, P7-B を追記",
+    "P7-pre の depends_on と goals を定義",
+    "P7 の depends_on と goals を定義",
+    "P7-B の depends_on と goals を定義"
+  ],
+  "out_of_scope": [
+    "既存 phase の変更",
+    "既存 phase の削除",
+    "run_session.py の変更",
+    "queue / scheduler / hooks / MCP の実装",
+    "session-141 の実装"
+  ],
+  "constraints": [
+    "1セッション1目的",
+    "docs-only セッションとする",
+    "既存 phase の記述に一切の変更を加えない",
+    "変更ファイル数は最大3ファイル以内",
+    "review_points は4軸固定(仕様一致、変更範囲遵守、副作用なし、検証十分性)"
+  ],
+  "acceptance_ref": "docs/acceptance/session-140c.yaml",
+  "allowed_changes": [
+    "docs/roadmap.yaml",
+    "docs/sessions/session-140c.json",
+    "docs/acceptance/session-140c.yaml"
+  ],
+  "allowed_changes_detail": [
+    "docs/roadmap.yaml: P7-pre, P7, P7-B の 3 phase を追記し、depends_on と goals を定義",
+    "docs/sessions/session-140c.json: 本セッション定義の新規作成",
+    "docs/acceptance/session-140c.yaml: 本セッション acceptance 定義の新規作成"
+  ],
+  "forbidden_changes": [
+    "orchestration/ 配下の全ファイル",
+    "tests/ 配下の全ファイル",
+    "docs/sessions/ 配下の session-140c.json 以外",
+    "docs/acceptance/ 配下の session-140c.yaml 以外",
+    "docs/config/ 配下の全ファイル",
+    "docs/specs/ 配下の全ファイル",
+    "docs/reports/ 配下の全ファイル",
+    "docs/global_rules.md",
+    "docs/master_instruction.md",
+    ".github/ 配下の全ファイル",
+    "既存 phase(phase-01〜12, P6C-pre, P6C, P6A, P6B, P6D, P6)の記述"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-140C-01",
+      "type": "document_rule",
+      "condition": "roadmap.yaml に P7-pre, P7, P7-B の 3 phase が新規追加されている"
+    },
+    {
+      "id": "CC-140C-02",
+      "type": "document_rule",
+      "condition": "P7-pre の depends_on が P6、P7 の depends_on が P7-pre、P7-B の depends_on が P7 として記述されている"
+    },
+    {
+      "id": "CC-140C-03",
+      "type": "non_regression",
+      "condition": "既存の phase-01〜12, P6C-pre, P6C, P6A, P6B, P6D, P6 の記述に変更がない"
+    },
+    {
+      "id": "CC-140C-04",
+      "type": "side_effect_free",
+      "condition": "orchestration/, tests/, docs/config/, docs/specs/, docs/reports/ に変更がない"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-140C-01",
+      "text": "roadmap.yaml に P7-pre phase が追加されている",
+      "test_name": "test_roadmap_has_p7_pre"
+    },
+    {
+      "id": "AC-140C-02",
+      "text": "roadmap.yaml に P7 phase が追加されている",
+      "test_name": "test_roadmap_has_p7"
+    },
+    {
+      "id": "AC-140C-03",
+      "text": "roadmap.yaml に P7-B phase が追加されている",
+      "test_name": "test_roadmap_has_p7_b"
+    },
+    {
+      "id": "AC-140C-04",
+      "text": "P7-pre / P7 / P7-B の depends_on が正しく記述されている",
+      "test_name": "test_roadmap_p7_dependencies_defined"
+    },
+    {
+      "id": "AC-140C-05",
+      "text": "既存 phase の記述に変更がない",
+      "test_name": "test_existing_phases_unchanged"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ]
+}
