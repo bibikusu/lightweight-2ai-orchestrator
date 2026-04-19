@@ -1,0 +1,32 @@
+session_id: session-133
+acceptance:
+  - id: AC-01
+    description: resume 実行時に skip 対象 stage の required artifact が欠損している場合、欠損ファイル名を含む fail-fast 停止になる
+    test_name: test_resume_fails_fast_when_required_artifact_missing
+    completion_criteria_refs:
+      - CC-01
+  - id: AC-02
+    description: retry_history.json が retry 経路専用の補助履歴として session_dir 配下に保存され、session_id / retry_count / retry_events を保持する
+    test_name: test_retry_history_json_written_to_session_dir
+    completion_criteria_refs:
+      - CC-02
+  - id: AC-03
+    description: state.json schema は既存互換を維持し、completed_stages は初回パイプラインの完了記録として扱われる
+    test_name: test_state_schema_non_breaking_with_retry_history
+    completion_criteria_refs:
+      - CC-03
+  - id: AC-04
+    description: loading / validating は resume 実行でも常時実行され、skip 対象 stage 運用と矛盾しない
+    test_name: test_loading_and_validating_always_run_under_resume
+    completion_criteria_refs:
+      - CC-04
+  - id: AC-05
+    description: implementation_retry の artifact 参照が session_dir/responses/implementation_result.json と整合し、既存メモリ上 retry_history リスト動作を破壊しない
+    test_name: test_implementation_retry_artifact_and_memory_list_preserved
+    completion_criteria_refs:
+      - CC-05
+  - id: AC-06
+    description: 変更は allowed_changes_detail の範囲に収まり、M04 相当の拡張を含まない
+    test_name: test_session_133_scope_preserved
+    completion_criteria_refs:
+      - CC-06

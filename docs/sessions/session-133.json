@@ -1,0 +1,113 @@
+{
+  "session_id": "session-133",
+  "phase_id": "M03",
+  "title": "M03-D resume 実行整合性強化 (artifact 欠損 fail-fast + retry_history 永続化導入)",
+  "goal": "session-133-pre で正本化した resume 実行整合性ルールを run_session.py に反映し、artifact 欠損時 fail-fast 停止、state.json schema 非破壊維持、retry_history.json による retry 経路履歴の永続化分離、skip 対象 stage 運用の実装整合を確立する",
+  "scope": [
+    "resume 実行時に skip 対象 stage の required artifact 欠損を検知して fail-fast 停止する実装を追加する",
+    "欠損時に欠損ファイル名を含むエラーメッセージを返す実装を追加する",
+    "state.json schema を破壊せずに retry_history.json を session_dir 配下に追加し、retry 経路履歴を永続化する",
+    "既存メモリ上 retry_history リストと新規 retry_history.json 永続 artifact の責務分離を明示する",
+    "completed_stages を初回パイプラインの完了記録に限定する前提で retry 経路を別管理する",
+    "loading / validating 常時実行原則と skip 対象 stage 運用を実装上で整合させる",
+    "implementation_retry の artifact 参照を responses/implementation_result.json として既存実装と整合させる",
+    "retry_history.json を既存 state.json と同じ session_dir 配下に保存する",
+    "上記変更に対するテストを backend/tests/test_resume_execution_rules.py に追加する"
+  ],
+  "out_of_scope": [
+    "master_instruction.md / global_rules.md の追加改定",
+    "M04 の先取り",
+    "state.json schema の破壊的変更",
+    "provider 実装の変更",
+    "retry 最適化全般の拡張",
+    "resume と無関係な pipeline 再設計",
+    "複数 session 並列実行",
+    "UI / dashboard / report 仕様拡張",
+    "既存メモリ上 retry_history リストの構造変更 (シリアライズ出力のみ)"
+  ],
+  "constraints": [
+    "1セッション1目的を厳守する",
+    "session-133-pre で正本化した DP-07=A / DP-08=C / DP-09=C に従う",
+    "state.json schema は non-breaking で維持する",
+    "retry_history.json は retry 経路専用の補助履歴として扱い、state.json の代替にしない",
+    "retry_history.json は session_dir 配下に保存する",
+    "既存メモリ上 retry_history リスト (run_session.py 3561-5077 付近) の構造は変更せず、永続化のための読み書き層のみ追加する",
+    "loading / validating は常時実行原則を維持する",
+    "artifact 欠損時の黙示的再実行フォールバックは禁止する",
+    "変更ファイル数は 4 ファイル以内を目安とする",
+    "既存の session / acceptance / backlog / reports / templates は変更しない",
+    "required artifact 判定は current implementation と整合する形で実装する",
+    "implementation_retry の required artifact は session_dir/responses/implementation_result.json とする",
+    "run_session.py の変更は M03-D に必要な最小差分に限定する"
+  ],
+  "acceptance_ref": "docs/acceptance/session-133.yaml",
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "backend/tests/test_resume_execution_rules.py",
+    "docs/sessions/session-133.json",
+    "docs/acceptance/session-133.yaml"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/run_session.py: resume 実行時の artifact 欠損 fail-fast 判定、retry_history.json の保存/読み込み、既存メモリ上 retry_history リストとの責務分離、completed_stages と retry 経路の責務分離、loading/validating 常時実行原則と skip 対象 stage 運用の整合に必要な範囲のみ変更可",
+    "backend/tests/test_resume_execution_rules.py: M03-D の受入条件を検証する新規テストファイルの追加のみ可",
+    "docs/sessions/session-133.json: 本 session 定義の新規作成のみ可",
+    "docs/acceptance/session-133.yaml: 本 session 受入基準の新規作成のみ可"
+  ],
+  "forbidden_changes": [
+    "orchestration/providers/ 配下",
+    "orchestration/config.yaml",
+    ".github/ 配下",
+    "docs/global_rules.md",
+    "docs/master_instruction.md",
+    "docs/sessions/ 配下の既存ファイル",
+    "docs/acceptance/ 配下の既存ファイル",
+    "docs/reports/ 配下の既存ファイル",
+    "docs/backlogs/ 配下の既存ファイル",
+    "docs/templates/ 配下",
+    "backend/tests/ 配下の既存ファイル",
+    "state.json schema の破壊的変更",
+    "既存 RESUME_SKIP_ELIGIBLE_STAGES 定数の破壊的変更",
+    "既存メモリ上 retry_history リストの構造変更",
+    "M03-D と無関係な pipeline stage 定義変更"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-01",
+      "type": "state_transition_consistent",
+      "condition": "resume 実行時に skip 対象 stage の required artifact 欠損を検知した場合、欠損ファイル名を含む fail-fast 停止になる"
+    },
+    {
+      "id": "CC-02",
+      "type": "artifact",
+      "condition": "retry_history.json が retry 経路専用の補助履歴として session_dir 配下に保存され、session_id / retry_count / retry_events を保持する"
+    },
+    {
+      "id": "CC-03",
+      "type": "non_regression",
+      "condition": "state.json schema は既存互換を維持し、completed_stages は初回パイプラインの完了記録として扱われる"
+    },
+    {
+      "id": "CC-04",
+      "type": "state_transition_consistent",
+      "condition": "loading / validating は resume 実行でも常時実行され、skip 対象 stage 運用と矛盾しない"
+    },
+    {
+      "id": "CC-05",
+      "type": "non_regression",
+      "condition": "implementation_retry の artifact 参照が session_dir/responses/implementation_result.json と整合し、既存メモリ上 retry_history リスト動作を破壊しない"
+    },
+    {
+      "id": "CC-06",
+      "type": "side_effect_free",
+      "condition": "変更は allowed_changes_detail の範囲に収まり、M04 相当の拡張を含まない"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ],
+  "drift_check_v01": true,
+  "verification": "automated_and_human_review"
+}
