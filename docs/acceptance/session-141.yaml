@@ -1,0 +1,39 @@
+session_id: session-141
+phase_id: P7
+title: P7 implementation - minimal Hooks and MCP configuration
+acceptance:
+  - id: AC-141-01
+    description: .claude/hooks/pre_tool_use.sh が存在し実行可能である
+    test_name: test_pre_tool_use_hook_exists_and_executable
+    completion_criteria_refs: [CC-141-01]
+    priority: highest
+  - id: AC-141-02
+    description: .claude/hooks/post_tool_use.sh が存在し実行可能である
+    test_name: test_post_tool_use_hook_exists_and_executable
+    completion_criteria_refs: [CC-141-01]
+    priority: highest
+  - id: AC-141-03
+    description: .claude/settings.json が正しい JSON で、PreToolUse / PostToolUse Hook と permission_mode=plan が登録されている
+    test_name: test_claude_settings_registers_hooks_and_plan_mode
+    completion_criteria_refs: [CC-141-02, CC-141-04]
+    priority: highest
+  - id: AC-141-04
+    description: .mcp.json が正しい JSON で、filesystem サーバが read-only で登録されている
+    test_name: test_mcp_json_registers_filesystem_readonly
+    completion_criteria_refs: [CC-141-03]
+    priority: highest
+  - id: AC-141-05
+    description: pre_tool_use.sh が preflight_session.sh の exit code を伝播する
+    test_name: test_pre_hook_delegates_to_preflight_script
+    completion_criteria_refs: [CC-141-05]
+    priority: high
+  - id: AC-141-06
+    description: post_tool_use.sh が 4-gate を実行し fail-fast する
+    test_name: test_post_hook_runs_four_gates_and_fails_fast
+    completion_criteria_refs: [CC-141-06]
+    priority: high
+  - id: AC-141-07
+    description: 既存 orchestration / scripts / docs に変更がない(session-141 定義ファイルを除く)
+    test_name: test_session_141_does_not_modify_core_files
+    completion_criteria_refs: [CC-141-07]
+    priority: highest

@@ -1,0 +1,158 @@
+{
+  "session_id": "session-141",
+  "phase_id": "P7",
+  "title": "P7 implementation: minimal Claude Code Hooks and MCP configuration",
+  "goal": "P7-pre で正本化した責務境界に基づき、最小の Claude Code Hooks(PreToolUse / PostToolUse)と MCP 設定(.mcp.json, filesystem read-only)を配置し、人間コピペ削減の最初の自動化ガードを成立させる。",
+  "scope": [
+    ".claude/hooks/pre_tool_use.sh の新規作成(preflight 呼び出し + fail-fast)",
+    ".claude/hooks/post_tool_use.sh の新規作成(4-gate 呼び出し + log 出力)",
+    ".claude/settings.json の新規作成(Hook 登録と permission_mode 固定)",
+    ".mcp.json の新規作成(filesystem read-only サーバのみ定義)",
+    "tests/hooks/test_hook_scripts.py の新規作成(hook スクリプトの健全性検査)",
+    "docs/sessions/session-141.json と docs/acceptance/session-141.yaml の新規作成"
+  ],
+  "out_of_scope": [
+    "Hooks / MCP / slash commands の実装コード追加を超える拡張",
+    "run_session.py / queue / scheduler の仕様変更",
+    "MCP GitHub / SSH / Postgres などの外部サーバ実装",
+    "Custom Slash Commands の実装(Phase 7-B 扱い)",
+    "commit guard の自動実行(log のみ)",
+    "Hook による main 自動 push",
+    "CI / GitHub Actions への統合",
+    "自動実行の本番有効化"
+  ],
+  "constraints": [
+    "1セッション1目的",
+    "通常コードセッションとして sandbox/session-141 上で実施する",
+    "Hook スクリプトは bash で実装し、Python 依存を追加しない",
+    "既存 scripts/preflight_session.sh を Hook から呼び出す(再実装しない)",
+    "4-gate の呼び出しは既存 python3 -m ruff / pytest / mypy / compileall を使用する",
+    "MCP サーバは filesystem(read-only)のみとし、書き込み権限のあるサーバは今回追加しない",
+    ".claude/ 配下は本セッションでは明示的に git 管理対象とする",
+    "変更ファイル数は最大7ファイル以内に収めること",
+    "review_points は4軸固定(仕様一致、変更範囲遵守、副作用なし、検証十分性)",
+    "4コマンド gate(ruff / pytest / mypy / compileall)を通すこと",
+    "Hook の実ブート検証(Claude Code 実環境での動作確認)は human が手動で行い、AC には含めない"
+  ],
+  "acceptance_ref": "docs/acceptance/session-141.yaml",
+  "allowed_changes": [
+    ".claude/hooks/pre_tool_use.sh",
+    ".claude/hooks/post_tool_use.sh",
+    ".claude/settings.json",
+    ".mcp.json",
+    "tests/hooks/test_hook_scripts.py",
+    "docs/sessions/session-141.json",
+    "docs/acceptance/session-141.yaml"
+  ],
+  "allowed_changes_detail": [
+    ".claude/hooks/pre_tool_use.sh: scripts/preflight_session.sh を呼び出し、exit code で Claude Code の実行可否を制御する最小スクリプト",
+    ".claude/hooks/post_tool_use.sh: 4-gate(ruff/pytest/mypy/compileall)を順に実行し、1つでも失敗したら non-zero exit する最小スクリプト",
+    ".claude/settings.json: PreToolUse / PostToolUse に上記スクリプトを登録し、permission_mode=plan を固定",
+    ".mcp.json: filesystem サーバを read-only で 1 つだけ登録(プロジェクトルートを root に)",
+    "tests/hooks/test_hook_scripts.py: bash スクリプトが存在し実行可能であること、settings.json / .mcp.json が正しい JSON であること、hook スクリプトが subprocess.run で呼び出し可能であることを確認するユニットテスト",
+    "docs/sessions/session-141.json: 本セッション定義の新規作成",
+    "docs/acceptance/session-141.yaml: 本セッション acceptance 定義の新規作成"
+  ],
+  "forbidden_changes": [
+    "orchestration/ 配下の全ファイル",
+    "tests/queue/ 配下の全ファイル",
+    "tests/scheduler/ 配下の全ファイル",
+    "tests/hooks/test_hook_scripts.py 以外の tests/ 配下の全ファイル",
+    "scripts/ 配下の既存ファイル(Hook は呼ぶだけで変更しない)",
+    "docs/sessions/ 配下の session-141.json 以外",
+    "docs/acceptance/ 配下の session-141.yaml 以外",
+    "docs/config/ 配下の全ファイル",
+    "docs/specs/ 配下の全ファイル",
+    "docs/reports/ 配下の全ファイル",
+    "docs/roadmap.yaml",
+    "docs/global_rules.md",
+    "docs/master_instruction.md",
+    ".github/ 配下の全ファイル",
+    "requirements.txt / requirements-dev.txt / pyproject.toml の全変更"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-141-01",
+      "type": "artifact",
+      "condition": ".claude/hooks/pre_tool_use.sh と .claude/hooks/post_tool_use.sh が作成され、実行可能属性(chmod +x)が付与されている"
+    },
+    {
+      "id": "CC-141-02",
+      "type": "artifact",
+      "condition": ".claude/settings.json に PreToolUse / PostToolUse の 2 つの Hook エントリが登録されている"
+    },
+    {
+      "id": "CC-141-03",
+      "type": "artifact",
+      "condition": ".mcp.json に filesystem サーバが read-only で 1 つ登録されている"
+    },
+    {
+      "id": "CC-141-04",
+      "type": "document_rule",
+      "condition": ".claude/settings.json の permission_mode が plan に固定されている"
+    },
+    {
+      "id": "CC-141-05",
+      "type": "state_transition_consistent",
+      "condition": "pre_tool_use.sh は scripts/preflight_session.sh の exit code をそのまま伝播する"
+    },
+    {
+      "id": "CC-141-06",
+      "type": "state_transition_consistent",
+      "condition": "post_tool_use.sh は 4-gate の 1つでも失敗したら non-zero で終了する"
+    },
+    {
+      "id": "CC-141-07",
+      "type": "non_regression",
+      "condition": "orchestration/ / scripts/ / docs/ 配下の既存ファイルに変更がない(session-141 定義ファイルを除く)"
+    },
+    {
+      "id": "CC-141-08",
+      "type": "non_regression",
+      "condition": "4コマンド gate(ruff/pytest/mypy/compileall)が通過する"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-141-01",
+      "text": ".claude/hooks/pre_tool_use.sh が存在し実行可能である",
+      "test_name": "test_pre_tool_use_hook_exists_and_executable"
+    },
+    {
+      "id": "AC-141-02",
+      "text": ".claude/hooks/post_tool_use.sh が存在し実行可能である",
+      "test_name": "test_post_tool_use_hook_exists_and_executable"
+    },
+    {
+      "id": "AC-141-03",
+      "text": ".claude/settings.json が正しい JSON で、PreToolUse / PostToolUse Hook と permission_mode=plan が登録されている",
+      "test_name": "test_claude_settings_registers_hooks_and_plan_mode"
+    },
+    {
+      "id": "AC-141-04",
+      "text": ".mcp.json が正しい JSON で、filesystem サーバが read-only で登録されている",
+      "test_name": "test_mcp_json_registers_filesystem_readonly"
+    },
+    {
+      "id": "AC-141-05",
+      "text": "pre_tool_use.sh は scripts/preflight_session.sh を呼び出し、その exit code を伝播する",
+      "test_name": "test_pre_hook_delegates_to_preflight_script"
+    },
+    {
+      "id": "AC-141-06",
+      "text": "post_tool_use.sh は 4-gate を順に実行し、1つでも失敗したら non-zero を返す",
+      "test_name": "test_post_hook_runs_four_gates_and_fails_fast"
+    },
+    {
+      "id": "AC-141-07",
+      "text": "orchestration/ / scripts/ / docs に既存ファイル変更がない(session-141 定義ファイルを除く)",
+      "test_name": "test_session_141_does_not_modify_core_files"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ]
+}
