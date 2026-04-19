@@ -83,3 +83,20 @@ phases:
       - phase-11
     goals:
       - Phase12 の最小成果物を定義する
+
+  - id: P6C-pre
+    name: queue execution engine responsibility canonicalization
+    depends_on: [P6B]
+    goals:
+      - queue responsibility boundary
+      - queue state model
+      - routing and gate rules canonicalization
+
+  - id: P6C
+    name: minimal queue execution engine
+    depends_on: [P6C-pre]
+    goals:
+      - dispatch
+      - concurrency control
+      - routing
+      - json persistence
