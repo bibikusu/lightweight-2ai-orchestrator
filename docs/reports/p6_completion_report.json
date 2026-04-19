@@ -1,0 +1,213 @@
+{
+  "phase": "P6",
+  "name": "Execution baseline (queue + scheduler)",
+  "status": "completed",
+  "completion_date": "2026-04-19",
+  "sub_phases": [
+    {
+      "id": "P6A",
+      "name": "project_registry and queue_policy canonicalization",
+      "status": "completed",
+      "sessions": ["session-134"],
+      "main_commits": ["d2d19bd"]
+    },
+    {
+      "id": "P6B",
+      "name": "run_session integration (loader + DSL + 4 decisions + CLI)",
+      "status": "completed",
+      "sessions": ["session-135"],
+      "main_commits": ["de288bf", "c6efc16"]
+    },
+    {
+      "id": "P6C-pre",
+      "name": "queue engine responsibility canonicalization",
+      "status": "completed",
+      "sessions": ["session-136", "session-136a"],
+      "main_commits": ["987fbcf", "c9c136a"]
+    },
+    {
+      "id": "P6C",
+      "name": "minimal queue execution engine",
+      "status": "completed",
+      "sessions": ["session-137"],
+      "main_commits": ["d05c938", "692529c"]
+    },
+    {
+      "id": "P6D",
+      "name": "minimal scheduler entrypoint",
+      "status": "completed",
+      "sessions": ["session-138", "session-138 fix"],
+      "main_commits": ["834bfc5", "08d3141", "d4c796e"]
+    }
+  ],
+  "responsibility_separation": {
+    "run_session": {
+      "layer": "execution",
+      "responsibilities": [
+        "single session execution",
+        "acceptance validation",
+        "retry within session (max 1 retry per v1 rule)",
+        "artifacts / state.json / retry_history.json generation"
+      ],
+      "entrypoint": "python orchestration/run_session.py --session-id <id> --project <id>",
+      "invoked_via": "subprocess only (no direct import from queue or scheduler)"
+    },
+    "queue_engine": {
+      "layer": "control",
+      "responsibilities": [
+        "dispatch (selecting and invoking execution targets)",
+        "concurrency control (parallel / serial judgement per deploy_risk)",
+        "routing (next state decision from run_session result)",
+        "persistence (queue state in JSON file)"
+      ],
+      "entrypoint": "orchestration.queue.QueueEngine (public API: enqueue / dispatch_ready / run_next)",
+      "invoked_via": "direct import from scheduler, invokes run_session via subprocess.run"
+    },
+    "scheduler": {
+      "layer": "trigger",
+      "responsibilities": [
+        "time-based plan matching (JST, ISO weekday 1-7)",
+        "plan-to-session enqueue binding",
+        "CLI entrypoint (--now ISO8601 / --plan-id for bypass)"
+      ],
+      "entrypoint": "orchestration.scheduler.CronRunner (public API: tick)",
+      "invoked_via": "direct import of QueueEngine (same process)"
+    },
+    "boundary_rules": [
+      "scheduler must not import run_session directly",
+      "queue engine must not import run_session directly",
+      "queue engine must invoke run_session only via subprocess",
+      "scheduler may invoke queue engine via direct import (same process)",
+      "scheduler must use only QueueEngine public API (no private members)"
+    ]
+  },
+  "artifacts_on_main": {
+    "code": [
+      "orchestration/queue/__init__.py",
+      "orchestration/queue/state.py",
+      "orchestration/queue/store.py",
+      "orchestration/queue/engine.py",
+      "orchestration/scheduler/__init__.py",
+      "orchestration/scheduler/plan_loader.py",
+      "orchestration/scheduler/cron_runner.py"
+    ],
+    "tests": [
+      "tests/queue/test_queue_engine.py",
+      "tests/scheduler/test_scheduler.py"
+    ],
+    "config": [
+      "docs/config/project_registry.json",
+      "docs/config/queue_policy.yaml",
+      "docs/config/scheduler_plans.yaml"
+    ],
+    "specs": [
+      "docs/specs/queue_engine_spec.md"
+    ],
+    "session_definitions": [
+      "docs/sessions/session-134.json",
+      "docs/sessions/session-135.json",
+      "docs/sessions/session-136.json",
+      "docs/sessions/session-136a.json",
+      "docs/sessions/session-137.json",
+      "docs/sessions/session-138.json",
+      "docs/sessions/session-139.json"
+    ],
+    "acceptance_definitions": [
+      "docs/acceptance/session-134.yaml",
+      "docs/acceptance/session-135.yaml",
+      "docs/acceptance/session-136.yaml",
+      "docs/acceptance/session-136a.yaml",
+      "docs/acceptance/session-137.yaml",
+      "docs/acceptance/session-138.yaml",
+      "docs/acceptance/session-139.yaml"
+    ]
+  },
+  "verification_gates": {
+    "ruff": "passed",
+    "pytest": "passed (queue: 6 tests, scheduler: 5 tests = 11 total)",
+    "mypy": "passed (no issues)",
+    "compileall": "passed"
+  },
+  "open_issues": [
+    {
+      "id": "OI-P6-01",
+      "category": "technical",
+      "title": "queue_policy DSL full evaluation not implemented",
+      "description": "dispatch_ready handles only deploy_risk==critical → BLOCKED_HUMAN. Other DSL conditions (e.g., waiting_human.db_touch_allowed) are not yet evaluated.",
+      "carry_over_to": "P7 or later"
+    },
+    {
+      "id": "OI-P6-02",
+      "category": "technical",
+      "title": "failure_type extraction relies on subprocess stdout",
+      "description": "QueueEngine assumes run_session writes failure_type to stdout as JSON. In production, reading artifacts/report.json may be needed.",
+      "carry_over_to": "P7 or scheduler real-cron integration"
+    },
+    {
+      "id": "OI-P6-03",
+      "category": "technical",
+      "title": "queue priority not implemented",
+      "description": "Multiple READY items are picked by created_at / id order. Priority queue design is deferred.",
+      "carry_over_to": "v2 or later"
+    },
+    {
+      "id": "OI-P6-04",
+      "category": "technical",
+      "title": "force_plan_id is internal API not formally documented as public",
+      "description": "scheduler CronRunner.tick(force_plan_id=...) is used to bypass time matching for --plan-id CLI. Formal public API status should be decided in P7.",
+      "carry_over_to": "P7"
+    }
+  ],
+  "operational_backlog": [
+    {
+      "id": "BACKLOG-CURSOR-COMMIT-GUARD-001",
+      "title": "Cursor commit omission prevention",
+      "description": "session-137 and session-138 both had untracked artifacts after Cursor implementation. Need Cursor prompt improvement or Hooks-based commit enforcement.",
+      "proposed_handling": "address in P7 via Claude Code Hooks"
+    },
+    {
+      "id": "BACKLOG-QUEUE-TEST-SPEC-MISSING-001",
+      "title": "Add explicit spec_missing case to scheduler test",
+      "description": "test_queue_engine_blocks_human_gate_conditions currently lacks an explicit spec_missing test case.",
+      "proposed_handling": "10-minute BACKLOG session, low priority"
+    }
+  ],
+  "p7_input_conditions": {
+    "queue_engine_public_api_locked": [
+      "QueueEngine.__init__(store, registry_path, policy_path, max_parallel=1)",
+      "QueueEngine.enqueue(session_id, project_id) -> QueueItem",
+      "QueueEngine.dispatch_ready() -> list[QueueItem]",
+      "QueueEngine.run_next() -> QueueItem | None",
+      "QueueEngine.route_after_run(item, exit_code, failure_type) -> QueueItem"
+    ],
+    "scheduler_responsibility_locked": [
+      "scheduler determines WHEN and WHAT to enqueue only",
+      "routing / retry / failure handling belongs to queue engine",
+      "time evaluation is JST with ISO weekday 1-7",
+      "CLI accepts --now (ISO8601) and --plan-id"
+    ],
+    "run_session_cli_contract_locked": [
+      "entry: python orchestration/run_session.py",
+      "required args: --session-id <id>",
+      "optional args: --project <id>",
+      "failure_type output: stdout JSON contract (current)",
+      "exit code 0 = success, non-zero = failure"
+    ]
+  },
+  "next_phase": {
+    "id": "P7",
+    "name": "Claude Code Hooks + MCP integration",
+    "entry_conditions": [
+      "P6 completed (this report)",
+      "queue engine public API frozen",
+      "scheduler responsibility frozen",
+      "run_session CLI contract frozen"
+    ],
+    "proposed_starter_session": "session-140 (P7-pre: responsibility canonicalization)"
+  },
+  "final_judgement": {
+    "result": "completed",
+    "reason": "P6A through P6D all reached completed status with main-tracked artifacts, verification gates pass on main, responsibility separation is documented, open issues are classified, and P7 input conditions are locked.",
+    "signed_off_by": ["Cursor (implementation)", "Claude (staff officer)", "GPT (command)"]
+  }
+}

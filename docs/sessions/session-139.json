@@ -1,0 +1,121 @@
+{
+  "session_id": "session-139",
+  "phase_id": "P6",
+  "title": "P6 completion report: queue + scheduler execution baseline",
+  "goal": "P6A〜P6D の成果物・責務・未解決事項を正本として固定し、P7 への入力条件を確定する。",
+  "scope": [
+    "P6A〜P6D の成果物一覧の整理と記録",
+    "run_session / queue / scheduler の責務分離の明文化",
+    "既知の open_issues の列挙と固定",
+    "P7 に引き継ぐ入力条件と運用改善事項の定義"
+  ],
+  "out_of_scope": [
+    "新規実装",
+    "既存コードの変更",
+    "scheduler / queue / run_session の仕様変更",
+    "P7 の設計と実装"
+  ],
+  "constraints": [
+    "1セッション1目的",
+    "docs-only セッションとする",
+    "既存コードに一切の変更を加えない",
+    "既存 session / acceptance / config に一切の変更を加えない",
+    "変更ファイル数は最大4ファイル以内",
+    "review_points は4軸固定(仕様一致、変更範囲遵守、副作用なし、検証十分性)"
+  ],
+  "acceptance_ref": "docs/acceptance/session-139.yaml",
+  "allowed_changes": [
+    "docs/reports/p6_completion_report.json",
+    "docs/reports/p6_completion_report.md",
+    "docs/sessions/session-139.json",
+    "docs/acceptance/session-139.yaml"
+  ],
+  "allowed_changes_detail": [
+    "docs/reports/p6_completion_report.json: P6A〜P6D 成果物一覧・責務分離・open_issues・P7 入力条件を JSON 形式で構造化記録(機械可読)",
+    "docs/reports/p6_completion_report.md: 同内容を human 可読 markdown で記述",
+    "docs/sessions/session-139.json: 本セッション定義の新規作成",
+    "docs/acceptance/session-139.yaml: 本セッション acceptance 定義の新規作成"
+  ],
+  "forbidden_changes": [
+    "orchestration/ 配下の全ファイル",
+    "tests/ 配下の全ファイル",
+    "docs/sessions/ 配下の session-139.json 以外",
+    "docs/acceptance/ 配下の session-139.yaml 以外",
+    "docs/config/ 配下の全ファイル",
+    "docs/specs/ 配下の全ファイル",
+    "docs/roadmap.yaml",
+    "docs/global_rules.md",
+    "docs/master_instruction.md",
+    ".github/ 配下の全ファイル"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-139-01",
+      "type": "document_rule",
+      "condition": "p6_completion_report に P6A(session-134), P6B(session-135), P6C-pre(session-136/136a), P6C(session-137), P6D(session-138/fix) が列挙されている"
+    },
+    {
+      "id": "CC-139-02",
+      "type": "document_rule",
+      "condition": "p6_completion_report に run_session / queue / scheduler の責務分離が明文化されている"
+    },
+    {
+      "id": "CC-139-03",
+      "type": "document_rule",
+      "condition": "p6_completion_report に既知の open_issues が列挙されている"
+    },
+    {
+      "id": "CC-139-04",
+      "type": "state_transition_consistent",
+      "condition": "p6_completion_report で P6 が completed として宣言されている"
+    },
+    {
+      "id": "CC-139-05",
+      "type": "document_rule",
+      "condition": "p6_completion_report に P7 への入力条件(QueueEngine API / scheduler 責務 / run_session CLI 契約)が固定されている"
+    },
+    {
+      "id": "CC-139-06",
+      "type": "side_effect_free",
+      "condition": "orchestration/, tests/, docs/config/, docs/specs/ 配下に変更がないこと"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-139-01",
+      "text": "P6A〜P6D の全 session が p6_completion_report に列挙されている",
+      "test_name": "test_p6_sessions_listed"
+    },
+    {
+      "id": "AC-139-02",
+      "text": "run_session / queue / scheduler の責務分離が明文化されている",
+      "test_name": "test_p6_responsibility_separation"
+    },
+    {
+      "id": "AC-139-03",
+      "text": "open_issues が列挙されている",
+      "test_name": "test_p6_open_issues_listed"
+    },
+    {
+      "id": "AC-139-04",
+      "text": "P6 が completed として宣言されている",
+      "test_name": "test_p6_marked_completed"
+    },
+    {
+      "id": "AC-139-05",
+      "text": "P7 への入力条件が固定されている",
+      "test_name": "test_p7_input_conditions_defined"
+    },
+    {
+      "id": "AC-139-06",
+      "text": "コード・既存 config に変更がない",
+      "test_name": "test_p6_docs_only"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ]
+}
