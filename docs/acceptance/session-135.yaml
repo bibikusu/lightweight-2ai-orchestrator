@@ -1,0 +1,32 @@
+session_id: session-135
+acceptance:
+  - id: AC-01
+    description: load_project_registry() が docs/config/project_registry.json を読み、10 project 分の dict を返す
+    test_name: test_load_project_registry_returns_10_projects
+    completion_criteria_refs:
+      - CC-01
+  - id: AC-02
+    description: load_queue_policy() が docs/config/queue_policy.yaml を読み、condition_dsl セクションを含む dict を返す
+    test_name: test_load_queue_policy_returns_condition_dsl
+    completion_criteria_refs:
+      - CC-02
+  - id: AC-03
+    description: condition DSL evaluator が operator enum 8 種 (eq/ne/in/not_in/gt/lt/gte/lte) を正しく評価し、エラー挙動 (undefined_field=forbidden / type_mismatch=forbidden / undefined_operator=parse_error_abort) が仕様通り
+    test_name: test_condition_dsl_evaluator_operators_and_error_handling
+    completion_criteria_refs:
+      - CC-03
+  - id: AC-04
+    description: 4 判定関数 (decide_isolation / decide_night_batch / decide_retry_route / decide_human_gate) が registry の project と policy のルールに基づき正しく分岐する
+    test_name: test_four_decision_functions_against_all_projects
+    completion_criteria_refs:
+      - CC-04
+  - id: AC-05
+    description: CLI に --project 引数が追加され、既存引数と共存する (--session-id / --max-retries / --dry-run / --skip-build)
+    test_name: test_project_cli_argument_coexists_with_existing_args
+    completion_criteria_refs:
+      - CC-05
+  - id: AC-06
+    description: 既存 run_session.py の pipeline stage / state.json schema / retry_history.json schema / RESUME_SKIP_ELIGIBLE_STAGES を破壊せず、4 コマンド gate を全通過する
+    test_name: test_session_135_non_regression_and_4cmd_gate
+    completion_criteria_refs:
+      - CC-06

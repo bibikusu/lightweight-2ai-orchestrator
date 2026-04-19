@@ -1,0 +1,120 @@
+{
+  "session_id": "session-135",
+  "phase_id": "P6B",
+  "title": "P6B run_session.py への registry/policy 統合 (loader + DSL evaluator + 4 decisions + CLI)",
+  "goal": "session-134 で正本化した docs/config/project_registry.json と docs/config/queue_policy.yaml を run_session.py が読み込み、condition DSL を評価して isolation / night_batch / retry route / human_gate の 4 判定を返す統合を最小差分で実装する",
+  "scope": [
+    "run_session.py に load_project_registry() 関数を追加し、docs/config/project_registry.json を読む",
+    "run_session.py に load_queue_policy() 関数を追加し、docs/config/queue_policy.yaml を読む",
+    "condition DSL evaluator を実装し、operator enum 8 種 (eq/ne/in/not_in/gt/lt/gte/lte) を eval 不要で評価する",
+    "isolation 判定関数を実装する (parallel / serial)",
+    "night_batch 可否判定関数を実装する (bool)",
+    "retry route 判定関数を実装する (retry / waiting_human)",
+    "human_gate 必要性判定関数を実装する (bool)",
+    "CLI に --project <project_id> 引数を追加する (既存引数と共存)",
+    "上記変更に対するテストを backend/tests/test_registry_policy_integration.py に追加する"
+  ],
+  "out_of_scope": [
+    "queue 実行エンジン (session の実際の実行開始)",
+    "scheduler (cron / webhook / systemd timer)",
+    "Cowork UI への表示実装",
+    "registry / policy の更新メカニズム (手動 git commit 前提を維持)",
+    "session JSON schema への tags 追加",
+    "project ごとの deploy 実装",
+    "run_session.py の pipeline stage 変更",
+    "Master Orchestrator (run_plan.py) の変更",
+    "M04 (backlog→session bridge) の先取り"
+  ],
+  "constraints": [
+    "1セッション1目的を厳守する",
+    "session-134 で正本化した registry (事実) / policy (ルール) / DSL 仕様に従う",
+    "既存の run_session.py pipeline stage 定義 10 値を破壊しない",
+    "既存の load_json / load_yaml / argparse / provider_policy 読み込みパターンを踏襲する",
+    "新規コードは run_session.py への関数追加として実装する (新モジュール作成は行わない)",
+    "patch_apply は使用せず直接編集で対応する (run_session.py が 5400 行超のため context_mismatch リスク回避)",
+    "condition DSL は文字列 eval を使用せず、field/operator/value の構造化条件を再帰的に評価する",
+    "undefined_field は forbidden 扱い、type_mismatch は forbidden 扱い、undefined_operator は例外 raise + 非ゼロ終了",
+    "--project 引数は既存 --session-id / --max-retries / --dry-run / --skip-build と共存する",
+    "registry / policy は関数呼び出しごとに読み込まず、起動時 1 回読み込みのキャッシュ戦略とする",
+    "変更ファイル数は 4 ファイル以内を目安とする",
+    "既存の session / acceptance / backlog / reports / templates は変更しない",
+    "4 コマンド gate (ruff / pytest / mypy / compileall) を全通過させる"
+  ],
+  "acceptance_ref": "docs/acceptance/session-135.yaml",
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "backend/tests/test_registry_policy_integration.py",
+    "docs/sessions/session-135.json",
+    "docs/acceptance/session-135.yaml"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/run_session.py: registry/policy loader 2 関数、condition DSL evaluator、4 判定関数 (isolation/night_batch/retry_route/human_gate)、--project CLI 引数追加に必要な範囲のみ変更可",
+    "backend/tests/test_registry_policy_integration.py: M03/P6A 整合と 4 判定関数の単体テスト新規追加のみ可",
+    "docs/sessions/session-135.json: 本 session 定義の新規作成のみ可",
+    "docs/acceptance/session-135.yaml: 本 session 受入基準の新規作成のみ可"
+  ],
+  "forbidden_changes": [
+    "orchestration/providers/ 配下",
+    "orchestration/config.yaml",
+    "orchestration/provider_policy.yaml",
+    "orchestration/run_plan.py",
+    "orchestration/drift_detector.py",
+    "orchestration/plan_schema.py",
+    ".github/ 配下",
+    "docs/global_rules.md",
+    "docs/master_instruction.md",
+    "docs/config/ 配下 (session-134 で正本化済、今回は読み取り専用)",
+    "docs/sessions/ 配下の既存ファイル",
+    "docs/acceptance/ 配下の既存ファイル",
+    "docs/reports/ 配下の既存ファイル",
+    "docs/backlogs/ 配下",
+    "docs/templates/ 配下",
+    "backend/tests/ 配下の既存ファイル",
+    "artifacts/ 配下",
+    "各 project repo 配下",
+    "既存 pipeline stage 定義 10 値の変更",
+    "既存 RESUME_SKIP_ELIGIBLE_STAGES 定数の変更",
+    "既存 state.json schema の破壊的変更",
+    "既存 retry_history.json schema の破壊的変更"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-01",
+      "type": "artifact",
+      "condition": "load_project_registry() が docs/config/project_registry.json を読み、10 project 分の dict を返す"
+    },
+    {
+      "id": "CC-02",
+      "type": "artifact",
+      "condition": "load_queue_policy() が docs/config/queue_policy.yaml を読み、condition_dsl セクションを含む dict を返す"
+    },
+    {
+      "id": "CC-03",
+      "type": "state_transition_consistent",
+      "condition": "condition DSL evaluator が operator enum 8 種 (eq/ne/in/not_in/gt/lt/gte/lte) を正しく評価し、undefined_field は forbidden、type_mismatch は forbidden、undefined_operator は例外で処理する"
+    },
+    {
+      "id": "CC-04",
+      "type": "state_transition_consistent",
+      "condition": "4 判定関数 (decide_isolation / decide_night_batch / decide_retry_route / decide_human_gate) が registry の project と policy のルールに基づき正しく分岐する"
+    },
+    {
+      "id": "CC-05",
+      "type": "state_transition_consistent",
+      "condition": "CLI に --project 引数が追加され、既存引数 (--session-id / --max-retries / --dry-run / --skip-build) と共存する"
+    },
+    {
+      "id": "CC-06",
+      "type": "non_regression",
+      "condition": "既存 run_session.py の pipeline stage / state.json schema / retry_history.json schema / RESUME_SKIP_ELIGIBLE_STAGES を破壊せず、4 コマンド gate を全通過する"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ],
+  "drift_check_v01": true,
+  "verification": "automated_and_human_review"
+}
