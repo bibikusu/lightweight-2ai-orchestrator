@@ -100,3 +100,35 @@ phases:
       - concurrency control
       - routing
       - json persistence
+
+  - id: P6A
+    name: project_registry and queue_policy canonicalization
+    depends_on: []
+    goals:
+      - project_registry.json canonicalization
+      - queue_policy.yaml canonicalization
+
+  - id: P6B
+    name: run_session integration (loader + DSL + 4 decisions + CLI)
+    depends_on: [P6A]
+    goals:
+      - registry loader integration
+      - queue policy loader integration
+      - decision DSL evaluator integration
+      - project CLI argument
+
+  - id: P6D
+    name: minimal scheduler entrypoint
+    depends_on: [P6C]
+    goals:
+      - scheduler_plans.yaml canonicalization
+      - CronRunner with --now and --plan-id
+      - direct import of QueueEngine
+      - JST and ISO weekday
+
+  - id: P6
+    name: execution baseline umbrella (queue + scheduler)
+    depends_on: [P6A, P6B, P6C-pre, P6C, P6D]
+    goals:
+      - P6 completion report
+      - P7 input conditions frozen
