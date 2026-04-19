@@ -1,0 +1,94 @@
+{
+  "session_id": "session-136a",
+  "phase_id": "P6C-pre",
+  "title": "Align queue_engine_spec §4 retry route with queue_policy.yaml canonical for spec_missing",
+  "goal": "queue_engine_spec.md §4 の spec_missing 行を queue_policy.yaml 正本(route_to_waiting_human_on)に揃え、§4 と §5 の整合を取る。",
+  "scope": [
+    "docs/specs/queue_engine_spec.md §4 retry route 表の spec_missing 行を blocked_human に修正"
+  ],
+  "out_of_scope": [
+    "§4 の他の行の変更",
+    "§5 の変更",
+    "queue_policy.yaml の変更",
+    "project_registry.json の変更",
+    "run_session.py の変更",
+    "queue 実装コードの変更"
+  ],
+  "constraints": [
+    "1セッション1目的",
+    "docs-only セッションとする",
+    "変更ファイル数は最大3ファイル以内",
+    "queue_policy.yaml を正本として扱う",
+    "review_points は4軸固定(仕様一致、変更範囲遵守、副作用なし、検証十分性)"
+  ],
+  "acceptance_ref": "docs/acceptance/session-136a.yaml",
+  "allowed_changes": [
+    "docs/specs/queue_engine_spec.md",
+    "docs/sessions/session-136a.json",
+    "docs/acceptance/session-136a.yaml"
+  ],
+  "allowed_changes_detail": [
+    "docs/specs/queue_engine_spec.md: §4 の spec_missing 行を「blocked_human(queue_policy.yaml 正本に準拠)」に修正",
+    "docs/sessions/session-136a.json: 本セッション定義の新規作成",
+    "docs/acceptance/session-136a.yaml: 本セッション用 acceptance 定義の新規作成"
+  ],
+  "forbidden_changes": [
+    "orchestration/run_session.py の変更",
+    "orchestration/queue/ 配下の変更",
+    "docs/config/project_registry.json の変更",
+    "docs/config/queue_policy.yaml の変更",
+    "queue_engine_spec.md §1/§2/§3/§5/§6/§7 の変更",
+    "既存 docs/sessions/session-001 から session-137 の変更",
+    "既存 docs/acceptance/session-001 から session-137 の変更"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-136A-01",
+      "type": "document_rule",
+      "condition": "queue_engine_spec.md §4 の spec_missing 行が blocked_human に修正されている"
+    },
+    {
+      "id": "CC-136A-02",
+      "type": "document_rule",
+      "condition": "queue_engine_spec.md §4 と §5 の spec_missing に関する扱いが一致している"
+    },
+    {
+      "id": "CC-136A-03",
+      "type": "non_regression",
+      "condition": "queue_engine_spec.md §4 の他の failure_type 行(test_failure/type_mismatch/build_error/import_error/scope_violation/regression)に変更がない"
+    },
+    {
+      "id": "CC-136A-04",
+      "type": "side_effect_free",
+      "condition": "orchestration/ 配下および docs/config/ 配下に変更がないこと"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-136A-01",
+      "text": "queue_engine_spec.md §4 の spec_missing 行が blocked_human を返す記述になっている",
+      "test_name": "test_spec_missing_route_is_blocked_human_in_section_4"
+    },
+    {
+      "id": "AC-136A-02",
+      "text": "§4 と §5 の spec_missing に関する扱いが一致している",
+      "test_name": "test_spec_missing_consistent_between_section_4_and_5"
+    },
+    {
+      "id": "AC-136A-03",
+      "text": "§4 の他の failure_type 行に変更がない",
+      "test_name": "test_other_failure_type_rows_unchanged"
+    },
+    {
+      "id": "AC-136A-04",
+      "text": "orchestration/ 配下および docs/config/ 配下に変更がない",
+      "test_name": "test_no_code_or_config_changes"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ]
+}

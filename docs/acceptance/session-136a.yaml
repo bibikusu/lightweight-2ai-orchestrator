@@ -1,0 +1,24 @@
+session_id: session-136a
+phase_id: P6C-pre
+title: Align queue_engine_spec §4 retry route with queue_policy.yaml canonical for spec_missing
+acceptance:
+  - id: AC-136A-01
+    description: queue_engine_spec.md §4 の spec_missing 行が blocked_human を返す記述になっている
+    test_name: test_spec_missing_route_is_blocked_human_in_section_4
+    completion_criteria_refs: [CC-136A-01]
+    priority: highest
+  - id: AC-136A-02
+    description: §4 と §5 の spec_missing に関する扱いが一致している
+    test_name: test_spec_missing_consistent_between_section_4_and_5
+    completion_criteria_refs: [CC-136A-02]
+    priority: highest
+  - id: AC-136A-03
+    description: §4 の他の failure_type 行に変更がない
+    test_name: test_other_failure_type_rows_unchanged
+    completion_criteria_refs: [CC-136A-03]
+    priority: high
+  - id: AC-136A-04
+    description: orchestration/ 配下および docs/config/ 配下に変更がない
+    test_name: test_no_code_or_config_changes
+    completion_criteria_refs: [CC-136A-04]
+    priority: highest
