@@ -1,0 +1,29 @@
+session_id: session-136
+phase_id: P6C-pre
+title: Canonicalize queue execution engine responsibility and boundaries
+acceptance:
+  - id: AC-136-01
+    description: queue と run_session.py の責務分離が明記されている
+    test_name: test_queue_responsibility_boundary_defined
+    completion_criteria_refs: [CC-136-02]
+    priority: highest
+  - id: AC-136-02
+    description: queue 状態モデル(7状態 enum)が定義されている
+    test_name: test_queue_state_model_defined
+    completion_criteria_refs: [CC-136-03]
+    priority: highest
+  - id: AC-136-03
+    description: deploy_risk ごとの parallel/serial 制御対応表が存在する
+    test_name: test_parallel_serial_policy_defined
+    completion_criteria_refs: [CC-136-04]
+    priority: high
+  - id: AC-136-04
+    description: retry_route と human_gate 分岐条件が定義されている
+    test_name: test_queue_routing_rules_defined
+    completion_criteria_refs: [CC-136-05, CC-136-06]
+    priority: high
+  - id: AC-136-05
+    description: 既存 run_session.py および registry/policy に変更がない
+    test_name: test_no_conflict_with_run_session
+    completion_criteria_refs: [CC-136-07]
+    priority: highest

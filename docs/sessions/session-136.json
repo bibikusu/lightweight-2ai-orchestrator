@@ -1,0 +1,128 @@
+{
+  "session_id": "session-136",
+  "phase_id": "P6C-pre",
+  "title": "Canonicalize queue execution engine responsibility and boundaries",
+  "goal": "queue 実行エンジンの責務と境界、状態モデル、parallel/serial 制御、retry/human_gate 分岐を正本として文書化し、P6C 実装前の仕様齟齬を排除する。",
+  "scope": [
+    "docs/specs/queue_engine_spec.md の新規作成",
+    "queue 責務と run_session.py 責務の分離定義の記述",
+    "queue 状態モデル(pending/ready/running/blocked_human/retry_waiting/completed/failed)の記述",
+    "parallel/serial 制御条件(deploy_risk 基準)の記述",
+    "retry_route 分岐条件(failure_type 基準)の記述",
+    "human_gate 発動条件の記述"
+  ],
+  "out_of_scope": [
+    "queue 実装コードの追加",
+    "scheduler 実装",
+    "queue 関連 CLI の追加",
+    "run_session.py の変更",
+    "orchestration/ 配下の Python コード変更",
+    "docs/config/project_registry.json の変更",
+    "docs/config/queue_policy.yaml の変更"
+  ],
+  "constraints": [
+    "1セッション1目的",
+    "docs-only セッションとする",
+    "既存 run_session.py の挙動を変更しない",
+    "既存 registry/policy の定義に矛盾しない仕様を書く",
+    "実装は session-137 に分離する",
+    "最大5ファイル以内で完結すること",
+    "曖昧語禁止",
+    "review points は4軸固定(仕様一致、変更範囲遵守、副作用なし、検証十分性)"
+  ],
+  "acceptance_ref": "docs/acceptance/session-136.yaml",
+  "allowed_changes": [
+    "docs/specs/queue_engine_spec.md",
+    "docs/sessions/session-136.json",
+    "docs/acceptance/session-136.yaml"
+  ],
+  "allowed_changes_detail": [
+    "docs/specs/queue_engine_spec.md: queue と run_session.py の責務分離を定義するセクションを新規記述",
+    "docs/specs/queue_engine_spec.md: queue 状態モデル(7状態 enum)を定義するセクションを新規記述",
+    "docs/specs/queue_engine_spec.md: parallel/serial 制御ルール(deploy_risk → 実行モード対応表)を新規記述",
+    "docs/specs/queue_engine_spec.md: retry_route 分岐(failure_type → route 対応表)を新規記述",
+    "docs/specs/queue_engine_spec.md: human_gate 発動条件(deploy_risk == critical OR failure_type in [scope_violation, regression, spec_missing])を新規記述",
+    "docs/sessions/session-136.json: 本セッション定義の新規作成",
+    "docs/acceptance/session-136.yaml: 本セッション用 acceptance 定義の新規作成"
+  ],
+  "forbidden_changes": [
+    "orchestration/run_session.py の変更",
+    "orchestration/providers/ 配下の変更",
+    "docs/config/project_registry.json の変更",
+    "docs/config/queue_policy.yaml の変更",
+    "既存 docs/sessions/session-001 から session-135 の変更",
+    "既存 docs/acceptance/session-001 から session-135 の変更",
+    "queue.py 等の実装ファイルの新規作成",
+    "scheduler 関連ファイルの新規作成"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-136-01",
+      "type": "artifact",
+      "condition": "docs/specs/queue_engine_spec.md が新規作成されている"
+    },
+    {
+      "id": "CC-136-02",
+      "type": "document_rule",
+      "condition": "queue_engine_spec.md に queue と run_session.py の責務分離セクションが含まれており、両者の担当範囲が明示されている"
+    },
+    {
+      "id": "CC-136-03",
+      "type": "document_rule",
+      "condition": "queue_engine_spec.md に queue 状態モデルとして pending/ready/running/blocked_human/retry_waiting/completed/failed の7状態が列挙されている"
+    },
+    {
+      "id": "CC-136-04",
+      "type": "document_rule",
+      "condition": "queue_engine_spec.md に deploy_risk(low/medium/high/critical)ごとの parallel/serial 対応表が含まれている"
+    },
+    {
+      "id": "CC-136-05",
+      "type": "document_rule",
+      "condition": "queue_engine_spec.md に failure_type ごとの retry_route 対応表が含まれている"
+    },
+    {
+      "id": "CC-136-06",
+      "type": "document_rule",
+      "condition": "queue_engine_spec.md に human_gate 発動条件が boolean 条件として記述されている"
+    },
+    {
+      "id": "CC-136-07",
+      "type": "side_effect_free",
+      "condition": "orchestration/run_session.py、docs/config/project_registry.json、docs/config/queue_policy.yaml に変更がないこと"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-136-01",
+      "text": "docs/specs/queue_engine_spec.md に queue と run_session.py の責務分離セクションが存在し、queue は制御レイヤー、run_session は実行レイヤーと明記されている",
+      "test_name": "test_queue_responsibility_boundary_defined"
+    },
+    {
+      "id": "AC-136-02",
+      "text": "docs/specs/queue_engine_spec.md に queue 状態の7値 enum が列挙されている",
+      "test_name": "test_queue_state_model_defined"
+    },
+    {
+      "id": "AC-136-03",
+      "text": "docs/specs/queue_engine_spec.md に deploy_risk ごとの parallel/serial 制御対応表が存在する",
+      "test_name": "test_parallel_serial_policy_defined"
+    },
+    {
+      "id": "AC-136-04",
+      "text": "docs/specs/queue_engine_spec.md に retry_route と human_gate 分岐条件が存在する",
+      "test_name": "test_queue_routing_rules_defined"
+    },
+    {
+      "id": "AC-136-05",
+      "text": "orchestration/run_session.py、docs/config/project_registry.json、docs/config/queue_policy.yaml に変更がない",
+      "test_name": "test_no_conflict_with_run_session"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ]
+}
