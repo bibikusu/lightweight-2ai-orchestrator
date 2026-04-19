@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "filesystem-readonly": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/Users/kunihideyamane/AI_Team/軽量2AIオーケストレーター方式"
+      ],
+      "env": {
+        "READ_ONLY": "true"
+      }
+    }
+  }
+}

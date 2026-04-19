@@ -1,0 +1,11 @@
+{
+  "permission_mode": "plan",
+  "hooks": {
+    "PreToolUse": [
+      {"match": ".*", "command": ".claude/hooks/pre_tool_use.sh"}
+    ],
+    "PostToolUse": [
+      {"match": ".*", "command": ".claude/hooks/post_tool_use.sh"}
+    ]
+  }
+}
