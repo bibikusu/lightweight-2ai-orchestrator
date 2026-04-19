@@ -14,15 +14,6 @@
 
 ## Open BACKLOG(未対応)
 
-### BACKLOG-PREFLIGHT-EXIT-CODE-001
-
-- **内容**: `scripts/preflight_session.sh` が dirty worktree 等でも `exit 0` を返し得る既存仕様を見直す
-- **発生元**: session-141 risk R-1(2026-04-19)
-- **影響**: P7 Hooks 運用時の fail-fast 品質に影響。PreToolUse hook が preflight の exit code を伝播する設計のため、preflight 側が甘いと Hook 全体のガード強度が下がる
-- **優先度**: medium
-- **見積**: 10-20min
-- **対応予定**: P7 運用開始前の別セッション(候補: session-142 or 143)
-
 ### BACKLOG-CURSOR-COMMIT-GUARD-001
 
 - **内容**: Cursor による untracked ファイル放置事故の再発防止
@@ -61,6 +52,14 @@
 ---
 
 ## Resolved BACKLOG(対応済)
+
+### BACKLOG-PREFLIGHT-EXIT-CODE-001(解消済)
+
+- **内容**: `scripts/preflight_session.sh` の終了コード設計を補正し、dirty worktree / branch sync NG / venv 不備 / session 定義不足で non-zero を返すようにした
+- **解消セッション**: session-142
+- **解消 commit**: `eb73021`
+- **解消日**: 2026-04-20
+
 
 ### BACKLOG-DRIFT-DETECTOR-REVIEW-POINTS-001(解消済)
 
