@@ -1,0 +1,25 @@
+# Minimal scheduler plans (P6D). Times are interpreted in Asia/Tokyo (JST).
+# weekday: ISO8601, 1=Monday .. 7=Sunday; null = every day at hour:minute
+
+queue_config:
+  registry_path: docs/config/project_registry.json
+  policy_path: docs/config/queue_policy.yaml
+
+plans:
+  - id: daily
+    enabled: true
+    hour: 6
+    minute: 0
+    weekday: null
+    sessions:
+      - session_id: session-140
+        project_id: A01_Card_task
+
+  - id: weekly
+    enabled: true
+    hour: 9
+    minute: 0
+    weekday: 1
+    sessions:
+      - session_id: session-141
+        project_id: A02_fina
