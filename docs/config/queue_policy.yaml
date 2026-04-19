@@ -1,0 +1,131 @@
+version: v1.1
+last_updated: 2026-04-19
+description: >
+  実行順・実行可否・直列/並列・retry・human gate を定義する正本。
+  project_registry.json には事実のみを保持し、本ファイルで判断ルールを定義する。
+condition_dsl:
+  description: >
+    構造化条件式の定義。eval を使わず、field/operator/value の 3要素で記述する。
+  operators:
+    - eq
+    - ne
+    - in
+    - not_in
+    - gt
+    - lt
+    - gte
+    - lte
+  field_source:
+    scope: registry_only
+    description: "field は docs/config/project_registry.json の各 project エントリの field のみを参照する"
+  combination_logic:
+    default: AND
+    description: "同一 allowed_if / forbidden_if / route_if 内の複数条件は AND で結合する"
+  error_handling:
+    undefined_field: "forbidden"
+    type_mismatch: "forbidden"
+    undefined_operator: "parse_error_abort"
+queues:
+  daytime:
+    description: "日中実行キュー（人間監視あり）"
+    default_enabled: true
+    priority_order:
+      - critical
+      - high
+      - medium
+      - low
+  night:
+    description: "夜間自動実行キュー"
+    default_enabled: true
+  blocked:
+    description: "自動実行禁止キュー"
+    default_enabled: true
+  waiting_human:
+    description: "人間判断待ちキュー"
+    default_enabled: true
+  retry:
+    description: "retry 実行キュー"
+    default_enabled: true
+execution_rules:
+  isolation:
+    parallel_allowed_if:
+      - field: db_touch_allowed
+        operator: eq
+        value: false
+    serial_required_if:
+      - field: db_touch_allowed
+        operator: eq
+        value: true
+  night_batch:
+    allowed_if:
+      - field: night_batch_allowed
+        operator: eq
+        value: true
+      - field: db_touch_allowed
+        operator: eq
+        value: false
+      - field: deploy_risk
+        operator: in
+        value:
+          - low
+          - medium
+    forbidden_if:
+      - field: db_touch_allowed
+        operator: eq
+        value: true
+      - field: deploy_risk
+        operator: eq
+        value: critical
+  blocked_queue:
+    route_if:
+      - field: deploy_risk
+        operator: eq
+        value: critical
+  waiting_human_queue:
+    route_if:
+      - field: deploy_risk
+        operator: eq
+        value: critical
+      - field: db_touch_allowed
+        operator: eq
+        value: true
+project_priority:
+  risk_to_priority:
+    critical: critical
+    high: high
+    medium: medium
+    low: low
+  explicit_priority_order:
+    - A04_deli_customer_management
+    - A05_CAST_PRO
+    - A06_cecare
+    - A10_fina_date
+retry_policy:
+  max_retry: 1
+  same_failure_retry: false
+  require_error_classification: true
+  route_to_retry_queue_on:
+    - build_error
+    - import_error
+    - type_mismatch
+    - test_failure
+  route_to_waiting_human_on:
+    - scope_violation
+    - regression
+    - spec_missing
+human_gate:
+  required_if:
+    - field: deploy_risk
+      operator: eq
+      value: critical
+    - field: db_touch_allowed
+      operator: eq
+      value: true
+decision_priority:
+  description: >
+    複数ルールが競合した場合の優先順位。より上位の観点が下位の観点に優先する。
+  order:
+    - safety
+    - data_integrity
+    - production_stability
+    - speed

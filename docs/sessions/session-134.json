@@ -1,0 +1,95 @@
+{
+  "session_id": "session-134",
+  "phase_id": "P6A",
+  "title": "P6A 10プロジェクト統制レイヤーの正本化 (project registry / queue policy / condition DSL)",
+  "goal": "10プロジェクト並列運用を前提に、docs/config/project_registry.json と docs/config/queue_policy.yaml の正本を確立し、registry は事実、policy は判断ルール、condition DSL は eval 不要の構造化条件として固定する",
+  "scope": [
+    "docs/config/project_registry.json の新規追加",
+    "docs/config/queue_policy.yaml の新規追加",
+    "registry と policy の責務分離を正本化する",
+    "condition DSL の operator enum / field 参照元 / 結合ロジック / エラー挙動を正本化する"
+  ],
+  "out_of_scope": [
+    "run_session.py への統合実装",
+    "Cowork UI への表示実装",
+    "scheduler 実装",
+    "queue 実行エンジンの実装",
+    "session JSON schema への tags 追加",
+    "project ごとの deploy 実装",
+    "project repo のリネーム",
+    "registry / policy を使った自動実行開始"
+  ],
+  "constraints": [
+    "1セッション1目的を厳守する",
+    "docs-only で完結する",
+    "registry / policy の配置先は docs/config/ 配下に統一する",
+    "project_registry.json には事実のみを保持し、判断ルールを持たせない",
+    "queue_policy.yaml には判断ルールのみを保持し、project 固有事実を重複記載しない",
+    "condition DSL は文字列 eval ではなく構造化条件で定義する",
+    "condition DSL は operator enum / field 参照元 / 結合ロジック / エラー挙動を明記する",
+    "condition DSL は registry field のみを参照対象とし、session JSON tags への依存は持たせない",
+    "A04 の repo_path は実在ディレクトリ A04_deli_customer_management に一致させる",
+    "A08 / A09 の repo_path は現時点の実在ディレクトリ名に一致させる",
+    "isolation / retry / night_batch の重複定義を避ける"
+  ],
+  "acceptance_ref": "docs/acceptance/session-134.yaml",
+  "allowed_changes": [
+    "docs/config/project_registry.json",
+    "docs/config/queue_policy.yaml",
+    "docs/sessions/session-134.json",
+    "docs/acceptance/session-134.yaml"
+  ],
+  "allowed_changes_detail": [
+    "docs/config/project_registry.json: 10プロジェクトの事実定義のみ追加可",
+    "docs/config/queue_policy.yaml: 実行順・実行可否・retry・human gate・condition DSL の正本ルールのみ追加可",
+    "docs/sessions/session-134.json: 本 session 定義の新規作成のみ可",
+    "docs/acceptance/session-134.yaml: 本 session 受入基準の新規作成のみ可"
+  ],
+  "forbidden_changes": [
+    "orchestration/run_session.py",
+    "orchestration/config.yaml",
+    "orchestration/provider_policy.yaml",
+    "orchestration/providers/ 配下",
+    ".github/ 配下",
+    "backend/tests/ 配下",
+    "docs/master_instruction.md",
+    "docs/global_rules.md",
+    "docs/sessions/ 配下の既存ファイル",
+    "docs/acceptance/ 配下の既存ファイル",
+    "docs/reports/ 配下の既存ファイル",
+    "docs/backlogs/ 配下",
+    "docs/templates/ 配下",
+    "artifacts/ 配下",
+    "各 project repo 配下"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-01",
+      "type": "document_rule",
+      "condition": "docs/config/project_registry.json が 10プロジェクト分の事実定義を保持し、repo_path の実在性と category/status を含む"
+    },
+    {
+      "id": "CC-02",
+      "type": "document_rule",
+      "condition": "docs/config/queue_policy.yaml が isolation / night_batch / retry / human_gate の判断ルールを一元化し、重複定義を持たない"
+    },
+    {
+      "id": "CC-03",
+      "type": "document_rule",
+      "condition": "condition DSL が eval 不要の構造化条件として定義され、operator enum (eq/ne/in/not_in/gt/lt/gte/lte)、field 参照元 (registry のみ)、複数条件のデフォルト結合ロジック (AND)、エラー時挙動の 4 点が明記されている"
+    },
+    {
+      "id": "CC-04",
+      "type": "side_effect_free",
+      "condition": "変更が allowed_changes_detail の範囲に収まり、実装コードや既存 docs 正本を変更しない"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ],
+  "drift_check_v01": true,
+  "verification": "human_review"
+}

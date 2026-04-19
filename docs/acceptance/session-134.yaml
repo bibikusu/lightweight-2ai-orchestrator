@@ -1,0 +1,22 @@
+session_id: session-134
+acceptance:
+  - id: AC-01
+    description: docs/config/project_registry.json が 10プロジェクト分の事実定義を保持し、repo_path の実在性と category/status を含む
+    verification: human_review
+    completion_criteria_refs:
+      - CC-01
+  - id: AC-02
+    description: docs/config/queue_policy.yaml が isolation / night_batch / retry / human_gate の判断ルールを一元化し、重複定義を持たない
+    verification: human_review
+    completion_criteria_refs:
+      - CC-02
+  - id: AC-03
+    description: condition DSL が eval 不要の構造化条件として定義され、operator enum / field 参照元 / 結合ロジック / エラー挙動の 4 点が明記されている
+    verification: human_review
+    completion_criteria_refs:
+      - CC-03
+  - id: AC-04
+    description: 変更が allowed_changes_detail の範囲に収まり、実装コードや既存 docs 正本を変更しない
+    verification: human_review
+    completion_criteria_refs:
+      - CC-04
