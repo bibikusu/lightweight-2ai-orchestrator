@@ -83,6 +83,15 @@ RESUME_SKIP_ELIGIBLE_STAGES: Set[str] = {
     "drift_check",
 }
 
+# M03-D: resume 時に skip される stage のうち、ファイル artifact が必須のもの（欠損時は fail-fast）。
+# git_guard / patch_apply / drift_check は state.json の完了記録のみで足りる。
+_RESUME_REQUIRED_STAGE_ARTIFACT_SEGMENTS: Dict[str, Tuple[str, ...]] = {
+    "prepared_spec": ("responses", "prepared_spec.json"),
+    "implementation": ("responses", "implementation_result.json"),
+    "retry_instruction": ("responses", "retry_instruction.json"),
+    "implementation_retry": ("responses", "implementation_result.json"),
+}
+
 _RESUME_TIMESTAMP_UTC_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
 
 
@@ -1224,6 +1233,57 @@ def _should_skip_stage_in_resume(stage_name: str, completed_stages: List[str]) -
     if stage_name not in RESUME_SKIP_ELIGIBLE_STAGES:
         return False
     return stage_name in completed_stages
+
+
+def _resume_required_artifact_path(session_dir: Path, stage_name: str) -> Optional[Path]:
+    """resume skip 時に参照するファイル artifact のパス。不要な stage は None。"""
+    rel = _RESUME_REQUIRED_STAGE_ARTIFACT_SEGMENTS.get(stage_name)
+    if rel is None:
+        return None
+    return session_dir.joinpath(*rel)
+
+
+def _resume_validate_required_artifacts_present(
+    session_dir: Path,
+    completed_stages: List[str],
+) -> Optional[int]:
+    """
+    resume 時、完了済みと記録された stage に紐づく必須 artifact が無い場合は継続しない。
+    黙示的再実行はせず exit code 1。
+    """
+    for stage_name in completed_stages:
+        path = _resume_required_artifact_path(session_dir, stage_name)
+        if path is None:
+            continue
+        if path.is_file():
+            continue
+        fname = path.name
+        print(
+            "[ERROR] resume aborted: required artifact missing for completed stage "
+            f"{stage_name!r}: file {fname!r} expected at {path}",
+            file=sys.stderr,
+        )
+        return 1
+    return None
+
+
+def _write_retry_history_artifact(
+    session_dir: Path,
+    session_id: str,
+    retry_count: int,
+    retry_events: List[Dict[str, Any]],
+) -> None:
+    """retry 経路専用の補助 artifact（state.json の代替にしない）。"""
+    payload: Dict[str, Any] = {
+        "session_id": session_id,
+        "retry_count": int(retry_count),
+        "retry_events": list(retry_events),
+    }
+    out_path = session_dir / "retry_history.json"
+    out_path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
 
 
 def _resume_load_state(session_id: str) -> Dict[str, Any]:
@@ -4757,6 +4817,13 @@ def _run_single_session_impl(args: argparse.Namespace) -> int:
             validate_normal_run_session_inputs(ctx.session_data)
         set_active_repo_root(Path(resolve_target_repo(ctx.session_data)))
         session_dir = ensure_artifact_dirs(args.session_id)
+        if resume_mode:
+            _artifact_rc = _resume_validate_required_artifacts_present(
+                session_dir, resume_completed_stages
+            )
+            if _artifact_rc is not None:
+                set_active_repo_root(ROOT_DIR)
+                return _artifact_rc
         log_stage_event(session_id=args.session_id, stage=stage, event="end")
         if _loading_ckpt:
             _checkpoint_stage_complete(
@@ -4977,6 +5044,7 @@ def _run_single_session_impl(args: argparse.Namespace) -> int:
         retry_stopped_same_cause = False
         retry_stopped_max_retries = False
         retry_history: List[Dict[str, Any]] = []
+        retry_history_file_events: List[Dict[str, Any]] = []
 
         # retry_count は永続化（成功時は 0 に戻す）
         retry_count = _read_retry_state_count(session_dir)
@@ -5038,6 +5106,8 @@ def _run_single_session_impl(args: argparse.Namespace) -> int:
                 break
 
             # retry 指示を生成（関数内で同一原因は抑止される）
+            retry_cycle_started_at = _iso_utc_now()
+            retry_cycle_executed_stages: List[str] = []
             stage = "retry_instruction"
             if resume_mode and _should_skip_stage_in_resume(stage, resume_completed_stages):
                 retry_instruction = load_json(
@@ -5060,6 +5130,7 @@ def _run_single_session_impl(args: argparse.Namespace) -> int:
                 _checkpoint_stage_complete(
                     args, session_dir, args.session_id, checkpoint_completed, "retry_instruction"
                 )
+            retry_cycle_executed_stages.append("retry_instruction")
             retry_instruction["failure_type"] = decision["failure_type"]
             retry_instruction["cause_summary"] = decision["cause_summary"]
             # 同一原因抑止の場合は retry_count を増やさない
@@ -5124,6 +5195,8 @@ def _run_single_session_impl(args: argparse.Namespace) -> int:
                     "implementation_retry",
                 )
 
+            retry_cycle_executed_stages.append("implementation_retry")
+
             # completed_stages は patch_apply を一度だけ記録するため、リトライループ内の 2 回目は
             # skip 判定と衝突しないよう常に実行する（M03-C）。
             stage = "patch_apply"
@@ -5151,9 +5224,35 @@ def _run_single_session_impl(args: argparse.Namespace) -> int:
                 args, session_dir, args.session_id, checkpoint_completed, "patch_apply"
             )
 
+            retry_cycle_executed_stages.append("patch_apply")
+            retry_cycle_finished_at = _iso_utc_now()
+            retry_history_file_events.append(
+                {
+                    "attempt_index": int(retry_history[-1]["attempt"]),
+                    "resumed_from_stage": "patch_apply",
+                    "executed_stages": list(retry_cycle_executed_stages),
+                    "patch_apply_executed": True,
+                    "started_at_utc": retry_cycle_started_at,
+                    "finished_at_utc": retry_cycle_finished_at,
+                    "result": "success" if check_results.get("success") else "fail",
+                }
+            )
+            _write_retry_history_artifact(
+                session_dir,
+                args.session_id,
+                retry_count,
+                retry_history_file_events,
+            )
+
             if check_results.get("success"):
                 retry_count = 0
                 _write_retry_state_count(session_dir, retry_count)
+                _write_retry_history_artifact(
+                    session_dir,
+                    args.session_id,
+                    retry_count,
+                    retry_history_file_events,
+                )
                 break
 
         overall_success = bool(check_results.get("success"))
