@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import functools
 import json
 import logging
 import os
@@ -29,6 +30,8 @@ DOCS_DIR = ROOT_DIR / "docs"
 ARTIFACTS_DIR = ROOT_DIR / "artifacts"
 CONFIG_PATH = ROOT_DIR / "orchestration" / "config.yaml"
 PROVIDER_POLICY_PATH = ROOT_DIR / "orchestration" / "provider_policy.yaml"
+PROJECT_REGISTRY_PATH = ROOT_DIR / "docs" / "config" / "project_registry.json"
+QUEUE_POLICY_PATH = ROOT_DIR / "docs" / "config" / "queue_policy.yaml"
 DEFAULT_TARGET_REPO = "LIGHTWEIGHT_2AI_ORCHESTRATOR"
 REPO_REGISTRY: Dict[str, str] = {
     "LIGHTWEIGHT_2AI_ORCHESTRATOR": str(ROOT_DIR),
@@ -374,6 +377,179 @@ def load_yaml_as_text(path: Path) -> str:
     if not path.exists():
         raise FileNotFoundError(f"YAML file not found: {path}")
     return path.read_text(encoding="utf-8")
+
+
+@functools.lru_cache(maxsize=1)
+def load_project_registry() -> Dict[str, Any]:
+    """docs/config/project_registry.json を読み込む。"""
+    return load_json(PROJECT_REGISTRY_PATH)
+
+
+@functools.lru_cache(maxsize=1)
+def load_queue_policy() -> Dict[str, Any]:
+    """docs/config/queue_policy.yaml を読み込む。"""
+    return load_yaml(QUEUE_POLICY_PATH)
+
+
+def _condition_error_handling(policy: Dict[str, Any]) -> Dict[str, str]:
+    dsl = policy.get("condition_dsl") if isinstance(policy, dict) else {}
+    if not isinstance(dsl, dict):
+        return {}
+    eh = dsl.get("error_handling")
+    return eh if isinstance(eh, dict) else {}
+
+
+def _is_numeric_for_dsl(x: Any) -> bool:
+    return isinstance(x, (int, float)) and not isinstance(x, bool)
+
+
+def evaluate_condition(
+    project: Dict[str, Any],
+    rule: Dict[str, Any],
+    error_handling: Dict[str, str],
+) -> bool:
+    """
+    rule は {"field": str, "operator": str, "value": Any} 形式。
+    project は registry の各 project エントリ。
+    error_handling は queue_policy.yaml の condition_dsl.error_handling。
+    """
+    field_raw = rule.get("field")
+    operator = rule.get("operator")
+    value = rule.get("value")
+    if not isinstance(field_raw, str) or not field_raw.strip():
+        raise ValueError("condition rule requires non-empty string field")
+    field = field_raw.strip()
+    op = str(operator).strip() if operator is not None else ""
+
+    if field not in project:
+        if error_handling.get("undefined_field") == "forbidden":
+            return False
+        return False
+
+    left = project[field]
+
+    if op == "eq":
+        return left == value
+    if op == "ne":
+        return left != value
+    if op == "in":
+        if not isinstance(value, list):
+            if error_handling.get("type_mismatch") == "forbidden":
+                return False
+            return False
+        return left in value
+    if op == "not_in":
+        if not isinstance(value, list):
+            if error_handling.get("type_mismatch") == "forbidden":
+                return False
+            return False
+        return left not in value
+    if op in ("gt", "lt", "gte", "lte"):
+        if not _is_numeric_for_dsl(left) or not _is_numeric_for_dsl(value):
+            if error_handling.get("type_mismatch") == "forbidden":
+                return False
+            return False
+        assert isinstance(left, (int, float)) and not isinstance(left, bool)
+        assert isinstance(value, (int, float)) and not isinstance(value, bool)
+        a, b = float(left), float(value)
+        if op == "gt":
+            return a > b
+        if op == "lt":
+            return a < b
+        if op == "gte":
+            return a >= b
+        return a <= b
+
+    raise ValueError(f"undefined condition_dsl operator: {op!r}")
+
+
+def evaluate_all_conditions(
+    project: Dict[str, Any],
+    rules: Any,
+    error_handling: Dict[str, str],
+) -> bool:
+    if not isinstance(rules, list):
+        return False
+    return all(evaluate_condition(project, r, error_handling) for r in rules)
+
+
+def _registry_project_entry(project_id: str) -> Dict[str, Any]:
+    reg = load_project_registry()
+    projects = reg.get("projects")
+    if not isinstance(projects, list):
+        raise KeyError(project_id)
+    for p in projects:
+        if isinstance(p, dict) and p.get("project_id") == project_id:
+            return p
+    raise KeyError(project_id)
+
+
+def decide_isolation(project_id: str) -> str:
+    """'parallel' or 'serial' を返す。"""
+    policy = load_queue_policy()
+    eh = _condition_error_handling(policy)
+    project = _registry_project_entry(project_id)
+    exec_rules = policy.get("execution_rules") if isinstance(policy, dict) else {}
+    isolation = exec_rules.get("isolation") if isinstance(exec_rules, dict) else {}
+    if not isinstance(isolation, dict):
+        isolation = {}
+    serial_rules = isolation.get("serial_required_if")
+    parallel_rules = isolation.get("parallel_allowed_if")
+    if evaluate_all_conditions(project, serial_rules, eh):
+        return "serial"
+    if evaluate_all_conditions(project, parallel_rules, eh):
+        return "parallel"
+    return "serial"
+
+
+def decide_night_batch(project_id: str) -> bool:
+    """夜間バッチ許可なら True。"""
+    policy = load_queue_policy()
+    eh = _condition_error_handling(policy)
+    project = _registry_project_entry(project_id)
+    exec_rules = policy.get("execution_rules") if isinstance(policy, dict) else {}
+    nb = exec_rules.get("night_batch") if isinstance(exec_rules, dict) else {}
+    if not isinstance(nb, dict):
+        nb = {}
+    allowed_if = nb.get("allowed_if")
+    forbidden_if = nb.get("forbidden_if")
+    allowed_ok = evaluate_all_conditions(project, allowed_if, eh)
+    forbidden_any = False
+    if isinstance(forbidden_if, list):
+        forbidden_any = any(evaluate_condition(project, r, eh) for r in forbidden_if)
+    return allowed_ok and not forbidden_any
+
+
+def decide_retry_route(project_id: str, error_type: str) -> str:
+    """'retry' or 'waiting_human' を返す（policy のリストはグローバル）。"""
+    _ = project_id
+    policy = load_queue_policy()
+    rp = policy.get("retry_policy") if isinstance(policy, dict) else {}
+    if not isinstance(rp, dict):
+        rp = {}
+    retry_on = rp.get("route_to_retry_queue_on")
+    human_on = rp.get("route_to_waiting_human_on")
+    retry_list = retry_on if isinstance(retry_on, list) else []
+    human_list = human_on if isinstance(human_on, list) else []
+    if error_type in human_list:
+        return "waiting_human"
+    if error_type in retry_list:
+        return "retry"
+    return "retry"
+
+
+def decide_human_gate(project_id: str) -> bool:
+    """human_gate が必要なら True（required_if は OR）。"""
+    policy = load_queue_policy()
+    eh = _condition_error_handling(policy)
+    project = _registry_project_entry(project_id)
+    hg = policy.get("human_gate") if isinstance(policy, dict) else {}
+    if not isinstance(hg, dict):
+        hg = {}
+    rules = hg.get("required_if")
+    if not isinstance(rules, list) or not rules:
+        return False
+    return any(evaluate_condition(project, r, eh) for r in rules)
 
 
 def load_runtime_config() -> Dict[str, Any]:
@@ -4727,6 +4903,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--skip-build", action="store_true")
     parser.add_argument(
+        "--project",
+        default=None,
+        help="project_id from docs/config/project_registry.json (e.g. A02_fina)",
+    )
+    parser.add_argument(
         "--resume",
         action="store_true",
         help="Resume a previously started session from its last checkpoint. Requires --session-id.",
@@ -4750,6 +4931,19 @@ def main() -> int:
     _ensure_repo_root_on_sys_path()
     set_active_repo_root(ROOT_DIR)
     args = parse_args()
+    if args.project is not None:
+        valid_ids = {
+            str(p.get("project_id"))
+            for p in load_project_registry().get("projects", [])
+            if isinstance(p, dict)
+        }
+        if args.project not in valid_ids:
+            print(
+                f"[ERROR] Unknown --project {args.project!r} "
+                "(not in docs/config/project_registry.json).",
+                file=sys.stderr,
+            )
+            return 1
     if args.batch is not None:
         batch_csv = args.batch.strip()
         if not batch_csv:
