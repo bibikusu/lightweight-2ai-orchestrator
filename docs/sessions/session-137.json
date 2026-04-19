@@ -1,0 +1,147 @@
+{
+  "session_id": "session-137",
+  "phase_id": "P6C",
+  "title": "Implement minimal queue execution engine with subprocess delegation",
+  "goal": "session-136 で正本化した queue engine 仕様に基づき、既存 run_session.py を変更せず subprocess 経由で呼び出す最小 queue 実行エンジンを実装し、dispatch / concurrency / routing / persistence を成立させる。",
+  "scope": [
+    "orchestration/queue/__init__.py の新規作成",
+    "orchestration/queue/state.py の新規作成",
+    "orchestration/queue/store.py の新規作成",
+    "orchestration/queue/engine.py の新規作成",
+    "tests/queue/test_queue_engine.py の新規作成"
+  ],
+  "out_of_scope": [
+    "orchestration/run_session.py の変更",
+    "scheduler(cron/systemd timer/webhook) の実装",
+    "dashboard や管理 UI の実装",
+    "docs/config/project_registry.json の変更",
+    "docs/config/queue_policy.yaml の変更",
+    "retry_history.json のスキーマ変更",
+    "SQLite 永続化の導入",
+    "queue 用 CLI エントリポイントの追加",
+    "複数プロジェクト同時実行の本番有効化",
+    "queue の並列書き込み対応"
+  ],
+  "constraints": [
+    "1セッション1目的",
+    "通常コードセッションとして sandbox/session-137 上で実施する",
+    "既存 run_session.py は subprocess 経由でのみ呼び出し、内部関数を直接 import しない",
+    "queue 永続化は JSON ファイル方式とし、orchestration/queue/queue_state.json に保存する",
+    "SQLite は導入しない",
+    "QueueStore はシングルスレッド前提で実装し、並列書き込みの排他制御は行わない",
+    "subprocess 呼び出しの検証はユニットテストで unittest.mock.patch を用い、実プロセス起動は行わない",
+    "retry は v1 制約に従い最大1回とする",
+    "failure_type は既存 enum(build_error/import_error/type_mismatch/test_failure/scope_violation/regression/spec_missing) を前提に扱う",
+    "review_points は4軸固定(仕様一致、変更範囲遵守、副作用なし、検証十分性)",
+    "4コマンド gate(ruff / pytest / mypy / compileall)を通すこと",
+    "変更ファイル数は5ファイル以内に収めること"
+  ],
+  "acceptance_ref": "docs/acceptance/session-137.yaml",
+  "allowed_changes": [
+    "orchestration/queue/__init__.py",
+    "orchestration/queue/state.py",
+    "orchestration/queue/store.py",
+    "orchestration/queue/engine.py",
+    "tests/queue/test_queue_engine.py"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/queue/__init__.py: queue パッケージ公開用の最小 export のみ追加",
+    "orchestration/queue/state.py: QueueState enum(pending/ready/running/blocked_human/retry_waiting/completed/failed の7状態) と QueueItem dataclass のみ実装",
+    "orchestration/queue/store.py: JSON ベース QueueStore の load/save/upsert/list 操作のみ実装(保存先は orchestration/queue/queue_state.json)",
+    "orchestration/queue/engine.py: QueueEngine 本体、subprocess 経由 run_session 起動、concurrency 判定、routing 判定、state 遷移処理のみ実装",
+    "tests/queue/test_queue_engine.py: QueueState / QueueStore / QueueEngine の最小ユニットテストのみ追加(subprocess は unittest.mock.patch でモック)"
+  ],
+  "forbidden_changes": [
+    "orchestration/run_session.py の変更",
+    "orchestration/providers/ 配下の変更",
+    "docs/config/project_registry.json の変更",
+    "docs/config/queue_policy.yaml の変更",
+    "docs/specs/queue_engine_spec.md の変更",
+    "既存 docs/sessions/session-001 から session-136 の変更",
+    "既存 docs/acceptance/session-001 から session-136 の変更",
+    "scheduler 関連ファイルの新規作成",
+    "SQLite DB ファイルの追加",
+    ".github/ 配下の変更",
+    "retry_history.json スキーマの変更"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-137-01",
+      "type": "artifact",
+      "condition": "orchestration/queue/__init__.py, state.py, store.py, engine.py, tests/queue/test_queue_engine.py の5ファイルが作成されている"
+    },
+    {
+      "id": "CC-137-02",
+      "type": "state_transition_consistent",
+      "condition": "QueueState として pending, ready, running, blocked_human, retry_waiting, completed, failed の7状態が実装されている"
+    },
+    {
+      "id": "CC-137-03",
+      "type": "document_rule",
+      "condition": "QueueEngine が run_session.py を subprocess.run 経由で呼び出し、run_session モジュールを直接 import していない"
+    },
+    {
+      "id": "CC-137-04",
+      "type": "state_transition_consistent",
+      "condition": "success 時に completed、retry 対象 failure_type(test_failure/type_mismatch/build_error/import_error) で retry_waiting、human gate 対象 failure_type(scope_violation/regression) または deploy_risk==critical で blocked_human に遷移する"
+    },
+    {
+      "id": "CC-137-05",
+      "type": "non_regression",
+      "condition": "orchestration/run_session.py, docs/config/project_registry.json, docs/config/queue_policy.yaml に変更がない"
+    },
+    {
+      "id": "CC-137-06",
+      "type": "artifact",
+      "condition": "QueueStore が orchestration/queue/queue_state.json への永続化(load/save/upsert)を行える"
+    },
+    {
+      "id": "CC-137-07",
+      "type": "side_effect_free",
+      "condition": "run_session.py の subprocess 実行に必要な引数生成と state 遷移以外の runtime 副作用を追加していない"
+    },
+    {
+      "id": "CC-137-08",
+      "type": "non_regression",
+      "condition": "4コマンド gate(ruff/pytest/mypy/compileall)が通過する"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-137-01",
+      "text": "QueueState の7状態 enum が実装されている",
+      "test_name": "test_queue_state_enum_defined"
+    },
+    {
+      "id": "AC-137-02",
+      "text": "QueueStore が JSON への保存と再読込を行える",
+      "test_name": "test_queue_store_roundtrip_json"
+    },
+    {
+      "id": "AC-137-03",
+      "text": "QueueEngine が run_session.py を subprocess.run 経由で起動する(unittest.mock.patch 検証)",
+      "test_name": "test_queue_engine_invokes_run_session_via_subprocess"
+    },
+    {
+      "id": "AC-137-04",
+      "text": "success / retry / human_gate の routing が仕様通りに状態遷移する",
+      "test_name": "test_queue_engine_routes_states_by_result"
+    },
+    {
+      "id": "AC-137-05",
+      "text": "critical deploy_risk または human gate 対象 failure_type で blocked_human に遷移する",
+      "test_name": "test_queue_engine_blocks_human_gate_conditions"
+    },
+    {
+      "id": "AC-137-06",
+      "text": "orchestration/run_session.py と registry/policy 正本に変更がない",
+      "test_name": "test_session_137_does_not_modify_run_session_or_policy_files"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ]
+}

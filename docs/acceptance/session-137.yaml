@@ -1,0 +1,34 @@
+session_id: session-137
+phase_id: P6C
+title: Implement minimal queue execution engine with subprocess delegation
+acceptance:
+  - id: AC-137-01
+    description: QueueState の7状態 enum が実装されている
+    test_name: test_queue_state_enum_defined
+    completion_criteria_refs: [CC-137-02]
+    priority: highest
+  - id: AC-137-02
+    description: QueueStore が JSON への保存と再読込を行える
+    test_name: test_queue_store_roundtrip_json
+    completion_criteria_refs: [CC-137-06]
+    priority: highest
+  - id: AC-137-03
+    description: QueueEngine が run_session.py を subprocess.run 経由で起動する(mock 検証)
+    test_name: test_queue_engine_invokes_run_session_via_subprocess
+    completion_criteria_refs: [CC-137-03, CC-137-07]
+    priority: highest
+  - id: AC-137-04
+    description: success / retry / human_gate の routing が仕様通りに状態遷移する
+    test_name: test_queue_engine_routes_states_by_result
+    completion_criteria_refs: [CC-137-04]
+    priority: highest
+  - id: AC-137-05
+    description: critical deploy_risk または human gate 対象 failure_type で blocked_human に遷移する
+    test_name: test_queue_engine_blocks_human_gate_conditions
+    completion_criteria_refs: [CC-137-04]
+    priority: high
+  - id: AC-137-06
+    description: orchestration/run_session.py と registry/policy 正本に変更がない
+    test_name: test_session_137_does_not_modify_run_session_or_policy_files
+    completion_criteria_refs: [CC-137-05]
+    priority: highest
