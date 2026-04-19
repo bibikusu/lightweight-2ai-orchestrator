@@ -1,0 +1,118 @@
+{
+  "session_id": "session-138",
+  "phase_id": "P6D",
+  "title": "Implement minimal scheduler entrypoint for queue execution",
+  "goal": "既存 queue engine の上に最小 scheduler を実装し、時刻または plan 指定に応じて session を enqueue して dispatch/run できるようにする。",
+  "scope": [
+    "orchestration/scheduler/__init__.py の新規作成",
+    "orchestration/scheduler/plan_loader.py の新規作成",
+    "orchestration/scheduler/cron_runner.py の新規作成",
+    "tests/scheduler/test_scheduler.py の新規作成",
+    "docs/config/scheduler_plans.yaml の新規作成"
+  ],
+  "out_of_scope": [
+    "orchestration/run_session.py の変更",
+    "orchestration/queue/ 配下の変更",
+    "dashboard や管理 UI の実装",
+    "systemd timer / launchd / webhook 実装",
+    "複数 plan の並列最適化",
+    "priority queue の実装",
+    "P6C queue_state.json のスキーマ変更"
+  ],
+  "constraints": [
+    "1セッション1目的",
+    "scheduler は queue engine の入口のみ担当し、routing は queue 側に委譲する",
+    "scheduler は orchestration.queue.QueueEngine を直接 import し、同一プロセス内で呼び出す",
+    "queue から run_session.py への subprocess 境界は既存設計のまま維持する",
+    "scheduler は orchestration/queue/ 配下のファイルに変更を加えず、既存 QueueEngine 公開 API のみを使用する",
+    "変更ファイル数は5ファイル以内に収めること",
+    "review_points は4軸固定(仕様一致、変更範囲遵守、副作用なし、検証十分性)",
+    "4コマンド gate(ruff/pytest/mypy/compileall)を通すこと",
+    "時刻依存のテストは mock で固定し、実時間待機を行わない",
+    "時刻判定は JST(Asia/Tokyo) を前提とする",
+    "weekday は ISO8601 準拠(1=月曜, 7=日曜)で定義する"
+  ],
+  "acceptance_ref": "docs/acceptance/session-138.yaml",
+  "allowed_changes": [
+    "orchestration/scheduler/__init__.py",
+    "orchestration/scheduler/plan_loader.py",
+    "orchestration/scheduler/cron_runner.py",
+    "tests/scheduler/test_scheduler.py",
+    "docs/config/scheduler_plans.yaml"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/scheduler/__init__.py: scheduler パッケージの最小 export のみ追加",
+    "orchestration/scheduler/plan_loader.py: scheduler_plans.yaml の読込と plan 抽出のみ実装",
+    "orchestration/scheduler/cron_runner.py: plan に従って QueueEngine.enqueue / dispatch_ready / run_next を呼ぶ最小 runner のみ実装し、`if __name__ == '__main__':` で CLI 起動を受け、--now または --plan-id 引数を受け付ける",
+    "tests/scheduler/test_scheduler.py: plan 読込・時刻判定・enqueue 呼び出しのユニットテストのみ追加",
+    "docs/config/scheduler_plans.yaml: queue_config と daily / weekly の最小 plan 定義のみ追加"
+  ],
+  "forbidden_changes": [
+    "orchestration/run_session.py の変更",
+    "orchestration/queue/ 配下の変更",
+    "docs/config/project_registry.json の変更",
+    "docs/config/queue_policy.yaml の変更",
+    ".github/ 配下の変更",
+    "systemd / launchd / cron 実ファイルの追加"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-138-01",
+      "type": "artifact",
+      "condition": "scheduler 関連4ファイルと docs/config/scheduler_plans.yaml の計5ファイルが作成されている"
+    },
+    {
+      "id": "CC-138-02",
+      "type": "document_rule",
+      "condition": "scheduler_plans.yaml から queue_config および daily / weekly plan を読める"
+    },
+    {
+      "id": "CC-138-03",
+      "type": "state_transition_consistent",
+      "condition": "scheduler は plan 一致時のみ QueueEngine.enqueue を呼び出し、不一致時は呼び出さない"
+    },
+    {
+      "id": "CC-138-04",
+      "type": "side_effect_free",
+      "condition": "scheduler は orchestration/queue/ 配下のファイルに変更を加えず、既存 QueueEngine 公開 API のみを使用し、run_session.py にも変更を加えていない"
+    },
+    {
+      "id": "CC-138-05",
+      "type": "non_regression",
+      "condition": "4コマンド gate が通過する"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-138-01",
+      "text": "scheduler_plans.yaml から queue_config と plan を読める",
+      "test_name": "test_scheduler_plan_loader_reads_plans"
+    },
+    {
+      "id": "AC-138-02",
+      "text": "対象時刻に一致した場合のみ scheduler が enqueue を呼ぶ",
+      "test_name": "test_scheduler_enqueues_only_when_plan_matches"
+    },
+    {
+      "id": "AC-138-03",
+      "text": "対象時刻に一致しない場合は enqueue を呼ばない",
+      "test_name": "test_scheduler_skips_when_plan_does_not_match"
+    },
+    {
+      "id": "AC-138-04",
+      "text": "scheduler は QueueEngine を直接 import し、公開 API を通じて dispatch/run を呼ぶ",
+      "test_name": "test_scheduler_invokes_queue_engine_methods"
+    },
+    {
+      "id": "AC-138-05",
+      "text": "run_session.py と queue 実装に変更がない",
+      "test_name": "test_scheduler_does_not_modify_queue_or_run_session"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ]
+}

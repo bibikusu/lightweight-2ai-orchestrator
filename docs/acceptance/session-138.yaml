@@ -1,0 +1,29 @@
+session_id: session-138
+phase_id: P6D
+title: Implement minimal scheduler entrypoint for queue execution
+acceptance:
+  - id: AC-138-01
+    description: scheduler_plans.yaml から queue_config と plan を読める
+    test_name: test_scheduler_plan_loader_reads_plans
+    completion_criteria_refs: [CC-138-02]
+    priority: highest
+  - id: AC-138-02
+    description: 対象時刻に一致した場合のみ scheduler が enqueue を呼ぶ
+    test_name: test_scheduler_enqueues_only_when_plan_matches
+    completion_criteria_refs: [CC-138-03]
+    priority: highest
+  - id: AC-138-03
+    description: 対象時刻に一致しない場合は enqueue を呼ばない
+    test_name: test_scheduler_skips_when_plan_does_not_match
+    completion_criteria_refs: [CC-138-03]
+    priority: highest
+  - id: AC-138-04
+    description: scheduler は QueueEngine を直接 import し、公開 API を通じて dispatch/run を呼ぶ
+    test_name: test_scheduler_invokes_queue_engine_methods
+    completion_criteria_refs: [CC-138-04]
+    priority: high
+  - id: AC-138-05
+    description: run_session.py と queue 実装に変更がない
+    test_name: test_scheduler_does_not_modify_queue_or_run_session
+    completion_criteria_refs: [CC-138-04]
+    priority: highest
