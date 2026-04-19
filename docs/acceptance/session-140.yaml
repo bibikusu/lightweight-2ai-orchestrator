@@ -1,0 +1,34 @@
+session_id: session-140
+phase_id: P7
+title: P7-pre responsibility canonicalization
+acceptance:
+  - id: AC-140-01
+    description: Hooks / MCP / preflight / commit / 4-gate / human の 6 責務が定義されている
+    test_name: test_p7_responsibility_defined
+    completion_criteria_refs: [CC-140-01]
+    priority: highest
+  - id: AC-140-02
+    description: 責務が JSON と Markdown の両方に存在する
+    test_name: test_p7_dual_representation
+    completion_criteria_refs: [CC-140-02]
+    priority: highest
+  - id: AC-140-03
+    description: 自動化範囲と人間判断範囲が分離されている
+    test_name: test_p7_automation_boundary_defined
+    completion_criteria_refs: [CC-140-03]
+    priority: highest
+  - id: AC-140-04
+    description: Slash Commands が P7-B 分離扱いで明示されている
+    test_name: test_p7_slash_commands_deferred
+    completion_criteria_refs: [CC-140-04]
+    priority: high
+  - id: AC-140-05
+    description: P7 実装に進める状態である
+    test_name: test_p7_ready_state
+    completion_criteria_refs: [CC-140-05]
+    priority: highest
+  - id: AC-140-06
+    description: コード変更が一切ない
+    test_name: test_p7_docs_only
+    completion_criteria_refs: [CC-140-06]
+    priority: highest

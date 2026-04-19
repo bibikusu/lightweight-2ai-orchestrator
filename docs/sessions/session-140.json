@@ -1,0 +1,123 @@
+{
+  "session_id": "session-140",
+  "phase_id": "P7",
+  "title": "P7-pre: Claude Code Hooks + MCP integration responsibility canonicalization",
+  "goal": "Claude Code Hooks / MCP / preflight / commit / 4-gate / human の責務境界を正本として固定し、人間コピペを排除する自動実行基盤の設計前提を確定する。",
+  "scope": [
+    "Claude Code Hooks の責務定義",
+    "MCP の接続境界と責務定義",
+    "preflight / commit / 4-gate の自動化範囲の定義",
+    "人間判断を残す領域の明確化",
+    "Custom Slash Commands の scope 外明示(Phase 7-B 扱い)"
+  ],
+  "out_of_scope": [
+    "Hooks / MCP / slash commands の実装コード追加",
+    "run_session.py / queue / scheduler の仕様変更",
+    "roadmap.yaml の補完(別セッションに分離)",
+    "自動実行の本番有効化"
+  ],
+  "constraints": [
+    "1セッション1目的",
+    "docs-only セッションとする",
+    "既存コードに一切の変更を加えない",
+    "既存 session / acceptance / config に一切の変更を加えない",
+    "変更ファイル数は最大4ファイル以内",
+    "review_points は4軸固定(仕様一致、変更範囲遵守、副作用なし、検証十分性)"
+  ],
+  "acceptance_ref": "docs/acceptance/session-140.yaml",
+  "allowed_changes": [
+    "docs/specs/p7_hooks_mcp_responsibility.md",
+    "docs/reports/p7_pre_design.json",
+    "docs/sessions/session-140.json",
+    "docs/acceptance/session-140.yaml"
+  ],
+  "allowed_changes_detail": [
+    "docs/specs/p7_hooks_mcp_responsibility.md: Hooks / MCP / preflight / commit / 4-gate / human の 6 責務境界、および slash commands の P7-B 分離方針を明文化",
+    "docs/reports/p7_pre_design.json: 上記責務を機械可読 JSON として構造化",
+    "docs/sessions/session-140.json: 本セッション定義",
+    "docs/acceptance/session-140.yaml: acceptance 定義"
+  ],
+  "forbidden_changes": [
+    "orchestration/ 配下の全ファイル",
+    "tests/ 配下の全ファイル",
+    "docs/sessions/ 配下の session-140.json 以外",
+    "docs/acceptance/ 配下の session-140.yaml 以外",
+    "docs/config/ 配下の全ファイル",
+    "docs/reports/ 配下の p7_pre_design.json 以外",
+    "docs/specs/ 配下の p7_hooks_mcp_responsibility.md 以外",
+    "docs/roadmap.yaml",
+    "docs/global_rules.md",
+    "docs/master_instruction.md",
+    ".github/ 配下の全ファイル"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-140-01",
+      "type": "document_rule",
+      "condition": "Hooks / MCP / preflight / commit / 4-gate / human の 6 責務境界が明文化されている"
+    },
+    {
+      "id": "CC-140-02",
+      "type": "document_rule",
+      "condition": "p7_pre_design.json に責務が構造化されている"
+    },
+    {
+      "id": "CC-140-03",
+      "type": "document_rule",
+      "condition": "自動化対象と人間判断対象が明確に分離されている"
+    },
+    {
+      "id": "CC-140-04",
+      "type": "document_rule",
+      "condition": "Custom Slash Commands が Phase 7-B 扱いで今回 scope 外であることが明示されている"
+    },
+    {
+      "id": "CC-140-05",
+      "type": "state_transition_consistent",
+      "condition": "P7-pre が完了し P7 本体実装に進める状態になっている"
+    },
+    {
+      "id": "CC-140-06",
+      "type": "side_effect_free",
+      "condition": "orchestration/, tests/, docs/config/, docs/roadmap.yaml に変更がない"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-140-01",
+      "text": "Hooks / MCP / preflight / commit / 4-gate / human の 6 責務が定義されている",
+      "test_name": "test_p7_responsibility_defined"
+    },
+    {
+      "id": "AC-140-02",
+      "text": "責務が JSON と Markdown の両方に存在する",
+      "test_name": "test_p7_dual_representation"
+    },
+    {
+      "id": "AC-140-03",
+      "text": "自動化範囲と人間判断範囲が分離されている",
+      "test_name": "test_p7_automation_boundary_defined"
+    },
+    {
+      "id": "AC-140-04",
+      "text": "Slash Commands が P7-B 分離扱いで明示されている",
+      "test_name": "test_p7_slash_commands_deferred"
+    },
+    {
+      "id": "AC-140-05",
+      "text": "P7 実装に進める状態である",
+      "test_name": "test_p7_ready_state"
+    },
+    {
+      "id": "AC-140-06",
+      "text": "コード変更が一切ない",
+      "test_name": "test_p7_docs_only"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ]
+}

@@ -1,0 +1,127 @@
+{
+  "phase_id": "P7",
+  "phase_name": "P7-pre responsibility canonicalization",
+  "status": "completed_precondition_ready",
+  "purpose": "Claude Code Hooks / MCP / preflight / commit / 4-gate / human の責務境界を固定し、P7 本体実装の前提を確定する",
+  "responsibility_boundaries": {
+    "hooks": {
+      "owns": [
+        "preflight invocation",
+        "4-gate invocation",
+        "commit guard",
+        "fail-fast stop",
+        "post-run verification trigger"
+      ],
+      "does_not_own": [
+        "spec finalization",
+        "acceptance final judgement",
+        "run_session replacement",
+        "main auto-push"
+      ]
+    },
+    "mcp": {
+      "owns": [
+        "external system connection boundary",
+        "repository context retrieval",
+        "future GitHub integration entrypoint"
+      ],
+      "does_not_own": [
+        "spec canonicalization",
+        "acceptance judgement",
+        "queue execution"
+      ]
+    },
+    "preflight": {
+      "owns": [
+        "worktree clean check",
+        "branch sync check",
+        "venv health check",
+        "session file existence check",
+        "fail-fast on missing prerequisites"
+      ],
+      "does_not_own": [
+        "implementation",
+        "commit",
+        "acceptance judgement"
+      ]
+    },
+    "commit": {
+      "owns": [
+        "sandbox history fixation",
+        "docs-only or code-change unit fixation",
+        "allowed_changes scoped history creation"
+      ],
+      "does_not_own": [
+        "acceptance judgement",
+        "auto merge",
+        "unconditional main push"
+      ]
+    },
+    "four_gate": {
+      "owns": [
+        "ruff",
+        "pytest",
+        "mypy",
+        "compileall"
+      ],
+      "does_not_own": [
+        "business validity judgement",
+        "acceptance substitution",
+        "human review substitution"
+      ]
+    },
+    "human": {
+      "owns": [
+        "final acceptance",
+        "exception handling",
+        "scope change approval",
+        "rollback decision"
+      ],
+      "does_not_own": [
+        "routine copy-paste relay",
+        "unchecked phase progression"
+      ]
+    }
+  },
+  "automation_boundary": {
+    "automated": [
+      "preflight execution",
+      "4-gate execution",
+      "docs-only/code-change classification assistance",
+      "sandbox commit assistance",
+      "hook-based guard execution",
+      "mcp-based external context retrieval"
+    ],
+    "human_required": [
+      "final spec approval",
+      "acceptance final judgement",
+      "main promotion judgement",
+      "exception judgement",
+      "production enablement"
+    ]
+  },
+  "deferred_to_phase_7b": {
+    "custom_slash_commands": [
+      "/session-draft",
+      "/spec-review",
+      "/cursor-run"
+    ],
+    "reason": "operation-flow layer is separated from responsibility-boundary canonicalization"
+  },
+  "p7_entry_conditions": [
+    "P6 completion report exists on main",
+    "QueueEngine public API is frozen",
+    "scheduler responsibility is frozen",
+    "run_session CLI contract is frozen",
+    "hooks/mcp/preflight/commit/4-gate/human boundaries are defined",
+    "slash commands are explicitly deferred to Phase 7-B"
+  ],
+  "next_step": {
+    "session_id": "session-141",
+    "title": "P7 implementation: minimal Hooks + MCP execution guard integration"
+  },
+  "final_judgement": {
+    "result": "ready_for_p7_implementation",
+    "reason": "responsibility boundaries are fixed, automation scope is separated from human judgement, and P7-B scope is explicitly deferred"
+  }
+}
