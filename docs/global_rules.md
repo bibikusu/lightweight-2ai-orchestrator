@@ -970,3 +970,66 @@ state 記録時の実行状態分類を表す enum として `checkpoint_failure
 - retry 早期 break(同一原因停止など)では checkpoint フックに到達しないまま session が終了するため、completed_stages が短縮されうる
 - resume 判定時は completed_stages 単独ではなく、`current_stage` / `status` / `failure_stage` / state.json 内 `failure_type` field (= checkpoint_failure_type の値) を**併せて解釈する**
 - completed_stages は resume 判定の補助情報であり、厳密な全完了履歴ではない
+
+### M03 resume 正本補足 (session-133-pre)
+
+#### resume 実行時の例外規則
+
+- `loading` は常時実行とする。
+- `validating` は常時実行とする。
+- retry ループ内 2 回目以降の `patch_apply` は、`completed_stages` の単純な stage 名の列挙では表現できない。このため、**初回パイプラインにおける skip 判定の対象**とは分離して扱う（session-132 実装では、ループ内の `patch_apply` は checkpoint で `patch_apply` を重複記録せず、skip 判定との衝突を避ける）。
+- 上記は session-132 実装で確認された挙動を正本化するためのものである。M03-D で `retry_history.json` を導入した後も、「`loading` / `validating` は常時実行」という原則は維持する。
+
+#### artifact 欠損時停止規則（DP-07=A）
+
+resume 実行で skip 対象 stage の required artifact が欠損している場合、当該実行は整合性破綻として fail-fast 停止しなければならない。state.json に `completed_stages` の記録が存在しても、対応 artifact が存在しない場合は resume 継続を許可しない。
+
+- skip 対象 stage に required artifact が存在しない場合、resume 実行は継続してはならず、**exit code 1** で停止する。
+- エラーメッセージには **欠損した artifact のファイル名** を含める。
+- state.json が `completed_stages` を保持していても、required artifact が欠損している状態は **resume 前提の整合性破綻**として扱う。
+- 欠損時に該当 stage を黙示的に再実行するフォールバックは禁止する。
+
+#### retry 経路履歴の分離と `retry_history.json`（DP-08=C）
+
+completed_stages は初回パイプラインの完了記録のみを保持し、retry 経路の履歴は `retry_history.json` に分離保存する。これにより state.json schema の互換性を維持しつつ、retry ループ内の多重 `patch_apply` 実行を明示的に表現する。
+
+- 既存 `state.json` schema は **non-breaking** に維持する（破壊的変更を行わない）。
+- `completed_stages` は **初回パイプライン**の stage 完了記録に限定する。
+- retry 経路の履歴は **`retry_history.json`**へ分離保存する。
+- `retry_history.json` は `state.json` の代替ではなく、**retry 経路専用の補助履歴**である。
+- `retry_history.json` の不在と「retry 履歴が無い」ことの区別は設計論点であり、M03-D 実装で厳密化する。`state.json` と `retry_history.json` を混同しない。
+
+**`retry_history.json` 最小スキーマ案（M03-D 実装時に最終確定する。実装時の微調整の余地あり）**
+
+- `session_id` (str)
+- `retry_count` (int)
+- `retry_events` (list[object])
+
+各 `retry_events` 要素の最小項目案:
+
+- `attempt_index` (int)
+- `resumed_from_stage` (str)
+- `executed_stages` (list[str])
+- `patch_apply_executed` (bool)
+- `started_at_utc` (str)
+- `finished_at_utc` (str)
+- `result` (enum: `success`, `fail`)
+
+#### skip 対象 stage の厳密定義（DP-09=C）
+
+現行実装（session-132）の skip 対象・非対象を次表に正本化する。`loading` / `validating` の常時実行原則は上記「resume 実行時の例外規則」に従い、本表では重複定義を避ける。
+
+| stage 名 | skip 可否 | 理由 | required artifact / state | 補足 |
+|---|---|---|---|---|
+| `loading` | no | 実行コンテキスト構築と state / artifact 読み込み前提を確立するため | session 定義 / acceptance / 親文書 | 常時実行（「resume 実行時の例外規則」参照） |
+| `validating` | no | resume / 通常実行を問わず入力整合性確認が必要なため | loaded context | 常時実行（「resume 実行時の例外規則」参照） |
+| `git_guard` | yes | 正常完了済みなら再実行不要 | `state.json` の `completed_stages` | resume skip 対象 |
+| `prepared_spec` | yes | 既存 prepared_spec artifact を再利用できるため | `prepared_spec.json` | artifact 欠損時は fail-fast 停止 |
+| `implementation` | yes | 既存 implementation artifact を再利用できるため | `implementation_result.json` | artifact 欠損時は fail-fast 停止 |
+| `patch_apply` | yes | 初回パイプラインの `patch_apply` 完了記録は skip 可能 | `state.json` の `completed_stages` | retry ループ内の多重実行は `retry_history` 側で別管理 |
+| `retry_instruction` | yes | 既存 retry_instruction artifact を再利用できるため | `retry_instruction.json` | artifact 欠損時は fail-fast 停止 |
+| `implementation_retry` | yes | 既存 retry 実装 artifact を再利用できるため | `implementation_result.json`（`responses/implementation_result.json`。session-132 は implementation と同一ファイルを retry 時に上書き更新） | M03-D 実装で `retry_history` と整合 |
+| `drift_check` | yes | 完了済み drift_check は再利用可能 | `state.json` の `completed_stages` | resume skip 対象 |
+| `completed` | no | 終端値であり実行 stage ではないため | final state | skip 対象外 |
+
+**AC-02 補正文言（本節の要約）:** `loading` / `validating` は常時実行とする。retry ループ 2 回目の `patch_apply` は従来 `completed_stages` の単純な記録では表現できないため、初回パイプラインの skip 判定とは切り離して扱う。
