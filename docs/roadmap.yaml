@@ -194,3 +194,19 @@ sessions:
     note: |
       恒久運用の state writer 実装を扱う後続 session。
       145a/145b で固定した責務分離と対象範囲を前提に実装へ進める。
+
+  - session_id: session-a02-research-01
+    phase_id: phase-a02-research
+    title: "A02_fina 悩み起点 Research の再設計"
+    status: ready_to_store
+    supersedes: session-a02-01
+  - session_id: session-a02-design-01
+    phase_id: phase-a02-design
+    title: "A02_fina クラスタ設計 (Research 受領後)"
+    status: planned
+    depends_on: session-a02-research-01
+  - session_id: session-a02-generate-01
+    phase_id: phase-a02-generate
+    title: "A02_fina 記事生成 (Design 受領後)"
+    status: planned
+    depends_on: session-a02-design-01
