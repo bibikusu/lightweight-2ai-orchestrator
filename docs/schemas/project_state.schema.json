@@ -1,0 +1,70 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "docs/schemas/project_state.schema.json",
+  "title": "ProjectState",
+  "description": "10 プロジェクト可視化ダッシュボード(session-144)の入力となる、各プロジェクトの現在状態を表す契約スキーマ。各 projects/<project_id>/state.json に配置されることを想定する。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "project_id",
+    "current_phase",
+    "current_session_id",
+    "status",
+    "waiting_for",
+    "last_updated",
+    "last_error"
+  ],
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "プロジェクト一意識別子。docs/projects.yaml の id と一致する必要がある。例: A02_fina"
+    },
+    "current_phase": {
+      "type": "string",
+      "minLength": 1,
+      "description": "現在のフェーズ識別子。例: phase7, phase7-post, a02-phase-a"
+    },
+    "current_session_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "現在または直近のセッション ID。例: session-144-pre"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["idle", "running", "waiting", "blocked", "completed", "error"],
+      "description": "プロジェクト全体の状態。idle=未稼働 / running=実行中 / waiting=誰かの判定待ち / blocked=進行不能 / completed=完了 / error=エラー停止"
+    },
+    "waiting_for": {
+      "type": ["string", "null"],
+      "enum": [
+        "gpt_spec_decision",
+        "claude_diff_analysis",
+        "cursor_implementation",
+        "gpt_acceptance",
+        "human_cherry_pick",
+        "human_external_input",
+        "blocked",
+        null
+      ],
+      "description": "ボール(次のアクション権)がどこにあるか。status=waiting 時は非 null が期待される。status=running / idle / completed 時は null でよい。blocked は詰まりが明示できない場合にのみ使う"
+    },
+    "last_updated": {
+      "type": "string",
+      "format": "date-time",
+      "description": "state.json の最終更新時刻(ISO 8601)。例: 2026-04-20T09:00:00+09:00"
+    },
+    "last_error": {
+      "type": ["string", "null"],
+      "description": "直近のエラーメッセージ。エラーがなければ null。長文は単一行に要約する"
+    },
+    "summary": {
+      "type": "string",
+      "description": "推奨フィールド。1 行の状況説明。例: session-143 受入待ち"
+    },
+    "next_action": {
+      "type": "string",
+      "description": "推奨フィールド。人間向けの次アクション 1 行。例: GPT 受入後に main へ cherry-pick"
+    }
+  }
+}
