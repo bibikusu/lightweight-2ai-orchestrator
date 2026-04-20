@@ -156,3 +156,16 @@ phases:
       - session draft command
       - spec review command
       - cursor run command
+
+sessions:
+  - session_id: session-125a
+    phase_id: phase7
+    title: "review_points 正本整合の現物確認と誤判定是正記録"
+    status: ready_to_store
+    note: |
+      2026-04-21: review_points 4軸の第4項目について、古い参照を現物と誤認したため
+      「実装過不足なし」を正本とする誤判定が発生した。
+      Cursor 実地確認により、現物 docs/global_rules.md と既存テストが
+      「検証十分性（テスト・証跡・再現性により、受入判断に足る根拠があること）」
+      を正本としていることを確認した。
+      本 session はこの現物確認結果と誤判定是正記録を残す。
