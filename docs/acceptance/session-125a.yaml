@@ -1,23 +1,16 @@
 session_id: session-125a
+phase_id: phase7
+title: "review_points 正本整合の現物確認と誤判定是正記録"
 acceptance:
-  - id: AC-01
-    description: drift_detector.py の EXPECTED_REVIEW_POINTS 第4要素が『検証十分性（テスト・証跡・再現性により、受入判断に足る根拠があること）』に修正されている
-    test_name: test_expected_review_points_fourth_axis_is_kensho_jubunsei
-  - id: AC-02
-    description: 正本 global_rules.md の review_points 4軸と drift_detector.py の EXPECTED_REVIEW_POINTS が完全一致する
-    test_name: test_expected_review_points_matches_canonical_global_rules
-  - id: AC-03
-    description: 過去の誤値『実装過不足なし』を含む review_points を持つ session JSON は drift violation として fail する
-    test_name: test_review_points_rejects_old_jisso_kabusoku_nashi
-  - id: AC-04
-    description: 正本準拠の『検証十分性』を含む review_points を持つ session JSON は drift check を pass する
-    test_name: test_review_points_accepts_canonical_kensho_jubunsei
-  - id: AC-05
-    description: run_session.py および docs/global_rules.md / docs/master_instruction.md に変更が発生していない
-    test_name: test_no_changes_to_runtime_or_canonical_docs
-  - id: AC-06
-    description: 既存 session JSON 35件(実装過不足なし採用)は書き換えられていない(履歴保持)
-    test_name: test_existing_35_sessions_preserved_as_history
-  - id: AC-07
-    description: backend/tests/ 全体が回帰なく PASS する
-    test_name: test_existing_tests_pass_without_regression
+  - id: AC-125A-01
+    description: review_points 第4軸の正本が『検証十分性（テスト・証跡・再現性により、受入判断に足る根拠があること）』であることを現物確認として記録している
+    test_name: test_review_points_canonical_value_is_kensho_jubunsei
+  - id: AC-125A-02
+    description: 前回誤判定の原因と是正方針が検証可能な文言で記録されている
+    test_name: test_misjudgment_cause_recorded
+  - id: AC-125A-03
+    description: drift_detector.py と docs/global_rules.md が forbidden_changes として明示され、scope 外変更を防いでいる
+    test_name: test_runtime_and_canonical_docs_safely_excluded
+  - id: AC-125A-04
+    description: session-145a と session-a02-research-01 が採用すべき review_points 第4軸が『検証十分性』で統一されている
+    test_name: test_followup_sessions_use_canonical_review_point
