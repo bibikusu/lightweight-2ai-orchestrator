@@ -1,0 +1,138 @@
+{
+  "session_id": "session-144-pre",
+  "phase_id": "phase7-post",
+  "title": "state / queue 契約の正本化と projects 初期登録方針の固定",
+  "goal": "session-144 (viewer v0) の入力前提を docs-only で正本化する。state.json / queue_state.json のスキーマを JSON Schema + Markdown で定義し、docs/projects.yaml に 10 プロジェクトの初期登録方針を確定する",
+  "scope": [
+    "docs/schemas/project_state.schema.json の新規作成",
+    "docs/schemas/project_state.schema.md の新規作成",
+    "docs/schemas/queue_state.schema.json の新規作成",
+    "docs/schemas/queue_state.schema.md の新規作成",
+    "docs/projects.yaml の新規作成",
+    "docs/sessions/session-144-pre.json の新規作成",
+    "docs/acceptance/session-144-pre.yaml の新規作成"
+  ],
+  "out_of_scope": [
+    "各 projects/ 配下への state.json 実配置",
+    "各 projects/ 配下への queue_state.json 実配置",
+    "dashboard/ ディレクトリの新規作成",
+    "UI 実装(HTML / CSS / JS の記述)",
+    "queue engine の挙動変更",
+    "既存 docs/pipeline_v0/dashboard_latest.* の変更または削除",
+    "認証設定の追加",
+    "デプロイ設定(deploy.sh / rsync / .htaccess)の変更",
+    "既存 session 定義の内容改変",
+    "docs/backlog/main.md の更新",
+    "docs/roadmap.yaml の更新"
+  ],
+  "constraints": [
+    "docs-only セッションとして扱うこと",
+    "コード挙動を変えないこと",
+    "pipeline_v0/dashboard_latest.* は参照のみで改変しないこと",
+    "projects.yaml の path はリポジトリ相対パスとして表記すること",
+    "絶対パスはドキュメント記述上も使用しないこと",
+    "1セッション1目的を守ること",
+    "変更ファイル数は最大 7 ファイル以内に抑えること",
+    "検証は human_review + JSON Schema self-validation 方式で実施すること",
+    "review_points は固定4軸(仕様一致 / 変更範囲遵守 / 副作用なし / 検証十分性)を用いること"
+  ],
+  "acceptance_ref": "docs/acceptance/session-144-pre.yaml",
+  "allowed_changes": [
+    "docs/schemas/project_state.schema.json",
+    "docs/schemas/project_state.schema.md",
+    "docs/schemas/queue_state.schema.json",
+    "docs/schemas/queue_state.schema.md",
+    "docs/projects.yaml",
+    "docs/sessions/session-144-pre.json",
+    "docs/acceptance/session-144-pre.yaml"
+  ],
+  "allowed_changes_detail": [
+    "docs/schemas/project_state.schema.json: project state の JSON Schema (draft-07) のみ新規作成",
+    "docs/schemas/project_state.schema.md: project state の人間可読仕様書のみ新規作成",
+    "docs/schemas/queue_state.schema.json: queue state の JSON Schema (draft-07) のみ新規作成",
+    "docs/schemas/queue_state.schema.md: queue state の人間可読仕様書のみ新規作成",
+    "docs/projects.yaml: 10 プロジェクトの初期登録方針(id / name / path / status_source / display_priority)のみ新規作成",
+    "docs/sessions/session-144-pre.json: 当該 session 定義の新規作成のみ",
+    "docs/acceptance/session-144-pre.yaml: 当該 acceptance 定義の新規作成のみ"
+  ],
+  "forbidden_changes": [
+    "orchestration/**",
+    "backend/**",
+    "tests/**",
+    ".claude/**",
+    ".github/**",
+    "artifacts/**",
+    "projects/**",
+    "dashboard/**",
+    "docs/pipeline_v0/**",
+    "docs/backlog/main.md",
+    "docs/roadmap.yaml",
+    "docs/sessions/session-140.json",
+    "docs/sessions/session-141.json",
+    "docs/sessions/session-142.json",
+    "docs/sessions/session-143.json",
+    "docs/acceptance/session-140.yaml",
+    "docs/acceptance/session-141.yaml",
+    "docs/acceptance/session-142.yaml",
+    "docs/acceptance/session-143.yaml"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-144-PRE-01",
+      "type": "document_rule",
+      "condition": "project_state.schema.json と project_state.schema.md の両方が作成され、必須 7 フィールド(project_id / current_phase / current_session_id / status / waiting_for / last_updated / last_error)と推奨 2 フィールド(summary / next_action)が定義されている"
+    },
+    {
+      "id": "CC-144-PRE-02",
+      "type": "document_rule",
+      "condition": "project_state.schema.json の status enum が 6 値(idle / running / waiting / blocked / completed / error)で、waiting_for enum が 7 値 + null(gpt_spec_decision / claude_diff_analysis / cursor_implementation / gpt_acceptance / human_cherry_pick / human_external_input / blocked / null)で定義されている"
+    },
+    {
+      "id": "CC-144-PRE-03",
+      "type": "document_rule",
+      "condition": "queue_state.schema.json と queue_state.schema.md の両方が作成され、queue job の最小必須フィールドが定義されている"
+    },
+    {
+      "id": "CC-144-PRE-04",
+      "type": "artifact",
+      "condition": "docs/projects.yaml が作成され、10 プロジェクト(A01_Card_task ~ A10_fina_date)すべてが id / name / path(リポジトリ相対) / status_source / display_priority を持って列挙されている"
+    },
+    {
+      "id": "CC-144-PRE-05",
+      "type": "side_effect_free",
+      "condition": "コード・テスト・既存 session 定義・既存 pipeline_v0 に変更がなく、実行挙動に影響を与えていない"
+    },
+    {
+      "id": "CC-144-PRE-06",
+      "type": "non_regression",
+      "condition": "変更対象が docs 配下の 7 ファイルに限定されており、scope 外変更が存在しない"
+    },
+    {
+      "id": "CC-144-PRE-07",
+      "type": "artifact",
+      "condition": "session-144-pre.json の acceptance_ref と session-144-pre.yaml の session_id が相互に一致し、session-144 本体の入力前提として再利用できる"
+    }
+  ],
+  "review_points": [
+    "仕様一致(AC達成)",
+    "変更範囲遵守",
+    "副作用なし(既存破壊なし)",
+    "検証十分性"
+  ],
+  "failure_type_priority": [
+    "build_error",
+    "import_error",
+    "type_mismatch",
+    "test_failure",
+    "scope_violation",
+    "regression",
+    "spec_missing"
+  ],
+  "notes": [
+    "本 session は session-144 (viewer v0) の入力前提を固めるための docs-only pre-session である",
+    "検証は human_review + JSON Schema self-validation を採用し、自動テスト追加は行わない",
+    "projects.yaml の path はリポジトリ相対(projects/<project_id>)で表記し、絶対パスは使わない",
+    "各 projects/ への state.json 実配置は session-144 本体または後続 session で扱う",
+    "既存 docs/pipeline_v0/dashboard_latest.* は reference として残し、本 session では改変しない"
+  ]
+}

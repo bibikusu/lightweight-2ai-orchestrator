@@ -1,0 +1,74 @@
+session_id: session-144-pre
+verification_mode: human_review
+acceptance:
+  - id: AC-144-PRE-01
+    description: project_state.schema.json が JSON Schema draft-07 形式で新規作成され、必須 7 フィールドと推奨 2 フィールドが定義されている
+    verification: human_review + schema_selfvalidation
+    review_focus:
+      - "$schema が http://json-schema.org/draft-07/schema# であるか"
+      - "required に project_id / current_phase / current_session_id / status / waiting_for / last_updated / last_error の 7 項目が含まれているか"
+      - "properties に summary と next_action も定義されているか(required には含めない)"
+      - "additionalProperties が false で固定されているか"
+
+  - id: AC-144-PRE-02
+    description: project_state.schema.json の status enum と waiting_for enum が確定仕様どおり列挙されている
+    verification: human_review + schema_selfvalidation
+    review_focus:
+      - "status enum が 6 値(idle / running / waiting / blocked / completed / error)で過不足なし"
+      - "waiting_for enum が 7 文字列値 + null(gpt_spec_decision / claude_diff_analysis / cursor_implementation / gpt_acceptance / human_cherry_pick / human_external_input / blocked)で過不足なし"
+      - "last_updated が date-time format であるか"
+      - "last_error が string もしくは null を許容するか"
+
+  - id: AC-144-PRE-03
+    description: project_state.schema.md が人間可読な仕様書として作成され、JSON Schema と内容が矛盾していない
+    verification: human_review
+    review_focus:
+      - "必須 7 フィールドの意味と値範囲が記載されているか"
+      - "推奨 2 フィールド(summary / next_action)の意味と用途が記載されているか"
+      - "status と waiting_for の役割分離(status=全体 / waiting_for=ボール所在)が記載されているか"
+      - "実例(サンプル JSON)が 1 件以上含まれているか"
+
+  - id: AC-144-PRE-04
+    description: queue_state.schema.json が JSON Schema draft-07 形式で新規作成され、queue job の最小必須フィールドが定義されている
+    verification: human_review + schema_selfvalidation
+    review_focus:
+      - "$schema が draft-07 であるか"
+      - "queue が jobs 配列を持ち、各 job に必須フィールド(id / type / status / priority / created_at)が定義されているか"
+      - "queue job の status enum が PENDING / RUNNING / COMPLETED / FAILED / DEAD_LETTER で定義されているか"
+      - "jobs が空配列でも妥当とされているか"
+
+  - id: AC-144-PRE-05
+    description: queue_state.schema.md が人間可読な仕様書として作成され、queue_state.schema.json と内容が矛盾していない
+    verification: human_review
+    review_focus:
+      - "queue job のライフサイクルが記載されているか"
+      - "priority の意味と範囲が記載されているか"
+      - "実例(サンプル JSON)が 1 件以上含まれているか"
+      - "任意項目(retry_count / payload / result / started_at / completed_at / error / project_id)が viewer v0 で未定義許容であることが明記されているか"
+
+  - id: AC-144-PRE-06
+    description: docs/projects.yaml が新規作成され、10 プロジェクトすべてが id / name / path / status_source / display_priority を持って列挙されている
+    verification: human_review
+    review_focus:
+      - "A01_Card_task から A10_fina_date までの 10 プロジェクトがすべて列挙されているか"
+      - "path がリポジトリ相対(projects/<project_id>)で記述されているか"
+      - "絶対パス(/Users/... 等)が使われていないか"
+      - "status_source が各プロジェクト配下の state.json 相当への相対パスであるか"
+      - "display_priority が high / medium / low の 3 値で付与されているか"
+      - "id / path が実フォルダ名 (projects/ 配下の実在ディレクトリ名) と一致しているか"
+
+  - id: AC-144-PRE-07
+    description: 変更が docs 配下の許可 7 ファイルに限定され、コード・既存 pipeline_v0・projects 配下・dashboard 配下に差分が発生していない
+    verification: human_review
+    review_focus:
+      - "git diff --stat で 7 ファイルに収まっているか"
+      - "orchestration / tests / .claude / .github / artifacts / projects / dashboard / docs/pipeline_v0 に差分がないか"
+      - "docs/backlog/main.md と docs/roadmap.yaml に差分がないか"
+
+  - id: AC-144-PRE-08
+    description: session-144-pre.json の acceptance_ref と session-144-pre.yaml の session_id が相互に一致し、session-144 本体の入力前提として再利用できる
+    verification: human_review
+    review_focus:
+      - "acceptance_ref = 'docs/acceptance/session-144-pre.yaml' が正しいか"
+      - "session-144-pre.yaml の session_id = 'session-144-pre' が正しいか"
+      - "allowed_changes が 7 ファイルで完全に閉じているか"

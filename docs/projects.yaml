@@ -1,0 +1,79 @@
+# Projects Registry v1
+#
+# 10 プロジェクトの初期登録の正本。
+# session-144 (viewer v0) がこの yaml を読んで 10 プロジェクト一覧を描画する。
+#
+# path はリポジトリ相対パスで記述する。絶対パスは使用しない。
+# 各プロジェクトの実在ステータスは status_source で指定された相対パスの state.json を参照する。
+# state.json が未整備のプロジェクトは viewer 側で status=idle / summary="データ未整備" 表示とする。
+
+version: 1
+registry_updated: "2026-04-20"
+
+projects:
+  - id: A01_Card_task
+    name: Card Task Management
+    path: projects/A01_Card_task
+    status_source: projects/A01_Card_task/state.json
+    display_priority: high
+
+  - id: A02_fina
+    name: Consumer Finance SEO Operations (YMYL)
+    path: projects/A02_fina
+    status_source: projects/A02_fina/state.json
+    display_priority: high
+
+  - id: A03_mane_bikusu
+    name: YAMANE HQ / mane.bikusu.net
+    path: projects/A03_mane_bikusu
+    status_source: projects/A03_mane_bikusu/state.json
+    display_priority: medium
+
+  - id: A04_deli_customer_management
+    name: Delivery Customer Management
+    path: projects/A04_deli_customer_management
+    status_source: projects/A04_deli_customer_management/state.json
+    display_priority: medium
+
+  - id: A05_CAST_PRO
+    name: CAST PRO
+    path: projects/A05_CAST_PRO
+    status_source: projects/A05_CAST_PRO/state.json
+    display_priority: medium
+
+  - id: A06_cecare
+    name: Cecare
+    path: projects/A06_cecare
+    status_source: projects/A06_cecare/state.json
+    display_priority: high
+
+  - id: A07_pochadeli_work
+    name: Pochadeli Work
+    path: projects/A07_pochadeli_work
+    status_source: projects/A07_pochadeli_work/state.json
+    display_priority: medium
+
+  - id: A08_AI_video_creation
+    name: AI Video Creation
+    path: projects/A08_AI_video_creation
+    status_source: projects/A08_AI_video_creation/state.json
+    display_priority: low
+
+  - id: A09_AI_movie_production
+    name: AI Movie Production
+    path: projects/A09_AI_movie_production
+    status_source: projects/A09_AI_movie_production/state.json
+    display_priority: high
+
+  - id: A10_fina_date
+    name: Finance Date
+    path: projects/A10_fina_date
+    status_source: projects/A10_fina_date/state.json
+    display_priority: low
+
+# display_priority は viewer v0 での表示順ヒント:
+#   high:   最優先表示 (実データがあれば主表示)
+#   medium: 通常表示
+#   low:    未着手または小規模
+#
+# 本登録はあくまで初期登録の正本であり、プロジェクトの活動状況は各 state.json 側で管理する。

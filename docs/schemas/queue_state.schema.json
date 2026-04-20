@@ -1,0 +1,98 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "docs/schemas/queue_state.schema.json",
+  "title": "QueueState",
+  "description": "session-144 (viewer v0) の入力となる、queue engine の現在状態を表す契約スキーマ。オーケストレーター全体の queue 状態を 1 ファイルで表現する。A02_fina など個別プロジェクトの queue が独立運用される場合は project 別に配置してもよい。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "queue_version",
+    "last_updated",
+    "jobs"
+  ],
+  "properties": {
+    "queue_version": {
+      "type": "string",
+      "description": "queue_state スキーマのバージョン識別子。例: 1.0"
+    },
+    "last_updated": {
+      "type": "string",
+      "format": "date-time",
+      "description": "queue_state.json の最終更新時刻 (ISO 8601)"
+    },
+    "jobs": {
+      "type": "array",
+      "description": "queue 内の job 配列。RUNNING / PENDING / COMPLETED / FAILED / DEAD_LETTER の混在を許容する。空配列を許容する",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "type",
+          "status",
+          "priority",
+          "created_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "job 一意識別子。例: job_abc123"
+          },
+          "type": {
+            "type": "string",
+            "minLength": 1,
+            "description": "job 種別。例: research / design / generate / verify / publish / measure / rewrite / session_run"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["PENDING", "RUNNING", "COMPLETED", "FAILED", "DEAD_LETTER"],
+            "description": "job ライフサイクル状態"
+          },
+          "priority": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "優先度 (0=最低, 100=最高)。既定は 50 を推奨"
+          },
+          "payload": {
+            "type": ["object", "null"],
+            "description": "job 固有のペイロード (JSON)。空または省略可"
+          },
+          "result": {
+            "type": ["object", "null"],
+            "description": "COMPLETED 時の結果 JSON。未完了なら null"
+          },
+          "retry_count": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "リトライ回数。既定 0。max 2 を推奨"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "job 生成時刻 (ISO 8601)"
+          },
+          "started_at": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "description": "実行開始時刻。未実行なら null"
+          },
+          "completed_at": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "description": "完了または失敗確定時刻。未完了なら null"
+          },
+          "error": {
+            "type": ["string", "null"],
+            "description": "FAILED または DEAD_LETTER 時のエラーメッセージ"
+          },
+          "project_id": {
+            "type": ["string", "null"],
+            "description": "所属プロジェクト ID。global job なら null"
+          }
+        }
+      }
+    }
+  }
+}
