@@ -1,0 +1,100 @@
+{
+  "session_id": "session-backlog-register-001",
+  "phase_id": "phase7",
+  "title": "BACKLOG 2 件の正式登録 (RETRY-RESUME-BUILDER-TEST-FAIL-001 / AUTH-REQUIREMENTS-SEPARATION-001)",
+  "goal": "2026-04-21 の整合修正レーン (125a/145a/a02-research-01) で新規発覚した 2 件の BACKLOG を docs/backlogs/ 配下に正式登録し、後続 session で着手可能な状態にする",
+  "scope": [
+    "BACKLOG-RETRY-RESUME-BUILDER-TEST-FAIL-001 を docs/backlogs/ 配下に登録する",
+    "BACKLOG-AUTH-REQUIREMENTS-SEPARATION-001 を docs/backlogs/ 配下に登録する",
+    "各 BACKLOG の優先度・内容・次アクションを明文化する"
+  ],
+  "out_of_scope": [
+    "BACKLOG 内容の実装修正",
+    "30 test fail の原因グルーピング実作業",
+    "auth/ / requirements.txt の復元",
+    "既存 BACKLOG (SANDBOX-CLEANUP-001 / PATCH-001 等) の内容変更",
+    "session-145b / a02-design-01 / a02-generate-01 の起票"
+  ],
+  "constraints": [
+    "docs-only とする",
+    "1 session 1 purpose を厳守する",
+    "新規 BACKLOG 2 件の登録に限定する",
+    "変更ファイル数は最大 4 ファイル以内とする"
+  ],
+  "allowed_changes": [
+    "docs/backlogs/BACKLOG-RETRY-RESUME-BUILDER-TEST-FAIL-001.md",
+    "docs/backlogs/BACKLOG-AUTH-REQUIREMENTS-SEPARATION-001.md",
+    "docs/sessions/session-backlog-register-001.json",
+    "docs/acceptance/session-backlog-register-001.yaml"
+  ],
+  "allowed_changes_detail": [
+    "docs/backlogs/BACKLOG-RETRY-RESUME-BUILDER-TEST-FAIL-001.md: 新規作成のみ",
+    "docs/backlogs/BACKLOG-AUTH-REQUIREMENTS-SEPARATION-001.md: 新規作成のみ",
+    "docs/sessions/session-backlog-register-001.json: 新規作成のみ",
+    "docs/acceptance/session-backlog-register-001.yaml: 新規作成のみ"
+  ],
+  "forbidden_changes": [
+    "orchestration/",
+    "dashboard/",
+    "docs/master_instruction.md",
+    "docs/global_rules.md",
+    "docs/roadmap.yaml",
+    "docs/schemas/",
+    "projects/",
+    ".github/",
+    "docs/sessions/session-125a.json",
+    "docs/sessions/session-145a.json",
+    "docs/sessions/session-a02-research-01.json"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-BLR-01",
+      "type": "artifact",
+      "condition": "docs/backlogs/BACKLOG-RETRY-RESUME-BUILDER-TEST-FAIL-001.md が存在し、優先度・内容・次アクションが明記されている"
+    },
+    {
+      "id": "CC-BLR-02",
+      "type": "artifact",
+      "condition": "docs/backlogs/BACKLOG-AUTH-REQUIREMENTS-SEPARATION-001.md が存在し、優先度・内容・次アクションが明記されている"
+    },
+    {
+      "id": "CC-BLR-03",
+      "type": "side_effect_free",
+      "condition": "orchestration・dashboard・既存 session 定義に変更がない"
+    },
+    {
+      "id": "CC-BLR-04",
+      "type": "non_regression",
+      "condition": "既存 BACKLOG の内容が維持されている"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-BLR-01",
+      "description": "BACKLOG-RETRY-RESUME-BUILDER-TEST-FAIL-001 が登録され、優先度中・対象 test 一覧・発覚日・次アクションが明記されている",
+      "test_name": "test_backlog_retry_resume_builder_registered"
+    },
+    {
+      "id": "AC-BLR-02",
+      "description": "BACKLOG-AUTH-REQUIREMENTS-SEPARATION-001 が登録され、優先度中・stash@{0} 経緯・分離方針・次アクションが明記されている",
+      "test_name": "test_backlog_auth_requirements_registered"
+    },
+    {
+      "id": "AC-BLR-03",
+      "description": "両 BACKLOG とも 2026-04-21 の整合修正レーン中に発覚したことが記録されている",
+      "test_name": "test_backlog_origin_session_documented"
+    },
+    {
+      "id": "AC-BLR-04",
+      "description": "runtime・dashboard・既存 session 定義に変更がない",
+      "test_name": "test_no_side_effects_on_runtime_or_existing_sessions"
+    }
+  ],
+  "acceptance_ref": "docs/acceptance/session-backlog-register-001.yaml",
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性（テスト・証跡・再現性により、受入判断に足る根拠があること）"
+  ]
+}
