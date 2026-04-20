@@ -1,0 +1,16 @@
+session_id: session-backlog-register-001
+phase_id: phase7
+title: "BACKLOG 2 件の正式登録 (RETRY-RESUME-BUILDER-TEST-FAIL-001 / AUTH-REQUIREMENTS-SEPARATION-001)"
+acceptance:
+  - id: AC-BLR-01
+    description: BACKLOG-RETRY-RESUME-BUILDER-TEST-FAIL-001 が登録され、優先度中・対象 test 一覧・発覚日・次アクションが明記されている
+    test_name: test_backlog_retry_resume_builder_registered
+  - id: AC-BLR-02
+    description: BACKLOG-AUTH-REQUIREMENTS-SEPARATION-001 が登録され、優先度中・stash@{0} 経緯・分離方針・次アクションが明記されている
+    test_name: test_backlog_auth_requirements_registered
+  - id: AC-BLR-03
+    description: 両 BACKLOG とも 2026-04-21 の整合修正レーン中に発覚したことが記録されている
+    test_name: test_backlog_origin_session_documented
+  - id: AC-BLR-04
+    description: runtime・dashboard・既存 session 定義に変更がない
+    test_name: test_no_side_effects_on_runtime_or_existing_sessions
