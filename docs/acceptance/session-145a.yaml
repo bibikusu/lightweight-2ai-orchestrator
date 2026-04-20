@@ -1,0 +1,38 @@
+session_id: session-145a
+phase_id: phase8
+title: dashboard state writer 戦略と bootstrap 方針の正本化
+acceptance:
+  - id: AC-145A-01
+    description: state.json の bootstrap は手動配置、正式 writer は後続 session で実装する方針が正本に明記されている
+    test_name: test_state_writer_strategy_documented
+  - id: AC-145A-02
+    description: session-145b の対象が 3〜4 プロジェクト先行であることが正本に明記されている
+    test_name: test_bootstrap_scope_limited_to_three_or_four_projects
+  - id: AC-145A-03
+    description: dashboard schema と viewer 実装を今回変更しないことが out_of_scope と forbidden_changes に明記されている
+    test_name: test_no_schema_or_viewer_changes_declared
+  - id: AC-145A-04
+    description: run_session.py と Hook / MCP の自動更新が今回対象外であることが明記されている
+    test_name: test_runtime_writer_excluded_from_scope
+  - id: AC-145A-05
+    description: session-145a が docs-only として成立し、後続 session-145b の起票前提が整う
+    test_name: test_session_145a_enables_145b_without_runtime_changes
+session_id: session-145a
+phase_id: phase8
+title: dashboard state writer 戦略と bootstrap 方針の正本化
+acceptance:
+  - id: AC-145A-01
+    description: state.json の bootstrap は手動配置、正式 writer は後続 session で実装する方針が正本に明記されている
+    test_name: test_state_writer_strategy_documented
+  - id: AC-145A-02
+    description: session-145b の対象が 3〜4 プロジェクト先行であることが正本に明記されている
+    test_name: test_bootstrap_scope_limited_to_three_or_four_projects
+  - id: AC-145A-03
+    description: dashboard schema と viewer 実装を今回変更しないことが out_of_scope と forbidden_changes に明記されている
+    test_name: test_no_schema_or_viewer_changes_declared
+  - id: AC-145A-04
+    description: run_session.py と Hook / MCP の自動更新が今回対象外であることが明記されている
+    test_name: test_runtime_writer_excluded_from_scope
+  - id: AC-145A-05
+    description: session-145a が docs-only として成立し、後続 session-145b の起票前提が整う
+    test_name: test_session_145a_enables_145b_without_runtime_changes

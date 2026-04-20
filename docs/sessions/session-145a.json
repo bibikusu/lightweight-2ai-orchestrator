@@ -1,0 +1,230 @@
+{
+  "session_id": "session-145a",
+  "phase_id": "phase8",
+  "title": "dashboard state writer 戦略と bootstrap 方針の正本化",
+  "goal": "dashboard 用 state.json の更新主体・更新タイミング・bootstrap 方針・対象範囲を docs-only で確定し、後続の session-145b が 1 session 1 purpose で起票できる状態にする",
+  "scope": [
+    "dashboard state writer 戦略の選定を文書で正本化する",
+    "bootstrap は手動配置、正式 writer は後続 session で実装する方針を明文化する",
+    "session-145b の対象件数を 3〜4 プロジェクトに限定する方針を明文化する",
+    "state.json 更新責務と out_of_scope を docs に追記する"
+  ],
+  "out_of_scope": [
+    "projects 配下への state.json 実配置",
+    "run_session.py の変更",
+    "Hook / MCP による自動更新",
+    "queue_state.json の実接続",
+    "dashboard viewer.js の変更",
+    "deploy",
+    "A02_fina 連携実装",
+    "review_points 表記補正",
+    "drift_detector.py の修正"
+  ],
+  "constraints": [
+    "docs-only とする",
+    "1 session 1 purpose を厳守する",
+    "writer の正式実装は別 session に分離する",
+    "bootstrap は手動配置とし、恒久運用の正式 writer とは区別して記述する",
+    "session-145b の対象は 10 プロジェクト全件ではなく 3〜4 プロジェクト先行とする",
+    "既存の dashboard schema 契約を変更しない",
+    "変更ファイル数は最大 5 ファイル以内とする"
+  ],
+  "allowed_changes": [
+    "docs/master_instruction.md",
+    "docs/roadmap.yaml",
+    "docs/sessions/session-145a.json",
+    "docs/acceptance/session-145a.yaml"
+  ],
+  "allowed_changes_detail": [
+    "docs/master_instruction.md: dashboard state writer の運用方針追記のみ",
+    "docs/roadmap.yaml: session-145a / 145b / state writer 後続 session の順序追記のみ",
+    "docs/sessions/session-145a.json: 新規作成のみ",
+    "docs/acceptance/session-145a.yaml: 新規作成のみ"
+  ],
+  "forbidden_changes": [
+    "dashboard/index.html",
+    "dashboard/viewer.js",
+    "orchestration/run_session.py",
+    "orchestration/providers/",
+    "projects/",
+    "docs/schemas/",
+    "docs/global_rules.md",
+    ".github/"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-145A-01",
+      "type": "document_rule",
+      "condition": "state.json の bootstrap と正式 writer の責務分離が正本に明文化されている"
+    },
+    {
+      "id": "CC-145A-02",
+      "type": "artifact",
+      "condition": "session-145b が追加判断なく起票可能な方針記述がある"
+    },
+    {
+      "id": "CC-145A-03",
+      "type": "side_effect_free",
+      "condition": "コード・schema・projects 配下に変更がない"
+    },
+    {
+      "id": "CC-145A-04",
+      "type": "state_transition_consistent",
+      "condition": "writer 戦略の現在地と将来方針が矛盾なく記述されている"
+    },
+    {
+      "id": "CC-145A-05",
+      "type": "non_regression",
+      "condition": "既存 dashboard 契約と viewer v0 の前提を壊していない"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-145A-01",
+      "description": "state.json の bootstrap は手動配置、正式 writer は後続 session で実装する方針が正本に明記されている",
+      "test_name": "test_state_writer_strategy_documented"
+    },
+    {
+      "id": "AC-145A-02",
+      "description": "session-145b の対象が 3〜4 プロジェクト先行であることが正本に明記されている",
+      "test_name": "test_bootstrap_scope_limited_to_three_or_four_projects"
+    },
+    {
+      "id": "AC-145A-03",
+      "description": "dashboard schema と viewer 実装を今回変更しないことが out_of_scope と forbidden_changes に明記されている",
+      "test_name": "test_no_schema_or_viewer_changes_declared"
+    },
+    {
+      "id": "AC-145A-04",
+      "description": "run_session.py と Hook / MCP の自動更新が今回対象外であることが明記されている",
+      "test_name": "test_runtime_writer_excluded_from_scope"
+    },
+    {
+      "id": "AC-145A-05",
+      "description": "session-145a が docs-only として成立し、後続 session-145b の起票前提が整う",
+      "test_name": "test_session_145a_enables_145b_without_runtime_changes"
+    }
+  ],
+  "acceptance_ref": "docs/acceptance/session-145a.yaml",
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性（テスト・証跡・再現性により、受入判断に足る根拠があること）"
+  ]
+}
+{
+  "session_id": "session-145a",
+  "phase_id": "phase8",
+  "title": "dashboard state writer 戦略と bootstrap 方針の正本化",
+  "goal": "dashboard 用 state.json の更新主体・更新タイミング・bootstrap 方針・対象範囲を docs-only で確定し、後続の session-145b が 1 session 1 purpose で起票できる状態にする",
+  "scope": [
+    "dashboard state writer 戦略の選定を文書で正本化する",
+    "bootstrap は手動配置、正式 writer は後続 session で実装する方針を明文化する",
+    "session-145b の対象件数を 3〜4 プロジェクトに限定する方針を明文化する",
+    "state.json 更新責務と out_of_scope を docs に追記する"
+  ],
+  "out_of_scope": [
+    "projects 配下への state.json 実配置",
+    "run_session.py の変更",
+    "Hook / MCP による自動更新",
+    "queue_state.json の実接続",
+    "dashboard viewer.js の変更",
+    "deploy",
+    "A02_fina 連携実装",
+    "review_points 表記補正",
+    "drift_detector.py の修正"
+  ],
+  "constraints": [
+    "docs-only とする",
+    "1 session 1 purpose を厳守する",
+    "writer の正式実装は別 session に分離する",
+    "bootstrap は手動配置とし、恒久運用の正式 writer とは区別して記述する",
+    "session-145b の対象は 10 プロジェクト全件ではなく 3〜4 プロジェクト先行とする",
+    "既存の dashboard schema 契約を変更しない",
+    "変更ファイル数は最大 5 ファイル以内とする"
+  ],
+  "allowed_changes": [
+    "docs/master_instruction.md",
+    "docs/roadmap.yaml",
+    "docs/sessions/session-145a.json",
+    "docs/acceptance/session-145a.yaml"
+  ],
+  "allowed_changes_detail": [
+    "docs/master_instruction.md: dashboard state writer の運用方針追記のみ",
+    "docs/roadmap.yaml: session-145a / 145b / state writer 後続 session の順序追記のみ",
+    "docs/sessions/session-145a.json: 新規作成のみ",
+    "docs/acceptance/session-145a.yaml: 新規作成のみ"
+  ],
+  "forbidden_changes": [
+    "dashboard/index.html",
+    "dashboard/viewer.js",
+    "orchestration/run_session.py",
+    "orchestration/providers/",
+    "projects/",
+    "docs/schemas/",
+    "docs/global_rules.md",
+    ".github/"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-145A-01",
+      "type": "document_rule",
+      "condition": "state.json の bootstrap と正式 writer の責務分離が正本に明文化されている"
+    },
+    {
+      "id": "CC-145A-02",
+      "type": "artifact",
+      "condition": "session-145b が追加判断なく起票可能な方針記述がある"
+    },
+    {
+      "id": "CC-145A-03",
+      "type": "side_effect_free",
+      "condition": "コード・schema・projects 配下に変更がない"
+    },
+    {
+      "id": "CC-145A-04",
+      "type": "state_transition_consistent",
+      "condition": "writer 戦略の現在地と将来方針が矛盾なく記述されている"
+    },
+    {
+      "id": "CC-145A-05",
+      "type": "non_regression",
+      "condition": "既存 dashboard 契約と viewer v0 の前提を壊していない"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-145A-01",
+      "description": "state.json の bootstrap は手動配置、正式 writer は後続 session で実装する方針が正本に明記されている",
+      "test_name": "test_state_writer_strategy_documented"
+    },
+    {
+      "id": "AC-145A-02",
+      "description": "session-145b の対象が 3〜4 プロジェクト先行であることが正本に明記されている",
+      "test_name": "test_bootstrap_scope_limited_to_three_or_four_projects"
+    },
+    {
+      "id": "AC-145A-03",
+      "description": "dashboard schema と viewer 実装を今回変更しないことが out_of_scope と forbidden_changes に明記されている",
+      "test_name": "test_no_schema_or_viewer_changes_declared"
+    },
+    {
+      "id": "AC-145A-04",
+      "description": "run_session.py と Hook / MCP の自動更新が今回対象外であることが明記されている",
+      "test_name": "test_runtime_writer_excluded_from_scope"
+    },
+    {
+      "id": "AC-145A-05",
+      "description": "session-145a が docs-only として成立し、後続 session-145b の起票前提が整う",
+      "test_name": "test_session_145a_enables_145b_without_runtime_changes"
+    }
+  ],
+  "acceptance_ref": "docs/acceptance/session-145a.yaml",
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性（テスト・証跡・再現性により、受入判断に足る根拠があること）"
+  ]
+}
