@@ -1,0 +1,139 @@
+{
+  "session_id": "session-144",
+  "phase_id": "phase7-post",
+  "title": "10プロジェクト可視化ダッシュボード v0 の最小実装",
+  "goal": "session-144-pre で定義した state / queue / projects 契約を入力として読み込み、10プロジェクトの status / waiting_for / latest error を 1 画面で可視化する静的 viewer v0 を実装する",
+  "scope": [
+    "dashboard/index.html の新規作成",
+    "dashboard/viewer.js の新規作成",
+    "docs/sessions/session-144.json の新規作成",
+    "docs/acceptance/session-144.yaml の新規作成"
+  ],
+  "out_of_scope": [
+    "dashboard/style.css の新規作成(スタイルは index.html 内包とする)",
+    "dashboard/projects.yaml の新規作成または変更",
+    "docs/projects.yaml の変更",
+    "docs/schemas/project_state.schema.json の変更",
+    "docs/schemas/project_state.schema.md の変更",
+    "docs/schemas/queue_state.schema.json の変更",
+    "docs/schemas/queue_state.schema.md の変更",
+    "各 projects/ 配下への state.json 実配置",
+    "各 projects/ 配下への queue_state.json 実配置",
+    "queue engine の挙動変更",
+    "認証設定の追加",
+    "デプロイ設定(deploy.sh / rsync / .htaccess)の変更",
+    "AI API 連携",
+    "書き込み機能",
+    "リアルタイム更新",
+    "グラフ / チャート",
+    "既存 docs/pipeline_v0/dashboard_latest.* の変更または削除"
+  ],
+  "constraints": [
+    "viewer は read-only とし、既存 JSON / YAML / Markdown を書き換えないこと",
+    "viewer は local-only で完了とし、本 session では本番デプロイしないこと",
+    "起動方法は Python 簡易サーバー (python3 -m http.server 8080) を前提とすること",
+    "フレームワークは使用せず、vanilla JavaScript で実装すること",
+    "docs/projects.yaml の読込には js-yaml を CDN 経由で利用してよい",
+    "表示は縦 1 カラムカードで統一すること",
+    "status 表示は絵文字 + テキスト + 色の組み合わせとすること",
+    "state.json 未整備のプロジェクトは idle / データ未整備 として表示すること",
+    "projects.yaml に列挙された 10 プロジェクトを全件表示すること",
+    "queue_state.json が未整備・空・読込失敗でも画面全体が落ちないこと",
+    "1セッション1目的を守ること",
+    "変更ファイル数は最大 4 ファイル以内に抑えること",
+    "review_points は固定4軸(仕様一致 / 変更範囲遵守 / 副作用なし / 検証十分性)を用いること"
+  ],
+  "acceptance_ref": "docs/acceptance/session-144.yaml",
+  "allowed_changes": [
+    "dashboard/index.html",
+    "dashboard/viewer.js",
+    "docs/sessions/session-144.json",
+    "docs/acceptance/session-144.yaml"
+  ],
+  "allowed_changes_detail": [
+    "dashboard/index.html: viewer 本体 HTML と最小内包 CSS のみ新規作成",
+    "dashboard/viewer.js: docs/projects.yaml / projects/*/state.json / queue_state.json を読み込む最小 viewer ロジックのみ新規作成",
+    "docs/sessions/session-144.json: 当該 session 定義の新規作成のみ",
+    "docs/acceptance/session-144.yaml: 当該 acceptance 定義の新規作成のみ"
+  ],
+  "forbidden_changes": [
+    "orchestration/**",
+    "backend/**",
+    "tests/**",
+    ".claude/**",
+    ".github/**",
+    "artifacts/**",
+    "projects/**",
+    "docs/projects.yaml",
+    "docs/schemas/**",
+    "docs/pipeline_v0/**",
+    "docs/backlog/main.md",
+    "docs/roadmap.yaml",
+    "docs/sessions/session-140.json",
+    "docs/sessions/session-141.json",
+    "docs/sessions/session-142.json",
+    "docs/sessions/session-143.json",
+    "docs/sessions/session-144-pre.json",
+    "docs/acceptance/session-140.yaml",
+    "docs/acceptance/session-141.yaml",
+    "docs/acceptance/session-142.yaml",
+    "docs/acceptance/session-143.yaml",
+    "docs/acceptance/session-144-pre.yaml"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-144-01",
+      "type": "artifact",
+      "condition": "dashboard/index.html と dashboard/viewer.js が作成され、ローカル HTTP サーバー経由で 1 画面表示できる"
+    },
+    {
+      "id": "CC-144-02",
+      "type": "document_rule",
+      "condition": "docs/projects.yaml に列挙された 10 プロジェクトが縦 1 カラムカードで全件表示される"
+    },
+    {
+      "id": "CC-144-03",
+      "type": "state_transition_consistent",
+      "condition": "state.json が存在するプロジェクトは status / waiting_for / current_phase / current_session_id / summary / next_action / last_error を反映し、state.json が未整備のプロジェクトは idle / データ未整備 として表示される"
+    },
+    {
+      "id": "CC-144-04",
+      "type": "side_effect_free",
+      "condition": "viewer は read-only であり、既存ファイルの内容や実行挙動を変更しない"
+    },
+    {
+      "id": "CC-144-05",
+      "type": "non_regression",
+      "condition": "queue_state.json が未整備・空・読込失敗でも viewer 全体は描画され、致命的エラーで停止しない"
+    },
+    {
+      "id": "CC-144-06",
+      "type": "artifact",
+      "condition": "session-144.json の acceptance_ref と session-144.yaml の session_id が相互に一致し、session-144 本体の正本入力として再利用できる"
+    }
+  ],
+  "review_points": [
+    "仕様一致(AC達成)",
+    "変更範囲遵守",
+    "副作用なし(既存破壊なし)",
+    "検証十分性"
+  ],
+  "failure_type_priority": [
+    "build_error",
+    "import_error",
+    "type_mismatch",
+    "test_failure",
+    "scope_violation",
+    "regression",
+    "spec_missing"
+  ],
+  "notes": [
+    "本 session は viewer v0 の最小実装であり、契約の正本は session-144-pre で固定済み",
+    "検証は automated + human_review のハイブリッドで行う",
+    "state.json / queue_state.json の writer 側実装は本 session では行わない",
+    "本 session ではデプロイしない。mane.bikusu.net への統合は後続 session に分離する",
+    "既存 docs/pipeline_v0/dashboard_latest.* は reference として残し、本 session では改変しない",
+    "docs/projects.yaml の YAML パースには js-yaml を CDN 経由で利用する前提とする",
+    "queue_state.json の想定配置はリポジトリルート直下とし、未整備・空・読込失敗でも viewer は継続描画する"
+  ]
+}

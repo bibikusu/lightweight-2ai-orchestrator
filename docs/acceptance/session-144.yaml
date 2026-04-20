@@ -1,0 +1,58 @@
+session_id: session-144
+verification_mode: human_review
+acceptance:
+  - id: AC-144-01
+    description: dashboard/index.html が新規作成され、viewer v0 の 1 画面 UI を提供する
+    verification: human_review
+    review_focus:
+      - "単一 HTML で表示できるか"
+      - "スタイルが index.html 内に内包されているか"
+      - "縦 1 カラムカードの構成になっているか"
+  - id: AC-144-02
+    description: dashboard/viewer.js が新規作成され、docs/projects.yaml を読み込んで 10 プロジェクト一覧を描画できる
+    verification: human_review
+    review_focus:
+      - "docs/projects.yaml を入力として読む構造になっているか"
+      - "js-yaml により docs/projects.yaml を正しくパースしているか"
+      - "10 プロジェクト全件を描画対象にしているか"
+      - "display_priority に応じた表示順になっているか"
+  - id: AC-144-03
+    description: state.json が存在する場合、status / waiting_for / current_phase / current_session_id / summary / next_action / last_error を反映して表示できる
+    verification: human_review
+    review_focus:
+      - "status が絵文字 + テキスト + 色で表示されるか"
+      - "waiting_for が非 null の場合に表示されるか"
+      - "summary / next_action / latest error が視認できるか"
+  - id: AC-144-04
+    description: state.json が存在しないプロジェクトは idle / データ未整備 として表示され、viewer 全体が落ちない
+    verification: human_review
+    review_focus:
+      - "state.json 未整備時に例外停止しないか"
+      - "idle / データ未整備 と表示されるか"
+      - "他プロジェクトの描画に影響しないか"
+  - id: AC-144-05
+    description: queue_state.json が未整備・空・読込失敗でも viewer 全体は描画され、queue 情報は欠落許容として扱われる
+    verification: human_review
+    review_focus:
+      - "queue_state.json 読込失敗で画面全体が落ちないか"
+      - "queue 未整備を欠落許容として扱っているか"
+      - "プロジェクトカード描画が継続するか"
+  - id: AC-144-06
+    description: 起動方式が Python 簡易サーバー前提で明記されており、file:// 直開き前提になっていない
+    verification: human_review
+    review_focus:
+      - "起動手順に python3 -m http.server 8080 が明記されているか"
+      - "その記載場所が index.html または実装に付随する明示箇所にあるか"
+      - "fetch の file:// 制約を回避する前提が示されているか"
+  - id: AC-144-07
+    description: 変更が dashboard/index.html, dashboard/viewer.js, docs/sessions/session-144.json, docs/acceptance/session-144.yaml の 4 ファイルに限定されている
+    verification: human_review
+    review_focus:
+      - "git diff --stat で 4 ファイル以内に収まっているか"
+      - "docs/projects.yaml / docs/schemas / projects / orchestration / tests に差分がないか"
+  - id: AC-144-08
+    description: session-144.json の acceptance_ref と session-144.yaml の session_id が相互に一致している
+    verification: human_review
+    review_focus:
+      - "acceptance_ref = 'docs/acceptance/session-144.yaml' が正しいか"
+      - "session-144.yaml の session_id = 'session-144' が正しいか"
