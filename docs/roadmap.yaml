@@ -169,3 +169,28 @@ sessions:
       「検証十分性（テスト・証跡・再現性により、受入判断に足る根拠があること）」
       を正本としていることを確認した。
       本 session はこの現物確認結果と誤判定是正記録を残す。
+
+  - session_id: session-145a
+    phase_id: phase8
+    title: "dashboard state writer 戦略と bootstrap 方針の正本化"
+    status: ready_to_store
+    note: |
+      docs-only で dashboard `state.json` の責務境界を固定する。
+      bootstrap は手動配置、正式 writer 実装は後続 session に分離する。
+      session-145b を追加判断なしで起票できる前提を整える。
+
+  - session_id: session-145b
+    phase_id: phase8
+    title: "dashboard state bootstrap 先行対象の起票"
+    status: planned
+    note: |
+      `state.json` の先行適用は 10 プロジェクト全件ではなく 3〜4 プロジェクトに限定する。
+      schema / viewer / runtime 変更を伴わない docs-first の起票準備として扱う。
+
+  - session_id: session-145c
+    phase_id: phase8
+    title: "dashboard state writer 正式実装"
+    status: planned
+    note: |
+      恒久運用の state writer 実装を扱う後続 session。
+      145a/145b で固定した責務分離と対象範囲を前提に実装へ進める。
