@@ -1,0 +1,38 @@
+session_id: session-a02-research-01
+phase_id: phase-a02-research
+title: A02_fina 悩み起点 Research の再設計
+acceptance:
+  - id: AC-A02-R-01
+    description: A02_fina の Research が悩み起点で定義され、keyword 起点が明示的に排除されている
+    test_name: test_research_is_problem_first_not_keyword_first
+  - id: AC-A02-R-02
+    description: 検索意図分類が Know / Do / Buy / Go の4区分で定義されている
+    test_name: test_search_intent_four_way_classification_defined
+  - id: AC-A02-R-03
+    description: Research の出力仕様が後続 Design session に渡せる構造で明記されている
+    test_name: test_research_output_contract_for_design_defined
+  - id: AC-A02-R-04
+    description: Design / Generate / 本文生成 / 公開処理が out_of_scope に明記されている
+    test_name: test_downstream_layers_explicitly_out_of_scope
+  - id: AC-A02-R-05
+    description: policy 外出し前提と本文生成禁止の原則が維持されている
+    test_name: test_policy_externalization_and_no_body_generation_preserved
+session_id: session-a02-research-01
+phase_id: phase-a02-research
+title: A02_fina 悩み起点 Research の再設計
+acceptance:
+  - id: AC-A02-R-01
+    description: A02_fina の Research が悩み起点で定義され、keyword 起点が明示的に排除されている
+    test_name: test_research_is_problem_first_not_keyword_first
+  - id: AC-A02-R-02
+    description: 検索意図分類が Know / Do / Buy / Go の4区分で定義されている
+    test_name: test_search_intent_four_way_classification_defined
+  - id: AC-A02-R-03
+    description: Research の出力仕様が後続 Design session に渡せる構造で明記されている
+    test_name: test_research_output_contract_for_design_defined
+  - id: AC-A02-R-04
+    description: Design / Generate / 本文生成 / 公開処理が out_of_scope に明記されている
+    test_name: test_downstream_layers_explicitly_out_of_scope
+  - id: AC-A02-R-05
+    description: policy 外出し前提と本文生成禁止の原則が維持されている
+    test_name: test_policy_externalization_and_no_body_generation_preserved
