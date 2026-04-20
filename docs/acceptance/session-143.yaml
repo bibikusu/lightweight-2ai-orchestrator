@@ -1,0 +1,42 @@
+session_id: session-143
+verification_mode: human_review
+acceptance:
+  - id: AC-143-01
+    description: phase7_completion_report.json が新規作成され、P7 の成果、未解決事項、次フェーズ分岐が構造化されている
+    verification: human_review
+    review_focus:
+      - "P7 達成項目(Hooks / MCP / preflight fail-fast)が網羅されているか"
+      - "open_issues に未解決事項が列挙されているか"
+      - "next_phase_candidates に session-144(ダッシュボード) と A02_fina が分岐として記載されているか"
+  - id: AC-143-02
+    description: phase7_completion_report.md が新規作成され、P7 の完了内容が人間可読な形で要約されている
+    verification: human_review
+    review_focus:
+      - "BLUF 形式で冒頭に結論が書かれているか"
+      - "json 版と内容が矛盾していないか"
+  - id: AC-143-03
+    description: completion report の内容が main 上の session-142 完了状態および backlog resolved 状態と整合している
+    verification: human_review
+    review_focus:
+      - "session-142 の main 反映(commit: eb73021)が記載されているか"
+      - "backlog resolved(commit: 9f13f7b)が記載されているか"
+      - "backlog 更新を本 session の変更として扱っていないか"
+  - id: AC-143-04
+    description: completion report に scope 外事項(roadmap 更新 / P7-B / A02_fina / session-144 詳細 / backlog更新)が含まれず、境界が明示されている
+    verification: human_review
+    review_focus:
+      - "roadmap.yaml 変更が本 session に含まれないことが notes で明示されているか"
+      - "backlog更新が本 session に含まれないことが notes で明示されているか"
+      - "次 session への引き継ぎ事項が分離記述されているか"
+  - id: AC-143-05
+    description: 変更が docs 配下の許可 4 ファイルに限定され、コードや設定の挙動変更が発生していない
+    verification: human_review
+    review_focus:
+      - "git diff --stat で 4 ファイル以内に収まっているか"
+      - "orchestration / tests / .claude / .github / docs/backlog/main.md に差分がないか"
+  - id: AC-143-06
+    description: session-143.json の acceptance_ref と session-143.yaml の session_id が相互に一致している
+    verification: human_review
+    review_focus:
+      - "acceptance_ref = 'docs/acceptance/session-143.yaml' が正しいか"
+      - "session-143.yaml の session_id = 'session-143' が正しいか"

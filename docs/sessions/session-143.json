@@ -1,0 +1,118 @@
+{
+  "session_id": "session-143",
+  "phase_id": "phase7",
+  "title": "P7公式クローズ: completion report と次フェーズ分岐の正本化",
+  "goal": "P7(Hooks + MCP + preflight fail-fast) の成果、未解決事項、次フェーズ分岐を docs-only で正本化し、P7 を公式にクローズできる状態にする",
+  "scope": [
+    "docs/reports/phase7_completion_report.json の新規作成",
+    "docs/reports/phase7_completion_report.md の新規作成",
+    "docs/sessions/session-143.json の新規作成",
+    "docs/acceptance/session-143.yaml の新規作成"
+  ],
+  "out_of_scope": [
+    "docs/backlog/main.md の更新",
+    "orchestration/ 配下のコード変更",
+    "tests/ 配下の変更",
+    "Hooks の追加実装",
+    "MCP 設定の変更",
+    "preflight の挙動変更",
+    "docs/roadmap.yaml の更新(別 session に分離)",
+    "P7-B の設計詳細追加",
+    "A02_fina の実装着手",
+    "session-144 ダッシュボード仕様の策定",
+    "既存 session 定義の内容改変"
+  ],
+  "constraints": [
+    "docs-only セッションとして扱うこと",
+    "コード挙動を変えないこと",
+    "P7 の完了事実は既存の main 状態と整合させること",
+    "未確認事項は断定せず open_issues に分離すること",
+    "1セッション1目的を守ること",
+    "変更ファイル数は最大 4 ファイル以内に抑えること",
+    "検証は human_review 方式で実施すること(自動テスト追加は行わない)",
+    "review_points は固定4軸(仕様一致 / 変更範囲遵守 / 副作用なし / 検証十分性)を用いること"
+  ],
+  "acceptance_ref": "docs/acceptance/session-143.yaml",
+  "allowed_changes": [
+    "docs/reports/phase7_completion_report.json",
+    "docs/reports/phase7_completion_report.md",
+    "docs/sessions/session-143.json",
+    "docs/acceptance/session-143.yaml"
+  ],
+  "allowed_changes_detail": [
+    "docs/reports/phase7_completion_report.json: P7 の completion report 本文のみ新規作成",
+    "docs/reports/phase7_completion_report.md: P7 の completion report 本文のみ新規作成",
+    "docs/sessions/session-143.json: 当該 session 定義の新規作成のみ",
+    "docs/acceptance/session-143.yaml: 当該 acceptance 定義の新規作成のみ"
+  ],
+  "forbidden_changes": [
+    "orchestration/**",
+    "backend/**",
+    "tests/**",
+    ".claude/**",
+    ".github/**",
+    "artifacts/**",
+    "docs/backlog/main.md",
+    "docs/roadmap.yaml",
+    "docs/sessions/session-140.json",
+    "docs/sessions/session-141.json",
+    "docs/sessions/session-142.json",
+    "docs/acceptance/session-140.yaml",
+    "docs/acceptance/session-141.yaml",
+    "docs/acceptance/session-142.yaml"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-143-01",
+      "type": "document_rule",
+      "condition": "phase7_completion_report.json と phase7_completion_report.md の両方が作成され、P7 の成果・未解決事項・次フェーズ分岐が記載されている"
+    },
+    {
+      "id": "CC-143-02",
+      "type": "state_transition_consistent",
+      "condition": "completion report の内容が main 上の session-142 完了状態および backlog resolved 状態と矛盾していない"
+    },
+    {
+      "id": "CC-143-03",
+      "type": "side_effect_free",
+      "condition": "コード・設定・テストに変更がなく、実行挙動に影響を与えていない"
+    },
+    {
+      "id": "CC-143-04",
+      "type": "document_rule",
+      "condition": "completion report に scope 外(roadmap / P7-B / A02_fina / session-144詳細 / backlog更新)が含まれず、境界が明示されている"
+    },
+    {
+      "id": "CC-143-05",
+      "type": "non_regression",
+      "condition": "変更対象が docs 配下の 4 ファイルに限定されており、scope 外変更が存在しない"
+    },
+    {
+      "id": "CC-143-06",
+      "type": "artifact",
+      "condition": "session-143.json の acceptance_ref と session-143.yaml の session_id が相互に一致し、P7 クローズの正本入力として再利用できる"
+    }
+  ],
+  "review_points": [
+    "仕様一致(AC達成)",
+    "変更範囲遵守",
+    "副作用なし(既存破壊なし)",
+    "検証十分性"
+  ],
+  "failure_type_priority": [
+    "build_error",
+    "import_error",
+    "type_mismatch",
+    "test_failure",
+    "scope_violation",
+    "regression",
+    "spec_missing"
+  ],
+  "notes": [
+    "本 session は P7 の公式クローズを目的とする docs-only セッションである",
+    "検証は human_review 方式(GPT 最終受入判定)を採用し、自動テストは追加しない",
+    "BACKLOG-PREFLIGHT-EXIT-CODE-001 の Resolved 移動は session-142 後に main へ既に反映済みであり、本 session の変更対象ではない",
+    "roadmap.yaml 更新は別 session(session-144 or その後)で実施する",
+    "P7-B / A02_fina / session-144 ダッシュボードの実装内容は本 session では扱わない"
+  ]
+}

@@ -1,0 +1,84 @@
+{
+  "phase_id": "phase7",
+  "phase_title": "P7 Hooks + MCP + preflight fail-fast",
+  "status": "completed",
+  "completed_at": "2026-04-20",
+  "summary": {
+    "bluf": "P7 は Hooks + MCP + preflight fail-fast の最小実用構成として main に反映済みであり、session-142 完了をもって公式クローズ可能な状態に到達した。",
+    "business_value": [
+      "人間の運用注意ではなく Hook による fail-fast で事故抑止できる状態になった",
+      "Claude Code Hooks と read-only MCP により P7 の制御境界が最小構成で成立した",
+      "session-144 ダッシュボードと A02_fina 着手前の可視化基盤に進める状態になった"
+    ]
+  },
+  "completed_sessions": [
+    {
+      "session_id": "session-140",
+      "title": "P7-pre responsibility canonicalization",
+      "result": "completed"
+    },
+    {
+      "session_id": "session-141",
+      "title": "minimal Claude Code Hooks and MCP configuration",
+      "result": "completed"
+    },
+    {
+      "session_id": "session-142",
+      "title": "preflight exit code fix for hook fail-fast",
+      "result": "completed",
+      "main_commit": "eb73021"
+    }
+  ],
+  "key_outcomes": [
+    "PreToolUse / PostToolUse Hook による最小 fail-fast 導線が成立",
+    "MCP filesystem read-only の最小構成が成立",
+    "preflight_session.sh が dirty worktree / branch sync failure / venv failure / missing session files で非ゼロ終了することを確認",
+    "session-142 実装は main へ反映済みであり、4-gate は全 pass",
+    "BACKLOG-PREFLIGHT-EXIT-CODE-001 は main 上で resolved 済み(commit: 9f13f7b)"
+  ],
+  "verification": {
+    "method": "human_review + existing 4-gate evidence",
+    "evidence": {
+      "ruff": "pass",
+      "pytest_hooks": "13 passed",
+      "mypy": "pass",
+      "compileall": "pass"
+    },
+    "notes": [
+      "session-142 は main で既反映確認済み",
+      "cherry-pick empty は既反映状態の確認として扱う",
+      "AC-142-06 は test_name 表記差異があるが、異常系4 + 正常系1 の exit code 検証により機能達成として受理する"
+    ]
+  },
+  "open_issues": [
+    {
+      "id": "OI-P7-001",
+      "summary": "session-142 の AC-142-06 は test_name 表記と実装名に差異がある",
+      "handling": "P7 completion report で対応表を正本化し、機能達成として整理する"
+    },
+    {
+      "id": "OI-P7-002",
+      "summary": "運用全体の可視化(UI)は未実装",
+      "handling": "session-144 でダッシュボード v0 を追加する"
+    }
+  ],
+  "next_phase_candidates": [
+    {
+      "session_id": "session-144",
+      "title": "10プロジェクト可視化ダッシュボード v0",
+      "priority": "highest"
+    },
+    {
+      "track": "A02_fina",
+      "title": "SEO運用OS 着手準備",
+      "priority": "after-session-144"
+    }
+  ],
+  "out_of_scope_confirmed": [
+    "docs/roadmap.yaml の更新",
+    "P7-B の詳細設計",
+    "A02_fina の実装着手",
+    "session-144 の実装詳細",
+    "docs/backlog/main.md の追加更新"
+  ]
+}
