@@ -123,6 +123,35 @@
 
 ---
 
+## Cursor 運用ガード (Cursor Execution Guard)
+
+本オーケストレーターでは、実装・コマンド実行の担当である Cursor に対して、
+役割境界を守るための運用ガードを設ける。詳細は `docs/global_rules.md` の
+「Cursor 実行ガード」節を参照。
+
+### 要点
+
+- Cursor は実装・実行専門であり、仕様確定・最終承認を行わない
+- Cursor 実行指示には必ず停止点を含める
+- 起票コミットと実装コミットは必要に応じて分離する
+- Cursor は依頼されていない自動生成 (現状サマリー、バックログ一覧等) を行わない
+- scope 外ファイルの変更、指示にない Git 操作 (rebase / merge / cherry-pick / stash) は禁止
+
+### 適用範囲
+
+- GPT または Claude から Cursor への指示テンプレ
+- session 実行時の Cursor 操作
+- KUNIHIDE が Cursor に直接投入する指示
+
+### 目的
+
+- main 汚染の防止
+- 再現性の確保
+- Cursor の暴走防止 (統合コミット化、scope 外変更、誤前提の混入)
+- 人間判断ポイントの明確化
+
+---
+
 ## 6. フェーズ方針
 
 ### Phase 0
