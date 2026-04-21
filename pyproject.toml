@@ -4,7 +4,9 @@ version = "0.1.0"
 
 [project.optional-dependencies]
 dev = [
-  "mypy"
+  "mypy",
+  "ruff",
+  "types-PyYAML",
 ]
 
 [tool.pytest.ini_options]
