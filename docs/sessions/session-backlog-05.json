@@ -1,0 +1,60 @@
+{
+  "session_id": "session-backlog-05",
+  "phase_id": "phaseX",
+  "title": "検証手順の再現性固定と .venv/bin ベース運用の明文化",
+  "goal": ".venv/bin を用いた 4-gate 実行手順を Git 管理対象の文書・補助スクリプトとして固定し、環境依存の誤判定を防ぐ",
+  "scope": [
+    "requirements.txt / requirements-dev.txt / pyproject.toml の整合確認",
+    "検証環境の再構築手順の明文化",
+    ".venv/bin を前提とした検証コマンドの固定",
+    "必要最小限の補助スクリプト追加"
+  ],
+  "out_of_scope": [
+    "アプリケーションロジック変更",
+    "backend テスト内容の変更",
+    "run_session.py の変更",
+    ".venv ディレクトリ自体の Git 管理",
+    "CI workflow の変更",
+    "README の変更",
+    "既存 backlog yaml ファイルの状態変更"
+  ],
+  "constraints": [
+    "1 session 1 purpose を守る",
+    "Git 管理対象のみを変更する",
+    ".venv 自体は commit 対象に含めない",
+    "検証は .venv/bin ベースで実施する"
+  ],
+  "acceptance_ref": "docs/acceptance/session-backlog-05.yaml",
+  "allowed_changes": [
+    "requirements.txt",
+    "requirements-dev.txt",
+    "pyproject.toml",
+    "scripts/setup_venv.sh",
+    "scripts/check_env.sh",
+    "docs/operations/venv.md"
+  ],
+  "allowed_changes_detail": [
+    "requirements.txt: 依存関係の整合修正のみ",
+    "requirements-dev.txt: 開発用依存関係の整合修正のみ",
+    "pyproject.toml: lint/typecheck/pytest 実行整合に必要な最小変更のみ",
+    "scripts/setup_venv.sh: .venv 再構築手順の自動化のみ",
+    "scripts/check_env.sh: .venv 前提の 4-gate 実行確認のみ",
+    "docs/operations/venv.md: 再現手順の文書化のみ"
+  ],
+  "forbidden_changes": [
+    "orchestration/**",
+    "backend/**",
+    "frontend/**",
+    ".venv/**",
+    ".github/**",
+    "README.md",
+    "scripts/run_four_gates.sh",
+    "docs/backlogs/**"
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ]
+}

@@ -1,0 +1,15 @@
+session_id: session-backlog-05
+verification: human_review
+acceptance:
+  - id: AC-01
+    description: .venv を前提とした検証手順が Git 管理対象の文書またはスクリプトとして再現可能な形で残っている
+    test_name: human_review_required
+  - id: AC-02
+    description: requirements 系と実行手順の整合が取れ、.venv/bin ベースの 4-gate 実行方法が明文化されている
+    test_name: human_review_required
+  - id: AC-03
+    description: .venv ディレクトリ自体を Git 管理対象に含めていない
+    test_name: human_review_required
+  - id: AC-04
+    description: 変更は allowed_changes の 6 ファイル以内に収まっている (scope 遵守)
+    test_name: human_review_required
