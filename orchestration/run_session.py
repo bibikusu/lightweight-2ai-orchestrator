@@ -881,12 +881,23 @@ def _extract_by_function_names(
     """関数名ヒントに基づき該当「セクション」相当の本文を返す。見つからなければ None。"""
     if not names:
         return None
+    normalized: List[str] = []
+    seen: Set[str] = set()
+    for name in names:
+        if not name:
+            continue
+        if name in seen:
+            continue
+        seen.add(name)
+        normalized.append(name)
+    if not normalized:
+        return None
     suffix = Path(path_str).suffix.lower()
     if suffix == ".py":
-        got = _extract_python_functions_with_context(content, names)
+        got = _extract_python_functions_with_context(content, normalized)
         if got is not None:
             return got
-    return _extract_functions_by_regex_fallback(content, names)
+    return _extract_functions_by_regex_fallback(content, normalized)
 
 
 def _find_opening_section_tag_end(content: str, section_id: str) -> Optional[int]:
@@ -1000,6 +1011,13 @@ def build_implementation_prompt_file_context_block(
     lines = content.splitlines(keepends=True)
     total_lines = len(lines)
     fh = function_hints or []
+    fh_normalized: List[str] = []
+    fh_seen: Set[str] = set()
+    for name in fh:
+        if not name or name in fh_seen:
+            continue
+        fh_seen.add(name)
+        fh_normalized.append(name)
 
     body: Optional[str] = None
     header = ""
@@ -1015,12 +1033,12 @@ def build_implementation_prompt_file_context_block(
             )
             body = section_body
 
-    if body is None and fh:
-        func_body = _extract_by_function_names(path_str, content, fh)
+    if body is None and fh_normalized:
+        func_body = _extract_by_function_names(path_str, content, fh_normalized)
         if func_body is not None:
             inj_line_count = len(func_body.splitlines())
-            names_desc = ", ".join(fh[:8])
-            if len(fh) > 8:
+            names_desc = ", ".join(fh_normalized[:8])
+            if len(fh_normalized) > 8:
                 names_desc += ", ..."
             header = (
                 f"[current file (functions [{names_desc}] extracted; "
@@ -1032,7 +1050,7 @@ def build_implementation_prompt_file_context_block(
         parts: List[str] = []
         if section_hint:
             parts.append(f"section id={section_hint!r} not found")
-        if fh:
+        if fh_normalized:
             parts.append("function hints not matched in source")
         if parts:
             reason = "; ".join(parts)

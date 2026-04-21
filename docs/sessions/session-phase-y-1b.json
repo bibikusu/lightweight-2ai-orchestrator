@@ -1,0 +1,107 @@
+{
+  "session_id": "session-phase-y-1b",
+  "phase_id": "phase-y",
+  "title": "run_session.py 内 build_implementation_prompts の large file handling 改修",
+  "goal": "orchestration/run_session.py 内の build_implementation_prompts 関数について、300行制限依存を見直し、大型ファイルおよび複数ファイル入力時でも情報欠損を抑えた構造化プロンプトを生成できるようにする",
+  "scope": [
+    "orchestration/run_session.py 内の build_implementation_prompts 関数の改修",
+    "IMPLEMENTATION_PROMPT_FULL_FILE_MAX_NEWLINES 依存ロジックの削除または置換",
+    "大型ファイル向けの構造化分割ロジックの導入",
+    "複数ファイル入力時の境界と順序を保つプロンプト構造への改善",
+    "既存 implementation prompt 関連テストの更新または追加",
+    "大型ファイル対応の非回帰テスト追加"
+  ],
+  "out_of_scope": [
+    "run_session.py 全体の大規模再設計",
+    "provider / transport / model 層の変更",
+    "retry ロジックの変更",
+    "CI workflow の変更",
+    "README の変更",
+    "requirements.txt / requirements-dev.txt / pyproject.toml の変更",
+    "scripts の追加または変更",
+    "別モジュールへの大規模抽出リファクタ"
+  ],
+  "constraints": [
+    "1 session 1 purpose を守る",
+    "変更対象は build_implementation_prompts 関数および直近補助ロジックに限定する",
+    "小規模ファイルの既存挙動を極力維持する",
+    "プロンプトサイズが過大になりすぎないよう構造化分割で制御する",
+    "Claude がファイル境界・順序・分割単位を理解できる構造にする",
+    "4-gate (ruff / pytest / mypy / compileall) をすべて通す",
+    "既存の run_session フロー prepared_spec → implementation を壊さない",
+    "実装前に変更計画を提示し、GPT 承認前にコード変更を開始しない",
+    "既存テストの変更は挙動変更の証跡付き最小修正に限定する"
+  ],
+  "acceptance_ref": "docs/acceptance/session-phase-y-1b.yaml",
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "backend/tests/test_implementation_prompt_hardening.py",
+    "backend/tests/test_implementation_prompt_context.py",
+    "backend/tests/test_large_file_injection.py",
+    "docs/sessions/session-phase-y-1b.json",
+    "docs/acceptance/session-phase-y-1b.yaml"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/run_session.py: build_implementation_prompts 関数およびその直近の補助ロジックに必要最小限の変更のみ",
+    "backend/tests/test_implementation_prompt_hardening.py: 挙動変更の証跡付き最小修正のみ",
+    "backend/tests/test_implementation_prompt_context.py: 挙動変更の証跡付き最小修正のみ",
+    "backend/tests/test_large_file_injection.py: 大型ファイル対応の新規テスト追加のみ",
+    "docs/sessions/session-phase-y-1b.json: 本 session 定義のみ",
+    "docs/acceptance/session-phase-y-1b.yaml: 本 session の受入条件定義のみ"
+  ],
+  "forbidden_changes": [
+    "orchestration/providers/**",
+    "orchestration/transport/**",
+    "orchestration/retry/**",
+    "orchestration/models/**",
+    ".github/**",
+    "README.md",
+    "requirements.txt",
+    "requirements-dev.txt",
+    "pyproject.toml",
+    "scripts/**",
+    "docs/backlogs/**",
+    "docs/operations/**",
+    "docs/sessions/session-phase-y-1.json",
+    "docs/acceptance/session-phase-y-1.yaml"
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-01",
+      "description": "ネストした section 構造を持つ large file から、外側ノイズを混入させずに対象 section が抽出される",
+      "test_name": "test_ac_01_nested_section_is_extracted_without_outer_noise"
+    },
+    {
+      "id": "AC-02",
+      "description": "重複する function hint が与えられた場合、抽出時に重複排除される",
+      "test_name": "test_ac_02_duplicate_function_hints_are_deduplicated"
+    },
+    {
+      "id": "AC-03",
+      "description": "入力が極端に短い場合、head-tail fallback は omitted 注記を入れず全文を返す",
+      "test_name": "test_ac_03_head_tail_fallback_returns_whole_for_short_input"
+    },
+    {
+      "id": "AC-04",
+      "description": "truncate 閾値の境界値で、期待通りの切り詰め挙動となる",
+      "test_name": "test_ac_04_truncate_boundary_plus_minus_one"
+    },
+    {
+      "id": "AC-05",
+      "description": "section 抽出と function hint 抽出の両方が失敗した場合、fallback 注記に両方の失敗理由が記載される",
+      "test_name": "test_ac_05_fallback_reason_includes_section_and_function_miss"
+    }
+  ],
+  "open_issues": [
+    "Y-1b は既存 large-file handling の境界ケース堅牢化であり、patch_apply 側の context_mismatch(BACKLOG-PATCH-001)は未解決のまま残る。Card Task session-12 再開時は BACKLOG-PATCH-001 の状態再評価が必要。"
+  ],
+  "learnings": [
+    "session の性格転換(治療期待から境界ケース堅牢化への転換)が入った時点で、goal だけでなく acceptance description も同時に再点検すべきだった。今後は Step B 投入前に AC description と test 実体の意味整合を確認する。"
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ]
+}

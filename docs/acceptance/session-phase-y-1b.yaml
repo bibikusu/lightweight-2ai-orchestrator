@@ -1,0 +1,19 @@
+session_id: session-phase-y-1b
+phase_id: phase-y
+title: run_session.py 内 build_implementation_prompts の large file handling 改修
+acceptance:
+  - id: AC-01
+    description: ネストした section 構造を持つ large file から、外側ノイズを混入させずに対象 section が抽出される
+    test_name: test_ac_01_nested_section_is_extracted_without_outer_noise
+  - id: AC-02
+    description: 重複する function hint が与えられた場合、抽出時に重複排除される
+    test_name: test_ac_02_duplicate_function_hints_are_deduplicated
+  - id: AC-03
+    description: 入力が極端に短い場合、head-tail fallback は omitted 注記を入れず全文を返す
+    test_name: test_ac_03_head_tail_fallback_returns_whole_for_short_input
+  - id: AC-04
+    description: truncate 閾値の境界値で、期待通りの切り詰め挙動となる
+    test_name: test_ac_04_truncate_boundary_plus_minus_one
+  - id: AC-05
+    description: section 抽出と function hint 抽出の両方が失敗した場合、fallback 注記に両方の失敗理由が記載される
+    test_name: test_ac_05_fallback_reason_includes_section_and_function_miss
