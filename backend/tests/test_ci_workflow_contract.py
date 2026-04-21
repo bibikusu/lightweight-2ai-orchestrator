@@ -17,7 +17,7 @@ COMMAND_MYPY = (
 )
 COMMAND_COMPILEALL = (
     'PYTHONPYCACHEPREFIX="./.pycache_compileall" '
-    "python3 -m compileall -q -f orchestration backend"
+    ".venv/bin/python -m compileall -q -f orchestration backend"
 )
 
 

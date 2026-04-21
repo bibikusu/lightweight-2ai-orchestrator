@@ -1,0 +1,25 @@
+session_id: session-backlog-05
+verification_mode: human_review
+title: ".venv 前提の検証手順の再現性と 4-gate 正本の明文化（backlog-05）"
+acceptance:
+  - id: AC-01
+    description: .venv を前提とした検証手順が Git 管理対象の文書またはスクリプトとして再現可能な形で残っている
+    test_name: human_review_required
+    verification: human_review
+    review_focus:
+      - "docs/operations/venv.md に venv 再構築手順と 4-gate が記載されているか"
+      - "scripts/setup_venv.sh / scripts/check_env.sh / scripts/run_four_gates.sh がリポジトリに含まれ、ルートから再現実行できるか"
+  - id: AC-02
+    description: requirements 系と実行手順の整合が取れ、.venv/bin ベースの 4-gate 実行方法が明文化されている
+    test_name: human_review_required
+    verification: human_review
+    review_focus:
+      - "requirements.txt / requirements-dev.txt と README・venv 文書の説明が矛盾していないか"
+      - "README と docs/operations/venv.md が .venv/bin の 4-gate 列を同一正本（run_four_gates.sh / validation.yml）と揃えているか"
+  - id: AC-03
+    description: .venv ディレクトリ自体を Git 管理対象に含めていない
+    test_name: human_review_required
+    verification: human_review
+    review_focus:
+      - ".gitignore に .venv/ があるか"
+      - "誤って .venv を追跡するコミットが含まれていないか（git ls-files .venv が空であること）"

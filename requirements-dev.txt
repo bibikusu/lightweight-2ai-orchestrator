@@ -1,4 +1,5 @@
-ruff
+# Lint / typecheck. Install with requirements.txt:
+#   pip install -r requirements.txt -r requirements-dev.txt
 mypy
+ruff
 types-PyYAML
-pytest

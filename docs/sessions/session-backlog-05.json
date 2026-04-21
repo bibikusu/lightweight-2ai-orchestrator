@@ -1,0 +1,37 @@
+{
+  "session_id": "session-backlog-05",
+  "phase_id": "operations",
+  "title": ".venv 前提の検証手順の再現性と 4-gate 正本の明文化（backlog-05-venv-consistency）",
+  "goal": "backlog-05 で挙がっていた .venv 不在・検証コマンド乖離を解消し、Git 管理下の文書とスクリプトだけでローカル検証を CI（validation.yml）と同一路線に再現できるようにする",
+  "scope": [
+    "docs/operations/venv.md による運用正本の追加",
+    "scripts/setup_venv.sh / scripts/check_env.sh / scripts/run_four_gates.sh による再現可能なセットアップと 4-gate 一括実行",
+    "README と requirements 系の説明整合、.github/workflows/validation.yml と標準 4 コマンド文字列の一致",
+    "backend/tests/test_ci_workflow_contract.py による CI コマンド列の契約テスト維持",
+    ".gitignore による .venv の非追跡の維持"
+  ],
+  "out_of_scope": [
+    "run_session.py のロジック変更",
+    "4-gate 対象ディレクトリや mypy オプションの方針変更",
+    "pyproject.toml の [project] 依存の全面的な pip-tools 化"
+  ],
+  "verification": "human_review",
+  "acceptance_ref": "docs/acceptance/session-backlog-05.yaml",
+  "evidence_for_reviewer": [
+    "docs/operations/venv.md",
+    "scripts/setup_venv.sh",
+    "scripts/check_env.sh",
+    "scripts/run_four_gates.sh",
+    "README.md（環境構築・標準 4-gate 節）",
+    ".github/workflows/validation.yml",
+    ".gitignore（.venv/）",
+    "requirements.txt",
+    "requirements-dev.txt",
+    "backend/tests/test_ci_workflow_contract.py"
+  ],
+  "constraints": [
+    "標準 4-gate は .venv/bin 配下のみを用いる",
+    "CI workflow の run ブロックとローカルスクリプトのコマンド列を同一に保つ",
+    ".venv はリポジトリにコミットしない"
+  ]
+}

@@ -33,4 +33,4 @@ jobs:
         run: PYTHONPATH=. .venv/bin/python -m mypy --explicit-package-bases orchestration --ignore-missing-imports
 
       - name: Compileall
-        run: PYTHONPYCACHEPREFIX="./.pycache_compileall" python3 -m compileall -q -f orchestration backend
+        run: PYTHONPYCACHEPREFIX="./.pycache_compileall" .venv/bin/python -m compileall -q -f orchestration backend

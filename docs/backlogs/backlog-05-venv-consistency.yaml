@@ -1,6 +1,7 @@
 backlog_id: backlog-05-venv-consistency
 title: .venv と検証コマンドの整合性回復
-status: backlog
+status: resolved
+resolved_session: session-backlog-05
 priority: low
 summary: .venv/bin/python が存在しない状態と、検証コマンドの正本が乖離している問題を解消する
 problem:
