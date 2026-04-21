@@ -1,0 +1,23 @@
+session_id: session-cursor-guard-01
+verification: human_review
+
+acceptance:
+  - id: AC-01
+    description: Cursor 実行前に branch / git status / git config / 対象 commit / clean worktree を確認するルールが明文化されている
+    test_name: human_review_required
+
+  - id: AC-02
+    description: 停止点付き実行テンプレの原則が明文化され、起票と実装を必要に応じて分離する運用が記載されている
+    test_name: human_review_required
+
+  - id: AC-03
+    description: 「現状サマリー」「バックログ一覧」など、依頼していない自動生成を禁止するルールが明文化されている
+    test_name: human_review_required
+
+  - id: AC-04
+    description: scope外ファイルを触らないこと、forbidden_changes を明示すること、指示にない commit/push/rebase/merge を行わないことが記載されている
+    test_name: human_review_required
+
+  - id: AC-05
+    description: GPT / Claude / Cursor / KUNIHIDE の役割境界を壊さず、実行主体が Cursor または KUNIHIDE に限定される運用になっている
+    test_name: human_review_required
