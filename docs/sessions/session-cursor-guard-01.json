@@ -1,0 +1,59 @@
+{
+  "session_id": "session-cursor-guard-01",
+  "phase_id": "phaseX",
+  "title": "Cursor 実行ガードと停止点テンプレの正本化",
+  "goal": "Cursor 実行時の統合コミット化・scope外変更・古い前提の混入を防ぐため、停止点付き実行テンプレと事前確認ルールを正本化する",
+  "scope": [
+    "Cursor 実行前チェック項目の正本化",
+    "停止点付き実行テンプレ運用ルールの明文化",
+    "不要な自動生成の禁止ルール追加",
+    "起票と実装の段階分離ルール追加",
+    "scope外変更を防ぐ指示テンプレの原則整理"
+  ],
+  "out_of_scope": [
+    "Python 実装変更",
+    "run_session.py の変更",
+    "backend/** の変更",
+    "frontend/** の変更",
+    "dashboard 実装変更",
+    "Claude Code 統合実装",
+    "tests の新規追加または修正",
+    "CI workflow の変更",
+    "docs/backlogs/** の状態変更"
+  ],
+  "constraints": [
+    "1 session 1 purpose を守る",
+    "docs-only で完結する",
+    "既存の役割固定を変更しない",
+    "実行主体は Cursor または KUNIHIDE であり、GPT/Claude は実行しない",
+    "既存運用の実態から導けるルールのみを追加し、抽象論を増やさない"
+  ],
+  "acceptance_ref": "docs/acceptance/session-cursor-guard-01.yaml",
+  "allowed_changes": [
+    "docs/global_rules.md",
+    "docs/master_instruction.md"
+  ],
+  "allowed_changes_detail": [
+    "docs/global_rules.md: Cursor 実行前チェック、停止点、禁止事項、段階分離の追記のみ",
+    "docs/master_instruction.md: 役割固定に反しない範囲で Cursor 運用補足を追記する場合のみ"
+  ],
+  "forbidden_changes": [
+    "orchestration/**",
+    "backend/**",
+    "frontend/**",
+    ".github/**",
+    "README.md",
+    "docs/backlogs/**",
+    "scripts/**",
+    ".venv/**",
+    "docs/operations/**",
+    "docs/sessions/**",
+    "docs/acceptance/**"
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ]
+}
