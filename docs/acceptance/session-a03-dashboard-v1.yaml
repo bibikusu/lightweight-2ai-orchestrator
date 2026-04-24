@@ -1,0 +1,147 @@
+session_id: session-a03-dashboard-v1
+acceptance:
+  - id: AC-A03V1-01
+    description: npm run build が成功し dist/ に index.html と assets/*.js + assets/*.css が生成される
+    test_name: test_build_succeeds_and_dist_artifacts_exist
+    type: build
+    manual_check: false
+    priority: highest
+    completion_criteria_refs:
+      - CC-A03V1-01
+      - CC-A03V1-02
+    implementation_refs:
+      - package.json
+      - vite.config.js
+    verification_command: "npm run build && ls dist/index.html dist/assets/*.js dist/assets/*.css"
+
+  - id: AC-A03V1-02
+    description: data/projects.json の 10 エントリ全件が dist/assets/*.js バンドルに含まれる
+    test_name: test_all_10_projects_included_in_bundle
+    type: artifact
+    manual_check: false
+    priority: highest
+    completion_criteria_refs:
+      - CC-A03V1-01
+    implementation_refs:
+      - src/App.jsx
+      - data/projects.json
+    verification_command: >
+      for id in A01_orchestrator A02_fina A03_mane_bikusu A04_cardtask A05_customer_system
+                A06_recruit_system A07_cast_pro A08_video_ai A09_fina_date A10_archived; do
+        grep -q "$id" dist/assets/*.js && echo "OK: $id" || echo "NG: $id";
+      done
+    expected_project_ids:
+      - A01_orchestrator
+      - A02_fina
+      - A03_mane_bikusu
+      - A04_cardtask
+      - A05_customer_system
+      - A06_recruit_system
+      - A07_cast_pro
+      - A08_video_ai
+      - A09_fina_date
+      - A10_archived
+
+  - id: AC-A03V1-03
+    description: data/projects.json がセッション前後で変更されない（SHA-256 一致）
+    test_name: test_projects_json_not_modified
+    type: side_effect_free
+    manual_check: false
+    priority: highest
+    completion_criteria_refs:
+      - CC-A03V1-03
+    implementation_refs:
+      - data/projects.json
+    verification_command: "shasum -a 256 data/projects.json"
+    note: セッション開始時に hash を記録し、終了時に再計算して一致を確認する
+
+  - id: AC-A03V1-04
+    description: data/projects.json のトップレベルスキーマ必須キーが全 10 件に存在する
+    test_name: test_projects_json_schema_integrity
+    type: artifact
+    manual_check: false
+    priority: high
+    completion_criteria_refs:
+      - CC-A03V1-03
+    implementation_refs:
+      - data/projects.json
+    required_keys:
+      - id
+      - name
+      - status
+      - priority
+      - next_action
+    verification_command: >
+      python3 -c "
+      import json
+      d = json.load(open('data/projects.json'))
+      keys = ['id','name','status','priority','next_action']
+      for p in d:
+          missing = [k for k in keys if k not in p]
+          print(('NG ' + p.get('id','?') + ' missing:' + str(missing)) if missing else ('OK ' + p['id']))
+      print('total:', len(d))
+      "
+
+  - id: AC-A03V1-05
+    description: dist/ と mane.bikusu.net/ のファイル名・サイズが一致する（rsync 後確認）
+    test_name: test_dist_sync_matches_production
+    type: artifact
+    manual_check: false
+    priority: high
+    completion_criteria_refs:
+      - CC-A03V1-05
+    implementation_refs:
+      - dist/
+    verification_command: >
+      diff <(ls -la dist/assets/) <(ls -la /Users/kunihideyamane/domain/mane.bikusu.net/assets/) &&
+      echo "SYNC OK" || echo "SYNC MISMATCH"
+    deploy_command: >
+      rsync -av --delete dist/ /Users/kunihideyamane/domain/mane.bikusu.net/
+      --exclude=data/
+
+manual_acceptance:
+  - id: MAC-A03V1-01
+    description: 10 プロジェクトが一覧で崩れなく表示されている
+    type: manual
+    manual_check: true
+    priority: highest
+    completion_criteria_refs:
+      - CC-A03V1-01
+    verification:
+      - mane.bikusu.net をブラウザで開く（またはローカルの npm run preview で確認）
+      - 10 件のプロジェクトカードが表示されることを確認する
+      - スクロール・カード間隔・レイアウトに崩れがないことを確認する
+      - 画面幅を変えてもカードが正常に折り返されることを確認する
+
+  - id: MAC-A03V1-02
+    description: 各プロジェクトの status カラーと priority が視認できる
+    type: manual
+    manual_check: true
+    priority: high
+    completion_criteria_refs:
+      - CC-A03V1-01
+    verification:
+      - implementing / planning / live / testing / idea / archived の各 status が色分けされている
+      - priority 1〜5 が各カードに表示されている
+      - ProjectDetail を開いて next_action と current_phase が表示されることを確認する
+      - 表示が日本語で崩れていないことを確認する
+
+  - id: MAC-A03V1-03
+    description: ProjectForm を操作しても data/projects.json が書き換わらない（readonly 保証）
+    type: manual
+    manual_check: true
+    priority: high
+    completion_criteria_refs:
+      - CC-A03V1-03
+    verification:
+      - ProjectForm を開く
+      - フォームに任意の値を入力して送信操作を行う
+      - ターミナルで shasum -a 256 data/projects.json を実行し、セッション開始時の hash と一致することを確認する
+      - ブラウザ localStorage への保存は許容する（JSON ファイル本体の不変が条件）
+
+notes:
+  - lint / typecheck / pytest は未定義のため 4-command gate は適用しない
+  - 検証コマンドは npm run build のみ（CC-A03V1-01 / 02）
+  - rsync 実行前に必ず AC-A03V1-03（projects.json hash 確認）を完了すること
+  - deploy_command の --exclude=data/ により data/projects.json の上書きを防止する
+  - data/projects.json の事前 hash 記録コマンド: shasum -a 256 data/projects.json > /tmp/a03v1_projects_hash.txt

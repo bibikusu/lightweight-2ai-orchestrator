@@ -1,0 +1,127 @@
+{
+  "session_id": "session-a03-dashboard-v1",
+  "phase_id": "A03-v1",
+  "project_id": "A03_mane_bikusu",
+  "target_repository": "/Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu",
+  "title": "A03 dashboard v1 品質確認・公開ビルド正本化",
+  "goal": "mane.bikusu.net dashboard の現状コードを v1 として正式確定する。npm run build の成功・10プロジェクト表示・readonly 動作・data schema 保護・dist 同期の5条件を受入基準とし、phase2（sessions.json / roadmap.json 分離の要否判断）起票の起点を確立する。",
+  "scope": [
+    "npm run build の成功確認および dist/ 成果物の検証",
+    "data/projects.json 全10エントリの表示確認",
+    "UI 操作後に data/projects.json が変更されないこと（readonly 保証）の確認",
+    "dist/ と mane.bikusu.net/ のファイル同期確認",
+    "src/ 内の軽微な表示修正（任意・build 成功を前提とした最小範囲のみ）"
+  ],
+  "out_of_scope": [
+    "新機能追加（セッション / ロードマップ表示、フィルタリング等）",
+    "data/projects.json のスキーマ変更・エントリ追加",
+    "sessions.json / roadmap.json の新設（phase2 以降に先送り）",
+    "Basic 認証の変更・Xserver 設定の変更",
+    "テストフレームワークの導入（phase2 以降の判断）",
+    "ESLint / TypeScript 導入"
+  ],
+  "constraints": [
+    "1 session 1 purpose",
+    "npm run build のみをコマンドゲートとする（lint / typecheck / pytest 未定義のため 4-command gate は適用しない）",
+    "data/projects.json は変更禁止（セッション前後でハッシュ一致を検証する）",
+    "package.json / 設定ファイル類は変更禁止"
+  ],
+  "allowed_changes": [
+    "src/App.jsx",
+    "src/components/ProjectCard.jsx",
+    "src/components/ProjectDetail.jsx",
+    "src/components/ProjectForm.jsx",
+    "src/hooks/useLocalStorage.js",
+    "src/lib/constants.js",
+    "src/lib/utils.js",
+    "src/index.css",
+    "dist/"
+  ],
+  "allowed_changes_detail": [
+    "src/App.jsx: 表示ロジックの軽微な修正のみ（data fetch / routing の変更を含まない）",
+    "src/components/ProjectCard.jsx: カード表示の軽微な修正のみ（data schema 変更を伴わない）",
+    "src/components/ProjectDetail.jsx: 詳細表示の軽微な修正のみ",
+    "src/components/ProjectForm.jsx: フォーム表示の軽微な修正のみ（data/projects.json への書き込みロジックを追加しない）",
+    "src/hooks/useLocalStorage.js: localStorage 読み取りロジックの軽微な修正のみ",
+    "src/lib/constants.js: 定数の軽微な修正のみ",
+    "src/lib/utils.js: ユーティリティの軽微な修正のみ",
+    "src/index.css: スタイルの軽微な修正のみ",
+    "dist/: npm run build の自動生成成果物（手動編集禁止）"
+  ],
+  "forbidden_changes": [
+    "data/projects.json",
+    "package.json",
+    "package-lock.json",
+    "vite.config.js",
+    "tailwind.config.js",
+    "postcss.config.js",
+    "eslint.config.js",
+    "index.html",
+    "public/",
+    "/Users/kunihideyamane/AI_Team/軽量2AIオーケストレーター方式/orchestration/",
+    "/Users/kunihideyamane/AI_Team/軽量2AIオーケストレーター方式/docs/global_rules.md",
+    "/Users/kunihideyamane/AI_Team/軽量2AIオーケストレーター方式/docs/master_instruction.md",
+    "/Users/kunihideyamane/domain/mane.bikusu.net/data/projects.json"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-A03V1-01",
+      "type": "artifact",
+      "condition": "npm run build が終了コード 0 で完了し、dist/index.html が生成されている"
+    },
+    {
+      "id": "CC-A03V1-02",
+      "type": "artifact",
+      "condition": "dist/assets/ に *.js と *.css が各 1 件以上存在する"
+    },
+    {
+      "id": "CC-A03V1-03",
+      "type": "side_effect_free",
+      "condition": "data/projects.json の SHA-256 ハッシュがセッション開始前後で変化しない"
+    },
+    {
+      "id": "CC-A03V1-04",
+      "type": "side_effect_free",
+      "condition": "package.json / vite.config.js / tailwind.config.js / postcss.config.js に変更がない"
+    },
+    {
+      "id": "CC-A03V1-05",
+      "type": "state_transition_consistent",
+      "condition": "dist/ と /Users/kunihideyamane/domain/mane.bikusu.net/ のファイル名・サイズが一致する（rsync 完了）"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-A03V1-01",
+      "description": "npm run build が成功し dist/ に index.html と assets/*.js + assets/*.css が生成される",
+      "test_name": "test_build_succeeds_and_dist_artifacts_exist"
+    },
+    {
+      "id": "AC-A03V1-02",
+      "description": "data/projects.json の 10 エントリ全件が dist/assets/*.js バンドルに含まれる（プロジェクト ID 文字列で確認）",
+      "test_name": "test_all_10_projects_included_in_bundle"
+    },
+    {
+      "id": "AC-A03V1-03",
+      "description": "data/projects.json がセッション前後で変更されない（SHA-256 一致）",
+      "test_name": "test_projects_json_not_modified"
+    },
+    {
+      "id": "AC-A03V1-04",
+      "description": "data/projects.json のトップレベルスキーマ必須キー（id / name / status / priority / next_action）が全 10 件に存在する",
+      "test_name": "test_projects_json_schema_integrity"
+    },
+    {
+      "id": "AC-A03V1-05",
+      "description": "dist/ と mane.bikusu.net/ のファイル名・サイズが一致する（rsync 後確認）",
+      "test_name": "test_dist_sync_matches_production"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ],
+  "acceptance_ref": "docs/acceptance/session-a03-dashboard-v1.yaml"
+}
