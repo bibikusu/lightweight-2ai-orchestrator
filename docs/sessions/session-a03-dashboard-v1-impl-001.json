@@ -1,0 +1,146 @@
+{
+  "session_id": "session-a03-dashboard-v1-impl-001",
+  "phase_id": "A03-v1-impl",
+  "project_id": "A03_mane_bikusu",
+  "target_repository": "/Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu",
+  "title": "A03 readonly dashboard v1 表示改善・build・rsync デプロイ",
+  "goal": "ProjectCard.jsx と ProjectDetail.jsx の軽微な表示改善を行い、npm run build を成功させ、dist/ を mane.bikusu.net/ へ rsync デプロイすることで A03 dashboard v1 を本番公開する。",
+  "scope": [
+    "ProjectCard.jsx: status='planned' 表示対応（色・ラベル）",
+    "ProjectDetail.jsx: next_action 長文表示対応（折り返し・省略表示）",
+    "npm run build の成功確認および dist/ 成果物の検証",
+    "rsync --delete --exclude=data/ による dist/ → mane.bikusu.net/ のデプロイ"
+  ],
+  "out_of_scope": [
+    "フィルタ / 検索 / ソート",
+    "API 連携",
+    "自然言語指示 UI",
+    "session 生成 UI",
+    "pass/fail 記録 UI",
+    "DB 導入",
+    "public/data/projects.json の変更",
+    "package.json の変更",
+    "App.jsx の変更",
+    "src/hooks/ の変更",
+    "src/lib/ の変更",
+    "run_session.py / orchestration/ の変更"
+  ],
+  "constraints": [
+    "1 session 1 purpose",
+    "rsync 実行時は --delete --exclude=data/ 必須",
+    "rsync 前に npm run build の成功確認必須（終了コード 0）",
+    "React 側変更は ProjectCard.jsx / ProjectDetail.jsx の2ファイルのみ",
+    "public/data/projects.json は変更禁止（SHA-256 一致を事前記録・事後確認）",
+    "Plan Mode で実装開始前に承認ゲート",
+    "public/data/projects.json の事前 SHA-256: cd32fee721bd021837dcdf6523bf888675db4810fca74a46c99de258ac208a95"
+  ],
+  "allowed_changes": [
+    "docs/sessions/session-a03-dashboard-v1-impl-001.json",
+    "docs/acceptance/session-a03-dashboard-v1-impl-001.yaml",
+    "/Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/src/components/ProjectCard.jsx",
+    "/Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/src/components/ProjectDetail.jsx",
+    "/Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/dist/",
+    "/Users/kunihideyamane/domain/mane.bikusu.net/"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/session-a03-dashboard-v1-impl-001.json",
+    "docs/acceptance/session-a03-dashboard-v1-impl-001.yaml",
+    "/Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/src/components/ProjectCard.jsx",
+    "/Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/src/components/ProjectDetail.jsx",
+    "/Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/dist/",
+    "/Users/kunihideyamane/domain/mane.bikusu.net/"
+  ],
+  "forbidden_changes": [
+    "docs/config/project_registry.json",
+    "/Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/public/data/projects.json",
+    "/Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/package.json",
+    "/Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/src/App.jsx",
+    "/Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/src/hooks/",
+    "/Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/src/lib/",
+    "run_session.py",
+    "orchestration/",
+    "docs/global_rules.md",
+    "docs/master_instruction.md",
+    "docs/sessions/session-12.json",
+    "docs/sessions/session-12-pass.log.md",
+    "docs/sessions/session-145a.json",
+    "docs/sessions/session-a03-id-migration-generator-001.json",
+    "docs/sessions/session-a03-id-migration-generator-001-pass.log.md",
+    "docs/sessions/session-a03-dashboard-v1.json",
+    "docs/acceptance/session-12.yaml",
+    "docs/acceptance/session-145a.yaml",
+    "docs/acceptance/session-a03-id-migration-generator-001.yaml",
+    "docs/acceptance/session-a03-dashboard-v1.yaml"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-A03IMPL-01",
+      "type": "artifact",
+      "condition": "npm run build が終了コード 0 で完了する"
+    },
+    {
+      "id": "CC-A03IMPL-02",
+      "type": "artifact",
+      "condition": "dist/ に index.html / assets/*.js / assets/*.css が生成されている"
+    },
+    {
+      "id": "CC-A03IMPL-03",
+      "type": "artifact",
+      "condition": "dist/assets/*.js に registry 正本ID 10件（A01_Card_task 等）が含まれる"
+    },
+    {
+      "id": "CC-A03IMPL-04",
+      "type": "state_transition_consistent",
+      "condition": "rsync 後、dist/ と mane.bikusu.net/ のファイル名・サイズが一致する（data/ 除く）"
+    },
+    {
+      "id": "CC-A03IMPL-05",
+      "type": "side_effect_free",
+      "condition": "public/data/projects.json の SHA-256 がセッション開始前後で一致する"
+    },
+    {
+      "id": "CC-A03IMPL-06",
+      "type": "side_effect_free",
+      "condition": "orchestrator repo（軽量2AIオーケストレーター方式）に変更差分がない"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-A03IMPL-01",
+      "description": "npm run build が終了コード 0 で成功する",
+      "test_name": "test_build_exits_zero"
+    },
+    {
+      "id": "AC-A03IMPL-02",
+      "description": "dist/ に index.html / assets/*.js / assets/*.css が生成されている",
+      "test_name": "test_dist_artifacts_exist"
+    },
+    {
+      "id": "AC-A03IMPL-03",
+      "description": "dist/assets/*.js に registry 正本ID 10件が含まれる",
+      "test_name": "test_bundle_contains_registry_ids"
+    },
+    {
+      "id": "AC-A03IMPL-04",
+      "description": "rsync 後 dist/ と mane.bikusu.net/ のファイル名・サイズが一致する（data/ 除く）",
+      "test_name": "test_rsync_sync_matches_dist"
+    },
+    {
+      "id": "AC-A03IMPL-05",
+      "description": "public/data/projects.json の SHA-256 がセッション前後で一致する",
+      "test_name": "test_projects_json_not_modified"
+    },
+    {
+      "id": "AC-A03IMPL-06",
+      "description": "orchestrator repo に変更差分がない",
+      "test_name": "test_orchestrator_repo_clean"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ],
+  "acceptance_ref": "docs/acceptance/session-a03-dashboard-v1-impl-001.yaml"
+}

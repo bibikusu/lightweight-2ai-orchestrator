@@ -1,0 +1,188 @@
+session_id: session-a03-dashboard-v1-impl-001
+acceptance:
+  - id: AC-A03IMPL-01
+    description: npm run build が終了コード 0 で成功する
+    test_name: test_build_exits_zero
+    type: artifact
+    manual_check: false
+    priority: highest
+    completion_criteria_refs:
+      - CC-A03IMPL-01
+    implementation_refs:
+      - /Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/src/components/ProjectCard.jsx
+      - /Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/src/components/ProjectDetail.jsx
+      - /Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/package.json
+    verification_command: >
+      cd /Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu &&
+      npm run build; echo "exit: $?"
+
+  - id: AC-A03IMPL-02
+    description: dist/ に index.html / assets/*.js / assets/*.css が生成されている
+    test_name: test_dist_artifacts_exist
+    type: artifact
+    manual_check: false
+    priority: highest
+    completion_criteria_refs:
+      - CC-A03IMPL-02
+    implementation_refs:
+      - /Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/dist/
+    verification_command: >
+      ls /Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/dist/index.html &&
+      ls /Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/dist/assets/*.js &&
+      ls /Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/dist/assets/*.css &&
+      echo "OK: all artifacts exist"
+
+  - id: AC-A03IMPL-03
+    description: dist/assets/*.js に registry 正本ID 10件が含まれる
+    test_name: test_bundle_contains_registry_ids
+    type: artifact
+    manual_check: false
+    priority: highest
+    completion_criteria_refs:
+      - CC-A03IMPL-03
+    implementation_refs:
+      - /Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/dist/
+      - docs/config/project_registry.json
+    expected_project_ids:
+      - A01_Card_task
+      - A02_fina
+      - A03_mane_bikusu
+      - A04_deli_customer_management
+      - A05_CAST_PRO
+      - A06_cecare
+      - A07_pochadeli_work
+      - A08_AI_video_creation
+      - A09_AI_movie_production
+      - A10_fina_date
+    verification_command: >
+      for id in A01_Card_task A02_fina A03_mane_bikusu A04_deli_customer_management A05_CAST_PRO
+                A06_cecare A07_pochadeli_work A08_AI_video_creation A09_AI_movie_production A10_fina_date; do
+        grep -q "$id" /Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/dist/assets/*.js &&
+        echo "OK: $id" || echo "NG: $id";
+      done
+
+  - id: AC-A03IMPL-04
+    description: rsync 後 dist/ と mane.bikusu.net/ のファイル名・サイズが一致する（data/ 除く）
+    test_name: test_rsync_sync_matches_dist
+    type: artifact
+    manual_check: false
+    priority: highest
+    completion_criteria_refs:
+      - CC-A03IMPL-04
+    implementation_refs:
+      - /Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/dist/
+      - /Users/kunihideyamane/domain/mane.bikusu.net/
+    deploy_command: >
+      rsync -av --delete --exclude=data/
+      /Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/dist/
+      /Users/kunihideyamane/domain/mane.bikusu.net/
+    verification_command: >
+      diff
+      <(find /Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/dist/
+        -not -path "*/data/*" -type f | sed "s|.*/dist/||" | sort)
+      <(find /Users/kunihideyamane/domain/mane.bikusu.net/
+        -not -path "*/data/*" -type f | sed "s|.*/mane.bikusu.net/||" | sort) &&
+      echo "SYNC OK" || echo "SYNC MISMATCH"
+
+  - id: AC-A03IMPL-05
+    description: public/data/projects.json の SHA-256 がセッション前後で一致する
+    test_name: test_projects_json_not_modified
+    type: side_effect_free
+    manual_check: false
+    priority: highest
+    completion_criteria_refs:
+      - CC-A03IMPL-05
+    implementation_refs:
+      - /Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/public/data/projects.json
+    expected_sha256: cd32fee721bd021837dcdf6523bf888675db4810fca74a46c99de258ac208a95
+    verification_command: >
+      shasum -a 256
+      /Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/public/data/projects.json
+    note: >
+      セッション開始前の SHA-256 は cd32fee721bd021837dcdf6523bf888675db4810fca74a46c99de258ac208a95。
+      終了時に再計算して一致を確認する。
+
+  - id: AC-A03IMPL-06
+    description: orchestrator repo に変更差分がない
+    test_name: test_orchestrator_repo_clean
+    type: side_effect_free
+    manual_check: false
+    priority: highest
+    completion_criteria_refs:
+      - CC-A03IMPL-06
+    implementation_refs:
+      - docs/sessions/session-a03-dashboard-v1-impl-001.json
+      - docs/acceptance/session-a03-dashboard-v1-impl-001.yaml
+    verification_command: >
+      git -C /Users/kunihideyamane/AI_Team/軽量2AIオーケストレーター方式 diff --stat &&
+      echo "ORCHESTRATOR CLEAN"
+
+manual_acceptance:
+  - id: MAC-A03IMPL-01
+    description: 10 プロジェクトが一覧で崩れなく表示されている
+    type: manual
+    manual_check: true
+    priority: highest
+    completion_criteria_refs:
+      - CC-A03IMPL-01
+    verification:
+      - https://mane.bikusu.net/ をブラウザで開く
+      - 10 件のプロジェクトカードが表示されることを確認する
+      - スクロール・カード間隔・レイアウトに崩れがないことを確認する
+
+  - id: MAC-A03IMPL-02
+    description: status / priority / name が各カードで視認できる
+    type: manual
+    manual_check: true
+    priority: highest
+    completion_criteria_refs:
+      - CC-A03IMPL-01
+    verification:
+      - 各カードに name（日本語）が表示されていることを確認する
+      - status ラベル（planned 等）が色付きで表示されていることを確認する
+      - priority 値が各カードに表示されていることを確認する
+
+  - id: MAC-A03IMPL-03
+    description: プレースホルダ値（next_action / current_phase）が壊れず表示されている
+    type: manual
+    manual_check: true
+    priority: high
+    completion_criteria_refs:
+      - CC-A03IMPL-01
+    verification:
+      - ProjectDetail を開く
+      - next_action に「未設定（別sessionで確定）」が正しく表示されることを確認する
+      - current_phase に「未設定（別sessionで確定）」が正しく表示されることを確認する
+      - 長文・括弧付き文字列が崩れていないことを確認する
+
+  - id: MAC-A03IMPL-04
+    description: 画面幅変更時にレイアウトが追従する
+    type: manual
+    manual_check: true
+    priority: high
+    completion_criteria_refs:
+      - CC-A03IMPL-01
+    verification:
+      - ブラウザの画面幅を変更してカードの折り返しが正常に機能することを確認する
+      - モバイル幅（375px 相当）でもカードが読める状態であることを確認する
+      - 横スクロールが発生していないことを確認する
+
+  - id: MAC-A03IMPL-05
+    description: https://mane.bikusu.net/ がブラウザで正常表示される
+    type: manual
+    manual_check: true
+    priority: highest
+    completion_criteria_refs:
+      - CC-A03IMPL-04
+    verification:
+      - https://mane.bikusu.net/ にアクセスしてページが表示されることを確認する
+      - ブラウザの開発者ツールで console.error / 404 がないことを確認する
+      - 10 件のプロジェクトカードが表示されることを確認する
+
+notes:
+  - "rsync 実行コマンド: rsync -av --delete --exclude=data/ /Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/dist/ /Users/kunihideyamane/domain/mane.bikusu.net/"
+  - "rsync 前に npm run build の成功（終了コード 0）確認必須"
+  - "public/data/projects.json は変更禁止（事前 SHA-256: cd32fee721bd021837dcdf6523bf888675db4810fca74a46c99de258ac208a95）"
+  - "src 変更対象は ProjectCard.jsx と ProjectDetail.jsx の2ファイルのみ"
+  - "localStorage 旧ID互換対応は本 session の out_of_scope（React は dynamic load のため影響軽微）"
+  - "dist/ は npm run build の自動生成成果物（手動編集禁止）"
