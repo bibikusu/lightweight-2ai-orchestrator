@@ -1,0 +1,144 @@
+{
+  "session_id": "session-a03-id-migration-generator-001",
+  "phase_id": "A03-id-migration-v1",
+  "project_id": "A03_mane_bikusu",
+  "target_repository": "/Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu",
+  "title": "A03 data/projects.json ID体系を registry 正本IDへ移行 + 生成スクリプト作成",
+  "goal": "docs/config/project_registry.json を正本として A03 用 data/projects.json を生成する手動実行スクリプト（scripts/generate_projects_json.py）を作成し、既存 projects.json の ID体系を registry 正本IDへ移行する。ID-MIGRATION と GENERATOR を1 session に統合して完結させる。",
+  "scope": [
+    "scripts/generate_projects_json.py の新規作成（orchestrator repo 側 scripts/ 配下）",
+    "旧 data/projects.json を projects.json.bak.YYYYMMDD-session-a03-id-migration-generator-001 として退避",
+    "generate_projects_json.py 実行による新 data/projects.json 生成（registry 正本IDベース）",
+    "生成後の ID 一覧と registry 正本ID の完全一致確認"
+  ],
+  "out_of_scope": [
+    "状態正本化（status / priority / next_action の実データ入力）— 別session で扱う",
+    "localStorage 旧ID互換対応 — 別session で扱う",
+    "UI 実装・表示改善 — session-a03-dashboard-v1-impl で扱う",
+    "npm run build 実行",
+    "rsync 実行",
+    "API 連携",
+    "自然言語指示インターフェース実装",
+    "session 生成 UI",
+    "pass/fail 記録 UI",
+    "DB 導入",
+    "cron / 自動更新の実装"
+  ],
+  "constraints": [
+    "1 session 1 purpose",
+    "生成スクリプト本体の実装 + 実行 + backup + 移行を1 session で完結",
+    "registry 読み込みは d['projects'] アクセスで統一（project_registry.json は dict 構造: {version, last_updated, description, projects:[...]}）",
+    "プレースホルダ値は事前指定値で固定（将来の状態正本化 session で更新）",
+    "scripts/ 配下の追加ファイルは generate_projects_json.py のみ",
+    "generate_projects_json.py は --help オプションを実装すること",
+    "旧 projects.json のバックアップは session 開始直後・スクリプト実行前に必須"
+  ],
+  "allowed_changes": [
+    "scripts/generate_projects_json.py",
+    "docs/sessions/session-a03-id-migration-generator-001.json",
+    "docs/acceptance/session-a03-id-migration-generator-001.yaml",
+    "/Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/data/projects.json",
+    "/Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/data/projects.json.bak.YYYYMMDD-session-a03-id-migration-generator-001"
+  ],
+  "allowed_changes_detail": [
+    "scripts/generate_projects_json.py",
+    "docs/sessions/session-a03-id-migration-generator-001.json",
+    "docs/acceptance/session-a03-id-migration-generator-001.yaml",
+    "/Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/data/projects.json",
+    "/Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/data/projects.json.bak.YYYYMMDD-session-a03-id-migration-generator-001"
+  ],
+  "forbidden_changes": [
+    "docs/config/project_registry.json",
+    "docs/config/queue_policy.yaml",
+    "run_session.py",
+    "orchestration/",
+    "/Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/src/",
+    "/Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/dist/",
+    "/Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/package.json",
+    "/Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/vite.config.js",
+    "/Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/tailwind.config.js",
+    "/Users/kunihideyamane/domain/mane.bikusu.net/",
+    "docs/global_rules.md",
+    "docs/master_instruction.md",
+    "docs/sessions/session-12.json",
+    "docs/sessions/session-12-pass.log.md",
+    "docs/sessions/session-145a.json",
+    "docs/sessions/session-a03-dashboard-v1.json",
+    "docs/acceptance/session-12.yaml",
+    "docs/acceptance/session-145a.yaml",
+    "docs/acceptance/session-a03-dashboard-v1.yaml",
+    "docs/backlogs/a03-dashboard-next-steps.md"
+  ],
+  "placeholder_values": {
+    "status": "planned",
+    "priority": 3,
+    "next_action": "未設定（別sessionで確定）",
+    "current_phase": "未設定（別sessionで確定）"
+  },
+  "completion_criteria": [
+    {
+      "id": "CC-A03MIG-01",
+      "type": "artifact",
+      "condition": "scripts/generate_projects_json.py が存在し、python3 scripts/generate_projects_json.py --help が終了コード 0 で完了する"
+    },
+    {
+      "id": "CC-A03MIG-02",
+      "type": "artifact",
+      "condition": "data/projects.json.bak.YYYYMMDD-session-a03-id-migration-generator-001 が存在する"
+    },
+    {
+      "id": "CC-A03MIG-03",
+      "type": "state_transition_consistent",
+      "condition": "生成後 data/projects.json の id 一覧が registry d['projects'] の project_id 一覧と sorted 比較で完全一致する"
+    },
+    {
+      "id": "CC-A03MIG-04",
+      "type": "artifact",
+      "condition": "生成後 data/projects.json のエントリ数が 10 件である"
+    },
+    {
+      "id": "CC-A03MIG-05",
+      "type": "side_effect_free",
+      "condition": "src/ / dist/ に git の変更差分がない"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-A03MIG-01",
+      "description": "generator スクリプトが存在し --help が動作する",
+      "test_name": "test_generator_script_exists_and_executable"
+    },
+    {
+      "id": "AC-A03MIG-02",
+      "description": "生成後の id 一覧が registry 正本ID（d['projects'] から抽出）と完全一致",
+      "test_name": "test_generated_ids_match_registry_canonical"
+    },
+    {
+      "id": "AC-A03MIG-03",
+      "description": "旧 projects.json が backup として保存されている",
+      "test_name": "test_old_projects_json_backup_exists"
+    },
+    {
+      "id": "AC-A03MIG-04",
+      "description": "生成後 projects.json が 10 件である",
+      "test_name": "test_generated_projects_count_is_ten"
+    },
+    {
+      "id": "AC-A03MIG-05",
+      "description": "status / priority / next_action が全 10 件に存在する（プレースホルダ値でも可）",
+      "test_name": "test_generated_projects_have_required_fields"
+    },
+    {
+      "id": "AC-A03MIG-06",
+      "description": "src/ / dist/ に変更がない",
+      "test_name": "test_src_dist_not_modified"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ],
+  "acceptance_ref": "docs/acceptance/session-a03-id-migration-generator-001.yaml"
+}

@@ -1,0 +1,149 @@
+session_id: session-a03-id-migration-generator-001
+acceptance:
+  - id: AC-A03MIG-01
+    description: generator スクリプトが存在し --help が動作する
+    test_name: test_generator_script_exists_and_executable
+    type: artifact
+    manual_check: false
+    priority: highest
+    completion_criteria_refs:
+      - CC-A03MIG-01
+    implementation_refs:
+      - scripts/generate_projects_json.py
+      - docs/sessions/session-a03-id-migration-generator-001.json
+      - docs/config/project_registry.json
+    verification_command: >
+      ls -la scripts/generate_projects_json.py &&
+      python3 scripts/generate_projects_json.py --help 2>&1 | head -5
+
+  - id: AC-A03MIG-02
+    description: 生成後の id 一覧が registry 正本ID（d['projects'] から抽出）と完全一致
+    test_name: test_generated_ids_match_registry_canonical
+    type: artifact
+    manual_check: false
+    priority: highest
+    completion_criteria_refs:
+      - CC-A03MIG-03
+    implementation_refs:
+      - scripts/generate_projects_json.py
+      - docs/acceptance/session-a03-id-migration-generator-001.yaml
+      - docs/config/project_registry.json
+    expected_project_ids:
+      - A01_Card_task
+      - A02_fina
+      - A03_mane_bikusu
+      - A04_deli_customer_management
+      - A05_CAST_PRO
+      - A06_cecare
+      - A07_pochadeli_work
+      - A08_AI_video_creation
+      - A09_AI_movie_production
+      - A10_fina_date
+    verification_command: >
+      python3 -c "
+      import json
+      reg = json.load(open('docs/config/project_registry.json'))
+      registry_ids = sorted([p['project_id'] for p in reg['projects']])
+      gen = json.load(open('/Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/data/projects.json'))
+      generated_ids = sorted([p['id'] for p in gen])
+      print('registry_ids :', registry_ids)
+      print('generated_ids:', generated_ids)
+      print('MATCH' if registry_ids == generated_ids else 'MISMATCH')
+      "
+
+  - id: AC-A03MIG-03
+    description: 旧 projects.json が backup として保存されている
+    test_name: test_old_projects_json_backup_exists
+    type: artifact
+    manual_check: false
+    priority: highest
+    completion_criteria_refs:
+      - CC-A03MIG-02
+    implementation_refs:
+      - docs/sessions/session-a03-id-migration-generator-001.json
+      - docs/acceptance/session-a03-id-migration-generator-001.yaml
+      - docs/config/project_registry.json
+    verification_command: >
+      ls -la /Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/data/projects.json.bak.*session-a03-id-migration-generator-001*
+
+  - id: AC-A03MIG-04
+    description: 生成後 projects.json が 10 件である
+    test_name: test_generated_projects_count_is_ten
+    type: artifact
+    manual_check: false
+    priority: highest
+    completion_criteria_refs:
+      - CC-A03MIG-04
+    implementation_refs:
+      - scripts/generate_projects_json.py
+      - docs/acceptance/session-a03-id-migration-generator-001.yaml
+      - docs/config/project_registry.json
+    verification_command: >
+      python3 -c "
+      import json
+      d = json.load(open('/Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/data/projects.json'))
+      count = len(d)
+      print(f'count: {count}')
+      print('OK' if count == 10 else f'NG: expected 10, got {count}')
+      "
+
+  - id: AC-A03MIG-05
+    description: status / priority / next_action が全 10 件に存在する（プレースホルダ値でも可）
+    test_name: test_generated_projects_have_required_fields
+    type: artifact
+    manual_check: false
+    priority: high
+    completion_criteria_refs:
+      - CC-A03MIG-04
+    implementation_refs:
+      - scripts/generate_projects_json.py
+      - docs/acceptance/session-a03-id-migration-generator-001.yaml
+      - docs/config/project_registry.json
+    required_keys:
+      - id
+      - name
+      - status
+      - priority
+      - next_action
+      - current_phase
+    verification_command: >
+      python3 -c "
+      import json
+      d = json.load(open('/Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/data/projects.json'))
+      keys = ['id', 'name', 'status', 'priority', 'next_action', 'current_phase']
+      all_ok = True
+      for p in d:
+          missing = [k for k in keys if k not in p]
+          if missing:
+              print(f'NG {p.get(\"id\",\"?\")} missing: {missing}')
+              all_ok = False
+          else:
+              print(f'OK {p[\"id\"]}')
+      print('total:', len(d))
+      print('ALL OK' if all_ok else 'HAS ERRORS')
+      "
+
+  - id: AC-A03MIG-06
+    description: src/ / dist/ に変更がない
+    test_name: test_src_dist_not_modified
+    type: side_effect_free
+    manual_check: false
+    priority: highest
+    completion_criteria_refs:
+      - CC-A03MIG-05
+    implementation_refs:
+      - docs/sessions/session-a03-id-migration-generator-001.json
+      - docs/acceptance/session-a03-id-migration-generator-001.yaml
+      - docs/config/project_registry.json
+    verification_command: >
+      git -C /Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu diff --stat src/ dist/ &&
+      echo "NO CHANGES IN src/ dist/" || echo "NG: unexpected changes detected"
+
+notes:
+  - "registry アクセスパス: d['projects']（project_registry.json は dict 構造）"
+  - "registry エントリの ID フィールド名: project_id"
+  - "生成 projects.json の ID フィールド名: id"
+  - "backup 命名規則: projects.json.bak.YYYYMMDD-session-a03-id-migration-generator-001"
+  - "プレースホルダ値: status=planned / priority=3 / next_action=未設定（別sessionで確定） / current_phase=未設定（別sessionで確定）"
+  - "scripts/ は既存ディレクトリ（aggregate_observation_reports.py 等が存在）。generate_projects_json.py を追加するのみ"
+  - "localStorage 旧ID互換・状態正本化・UI実装は別session（session-a03-dashboard-v1-impl）で扱う"
