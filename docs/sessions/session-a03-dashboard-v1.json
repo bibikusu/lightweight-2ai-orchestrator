@@ -70,54 +70,54 @@
     {
       "id": "CC-A03V1-01",
       "type": "artifact",
-      "condition": "npm run build が終了コード 0 で完了し、dist/index.html が生成されている"
+      "condition": "docs/sessions/ と docs/acceptance/ の2ファイルのみが変更対象"
     },
     {
       "id": "CC-A03V1-02",
-      "type": "artifact",
-      "condition": "dist/assets/ に *.js と *.css が各 1 件以上存在する"
+      "type": "document_rule",
+      "condition": "goal / scope / out_of_scope が docs-only 受入条件定義として一貫"
     },
     {
       "id": "CC-A03V1-03",
-      "type": "side_effect_free",
-      "condition": "data/projects.json の SHA-256 ハッシュがセッション開始前後で変化しない"
+      "type": "state_transition_consistent",
+      "condition": "AC/CC が docs/config/project_registry.json 正本IDに基づいている"
     },
     {
       "id": "CC-A03V1-04",
       "type": "side_effect_free",
-      "condition": "package.json / vite.config.js / tailwind.config.js / postcss.config.js に変更がない"
+      "condition": "src/ / dist/ / mane.bikusu.net/ / data/projects.json に変更なし"
     },
     {
       "id": "CC-A03V1-05",
-      "type": "state_transition_consistent",
-      "condition": "dist/ と /Users/kunihideyamane/domain/mane.bikusu.net/ のファイル名・サイズが一致する（rsync 完了）"
+      "type": "artifact",
+      "condition": "実装 session (session-a03-dashboard-v1-impl) の前段受入条件が網羅"
     }
   ],
   "acceptance_criteria": [
     {
       "id": "AC-A03V1-01",
-      "description": "npm run build が成功し dist/ に index.html と assets/*.js + assets/*.css が生成される",
-      "test_name": "test_build_succeeds_and_dist_artifacts_exist"
+      "description": "expected_project_ids が registry 正本IDと完全一致",
+      "test_name": "test_session_def_ids_match_registry_canonical"
     },
     {
       "id": "AC-A03V1-02",
-      "description": "data/projects.json の 10 エントリ全件が dist/assets/*.js バンドルに含まれる（プロジェクト ID 文字列で確認）",
-      "test_name": "test_all_10_projects_included_in_bundle"
+      "description": "AC yaml の IDリストが registry 正本IDと完全一致",
+      "test_name": "test_acceptance_yaml_ids_match_registry"
     },
     {
       "id": "AC-A03V1-03",
-      "description": "data/projects.json がセッション前後で変更されない（SHA-256 一致）",
-      "test_name": "test_projects_json_not_modified"
+      "description": "allowed_changes_detail が list[str] で実ファイルパスのみ",
+      "test_name": "test_allowed_changes_detail_is_pure_pathlist"
     },
     {
       "id": "AC-A03V1-04",
-      "description": "data/projects.json のトップレベルスキーマ必須キー（id / name / status / priority / next_action）が全 10 件に存在する",
-      "test_name": "test_projects_json_schema_integrity"
+      "description": "forbidden_changes に必須項目が全て含まれる",
+      "test_name": "test_forbidden_changes_contains_required_items"
     },
     {
       "id": "AC-A03V1-05",
-      "description": "dist/ と mane.bikusu.net/ のファイル名・サイズが一致する（rsync 後確認）",
-      "test_name": "test_dist_sync_matches_production"
+      "description": "review_points[3] = '検証十分性' が固定値",
+      "test_name": "test_review_points_axis4_is_fixed"
     }
   ],
   "review_points": [

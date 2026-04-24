@@ -1,35 +1,44 @@
 session_id: session-a03-dashboard-v1
 acceptance:
   - id: AC-A03V1-01
-    description: npm run build が成功し dist/ に index.html と assets/*.js + assets/*.css が生成される
-    test_name: test_build_succeeds_and_dist_artifacts_exist
-    type: build
+    description: expected_project_ids が registry 正本IDと完全一致
+    test_name: test_session_def_ids_match_registry_canonical
+    type: document_rule
     manual_check: false
     priority: highest
     completion_criteria_refs:
-      - CC-A03V1-01
-      - CC-A03V1-02
+      - CC-A03V1-03
     implementation_refs:
-      - package.json
-      - vite.config.js
-    verification_command: "npm run build && ls dist/index.html dist/assets/*.js dist/assets/*.css"
+      - docs/sessions/session-a03-dashboard-v1.json
+      - docs/acceptance/session-a03-dashboard-v1.yaml
+      - docs/config/project_registry.json
+    verification_command: >
+      python3 -c "
+      import json, yaml
+      CANONICAL = [
+        'A01_Card_task','A02_fina','A03_mane_bikusu','A04_deli_customer_management',
+        'A05_CAST_PRO','A06_cecare','A07_pochadeli_work',
+        'A08_AI_video_creation','A09_AI_movie_production','A10_fina_date'
+      ]
+      reg = json.load(open('docs/config/project_registry.json'))
+      reg_ids = sorted([p['id'] for p in (reg if isinstance(reg, list) else reg.get('projects', []))])
+      print('registry IDs:', reg_ids)
+      print('canonical   :', sorted(CANONICAL))
+      print('MATCH' if reg_ids == sorted(CANONICAL) else 'MISMATCH')
+      "
 
   - id: AC-A03V1-02
-    description: docs/config/project_registry.json 正本IDに基づく 10 エントリ全件が dist/assets/*.js バンドルに含まれる
-    test_name: test_all_10_projects_included_in_bundle
-    type: artifact
+    description: AC yaml の IDリストが registry 正本IDと完全一致
+    test_name: test_acceptance_yaml_ids_match_registry
+    type: document_rule
     manual_check: false
     priority: highest
     completion_criteria_refs:
-      - CC-A03V1-01
+      - CC-A03V1-03
     implementation_refs:
-      - src/App.jsx
-      - data/projects.json
-    verification_command: >
-      for id in A01_Card_task A02_fina A03_mane_bikusu A04_deli_customer_management A05_CAST_PRO
-                A06_cecare A07_pochadeli_work A08_AI_video_creation A09_AI_movie_production A10_fina_date; do
-        grep -q "$id" dist/assets/*.js && echo "OK: $id" || echo "NG: $id";
-      done
+      - docs/sessions/session-a03-dashboard-v1.json
+      - docs/acceptance/session-a03-dashboard-v1.yaml
+      - docs/config/project_registry.json
     expected_project_ids:
       - A01_Card_task
       - A02_fina
@@ -41,107 +50,106 @@ acceptance:
       - A08_AI_video_creation
       - A09_AI_movie_production
       - A10_fina_date
+    verification_command: >
+      python3 -c "
+      import json, yaml
+      CANONICAL = sorted([
+        'A01_Card_task','A02_fina','A03_mane_bikusu','A04_deli_customer_management',
+        'A05_CAST_PRO','A06_cecare','A07_pochadeli_work',
+        'A08_AI_video_creation','A09_AI_movie_production','A10_fina_date'
+      ])
+      doc = yaml.safe_load(open('docs/acceptance/session-a03-dashboard-v1.yaml'))
+      ac02 = next(a for a in doc['acceptance'] if a['id'] == 'AC-A03V1-02')
+      yaml_ids = sorted(ac02['expected_project_ids'])
+      print('yaml IDs     :', yaml_ids)
+      print('canonical    :', CANONICAL)
+      print('MATCH' if yaml_ids == CANONICAL else 'MISMATCH')
+      "
 
   - id: AC-A03V1-03
-    description: data/projects.json がセッション前後で変更されない（SHA-256 一致）
-    test_name: test_projects_json_not_modified
-    type: side_effect_free
-    manual_check: false
-    priority: highest
-    completion_criteria_refs:
-      - CC-A03V1-03
-    implementation_refs:
-      - data/projects.json
-    verification_command: "shasum -a 256 data/projects.json"
-    note: セッション開始時に hash を記録し、終了時に再計算して一致を確認する
-
-  - id: AC-A03V1-04
-    description: data/projects.json のトップレベルスキーマ必須キーが全 10 件に存在する
-    test_name: test_projects_json_schema_integrity
+    description: allowed_changes_detail が list[str] で実ファイルパスのみ
+    test_name: test_allowed_changes_detail_is_pure_pathlist
     type: artifact
     manual_check: false
     priority: high
     completion_criteria_refs:
-      - CC-A03V1-03
+      - CC-A03V1-01
     implementation_refs:
-      - data/projects.json
-    required_keys:
-      - id
-      - name
-      - status
-      - priority
-      - next_action
+      - docs/sessions/session-a03-dashboard-v1.json
+      - docs/acceptance/session-a03-dashboard-v1.yaml
+      - docs/config/project_registry.json
     verification_command: >
       python3 -c "
       import json
-      d = json.load(open('data/projects.json'))
-      keys = ['id','name','status','priority','next_action']
-      for p in d:
-          missing = [k for k in keys if k not in p]
-          print(('NG ' + p.get('id','?') + ' missing:' + str(missing)) if missing else ('OK ' + p['id']))
-      print('total:', len(d))
+      d = json.load(open('docs/sessions/session-a03-dashboard-v1.json'))
+      detail = d['allowed_changes_detail']
+      assert isinstance(detail, list), 'NG: not a list'
+      for v in detail:
+          assert isinstance(v, str), f'NG: non-str value: {v}'
+          assert ':' not in v, f'NG: contains colon (not pure path): {v}'
+      print('OK: allowed_changes_detail is list[str] of pure paths')
+      print('entries:', detail)
       "
 
-  - id: AC-A03V1-05
-    description: dist/ と mane.bikusu.net/ のファイル名・サイズが一致する（rsync 後確認）
-    test_name: test_dist_sync_matches_production
+  - id: AC-A03V1-04
+    description: forbidden_changes に必須項目が全て含まれる
+    test_name: test_forbidden_changes_contains_required_items
     type: artifact
     manual_check: false
     priority: high
     completion_criteria_refs:
-      - CC-A03V1-05
+      - CC-A03V1-01
     implementation_refs:
-      - dist/
+      - docs/sessions/session-a03-dashboard-v1.json
+      - docs/acceptance/session-a03-dashboard-v1.yaml
+      - docs/config/project_registry.json
+    required_items:
+      - run_session.py
+      - docs/config/project_registry.json
+      - docs/config/queue_policy.yaml
+      - data/projects.json
+      - package.json
     verification_command: >
-      diff <(ls -la dist/assets/) <(ls -la /Users/kunihideyamane/domain/mane.bikusu.net/assets/) &&
-      echo "SYNC OK" || echo "SYNC MISMATCH"
-    deploy_command: >
-      rsync -av --delete dist/ /Users/kunihideyamane/domain/mane.bikusu.net/
-      --exclude=data/
+      python3 -c "
+      import json
+      d = json.load(open('docs/sessions/session-a03-dashboard-v1.json'))
+      forbidden = d['forbidden_changes']
+      required = [
+        'run_session.py',
+        'docs/config/project_registry.json',
+        'docs/config/queue_policy.yaml',
+        'data/projects.json',
+        'package.json',
+      ]
+      for item in required:
+          status = 'OK' if item in forbidden else 'NG'
+          print(f'{status}: {item}')
+      "
 
-manual_acceptance:
-  - id: MAC-A03V1-01
-    description: 10 プロジェクトが一覧で崩れなく表示されている
-    type: manual
-    manual_check: true
-    priority: highest
-    completion_criteria_refs:
-      - CC-A03V1-01
-    verification:
-      - mane.bikusu.net をブラウザで開く（またはローカルの npm run preview で確認）
-      - 10 件のプロジェクトカードが表示されることを確認する
-      - スクロール・カード間隔・レイアウトに崩れがないことを確認する
-      - 画面幅を変えてもカードが正常に折り返されることを確認する
-
-  - id: MAC-A03V1-02
-    description: 各プロジェクトの status カラーと priority が視認できる
-    type: manual
-    manual_check: true
+  - id: AC-A03V1-05
+    description: "review_points[3] = '検証十分性' が固定値"
+    test_name: test_review_points_axis4_is_fixed
+    type: artifact
+    manual_check: false
     priority: high
     completion_criteria_refs:
-      - CC-A03V1-01
-    verification:
-      - implementing / planning / live / testing / idea / archived の各 status が色分けされている
-      - priority 1〜5 が各カードに表示されている
-      - ProjectDetail を開いて next_action と current_phase が表示されることを確認する
-      - 表示が日本語で崩れていないことを確認する
-
-  - id: MAC-A03V1-03
-    description: ProjectForm を操作しても data/projects.json が書き換わらない（readonly 保証）
-    type: manual
-    manual_check: true
-    priority: high
-    completion_criteria_refs:
-      - CC-A03V1-03
-    verification:
-      - ProjectForm を開く
-      - フォームに任意の値を入力して送信操作を行う
-      - ターミナルで shasum -a 256 data/projects.json を実行し、セッション開始時の hash と一致することを確認する
-      - ブラウザ localStorage への保存は許容する（JSON ファイル本体の不変が条件）
+      - CC-A03V1-02
+    implementation_refs:
+      - docs/sessions/session-a03-dashboard-v1.json
+      - docs/acceptance/session-a03-dashboard-v1.yaml
+      - docs/config/project_registry.json
+    verification_command: >
+      python3 -c "
+      import json
+      d = json.load(open('docs/sessions/session-a03-dashboard-v1.json'))
+      rp = d['review_points']
+      assert len(rp) >= 4, f'NG: review_points has only {len(rp)} items'
+      expected = '検証十分性'
+      actual = rp[3]
+      print('OK' if actual == expected else 'NG', f'review_points[3] = {actual!r}')
+      "
 
 notes:
-  - lint / typecheck / pytest は未定義のため 4-command gate は適用しない
-  - 検証コマンドは npm run build のみ（CC-A03V1-01 / 02）
-  - rsync 実行前に必ず AC-A03V1-03（projects.json hash 確認）を完了すること
-  - deploy_command の --exclude=data/ により data/projects.json の上書きを防止する
-  - data/projects.json の事前 hash 記録コマンド: shasum -a 256 data/projects.json > /tmp/a03v1_projects_hash.txt
+  - "docs-only session として GPT 判定のみで受入"
+  - "実装フェーズは session-a03-dashboard-v1-impl で扱う"
+  - "本 session の受入後、registry 正本IDベースの projects.json 更新 session および実装 session を別途起票"
