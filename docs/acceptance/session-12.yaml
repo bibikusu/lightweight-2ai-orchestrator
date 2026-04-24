@@ -1,54 +1,140 @@
 session_id: session-12
-phase_id: phase1-f
-title: タスク状態管理の保存・復元・日次リセット整合を固定する
 acceptance:
   - id: AC-12-01
-    description: タスクを完了状態に変更した後、画面再読み込みを行っても同一営業日の完了状態が復元される。
-    test_name: test_task_state_persist_and_restore_same_business_day
+    description: 同一営業日の taskCompletions が保存・復元される
+    test_name: test_task_completions_persist_within_same_business_day
+    type: automated
+    manual_check: false
     priority: highest
     completion_criteria_refs:
-      - CC-12-01
-
+      - CC-12-03
+    implementation_refs:
+      - index.html:1169-1176
+      - index.html:1179-1191
+      - index.html:1954
+      - index.html:1967
+    functions:
+      - getCompletionsForCurrentTaskDay
+      - setTaskCompletion
+      - saveAppState
+      - loadAppState
   - id: AC-12-02
-    description: 業務開始ボタン実行時に、その営業日の taskCompletions が初期状態へ更新される。
-    test_name: test_task_state_reset_by_business_start_action
-    priority: highest
-    completion_criteria_refs:
-      - CC-12-02
-
-  - id: AC-12-03
-    description: 業務開始ボタン未実行でも、businessStartTime を跨いだ条件で当日タスク状態の自動初期化が行われる。
-    test_name: test_task_state_auto_reset_by_business_start_time_fallback
+    description: 業務開始時に当日営業日の taskCompletions が初期化される
+    test_name: test_business_start_resets_current_business_day_tasks
+    type: automated
+    manual_check: false
     priority: highest
     completion_criteria_refs:
       - CC-12-03
-
+    implementation_refs:
+      - index.html:1232-1236
+      - index.html:3040
+    functions:
+      - handleBusinessStartTaskReset
+      - resetTaskCompletionsForCurrentBusinessDay
+  - id: AC-12-03
+    description: businessStartTime を跨いだ場合に自動初期化される
+    test_name: test_business_start_time_auto_reset
+    type: automated
+    manual_check: false
+    priority: highest
+    completion_criteria_refs:
+      - CC-12-03
+    implementation_refs:
+      - index.html:1202-1229
+      - index.html:2103
+      - index.html:2361
+      - index.html:2402
+      - index.html:2956
+    functions:
+      - handleTaskStateAutoReset
+      - getTaskBusinessDayKey
+      - parseTimeToMin
   - id: AC-12-04
-    description: 当日状態の初期化を実行しても、前営業日以前の taskCompletions データは保持される。
-    test_name: test_task_state_reset_does_not_overwrite_previous_business_days
+    description: 過去営業日の taskCompletions を破壊せず当日キーのみ初期化される
+    test_name: test_previous_business_day_completions_are_preserved
+    type: automated
+    manual_check: false
     priority: high
     completion_criteria_refs:
-      - CC-12-04
-
+      - CC-12-03
+    implementation_refs:
+      - index.html:1194-1199
+      - index.html:1201-1229
+    functions:
+      - resetTaskCompletionsForCurrentBusinessDay
+      - parseTaskBusinessDayKeyToDate
+      - handleTaskStateAutoReset
   - id: AC-12-05
-    description: localStorage にタスク状態データが存在しない場合でも、初期表示または初回操作でクラッシュせず初期状態を生成できる。
-    test_name: test_task_state_initializes_when_storage_missing
+    description: storage 欠損時に taskCompletions の形状が安全に初期化される
+    test_name: test_missing_task_completion_storage_is_initialized_safely
+    type: automated
+    manual_check: false
     priority: high
+    completion_criteria_refs:
+      - CC-12-03
+    implementation_refs:
+      - index.html:1162-1166
+      - index.html:1169-1174
+      - index.html:1182-1183
+    functions:
+      - ensureTaskCompletionsShape
+      - getCompletionsForCurrentTaskDay
+  - id: AC-12-06
+    description: session-12 の acceptance_ref と allowed_changes が docs-only 再定義として整合する
+    test_name: test_session12_docs_only_contract
+    type: automated
+    manual_check: false
+    priority: highest
     completion_criteria_refs:
       - CC-12-01
-      - CC-12-03
-
-  - id: AC-12-06
-    description: タスク状態管理の変更後も、シフト管理・打刻・給与概算・設定関連の既存機能が破壊されない。
-    test_name: test_task_state_changes_do_not_break_other_modules
-    priority: highest
+      - CC-12-02
+      - CC-12-04
+    implementation_refs:
+      - docs/sessions/session-12.json
+      - docs/acceptance/session-12.yaml
+manual_acceptance:
+  - id: MAC-12-01
+    description: タスク画面で日次・週次・月次タスクの表示が業務導線上破綻していない
+    type: manual
+    manual_check: true
+    priority: high
     completion_criteria_refs:
       - CC-12-05
-
-  - id: AC-12-07
-    description: docs/sessions/session-12.json と docs/acceptance/session-12.yaml が repository 相対パスで保存対象として定義されている。
-    test_name: test_session_12_spec_and_acceptance_paths_are_defined
+    verification:
+      - CardTask をブラウザで開く
+      - タスク画面を表示する
+      - 日次・週次・月次の表示が切り替え可能であることを確認する
+      - OPEN / ACTIVE / CLOSE の表示が崩れていないことを確認する
+  - id: MAC-12-02
+    description: 業務開始ボタン操作後にタスク表示が当日営業日として自然に表示される
+    type: manual
+    manual_check: true
+    priority: high
+    completion_criteria_refs:
+      - CC-12-03
+      - CC-12-05
+    verification:
+      - ホーム画面で業務開始ボタンを押す
+      - タスク画面へ移動する
+      - 当日営業日のタスク状態が表示されることを確認する
+      - 表示崩れや操作不能がないことを確認する
+  - id: MAC-12-03
+    description: 非タスク主要導線に目視回帰がない
+    type: manual
+    manual_check: true
     priority: medium
     completion_criteria_refs:
-      - CC-12-06
-      - CC-12-07
+      - CC-12-05
+    verification:
+      - ログイン導線を確認する
+      - ホーム画面を確認する
+      - シフト画面を確認する
+      - 打刻導線を確認する
+      - 給与画面を確認する
+      - 設定画面を確認する
+      - 致命的な表示崩れや操作不能がないことを確認する
+notes:
+  - stash@{6} は apply しない
+  - stash@{6} の主要意図は現行 CardTask 実装に別名対応で反映済みと扱う
+  - AC-12-07 以降の旧候補は session-12 の自動ACから外し、必要に応じて後続sessionで扱う
