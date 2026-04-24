@@ -4,13 +4,13 @@
   "project_id": "A03_mane_bikusu",
   "target_repository": "/Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu",
   "title": "A03 dashboard v1 品質確認・公開ビルド正本化",
-  "goal": "mane.bikusu.net dashboard の現状コードを v1 として正式確定する。npm run build の成功・10プロジェクト表示・readonly 動作・data schema 保護・dist 同期の5条件を受入基準とし、phase2（sessions.json / roadmap.json 分離の要否判断）起票の起点を確立する。",
+  "goal": "project_registry.json 正本IDを基準に、A03 readonly dashboard v1 の受入条件 (AC/CC/MAC) を確定する。実装は別session で扱う。",
   "scope": [
-    "npm run build の成功確認および dist/ 成果物の検証",
-    "data/projects.json 全10エントリの表示確認",
-    "UI 操作後に data/projects.json が変更されないこと（readonly 保証）の確認",
-    "dist/ と mane.bikusu.net/ のファイル同期確認",
-    "src/ 内の軽微な表示修正（任意・build 成功を前提とした最小範囲のみ）"
+    "AC/CC/MAC を registry 正本IDに基づき確定",
+    "allowed_changes_detail を実ファイルパスのみの list[str] に正規化",
+    "forbidden_changes に必須項目を追加",
+    "constraints に build/rsync/exclude の運用制約を追加",
+    "実装 session (session-a03-dashboard-v1-impl) の前段起点を明示"
   ],
   "out_of_scope": [
     "新機能追加（セッション / ロードマップ表示、フィルタリング等）",
@@ -18,35 +18,30 @@
     "sessions.json / roadmap.json の新設（phase2 以降に先送り）",
     "Basic 認証の変更・Xserver 設定の変更",
     "テストフレームワークの導入（phase2 以降の判断）",
-    "ESLint / TypeScript 導入"
+    "ESLint / TypeScript 導入",
+    "src/ 以下の実装変更",
+    "npm run build 実行",
+    "rsync 実行",
+    "projects.json の ID体系修正（別session で扱う）"
   ],
   "constraints": [
     "1 session 1 purpose",
     "npm run build のみをコマンドゲートとする（lint / typecheck / pytest 未定義のため 4-command gate は適用しない）",
     "data/projects.json は変更禁止（セッション前後でハッシュ一致を検証する）",
-    "package.json / 設定ファイル類は変更禁止"
+    "package.json / 設定ファイル類は変更禁止",
+    "docs-only session とする",
+    "src/ および dist/ への変更は本session では禁止",
+    "dist/ への書き込みは npm run build 経由のみ（別session で実施）",
+    "/Users/kunihideyamane/domain/mane.bikusu.net/ への書き込みは rsync 経由のみ（別session で実施）",
+    "rsync 実行時は --exclude=data/ を必須とする"
   ],
   "allowed_changes": [
-    "src/App.jsx",
-    "src/components/ProjectCard.jsx",
-    "src/components/ProjectDetail.jsx",
-    "src/components/ProjectForm.jsx",
-    "src/hooks/useLocalStorage.js",
-    "src/lib/constants.js",
-    "src/lib/utils.js",
-    "src/index.css",
-    "dist/"
+    "docs/sessions/session-a03-dashboard-v1.json",
+    "docs/acceptance/session-a03-dashboard-v1.yaml"
   ],
   "allowed_changes_detail": [
-    "src/App.jsx: 表示ロジックの軽微な修正のみ（data fetch / routing の変更を含まない）",
-    "src/components/ProjectCard.jsx: カード表示の軽微な修正のみ（data schema 変更を伴わない）",
-    "src/components/ProjectDetail.jsx: 詳細表示の軽微な修正のみ",
-    "src/components/ProjectForm.jsx: フォーム表示の軽微な修正のみ（data/projects.json への書き込みロジックを追加しない）",
-    "src/hooks/useLocalStorage.js: localStorage 読み取りロジックの軽微な修正のみ",
-    "src/lib/constants.js: 定数の軽微な修正のみ",
-    "src/lib/utils.js: ユーティリティの軽微な修正のみ",
-    "src/index.css: スタイルの軽微な修正のみ",
-    "dist/: npm run build の自動生成成果物（手動編集禁止）"
+    "docs/sessions/session-a03-dashboard-v1.json",
+    "docs/acceptance/session-a03-dashboard-v1.yaml"
   ],
   "forbidden_changes": [
     "data/projects.json",
@@ -61,7 +56,15 @@
     "/Users/kunihideyamane/AI_Team/軽量2AIオーケストレーター方式/orchestration/",
     "/Users/kunihideyamane/AI_Team/軽量2AIオーケストレーター方式/docs/global_rules.md",
     "/Users/kunihideyamane/AI_Team/軽量2AIオーケストレーター方式/docs/master_instruction.md",
-    "/Users/kunihideyamane/domain/mane.bikusu.net/data/projects.json"
+    "/Users/kunihideyamane/domain/mane.bikusu.net/data/projects.json",
+    "run_session.py",
+    "docs/config/project_registry.json",
+    "docs/config/queue_policy.yaml",
+    "docs/sessions/session-12.json",
+    "docs/sessions/session-12-pass.log.md",
+    "docs/sessions/session-145a.json",
+    "docs/acceptance/session-12.yaml",
+    "docs/acceptance/session-145a.yaml"
   ],
   "completion_criteria": [
     {

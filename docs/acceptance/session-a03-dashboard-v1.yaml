@@ -15,7 +15,7 @@ acceptance:
     verification_command: "npm run build && ls dist/index.html dist/assets/*.js dist/assets/*.css"
 
   - id: AC-A03V1-02
-    description: data/projects.json の 10 エントリ全件が dist/assets/*.js バンドルに含まれる
+    description: docs/config/project_registry.json 正本IDに基づく 10 エントリ全件が dist/assets/*.js バンドルに含まれる
     test_name: test_all_10_projects_included_in_bundle
     type: artifact
     manual_check: false
@@ -26,21 +26,21 @@ acceptance:
       - src/App.jsx
       - data/projects.json
     verification_command: >
-      for id in A01_orchestrator A02_fina A03_mane_bikusu A04_cardtask A05_customer_system
-                A06_recruit_system A07_cast_pro A08_video_ai A09_fina_date A10_archived; do
+      for id in A01_Card_task A02_fina A03_mane_bikusu A04_deli_customer_management A05_CAST_PRO
+                A06_cecare A07_pochadeli_work A08_AI_video_creation A09_AI_movie_production A10_fina_date; do
         grep -q "$id" dist/assets/*.js && echo "OK: $id" || echo "NG: $id";
       done
     expected_project_ids:
-      - A01_orchestrator
+      - A01_Card_task
       - A02_fina
       - A03_mane_bikusu
-      - A04_cardtask
-      - A05_customer_system
-      - A06_recruit_system
-      - A07_cast_pro
-      - A08_video_ai
-      - A09_fina_date
-      - A10_archived
+      - A04_deli_customer_management
+      - A05_CAST_PRO
+      - A06_cecare
+      - A07_pochadeli_work
+      - A08_AI_video_creation
+      - A09_AI_movie_production
+      - A10_fina_date
 
   - id: AC-A03V1-03
     description: data/projects.json がセッション前後で変更されない（SHA-256 一致）
