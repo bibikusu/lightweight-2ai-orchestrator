@@ -100,6 +100,11 @@
       "id": "CC-A03MIG-05",
       "type": "side_effect_free",
       "condition": "src/ / dist/ に git の変更差分がない"
+    },
+    {
+      "id": "CC-A03MIG-06",
+      "type": "artifact",
+      "condition": "生成後 data/projects.json の全10件に id / name / status / priority / next_action / current_phase が存在する"
     }
   ],
   "acceptance_criteria": [

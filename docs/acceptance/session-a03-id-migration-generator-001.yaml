@@ -94,7 +94,7 @@ acceptance:
     manual_check: false
     priority: high
     completion_criteria_refs:
-      - CC-A03MIG-04
+      - CC-A03MIG-06
     implementation_refs:
       - scripts/generate_projects_json.py
       - docs/acceptance/session-a03-id-migration-generator-001.yaml
