@@ -1,0 +1,122 @@
+{
+  "session_id": "session-150-json-repair-a02-research-01",
+  "phase_id": "phase_docs_repair",
+  "title": "session-a02-research-01.json JSON 破損修復（2 root object 結合を後半正本に差し替え）",
+  "goal": "session-a02-research-01.json が 2 つの root object 連結により JSON 無効な状態になっている。119行目以降（後半: A02_fina 悩み起点 Research の再設計）を正本として採用し、前半を除去することで有効な JSON に修復する。A02_fina の実装セッション起票の前提ファイルであるため優先修復する。",
+  "scope": [
+    "docs/sessions/session-a02-research-01.json の後半（119行目〜末尾）を正本として上書き保存",
+    "修復後の JSON 構文検証（python3 -m json.tool）",
+    "session_id フィールドが 1 件のみであることの確認"
+  ],
+  "out_of_scope": [
+    "session-a02-research-01.json の内容変更（後半の文言・仕様の変更は禁止）",
+    "docs/acceptance/session-a02-research-01.yaml の変更",
+    "他セッションJSONの変更",
+    "orchestration/ / scripts/ / backend/ の変更",
+    "pyproject.toml の変更",
+    "git add / commit / stash 操作（Claude Code は禁止）"
+  ],
+  "constraints": [
+    "1 session 1 purpose",
+    "docs/sessions/session-a02-research-01.json のみが変更対象",
+    "上書き内容は tail -n +119 の出力と完全一致（文字列追加・削除禁止）",
+    "4 command gate: ruff check / pytest / mypy / compileall 全通過"
+  ],
+  "acceptance_ref": "docs/acceptance/session-150-json-repair-a02-research-01.yaml",
+  "allowed_changes": [
+    "docs/sessions/session-a02-research-01.json",
+    "docs/sessions/session-150-json-repair-a02-research-01.json",
+    "docs/acceptance/session-150-json-repair-a02-research-01.yaml"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/session-a02-research-01.json: 後半（119行目〜末尾）のみを内容として上書き。前半（1〜118行）は除去。文言変更禁止。",
+    "docs/sessions/session-150-json-repair-a02-research-01.json: 本セッション定義ファイル（新規作成のみ）",
+    "docs/acceptance/session-150-json-repair-a02-research-01.yaml: 本セッション用 acceptance 定義の新規作成"
+  ],
+  "forbidden_changes": [
+    "docs/sessions/session-a02-research-01.json の後半内容の変更",
+    "docs/acceptance/session-a02-research-01.yaml",
+    "docs/config/project_registry.json",
+    "docs/config/scheduler_plans.yaml",
+    "orchestration/run_session.py",
+    "orchestration/queue/engine.py",
+    "pyproject.toml",
+    "scripts/ 配下すべて",
+    "backend/ 配下すべて"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-150-01",
+      "type": "artifact",
+      "condition": "python3 -m json.tool docs/sessions/session-a02-research-01.json が exit 0 で完了する"
+    },
+    {
+      "id": "CC-150-02",
+      "type": "document_rule",
+      "condition": "grep -c '\"session_id\"' docs/sessions/session-a02-research-01.json の出力が 1"
+    },
+    {
+      "id": "CC-150-03",
+      "type": "artifact",
+      "condition": "修復後の session_id が 'session-a02-research-01'、title が 'A02_fina 悩み起点 Research の再設計' であること"
+    },
+    {
+      "id": "CC-150-04",
+      "type": "side_effect_free",
+      "condition": "docs/sessions/session-a02-research-01.json 以外のファイルに変更が発生していない"
+    },
+    {
+      "id": "CC-150-05",
+      "type": "non_regression",
+      "condition": "ruff check / pytest / mypy / compileall の 4 コマンドゲートが、修復前 baseline と比較して悪化していないこと。既存の DL/ 配下 ruff 違反および連鎖する pytest 失敗は本セッションのスコープ外とする。"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-150-01",
+      "text": "修復後の docs/sessions/session-a02-research-01.json が python3 -m json.tool で構文エラーなく解析できる",
+      "test_name": "test_a02_research_json_is_valid",
+      "completion_criteria_refs": [
+        "CC-150-01"
+      ]
+    },
+    {
+      "id": "AC-150-02",
+      "text": "session_id フィールドが 1 件のみ存在する",
+      "test_name": "test_a02_research_single_root",
+      "completion_criteria_refs": [
+        "CC-150-02"
+      ]
+    },
+    {
+      "id": "AC-150-03",
+      "text": "session-a02-research-01.json の内容が後半正本（phase_id='phase-a02-research', title='A02_fina 悩み起点 Research の再設計'）と一致する",
+      "test_name": "test_a02_research_content_matches_canonical",
+      "completion_criteria_refs": [
+        "CC-150-03"
+      ]
+    },
+    {
+      "id": "AC-150-04",
+      "text": "docs/sessions/session-a02-research-01.json 以外のファイルに変更が発生していない",
+      "test_name": "test_a02_research_side_effect_free",
+      "completion_criteria_refs": [
+        "CC-150-04"
+      ]
+    },
+    {
+      "id": "AC-150-05",
+      "text": "ruff check / pytest / mypy / compileall の 4 コマンドゲートが、修復前 baseline と比較して悪化していない。",
+      "test_name": "test_a02_research_four_command_gate_no_regression",
+      "completion_criteria_refs": [
+        "CC-150-05"
+      ]
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ]
+}

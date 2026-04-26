@@ -1,0 +1,34 @@
+session_id: "session-150-json-repair-a02-research-01"
+phase_id: "phase_docs_repair"
+title: "session-a02-research-01.json JSON 破損修復（2 root object 結合を後半正本に差し替え）"
+acceptance:
+  - id: "AC-150-01"
+    description: "修復後の docs/sessions/session-a02-research-01.json が python3 -m json.tool で構文エラーなく解析できる"
+    test_name: "test_a02_research_json_is_valid"
+    priority: "highest"
+    completion_criteria_refs:
+      - "CC-150-01"
+  - id: "AC-150-02"
+    description: "session_id フィールドが 1 件のみ存在する"
+    test_name: "test_a02_research_single_root"
+    priority: "highest"
+    completion_criteria_refs:
+      - "CC-150-02"
+  - id: "AC-150-03"
+    description: "session-a02-research-01.json の内容が後半正本（phase_id='phase-a02-research', title='A02_fina 悩み起点 Research の再設計'）と一致する"
+    test_name: "test_a02_research_content_matches_canonical"
+    priority: "highest"
+    completion_criteria_refs:
+      - "CC-150-03"
+  - id: "AC-150-04"
+    description: "docs/sessions/session-a02-research-01.json 以外のファイルに変更が発生していない"
+    test_name: "test_a02_research_side_effect_free"
+    priority: "high"
+    completion_criteria_refs:
+      - "CC-150-04"
+  - id: "AC-150-05"
+    description: "ruff check / pytest / mypy / compileall の 4 コマンドゲートが、修復前 baseline と比較して悪化していない。"
+    test_name: "test_a02_research_four_command_gate_no_regression"
+    priority: "medium"
+    completion_criteria_refs:
+      - "CC-150-05"
