@@ -1,0 +1,122 @@
+{
+  "session_id": "session-149-json-repair-145a",
+  "phase_id": "phase_docs_repair",
+  "title": "session-145a.json JSON 破損修復（2 root object 結合を後半正本に差し替え）",
+  "goal": "session-145a.json が 2 つの root object 連結により JSON 無効な状態になっている。116行目以降（後半: dashboard state writer 戦略と bootstrap 方針の正本化）を正本として採用し、前半を除去することで有効な JSON に修復する。",
+  "scope": [
+    "docs/sessions/session-145a.json の後半（116行目〜末尾）を正本として上書き保存",
+    "修復後の JSON 構文検証（python3 -m json.tool）",
+    "session_id フィールドが 1 件のみであることの確認"
+  ],
+  "out_of_scope": [
+    "session-145a.json の内容変更（後半の文言・仕様の変更は禁止）",
+    "session-145a.yaml（acceptance）の変更",
+    "他セッションJSONの変更",
+    "orchestration/ / scripts/ / backend/ の変更",
+    "pyproject.toml の変更",
+    "git add / commit / stash 操作（Claude Code は禁止）"
+  ],
+  "constraints": [
+    "1 session 1 purpose",
+    "docs/sessions/session-145a.json のみが変更対象",
+    "上書き内容は tail -n +116 の出力と完全一致（文字列追加・削除禁止）",
+    "4 command gate: ruff check / pytest / mypy / compileall 全通過"
+  ],
+  "acceptance_ref": "docs/acceptance/session-149-json-repair-145a.yaml",
+  "allowed_changes": [
+    "docs/sessions/session-145a.json",
+    "docs/sessions/session-149-json-repair-145a.json",
+    "docs/acceptance/session-149-json-repair-145a.yaml"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/session-145a.json: 後半（116行目〜末尾）のみを内容として上書き。前半（1〜115行）は除去。文言変更禁止。",
+    "docs/sessions/session-149-json-repair-145a.json: 本セッション定義ファイル（新規作成のみ）",
+    "docs/acceptance/session-149-json-repair-145a.yaml: 本セッション用 acceptance 定義の新規作成"
+  ],
+  "forbidden_changes": [
+    "docs/sessions/session-145a.json の後半内容の変更",
+    "docs/acceptance/session-145a.yaml",
+    "docs/config/project_registry.json",
+    "docs/config/scheduler_plans.yaml",
+    "orchestration/run_session.py",
+    "orchestration/queue/engine.py",
+    "pyproject.toml",
+    "scripts/ 配下すべて",
+    "backend/ 配下すべて"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-149-01",
+      "type": "artifact",
+      "condition": "python3 -m json.tool docs/sessions/session-145a.json が exit 0 で完了する"
+    },
+    {
+      "id": "CC-149-02",
+      "type": "document_rule",
+      "condition": "grep -c '\"session_id\"' docs/sessions/session-145a.json の出力が 1"
+    },
+    {
+      "id": "CC-149-03",
+      "type": "artifact",
+      "condition": "修復後の session_id が 'session-145a'、title が 'dashboard state writer 戦略と bootstrap 方針の正本化' であること"
+    },
+    {
+      "id": "CC-149-04",
+      "type": "side_effect_free",
+      "condition": "docs/sessions/session-145a.json 以外のファイルに変更が発生していない"
+    },
+    {
+      "id": "CC-149-05",
+      "type": "non_regression",
+      "condition": "ruff check / pytest / mypy / compileall の 4 コマンドゲートが、修復前 baseline と比較して悪化していないこと。既存の DL/ 配下 ruff 違反および連鎖する pytest 失敗は本セッションのスコープ外とする。"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-149-01",
+      "text": "修復後の docs/sessions/session-145a.json が python3 -m json.tool で構文エラーなく解析できる",
+      "test_name": "test_session_145a_json_is_valid",
+      "completion_criteria_refs": [
+        "CC-149-01"
+      ]
+    },
+    {
+      "id": "AC-149-02",
+      "text": "session_id フィールドが 1 件のみ存在する",
+      "test_name": "test_session_145a_single_root",
+      "completion_criteria_refs": [
+        "CC-149-02"
+      ]
+    },
+    {
+      "id": "AC-149-03",
+      "text": "session-145a.json の内容が後半正本（phase_id='phase8', title='dashboard state writer 戦略と bootstrap 方針の正本化'）と一致する",
+      "test_name": "test_session_145a_content_matches_canonical",
+      "completion_criteria_refs": [
+        "CC-149-03"
+      ]
+    },
+    {
+      "id": "AC-149-04",
+      "text": "docs/sessions/session-145a.json 以外のファイルに変更が発生していない",
+      "test_name": "test_session_145a_side_effect_free",
+      "completion_criteria_refs": [
+        "CC-149-04"
+      ]
+    },
+    {
+      "id": "AC-149-05",
+      "text": "ruff check / pytest / mypy / compileall の 4 コマンドゲートが、修復前 baseline と比較して悪化していない。",
+      "test_name": "test_session_145a_four_command_gate_no_regression",
+      "completion_criteria_refs": [
+        "CC-149-05"
+      ]
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ]
+}
