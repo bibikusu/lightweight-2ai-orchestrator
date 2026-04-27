@@ -1,0 +1,105 @@
+session_id: "session-152"
+goal: "AI API が pending session list から次に推薦すべき session を1件選ぶための入出力契約と最小判定 policy を docs-only で定義し、自動実行ではなく human approval を残した推薦器の最小仕様を正本化する。"
+scope:
+  - "next-session selector の入力契約として pending_sessions が session_id, status, depends_on, human_required を持つ list[object] であることを定義する。"
+  - "next-session selector の出力契約として next_session_candidate, human_required_flag, stop_reason を返すことを定義する。"
+  - "選択 policy として status=open かつ depends_on 全件 done のみ対象とすることを定義する。"
+  - "選択 policy として human_required=false を優先することを定義する。"
+  - "停止条件 stop_reason の enum として no_candidates, all_blocked_by_dependency, only_human_required_left を定義する。"
+  - "selector が推薦のみを返し自動実行しないことを契約として明記する。"
+out_of_scope:
+  - "queue_policy.yaml の中身調査または schema 定義"
+  - "project_registry.json の中身調査または schema 再定義"
+  - "session metadata 形式の拡張"
+  - "selector の Python 実装"
+  - "queue engine の実装または接続"
+  - "scheduler の実装または接続"
+  - "Claude Code hooks の実装"
+  - "AI API 呼び出し実装"
+  - "自動実行 / 自動 push / 自動 merge"
+  - "DL/ 配下の変更"
+  - "orchestration/run_session.py の変更"
+acceptance:
+  - id: "AC-152-01"
+    requirement: "session-152.json に必須8キー (session_id, phase_id, title, goal, scope, out_of_scope, constraints, acceptance_ref) がすべて存在する。"
+    test_name: "test_session_152_required_keys_present"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "session-152.json をパースし、8つの必須キーがすべて存在することを確認する。"
+  - id: "AC-152-02"
+    requirement: "session-152.json の phase_id が phase-07 であり、acceptance_ref が docs/acceptance/session-152.yaml である。"
+    test_name: "test_session_152_phase_id_and_acceptance_ref"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "session-152.json の phase_id が phase-07 であることを確認する。"
+      - "session-152.json の acceptance_ref が docs/acceptance/session-152.yaml であることを確認する。"
+  - id: "AC-152-03"
+    requirement: "session-152.json に pending_sessions の入力契約が session_id / status / depends_on / human_required を持つ list[object] として定義されている。"
+    test_name: "test_session_152_input_contract_pending_sessions"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "session-152.json の scope または記述内に pending_sessions の入力契約が4フィールドすべて含めて定義されていることを確認する。"
+  - id: "AC-152-04"
+    requirement: "session-152.json に next_session_candidate / human_required_flag / stop_reason の出力契約が定義されている。"
+    test_name: "test_session_152_output_contract"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "session-152.json の scope または記述内に出力契約3項目が定義されていることを確認する。"
+  - id: "AC-152-05"
+    requirement: "session-152.json に最小判定 policy として status=open かつ depends_on 全件 done のみ対象とし human_required=false を優先する記述がある。"
+    test_name: "test_session_152_selection_policy_minimum"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "session-152.json の scope または記述内に選択 policy が明記されていることを確認する。"
+  - id: "AC-152-06"
+    requirement: "session-152.json に停止条件 stop_reason の enum (no_candidates / all_blocked_by_dependency / only_human_required_left) がすべて記述されている。"
+    test_name: "test_session_152_stop_reason_enum"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "session-152.json の scope に stop_reason の3 enum がすべて記述されていることを確認する。"
+  - id: "AC-152-07"
+    requirement: "session-152.json に selector が推薦のみで自動実行しない契約が明記されている。"
+    test_name: "test_session_152_no_auto_execution_contract"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "session-152.json の scope または constraints に自動実行禁止の契約が明記されていることを確認する。"
+  - id: "AC-152-08"
+    requirement: "session-152.yaml のトップレベルに session_id があり値が session-152 と一致する。"
+    test_name: "test_session_152_yaml_top_level_session_id"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "session-152.yaml のトップレベル session_id が session-152 であることを確認する。"
+  - id: "AC-152-09"
+    requirement: "allowed_changes が docs/sessions/session-152.json と docs/acceptance/session-152.yaml の2件のみに限定されている。"
+    test_name: "test_session_152_allowed_changes_limited_to_two"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "session-152.json の allowed_changes が2件のみであることを確認する。"
+completion_checks:
+  - "docs/sessions/session-152.json が新規作成されている。"
+  - "docs/acceptance/session-152.yaml が新規作成されている。"
+  - "session-152.json に next-session selector の入力契約 / 出力契約 / 最小判定 policy / 停止条件 / 自動実行禁止契約がすべて記述されている。"
+  - "orchestration / backend / DL / queue_policy.yaml / project_registry.json / docs/templates / docs/roadmap.yaml のいずれも変更されていない。"
+change_guardrails:
+  allowed_changes:
+    - "docs/sessions/session-152.json"
+    - "docs/acceptance/session-152.yaml"
+  forbidden_changes:
+    - "orchestration/**/*.py"
+    - "backend/**/*.py"
+    - "providers/**"
+    - ".github/**"
+    - "docs/templates/**"
+    - "docs/roadmap.yaml"
+    - "DL/**"
+    - "queue_policy.yaml"
+    - "project_registry.json"

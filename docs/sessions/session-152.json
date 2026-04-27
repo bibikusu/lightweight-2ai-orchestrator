@@ -1,0 +1,158 @@
+{
+  "session_id": "session-152",
+  "phase_id": "phase-07",
+  "title": "next-session selector の入出力契約と最小判定 policy を docs-only で正本化する",
+  "goal": "AI API が pending session list から次に推薦すべき session を1件選ぶための入出力契約と最小判定 policy を docs-only で定義し、自動実行ではなく human approval を残した推薦器の最小仕様を正本化する。",
+  "scope": [
+    "next-session selector の入力契約として pending_sessions が session_id, status, depends_on, human_required を持つ list[object] であることを定義する。",
+    "next-session selector の出力契約として next_session_candidate, human_required_flag, stop_reason を返すことを定義する。",
+    "選択 policy として status=open かつ depends_on 全件 done のみ対象とすることを定義する。",
+    "選択 policy として human_required=false を優先することを定義する。",
+    "停止条件 stop_reason の enum として no_candidates, all_blocked_by_dependency, only_human_required_left を定義する。",
+    "selector が推薦のみを返し自動実行しないことを契約として明記する。"
+  ],
+  "out_of_scope": [
+    "queue_policy.yaml の中身調査または schema 定義",
+    "project_registry.json の中身調査または schema 再定義",
+    "session metadata 形式の拡張",
+    "selector の Python 実装",
+    "queue engine の実装または接続",
+    "scheduler の実装または接続",
+    "Claude Code hooks の実装",
+    "AI API 呼び出し実装",
+    "自動実行 / 自動 push / 自動 merge",
+    "DL/ 配下の変更",
+    "orchestration/run_session.py の変更"
+  ],
+  "constraints": [
+    "1セッション1目的",
+    "docs-only",
+    "最大2ファイル以内",
+    "selector は推薦のみとし自動実行しない",
+    "human approval を必ず残す",
+    "曖昧語禁止",
+    "acceptance_ref は repository 相対パス",
+    "phase_id は roadmap.yaml に存在する値のみ使用",
+    "review_points は4軸固定 (仕様一致 / 変更範囲遵守 / 副作用なし / 検証十分性)",
+    "completion_criteria.type は document_rule / artifact / non_regression / state_transition_consistent / side_effect_free のみ使用"
+  ],
+  "acceptance_ref": "docs/acceptance/session-152.yaml",
+  "allowed_changes": [
+    "docs/sessions/session-152.json",
+    "docs/acceptance/session-152.yaml"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/session-152.json: 新規作成。next-session selector の入出力契約と最小判定 policy を記述する。",
+    "docs/acceptance/session-152.yaml: 新規作成。session-152.json の acceptance_ref と一致する acceptance YAML を記述する。"
+  ],
+  "forbidden_changes": [
+    "orchestration/**/*.py",
+    "backend/**/*.py",
+    "providers/**",
+    ".github/**",
+    "docs/templates/**",
+    "docs/roadmap.yaml",
+    "DL/**",
+    "queue_policy.yaml",
+    "project_registry.json"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-152-01",
+      "type": "artifact",
+      "condition": "docs/sessions/session-152.json が新規作成されている。"
+    },
+    {
+      "id": "CC-152-02",
+      "type": "artifact",
+      "condition": "docs/acceptance/session-152.yaml が新規作成されている。"
+    },
+    {
+      "id": "CC-152-03",
+      "type": "document_rule",
+      "condition": "session-152.json に next-session selector の入力契約 (pending_sessions が session_id, status, depends_on, human_required を持つ list[object]) が記述されている。"
+    },
+    {
+      "id": "CC-152-04",
+      "type": "document_rule",
+      "condition": "session-152.json に next-session selector の出力契約 (next_session_candidate, human_required_flag, stop_reason) が記述されている。"
+    },
+    {
+      "id": "CC-152-05",
+      "type": "document_rule",
+      "condition": "session-152.json に最小判定 policy (status=open かつ depends_on 全件 done / human_required=false 優先) が記述されている。"
+    },
+    {
+      "id": "CC-152-06",
+      "type": "document_rule",
+      "condition": "session-152.json に停止条件 stop_reason の enum (no_candidates / all_blocked_by_dependency / only_human_required_left) が記述されている。"
+    },
+    {
+      "id": "CC-152-07",
+      "type": "document_rule",
+      "condition": "session-152.json に selector が推薦のみで自動実行しない契約が明記されている。"
+    },
+    {
+      "id": "CC-152-08",
+      "type": "side_effect_free",
+      "condition": "orchestration / backend / DL / queue_policy.yaml / project_registry.json / docs/templates / docs/roadmap.yaml のいずれも変更されていない。"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-152-01",
+      "text": "session-152.json に必須8キー (session_id, phase_id, title, goal, scope, out_of_scope, constraints, acceptance_ref) がすべて存在する。",
+      "test_name": "test_session_152_required_keys_present"
+    },
+    {
+      "id": "AC-152-02",
+      "text": "session-152.json の phase_id が phase-07 であり、acceptance_ref が docs/acceptance/session-152.yaml である。",
+      "test_name": "test_session_152_phase_id_and_acceptance_ref"
+    },
+    {
+      "id": "AC-152-03",
+      "text": "session-152.json に pending_sessions の入力契約が session_id / status / depends_on / human_required を持つ list[object] として定義されている。",
+      "test_name": "test_session_152_input_contract_pending_sessions"
+    },
+    {
+      "id": "AC-152-04",
+      "text": "session-152.json に next_session_candidate / human_required_flag / stop_reason の出力契約が定義されている。",
+      "test_name": "test_session_152_output_contract"
+    },
+    {
+      "id": "AC-152-05",
+      "text": "session-152.json に最小判定 policy として status=open かつ depends_on 全件 done のみ対象とし human_required=false を優先する記述がある。",
+      "test_name": "test_session_152_selection_policy_minimum"
+    },
+    {
+      "id": "AC-152-06",
+      "text": "session-152.json に停止条件 stop_reason の enum (no_candidates / all_blocked_by_dependency / only_human_required_left) がすべて記述されている。",
+      "test_name": "test_session_152_stop_reason_enum"
+    },
+    {
+      "id": "AC-152-07",
+      "text": "session-152.json に selector が推薦のみで自動実行しない契約が明記されている。",
+      "test_name": "test_session_152_no_auto_execution_contract"
+    },
+    {
+      "id": "AC-152-08",
+      "text": "session-152.yaml のトップレベルに session_id があり値が session-152 と一致する。",
+      "test_name": "test_session_152_yaml_top_level_session_id"
+    },
+    {
+      "id": "AC-152-09",
+      "text": "allowed_changes が docs/sessions/session-152.json と docs/acceptance/session-152.yaml の2件のみに限定されている。",
+      "test_name": "test_session_152_allowed_changes_limited_to_two"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ],
+  "failure_type_candidates": [
+    "scope_violation",
+    "spec_missing"
+  ]
+}
