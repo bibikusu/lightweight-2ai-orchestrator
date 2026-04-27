@@ -256,3 +256,32 @@ chat 36 にて、同一ブロック再投入が発生しうる構造的問題を
 - main を壊さない
 
 **candidate_session**: session-152
+
+---
+
+## BACKLOG-QUEUE-POLICY-SCHEMA-001
+
+**status**: open
+
+**discovered_in**: chat 40
+
+**summary**: session-152 で定義した next-session selector が参照する queue_policy.yaml の最小項目を docs-only で定義する schema 仕様を session-153 として起票する。
+
+**purpose**:
+session-152 で定義した selector の入出力契約に対し、判定基準となる policy schema を正本化する。schema 仕様のみを定義し、policy 実ファイル中身・registry 定義・Python 実装は別 session に分離することで「1セッション1目的」を維持する。
+
+**required_direction**:
+- docs-only / schema 仕様のみ
+- queue_policy.yaml 実ファイル作成は範囲外 (= session-154 以降)
+- project_registry.json 定義は範囲外 (= session-155 以降)
+- Python 実装 / queue engine / scheduler / 自動実行は範囲外
+- DL/ 操作禁止
+- main を壊さない
+- selection_rules (status_required / depends_on_required_status / human_required_priority) を最小項目として定義
+- stop_reason 3 enum (no_candidates / all_blocked_by_dependency / only_human_required_left) を policy 側からも参照可能な項目として定義
+- selector が policy を読む契約 (load → validate → apply) を docs で記述
+- human approval 必須を policy レベルで強制する項目を定義
+
+**depends_on**: BACKLOG-NEXT-SESSION-SELECTOR-001 (session-152 = abstract contract)
+
+**candidate_session**: session-153
