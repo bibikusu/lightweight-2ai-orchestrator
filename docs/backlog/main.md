@@ -233,3 +233,26 @@ chat 36 にて、同一ブロック再投入が発生しうる構造的問題を
 **summary**: chat 37 引き継ぎサマリの sandbox/session-146-pre 記述「5 commits 全件 main 反映済」が実体「10 commits / うち chat 35 残務 5件未反映」と齟齬。chat 跨ぎの引き継ぎ精度問題。
 **impact**: chat 38 で sandbox 削除を試みた際に判断材料不足 / 数ターンの調査工数が発生
 **proposed_fix**: chat 終了時の引き継ぎサマリ生成ルールに「sandbox / branch HEAD と main 反映状況の patch-id 検証ステップ」を組込
+
+---
+
+## BACKLOG-NEXT-SESSION-SELECTOR-001
+
+**status**: open
+
+**discovered_in**: chat 39
+
+**summary**: AI API が次に実行する session を選ぶための最小仕様を session-152 として起票する。
+
+**purpose**:
+人間が毎回「次は何？」を判断してコピペする状態を減らすため、AI API が候補 session を評価し、次に進めるべき session を推薦する最小ルールを正本化する。
+
+**required_direction**:
+- docs-only
+- 自動実行ではなく next_session recommendation まで
+- human approval を残す
+- queue_policy.yaml / project_registry.json / session metadata を判断材料にする
+- DL/ 操作禁止
+- main を壊さない
+
+**candidate_session**: session-152
