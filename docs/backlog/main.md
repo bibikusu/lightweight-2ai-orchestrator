@@ -203,3 +203,33 @@ chat 36 にて、同一ブロック再投入が発生しうる構造的問題を
 - session単位での「実行済み判定」仕組みの検討（state.json / completed_stages拡張）
 - 同一session再実行時の自動STOP条件定義
 - Cursor投入前チェックリストの制度化
+
+---
+
+## BACKLOG-CURSOR-AUTO-STOP-001
+**status**: open
+**discovered_in**: chat 38 #2
+**summary**: Cursor が bash 内 non-zero exit 検知時に独断停止する挙動を確認。投入文に書かれていない `|| code=$?` を Cursor が独断追加して自己補正する例も観測。
+**impact**: 4-gate 連続実行が保証されない / 投入文 drift 発生
+**proposed_fix**: 投入文 template に `|| code=$?` を正本化 (BACKLOG-4GATE-IDIOM-001 と連動)、または Cursor 側に「指示外の bash 改変を禁止」する規律を明文化
+
+## BACKLOG-DIRECTIVE-PROPAGATION-002
+**status**: open
+**discovered_in**: chat 38 #2
+**summary**: BACKLOG-DIRECTIVE-PROPAGATION-001 の再発。司令塔承認版投入文と Cursor 実投入版が乖離 (修正1+2+3 のうち 2/3 が抜けて投入された)。
+**impact**: 参謀 selfcheck を通過した投入文が経路上で改変される / 規律ガード無効化リスク
+**proposed_fix**: 投入文を Cursor へ渡す経路の整合性確保 (コピペ精度 / 中間処理の有無確認)
+
+## BACKLOG-4GATE-IDIOM-001
+**status**: open
+**discovered_in**: chat 38 #2 続行
+**summary**: 4-gate 連続実行を保証する idiom として `; echo "exit=$?"` および `|| code=$?` を投入文 template に正本化する必要。
+**impact**: 投入文ごとに idiom が揺れる / chat 38 #2 で auto-stop 誘発
+**proposed_fix**: master_instruction.md または global_rules.md に 4-gate 標準 template を明記
+
+## BACKLOG-HANDOFF-PRECISION-001
+**status**: open
+**discovered_in**: chat 38 Step 1-3
+**summary**: chat 37 引き継ぎサマリの sandbox/session-146-pre 記述「5 commits 全件 main 反映済」が実体「10 commits / うち chat 35 残務 5件未反映」と齟齬。chat 跨ぎの引き継ぎ精度問題。
+**impact**: chat 38 で sandbox 削除を試みた際に判断材料不足 / 数ターンの調査工数が発生
+**proposed_fix**: chat 終了時の引き継ぎサマリ生成ルールに「sandbox / branch HEAD と main 反映状況の patch-id 検証ステップ」を組込
