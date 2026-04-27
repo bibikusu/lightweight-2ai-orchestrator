@@ -1,0 +1,168 @@
+{
+  "session_id": "session-153",
+  "phase_id": "phase-07",
+  "title": "queue_policy.yaml schema の docs-only 最小仕様",
+  "goal": "session-152 で定義した next-session selector が参照する queue_policy.yaml の最小項目 schema を docs-only で正本化し、selector が policy を読む契約 (load → validate → apply) を spec 文書として固定する。queue_policy.yaml の実ファイル中身、project_registry.json 定義、selector の Python 実装は本セッションの範囲外とし、別 session に分離する。",
+  "scope": [
+    "docs/specs/queue_policy_schema_v0.md を新規作成し、queue_policy.yaml の最小項目 schema を docs-only で定義する",
+    "selection_rules の 3 項目 (status_required / depends_on_required_status / human_required_priority) を schema として定義する",
+    "session-152 で正本定義された stop_reason 3 enum (no_candidates / all_blocked_by_dependency / only_human_required_left) を policy 側から参照可能とする項目を schema に明記する",
+    "selector が policy を読む契約 (load → validate → apply) を spec 文書として記述する",
+    "human approval 必須を policy レベルで強制する項目を schema として定義する",
+    "session-152 入出力契約との整合を spec 文書に明示する"
+  ],
+  "out_of_scope": [
+    "queue_policy.yaml 実ファイルの作成または編集 (= session-154 以降)",
+    "queue_policy.yaml への実値投入 (= session-154 以降)",
+    "project_registry.json の定義 (= session-155 以降)",
+    "selector の Python 実装 (= session-156 以降)",
+    "queue engine / scheduler / 自動実行の実装",
+    "DL/ 配下の操作",
+    "orchestration/run_session.py の変更",
+    "providers / backend / .github 配下の変更",
+    "既存 session-01 から session-152 の変更",
+    "既存 acceptance session-01 から session-152 の変更",
+    "stop_reason enum の再定義 (= session-152 が正本 / 本セッションは参照のみ)",
+    "review_points 4 軸の変更"
+  ],
+  "constraints": [
+    "1セッション1目的を厳守すること",
+    "docs-only であり、Python コードや実行可能ファイルを変更・追加しないこと",
+    "新規作成は docs/sessions/session-153.json、docs/acceptance/session-153.yaml、docs/specs/queue_policy_schema_v0.md の 3 ファイルのみとすること",
+    "既存 session 文書、既存 acceptance 文書、既存 spec 文書を変更・破壊しないこと (副作用なし)",
+    "stop_reason 3 enum は session-152 を正本とし、本セッションでは再定義せず参照可能化のみ行うこと",
+    "queue_policy.yaml の実値・実データインスタンスは spec 内に書かないこと (schema のみ)",
+    "selection_rules の各項目は型・必須/任意・取り得る値の範囲を schema として明記すること",
+    "human approval 必須を schema レベルで強制可能な項目構造として定義すること",
+    "曖昧語を使用しないこと",
+    "acceptance_ref は repository 相対パスとすること",
+    "review_points は固定 4 軸 (仕様一致 / 変更範囲遵守 / 副作用なし / 検証十分性) を使用すること",
+    "completion_criteria.type は document_rule、artifact、side_effect_free のみ使用すること"
+  ],
+  "acceptance_ref": "docs/acceptance/session-153.yaml",
+  "allowed_changes": [
+    "docs/sessions/session-153.json",
+    "docs/acceptance/session-153.yaml",
+    "docs/specs/queue_policy_schema_v0.md"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/session-153.json: 本セッション定義の新規作成",
+    "docs/acceptance/session-153.yaml: 本セッション用 acceptance 定義の新規作成",
+    "docs/specs/queue_policy_schema_v0.md: queue_policy.yaml 最小項目 schema の新規作成 (selection_rules 3 項目の schema 定義 / stop_reason 3 enum の参照可能化項目 / selector が policy を読む load→validate→apply 契約 / human approval 必須を policy レベルで強制する項目 / session-152 入出力契約との整合明示)"
+  ],
+  "forbidden_changes": [
+    "queue_policy.yaml ファイルの新規作成または編集",
+    "project_registry.json ファイルの新規作成または編集",
+    "orchestration/ 配下の変更",
+    "providers/ 配下の変更",
+    "backend/ 配下の変更",
+    ".github/ 配下の変更",
+    "DL/ 配下の操作",
+    "docs/roadmap.yaml の変更",
+    "既存 docs/sessions/session-*.json (session-01 から session-152) の変更",
+    "既存 docs/acceptance/session-*.yaml (session-01 から session-152) の変更",
+    "session-152 で定義された next-session selector の入出力契約の変更",
+    "session-152 で定義された stop_reason 3 enum の再定義",
+    "review_points 4 軸の変更"
+  ],
+  "review_points": [
+    "仕様一致",
+    "変更範囲遵守",
+    "副作用なし",
+    "検証十分性"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-153-01",
+      "type": "artifact",
+      "condition": "docs/sessions/session-153.json が必須 8 キー全揃で新規作成されている。"
+    },
+    {
+      "id": "CC-153-02",
+      "type": "artifact",
+      "condition": "docs/acceptance/session-153.yaml が新規作成され、acceptance / completion_checks / change_guardrails を含み session_id がトップレベルにある。"
+    },
+    {
+      "id": "CC-153-03",
+      "type": "artifact",
+      "condition": "docs/specs/queue_policy_schema_v0.md が新規作成され、queue_policy.yaml の最小項目 schema を docs-only で定義している。"
+    },
+    {
+      "id": "CC-153-04",
+      "type": "document_rule",
+      "condition": "spec 文書において selection_rules の 3 項目 (status_required / depends_on_required_status / human_required_priority) が型・必須/任意・取り得る値とともに schema として定義されている。"
+    },
+    {
+      "id": "CC-153-05",
+      "type": "document_rule",
+      "condition": "spec 文書において session-152 で正本定義された stop_reason 3 enum を policy 側から参照可能とする項目が schema として明記されており、本セッションでは enum を再定義していない。"
+    },
+    {
+      "id": "CC-153-06",
+      "type": "document_rule",
+      "condition": "spec 文書において selector が policy を読む契約 (load → validate → apply) が記述されている。"
+    },
+    {
+      "id": "CC-153-07",
+      "type": "document_rule",
+      "condition": "spec 文書において human approval 必須を policy レベルで強制する項目が schema として定義されている。"
+    },
+    {
+      "id": "CC-153-08",
+      "type": "document_rule",
+      "condition": "spec 文書において session-152 入出力契約との整合が明示されている。"
+    },
+    {
+      "id": "CC-153-09",
+      "type": "side_effect_free",
+      "condition": "本セッションの差分が docs/sessions/session-153.json、docs/acceptance/session-153.yaml、docs/specs/queue_policy_schema_v0.md の 3 ファイル新規作成のみであり、既存 session/acceptance/spec、orchestration/、providers/、backend/、.github/、DL/、docs/roadmap.yaml に変更が発生していないこと。"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-153-01",
+      "text": "docs/specs/queue_policy_schema_v0.md が新規作成され、queue_policy.yaml の最小項目 schema を docs-only で定義している。",
+      "test_name": "manual_acceptance_queue_policy_schema_v0_created"
+    },
+    {
+      "id": "AC-153-02",
+      "text": "spec 文書で selection_rules.status_required の schema (型 / 必須 / 取り得る値) が定義されている。",
+      "test_name": "manual_acceptance_selection_rules_status_required_schema"
+    },
+    {
+      "id": "AC-153-03",
+      "text": "spec 文書で selection_rules.depends_on_required_status の schema (型 / 必須 / 取り得る値) が定義されている。",
+      "test_name": "manual_acceptance_selection_rules_depends_on_required_status_schema"
+    },
+    {
+      "id": "AC-153-04",
+      "text": "spec 文書で selection_rules.human_required_priority の schema (型 / 必須 / 取り得る値) が定義されている。",
+      "test_name": "manual_acceptance_selection_rules_human_required_priority_schema"
+    },
+    {
+      "id": "AC-153-05",
+      "text": "spec 文書で session-152 で正本定義された stop_reason 3 enum (no_candidates / all_blocked_by_dependency / only_human_required_left) を policy 側から参照可能とする項目が schema として明記されており、enum 値の再定義は行っていない。",
+      "test_name": "manual_acceptance_stop_reason_reference_schema"
+    },
+    {
+      "id": "AC-153-06",
+      "text": "spec 文書で selector が policy を読む契約 (load → validate → apply) が記述されている。",
+      "test_name": "manual_acceptance_load_validate_apply_contract"
+    },
+    {
+      "id": "AC-153-07",
+      "text": "spec 文書で human approval 必須を policy レベルで強制する項目が schema として定義されている。",
+      "test_name": "manual_acceptance_human_approval_enforcement_schema"
+    },
+    {
+      "id": "AC-153-08",
+      "text": "spec 文書で session-152 入出力契約との整合が明示されている。",
+      "test_name": "manual_acceptance_session_152_contract_alignment"
+    },
+    {
+      "id": "AC-153-09",
+      "text": "本セッションの差分が 3 ファイル新規作成のみであり、queue_policy.yaml 実ファイル / project_registry.json / Python 実装 / 既存 session/acceptance/spec/orchestration の変更が発生していない (副作用なし)。",
+      "test_name": "manual_acceptance_no_side_effects_on_existing_assets"
+    }
+  ]
+}

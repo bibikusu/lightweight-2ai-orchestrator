@@ -1,0 +1,116 @@
+session_id: "session-153"
+goal: "session-152 で定義した next-session selector が参照する queue_policy.yaml の最小項目 schema を docs-only で正本化し、selector が policy を読む契約 (load → validate → apply) を spec 文書として固定する。queue_policy.yaml の実ファイル中身、project_registry.json 定義、selector の Python 実装は本セッションの範囲外とし、別 session に分離する。"
+scope:
+  - "docs/specs/queue_policy_schema_v0.md を新規作成し、queue_policy.yaml の最小項目 schema を docs-only で定義する"
+  - "selection_rules の 3 項目 (status_required / depends_on_required_status / human_required_priority) を schema として定義する"
+  - "session-152 で正本定義された stop_reason 3 enum を policy 側から参照可能とする項目を schema に明記する"
+  - "selector が policy を読む契約 (load → validate → apply) を spec 文書として記述する"
+  - "human approval 必須を policy レベルで強制する項目を schema として定義する"
+  - "session-152 入出力契約との整合を spec 文書に明示する"
+out_of_scope:
+  - "queue_policy.yaml 実ファイルの作成または編集 (= session-154 以降)"
+  - "project_registry.json の定義 (= session-155 以降)"
+  - "selector の Python 実装 (= session-156 以降)"
+  - "queue engine / scheduler / 自動実行の実装"
+  - "DL/ 配下の操作"
+  - "orchestration / providers / backend / .github 配下の変更"
+  - "既存 session-01 から session-152 の変更"
+  - "stop_reason enum の再定義 (本セッションは参照のみ)"
+  - "review_points 4 軸の変更"
+acceptance:
+  - id: "AC-153-01"
+    requirement: "docs/specs/queue_policy_schema_v0.md が新規作成され、queue_policy.yaml の最小項目 schema を docs-only で定義している。"
+    test_name: "manual_acceptance_queue_policy_schema_v0_created"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "ls docs/specs/queue_policy_schema_v0.md でファイル存在を確認する。"
+      - "spec 文書冒頭で queue_policy.yaml の最小項目 schema を定義する旨が明記されていることを目視確認する。"
+  - id: "AC-153-02"
+    requirement: "spec 文書で selection_rules.status_required の schema (型 / 必須 / 取り得る値) が定義されている。"
+    test_name: "manual_acceptance_selection_rules_status_required_schema"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "spec 文書内で selection_rules.status_required について型・必須/任意・取り得る値の 3 要素が記述されていることを目視確認する。"
+  - id: "AC-153-03"
+    requirement: "spec 文書で selection_rules.depends_on_required_status の schema (型 / 必須 / 取り得る値) が定義されている。"
+    test_name: "manual_acceptance_selection_rules_depends_on_required_status_schema"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "spec 文書内で selection_rules.depends_on_required_status について型・必須/任意・取り得る値の 3 要素が記述されていることを目視確認する。"
+  - id: "AC-153-04"
+    requirement: "spec 文書で selection_rules.human_required_priority の schema (型 / 必須 / 取り得る値) が定義されている。"
+    test_name: "manual_acceptance_selection_rules_human_required_priority_schema"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "spec 文書内で selection_rules.human_required_priority について型・必須/任意・取り得る値の 3 要素が記述されていることを目視確認する。"
+  - id: "AC-153-05"
+    requirement: "spec 文書で session-152 で正本定義された stop_reason 3 enum を policy 側から参照可能とする項目が schema として明記されており、enum 値の再定義は行っていない。"
+    test_name: "manual_acceptance_stop_reason_reference_schema"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "spec 文書内で stop_reason 参照項目の schema が記述されていることを目視確認する。"
+      - "spec 文書内で stop_reason 3 enum 値 (no_candidates / all_blocked_by_dependency / only_human_required_left) が session-152 を正本として参照する旨が明記されていることを目視確認する。"
+      - "spec 文書内で enum 値の再定義 (新規追加・変更) が行われていないことを目視確認する。"
+  - id: "AC-153-06"
+    requirement: "spec 文書で selector が policy を読む契約 (load → validate → apply) が記述されている。"
+    test_name: "manual_acceptance_load_validate_apply_contract"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "spec 文書内で load / validate / apply の 3 ステップ契約が記述されていることを目視確認する。"
+  - id: "AC-153-07"
+    requirement: "spec 文書で human approval 必須を policy レベルで強制する項目が schema として定義されている。"
+    test_name: "manual_acceptance_human_approval_enforcement_schema"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "spec 文書内で human approval 必須を policy レベルで強制する項目が schema (型 / 必須 / 取り得る値) として定義されていることを目視確認する。"
+  - id: "AC-153-08"
+    requirement: "spec 文書で session-152 入出力契約との整合が明示されている。"
+    test_name: "manual_acceptance_session_152_contract_alignment"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "spec 文書内で session-152 (next-session selector) の入出力契約との対応関係が記述されていることを目視確認する。"
+  - id: "AC-153-09"
+    requirement: "本セッションの差分が 3 ファイル新規作成のみであり、queue_policy.yaml 実ファイル / project_registry.json / Python 実装 / 既存 session/acceptance/spec/orchestration の変更が発生していない (副作用なし)。"
+    test_name: "manual_acceptance_no_side_effects_on_existing_assets"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "git diff --stat で本セッション commit の差分が docs/sessions/session-153.json、docs/acceptance/session-153.yaml、docs/specs/queue_policy_schema_v0.md の 3 ファイルのみ・全て新規追加であることを目視確認する。"
+      - "queue_policy.yaml、project_registry.json が新規作成されていないことを ls で確認する。"
+completion_checks:
+  - "docs/sessions/session-153.json が保存されている。"
+  - "docs/acceptance/session-153.yaml が保存されている。"
+  - "docs/specs/queue_policy_schema_v0.md が保存されている。"
+  - "session-153.json に session_id, phase_id, title, goal, scope, out_of_scope, constraints, acceptance_ref が存在する。"
+  - "session-153.json の acceptance_ref が docs/acceptance/session-153.yaml と一致する。"
+  - "session-153.yaml のトップレベルに session_id が存在する。"
+  - "spec 文書が schema 定義のみで構成され、実値・実データインスタンスを含まない。"
+  - "stop_reason enum は spec 文書内で再定義されておらず、session-152 を正本として参照されている。"
+  - "変更ファイルが docs/sessions/session-153.json、docs/acceptance/session-153.yaml、docs/specs/queue_policy_schema_v0.md の 3 件に限定される。"
+change_guardrails:
+  allowed_changes:
+    - "docs/sessions/session-153.json"
+    - "docs/acceptance/session-153.yaml"
+    - "docs/specs/queue_policy_schema_v0.md"
+  forbidden_changes:
+    - "queue_policy.yaml ファイルの新規作成または編集"
+    - "project_registry.json ファイルの新規作成または編集"
+    - "orchestration/ 配下を変更しない。"
+    - "providers/ 配下を変更しない。"
+    - "backend/ 配下を変更しない。"
+    - ".github/ 配下を変更しない。"
+    - "DL/ 配下を操作しない。"
+    - "docs/roadmap.yaml を変更しない。"
+    - "既存 docs/sessions/session-*.json (session-01 から session-152) を変更しない。"
+    - "既存 docs/acceptance/session-*.yaml (session-01 から session-152) を変更しない。"
+    - "session-152 で定義された next-session selector の入出力契約を変更しない。"
+    - "session-152 で定義された stop_reason 3 enum を再定義しない。"
+    - "review_points 4 軸を変更しない。"
