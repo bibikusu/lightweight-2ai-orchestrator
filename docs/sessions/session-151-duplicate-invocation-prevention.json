@@ -1,0 +1,99 @@
+{
+  "session_id": "session-151-duplicate-invocation-prevention",
+  "phase_id": "P7-pre",
+  "title": "重複投入対策のBACKLOG化とdocs-only設計枠作成",
+  "goal": "chat 36で確認された同一Cursor投入ブロック再投入リスクを、BACKLOGとsession定義として記録する",
+  "scope": [
+    "docs/backlog/main.md に BACKLOG-DUPLICATE-INVOCATION-001 を1件追加する",
+    "docs/sessions/session-151-duplicate-invocation-prevention.json を作成する",
+    "docs/acceptance/session-151-duplicate-invocation-prevention.yaml を作成する"
+  ],
+  "out_of_scope": [
+    "run_session.py の変更",
+    "queue engine の変更",
+    "global_rules.md / global_rules_v2.md の変更",
+    "冪等性チェックの実装",
+    "既存BACKLOG本文の編集",
+    "DL/ 配下の変更"
+  ],
+  "constraints": [
+    "docs-only session とする",
+    "変更ファイルは最大3ファイルに限定する",
+    "既存BACKLOGは編集せず末尾追記のみとする",
+    "実装コードは変更しない"
+  ],
+  "allowed_changes_detail": [
+    "docs/backlog/main.md: BACKLOG-DUPLICATE-INVOCATION-001 の末尾追記のみ",
+    "docs/sessions/session-151-duplicate-invocation-prevention.json: session定義の新規作成",
+    "docs/acceptance/session-151-duplicate-invocation-prevention.yaml: acceptance定義の新規作成"
+  ],
+  "forbidden_changes": [
+    "orchestration/**/*.py",
+    "backend/**/*.py",
+    "docs/global_rules.md",
+    "docs/specs/v2/global_rules_v2.md",
+    "docs/backlog/main.md の既存項目編集",
+    "DL/**"
+  ],
+  "acceptance_ref": "docs/acceptance/session-151-duplicate-invocation-prevention.yaml",
+  "completion_criteria": [
+    {
+      "id": "CC-151-01",
+      "type": "artifact",
+      "condition": "docs/backlog/main.md に BACKLOG-DUPLICATE-INVOCATION-001 が1件追加されている"
+    },
+    {
+      "id": "CC-151-02",
+      "type": "artifact",
+      "condition": "docs/sessions/session-151-duplicate-invocation-prevention.json が存在する"
+    },
+    {
+      "id": "CC-151-03",
+      "type": "artifact",
+      "condition": "docs/acceptance/session-151-duplicate-invocation-prevention.yaml が存在する"
+    },
+    {
+      "id": "CC-151-04",
+      "type": "side_effect_free",
+      "condition": "変更ファイルが allowed_changes_detail の3ファイルに限定されている"
+    },
+    {
+      "id": "CC-151-05",
+      "type": "non_regression",
+      "condition": "既存BACKLOG本文、コードファイル、global_rules、DL配下が変更されていない"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-151-01",
+      "description": "BACKLOG-DUPLICATE-INVOCATION-001 が docs/backlog/main.md に追加されている",
+      "test_name": "test_backlog_duplicate_invocation_entry_exists"
+    },
+    {
+      "id": "AC-151-02",
+      "description": "session定義とacceptance定義が新規作成されている",
+      "test_name": "test_session151_docs_exist"
+    },
+    {
+      "id": "AC-151-03",
+      "description": "変更範囲が docs/backlog/main.md と session-151 関連2ファイルに限定されている",
+      "test_name": "test_session151_changed_files_limited"
+    },
+    {
+      "id": "AC-151-04",
+      "description": "既存BACKLOG本文、コードファイル、global_rules、DL配下が変更されていない",
+      "test_name": "test_session151_forbidden_paths_and_existing_backlog_unchanged"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ],
+  "failure_type_candidates": [
+    "scope_violation",
+    "regression",
+    "spec_missing"
+  ]
+}

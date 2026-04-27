@@ -1,0 +1,75 @@
+session_id: "session-151-duplicate-invocation-prevention"
+goal: "chat 36で確認された同一Cursor投入ブロック再投入リスクを、BACKLOGとsession定義として記録する"
+
+scope:
+  - "docs/backlog/main.md に BACKLOG-DUPLICATE-INVOCATION-001 を1件追加する"
+  - "docs/sessions/session-151-duplicate-invocation-prevention.json を作成する"
+  - "docs/acceptance/session-151-duplicate-invocation-prevention.yaml を作成する"
+
+out_of_scope:
+  - "run_session.py の変更"
+  - "queue engine の変更"
+  - "global_rules.md / global_rules_v2.md の変更"
+  - "冪等性チェックの実装"
+  - "既存BACKLOG本文の編集"
+  - "DL/ 配下の変更"
+
+acceptance:
+  - id: "AC-151-01"
+    requirement: "BACKLOG-DUPLICATE-INVOCATION-001 が docs/backlog/main.md に追加されている"
+    test_name: "test_backlog_duplicate_invocation_entry_exists"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "docs/backlog/main.md に BACKLOG-DUPLICATE-INVOCATION-001 が存在する"
+      - "当該BACKLOGのカテゴリが 規律 / 実行制御 である"
+      - "当該BACKLOGの状態が open である"
+
+  - id: "AC-151-02"
+    requirement: "session定義とacceptance定義が新規作成されている"
+    test_name: "test_session151_docs_exist"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "docs/sessions/session-151-duplicate-invocation-prevention.json が存在する"
+      - "docs/acceptance/session-151-duplicate-invocation-prevention.yaml が存在する"
+
+  - id: "AC-151-03"
+    requirement: "変更範囲が docs/backlog/main.md と session-151 関連2ファイルに限定されている"
+    test_name: "test_session151_changed_files_limited"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "git diff --name-only HEAD~1..HEAD の結果が allowed_changes_detail の3ファイルのみである"
+
+  - id: "AC-151-04"
+    requirement: "既存BACKLOG本文、コードファイル、global_rules、DL配下が変更されていない"
+    test_name: "test_session151_forbidden_paths_and_existing_backlog_unchanged"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "既存BACKLOG本文が変更されていない"
+      - "orchestration/**/*.py が変更されていない"
+      - "backend/**/*.py が変更されていない"
+      - "docs/global_rules.md が変更されていない"
+      - "docs/specs/v2/global_rules_v2.md が変更されていない"
+      - "DL/ 配下が変更されていない"
+
+completion_checks:
+  - "docs/backlog/main.md に BACKLOG-DUPLICATE-INVOCATION-001 が1件追加されている"
+  - "docs/sessions/session-151-duplicate-invocation-prevention.json が存在する"
+  - "docs/acceptance/session-151-duplicate-invocation-prevention.yaml が存在する"
+  - "変更ファイルが allowed_changes_detail の3ファイルに限定されている"
+  - "既存BACKLOG本文、コードファイル、global_rules、DL配下が変更されていない"
+
+change_guardrails:
+  allowed_changes:
+    - "docs/backlog/main.md"
+    - "docs/sessions/session-151-duplicate-invocation-prevention.json"
+    - "docs/acceptance/session-151-duplicate-invocation-prevention.yaml"
+  forbidden_changes:
+    - "orchestration/**/*.py"
+    - "backend/**/*.py"
+    - "docs/global_rules.md"
+    - "docs/specs/v2/global_rules_v2.md"
+    - "DL/**"
