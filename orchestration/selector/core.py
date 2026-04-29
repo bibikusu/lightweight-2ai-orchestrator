@@ -65,22 +65,6 @@ def generate_candidates(session_definitions: list[dict[str, Any]]) -> list[str]:
     return sorted(_session_id(session) for session in _candidate_sessions(session_definitions))
 
 
-def generate_skipped_sessions(
-    session_definitions: list[dict[str, Any]],
-) -> list[dict[str, str]]:
-    skipped_sessions: list[dict[str, str]] = []
-    for session in session_definitions:
-        session_id = session.get("session_id")
-        if session_id in (None, ""):
-            skipped_sessions.append(
-                {
-                    "session_id": "",
-                    "reason": "session_id missing",
-                }
-            )
-    return skipped_sessions
-
-
 def select(
     queue_policy: dict[str, Any],
     project_registry: dict[str, Any],
@@ -106,9 +90,9 @@ def build_selector_output(
     timestamp: str,
     policy_source: str = "docs/config/queue_policy.yaml",
     registry_source: str = "docs/config/project_registry.json",
+    skipped_sessions: list[dict[str, str]] | None = None,
 ) -> dict[str, Any]:
     candidate_sessions = generate_candidates(session_definitions)
-    skipped_sessions = generate_skipped_sessions(session_definitions)
     selected_session_id = select(queue_policy, project_registry, session_definitions)
     selected_session = next(
         (
@@ -138,6 +122,6 @@ def build_selector_output(
             "policy_source": policy_source,
             "registry_source": registry_source,
             "session_count_scanned": len(session_definitions),
-            "skipped_sessions": skipped_sessions,
+            "skipped_sessions": list(skipped_sessions or []),
         },
     }

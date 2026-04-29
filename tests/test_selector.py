@@ -150,57 +150,58 @@ def test_deterministic() -> None:
     assert first["selected_session_id"] == second["selected_session_id"]
 
 
-def test_skipped_sessions_metadata() -> None:
-    from orchestration.selector import core
+def test_skipped_sessions_recorded(tmp_path: Path) -> None:
+    from orchestration.selector import core, loader
 
-    sessions = [
-        *_sessions(),
-        {
-            "project_id": "P_LOW",
-            "priority_rank_value": 100,
-        },
-    ]
+    sessions_dir = tmp_path / "sessions"
+    sessions_dir.mkdir()
+    for session in _sessions():
+        path = sessions_dir / f"{session['session_id']}.json"
+        path.write_text(json.dumps(session), encoding="utf-8")
+    broken_path = sessions_dir / "session-broken.json"
+    broken_path.write_text('{"session_id": "session-broken",', encoding="utf-8")
 
+    sessions, skipped_sessions = loader.load_session_definitions_with_skipped(
+        sessions_dir / "*.json"
+    )
     selector_output = core.build_selector_output(
         _policy(),
         _registry(),
         sessions,
         "2026-04-29T15:30:45.123Z",
+        skipped_sessions=skipped_sessions,
     )
 
     assert selector_output["candidate_sessions"] == ["session-high", "session-low"]
     assert selector_output["selected_session_id"] == "session-high"
     assert selector_output["metadata"]["skipped_sessions"] == [
         {
-            "session_id": "",
-            "reason": "session_id missing",
+            "path": str(broken_path),
+            "reason": "json_parse_error",
         }
     ]
+    assert "session-broken" not in selector_output["candidate_sessions"]
 
 
-def test_skipped_sessions_deterministic() -> None:
-    from orchestration.selector import core
+def test_skipped_sessions_empty_when_all_valid(tmp_path: Path) -> None:
+    from orchestration.selector import core, loader
 
-    sessions = [
-        {
-            "project_id": "P_LOW",
-            "priority_rank_value": 100,
-        },
-        *_sessions(),
-    ]
-    first = core.build_selector_output(
+    sessions_dir = tmp_path / "sessions"
+    sessions_dir.mkdir()
+    for session in _sessions():
+        path = sessions_dir / f"{session['session_id']}.json"
+        path.write_text(json.dumps(session), encoding="utf-8")
+
+    sessions, skipped_sessions = loader.load_session_definitions_with_skipped(
+        sessions_dir / "*.json"
+    )
+    selector_output = core.build_selector_output(
         _policy(),
         _registry(),
         sessions,
         "2026-04-29T15:30:45.123Z",
-    )
-    second = core.build_selector_output(
-        _policy(),
-        _registry(),
-        sessions,
-        "2026-04-29T15:30:45.123Z",
+        skipped_sessions=skipped_sessions,
     )
 
-    assert first["metadata"]["skipped_sessions"] == second["metadata"][
-        "skipped_sessions"
-    ]
+    assert "skipped_sessions" in selector_output["metadata"]
+    assert selector_output["metadata"]["skipped_sessions"] == []
