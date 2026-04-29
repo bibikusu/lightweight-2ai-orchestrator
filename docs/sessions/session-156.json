@@ -1,0 +1,358 @@
+{
+  "session_id": "session-156",
+  "phase_id": "phase-07",
+  "title": "Acceptance review of existing docs/config/project_registry.json against session-154 I/O contract (docs-only)",
+  "goal": "既存の docs/config/project_registry.json が session-154 で確定した I/O 契約および責務分離(registry=10プロジェクトの事実データのみ / selector=判断 / queue=実行制御)に適合しているかを検収し、selector が読む正本 project registry data として承認する。project_registry.json 自体は変更しない。",
+  "scope": [
+    "既存 docs/config/project_registry.json の存在確認と JSON パース成立の検収。",
+    "project_registry.json の必須トップレベルキー(version / last_updated / description / projects)存在確認。",
+    "projects 配列が 10 要素であり review_target.expected_project_ids と一致することの検収。",
+    "projects 各要素の必須キー(project_id / name / category / status / repo_path / project_characteristics / primary_stack / test_commands / deploy_risk / db_touch_allowed / night_batch_allowed / default_agents)存在確認。",
+    "project_registry.json が session-154 io_contract.actors[name=selector].inputs の path と一致することの検収。",
+    "project_registry.json に判断実行ロジック(関数定義 / lambda / eval / 条件分岐 / 計算式 / テンプレート展開)が含まれないことの機械検証。",
+    "project_registry.json が selector / queue / command_center の責務を侵食していないことの検収。",
+    "session-156.json および session-156.yaml の起票による検収結果の正本化。"
+  ],
+  "out_of_scope": [
+    "docs/config/project_registry.json の編集または上書き",
+    "docs/config/project_registry.json の構造変更",
+    "docs/config/project_registry.json への新規プロジェクト追加",
+    "docs/config/queue_policy.yaml の編集または検収再実施",
+    "docs/config/scheduler_plans.yaml の作成または編集または検収",
+    "orchestration/queue/queue_state.json の作成または編集",
+    "artifacts/selector/<timestamp>.json の生成処理の実装",
+    "selector の Python 実装",
+    "queue engine の実装または変更",
+    "Command Center の実装",
+    "dashboard HTML / UI ファイルの作成",
+    "session-154 io_contract の変更",
+    "session-153 queue_policy_schema の変更",
+    "session-155 検収結果の変更",
+    "A02_fina プロジェクトへの着手",
+    "orchestration/run_session.py の変更",
+    "providers 配下の変更",
+    "backend 配下の変更",
+    ".github 配下の変更",
+    "docs/roadmap.yaml の変更",
+    "orchestration/config.yaml の変更",
+    "既存 session-01 から session-155 の json / yaml の変更",
+    "既存 acceptance session-01 から session-155 の yaml の変更"
+  ],
+  "constraints": [
+    "1セッション1目的",
+    "docs-only(実装コード非接触)",
+    "最大2ファイル以内で完結すること(session-156.json と session-156.yaml のみ)",
+    "docs/config/project_registry.json は読み取り専用として扱うこと",
+    "session-154 io_contract と整合すること",
+    "session-155 で確立した acceptance_review_existing_artifact パターンに準拠すること",
+    "registry = 事実データのみ / selector = 判断ロジック / queue = 実行制御 の責務分離を破らないこと",
+    "JSON 厳格性(コメント禁止 / trailing comma 禁止)を維持すること",
+    "completion_criteria.type は既存 enum(state_transition_consistent / non_regression / side_effect_free / artifact / document_rule)に限定すること",
+    "allowed_changes_detail は list[str] 形式で記述すること",
+    "completion_criteria は id, type, condition を持つ object 配列で記述すること",
+    "acceptance_criteria の各要素は id, text, test_name を持つこと",
+    "曖昧語(適切に / 必要に応じて / など)を使用しないこと",
+    "ファイルパスは repository 相対パスで具体的に書くこと",
+    "正本ルールは master_instruction.md と global_rules.md を基準にすること"
+  ],
+  "acceptance_ref": "docs/acceptance/session-156.yaml",
+  "inputs": [
+    {
+      "name": "project_registry_json_existing",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/config/project_registry.json (既存・検収対象)"
+    },
+    {
+      "name": "session_154_json",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/sessions/session-154.json (I/O 契約正本・整合確認用)"
+    },
+    {
+      "name": "session_155_json",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/sessions/session-155.json (受入検収型テンプレ参照)"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "session_156_json",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/sessions/session-156.json (本セッション定義)"
+    },
+    {
+      "name": "session_156_yaml",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/acceptance/session-156.yaml (本セッション用 acceptance 定義)"
+    }
+  ],
+  "review_target": {
+    "file": "docs/config/project_registry.json",
+    "size_bytes_at_session_start": 5496,
+    "sha256_at_session_start": "01775f3a8fd7b930b9065e4c0efe2a4c47c09902b66e8600612cdf3cd2095cf9",
+    "review_mode": "acceptance_review_existing_artifact",
+    "review_basis": [
+      "session-154 io_contract.actors[name=selector].inputs[name=project_registry].path との一致",
+      "10 プロジェクト(A01_Card_task 〜 A10_fina_date)の正本性確認",
+      "session-156 constraints の registry 制約(事実データのみ / 判断ロジック禁止)遵守"
+    ],
+    "expected_top_level_keys": ["version", "last_updated", "description", "projects"],
+    "expected_projects_count": 10,
+    "expected_project_ids": [
+      "A01_Card_task",
+      "A02_fina",
+      "A03_mane_bikusu",
+      "A04_deli_customer_management",
+      "A05_CAST_PRO",
+      "A06_cecare",
+      "A07_pochadeli_work",
+      "A08_AI_video_creation",
+      "A09_AI_movie_production",
+      "A10_fina_date"
+    ],
+    "expected_per_project_required_keys": [
+      "project_id",
+      "name",
+      "category",
+      "status",
+      "repo_path",
+      "project_characteristics",
+      "primary_stack",
+      "test_commands",
+      "deploy_risk",
+      "db_touch_allowed",
+      "night_batch_allowed",
+      "default_agents"
+    ]
+  },
+  "allowed_changes": [
+    "docs/sessions/session-156.json",
+    "docs/acceptance/session-156.yaml"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/session-156.json: 本セッション定義の新規作成。受入検収型として review_target / acceptance_criteria を直書きで保存する。",
+    "docs/acceptance/session-156.yaml: 本セッション用 acceptance 定義の新規作成。session-155.yaml(検収型)構造に準拠する。"
+  ],
+  "forbidden_changes": [
+    "docs/config/project_registry.json の編集または上書きまたは構造変更",
+    "docs/config/project_registry.json への新規プロジェクト追加",
+    "docs/config/queue_policy.yaml の編集",
+    "docs/config/scheduler_plans.yaml の作成または編集",
+    "orchestration/queue/queue_state.json の作成または編集",
+    "artifacts/selector/ 配下のファイル生成",
+    "selector の Python 実装の追加",
+    "queue engine 実装の変更",
+    "Command Center 実装の追加",
+    "dashboard HTML / UI ファイルの作成",
+    "session-154 io_contract の変更",
+    "session-153 queue_policy_schema の変更",
+    "session-155 検収結果の変更",
+    "orchestration/run_session.py の変更",
+    "providers 配下の変更",
+    "backend 配下の変更",
+    ".github 配下の変更",
+    "docs/roadmap.yaml の変更",
+    "orchestration/config.yaml の変更",
+    "既存 session-01 から session-155 の json / yaml の変更",
+    "既存 acceptance session-01 から session-155 の yaml の変更",
+    "A02_fina プロジェクトへの着手"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-156-01",
+      "type": "artifact",
+      "condition": "docs/config/project_registry.json がリポジトリ内に存在すること。"
+    },
+    {
+      "id": "CC-156-02",
+      "type": "document_rule",
+      "condition": "docs/config/project_registry.json が python3 json.load でエラーなくパースできること。"
+    },
+    {
+      "id": "CC-156-03",
+      "type": "document_rule",
+      "condition": "docs/config/project_registry.json のトップレベルキーが version / last_updated / description / projects の4つを過不足なく含むこと。"
+    },
+    {
+      "id": "CC-156-04",
+      "type": "document_rule",
+      "condition": "projects 配列の要素数が 10 であり project_id 値が review_target.expected_project_ids(A01_Card_task / A02_fina / A03_mane_bikusu / A04_deli_customer_management / A05_CAST_PRO / A06_cecare / A07_pochadeli_work / A08_AI_video_creation / A09_AI_movie_production / A10_fina_date) を過不足なく含むこと。"
+    },
+    {
+      "id": "CC-156-05",
+      "type": "document_rule",
+      "condition": "projects の各要素が必須キー 12 個(project_id / name / category / status / repo_path / project_characteristics / primary_stack / test_commands / deploy_risk / db_touch_allowed / night_batch_allowed / default_agents)をすべて持つこと。"
+    },
+    {
+      "id": "CC-156-06",
+      "type": "document_rule",
+      "condition": "docs/config/project_registry.json のパス文字列が session-154.json の io_contract.actors[name=selector].inputs[name=project_registry].path と完全一致すること。"
+    },
+    {
+      "id": "CC-156-07",
+      "type": "document_rule",
+      "condition": "docs/config/project_registry.json に判断実行ロジック(関数定義 def / lambda / eval / exec / 条件分岐 if/elif/else / 計算式 / テンプレート展開 {{ }} ${ } / arrow function => / function() )が含まれないこと。"
+    },
+    {
+      "id": "CC-156-08",
+      "type": "document_rule",
+      "condition": "docs/config/project_registry.json が selector の判断ロジック(優先度算出 / 選定基準算出)を記述しないこと(registry はデータ / selector が解釈)。"
+    },
+    {
+      "id": "CC-156-09",
+      "type": "document_rule",
+      "condition": "docs/config/project_registry.json が queue の実行制御ロジックを記述しないこと(queue 状態遷移は orchestration/queue/queue_state.json および queue engine の責任)。"
+    },
+    {
+      "id": "CC-156-10",
+      "type": "document_rule",
+      "condition": "docs/config/project_registry.json が Command Center の表示ロジックを記述しないこと(dashboard 生成は command_center actor の責任)。"
+    },
+    {
+      "id": "CC-156-11",
+      "type": "side_effect_free",
+      "condition": "本セッションの実行により docs/config/project_registry.json のバイト内容および SHA256(01775f3a8fd7b930b9065e4c0efe2a4c47c09902b66e8600612cdf3cd2095cf9)が変更されないこと。"
+    },
+    {
+      "id": "CC-156-12",
+      "type": "side_effect_free",
+      "condition": "本セッション commit の git diff --name-only の結果が docs/sessions/session-156.json と docs/acceptance/session-156.yaml の2件のみであること。"
+    },
+    {
+      "id": "CC-156-13",
+      "type": "artifact",
+      "condition": "docs/acceptance/session-156.yaml が新規作成され保存されていること。"
+    },
+    {
+      "id": "CC-156-14",
+      "type": "document_rule",
+      "condition": "本セッション定義が allowed_changes_detail (list[str]) / forbidden_changes / completion_criteria (object 配列) / acceptance_criteria / review_points を含む構造化 JSON として保存されていること。"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-156-01",
+      "text": "コマンド `test -f docs/config/project_registry.json && echo OK` の出力に 'OK' が含まれる。",
+      "test_name": "test_session_156_project_registry_json_exists",
+      "completion_criteria_refs": ["CC-156-01"]
+    },
+    {
+      "id": "AC-156-02",
+      "text": "コマンド `python3 -c \"import json; json.load(open('docs/config/project_registry.json'))\"` がエラーなく終了する。",
+      "test_name": "test_session_156_project_registry_json_parses",
+      "completion_criteria_refs": ["CC-156-02"]
+    },
+    {
+      "id": "AC-156-03",
+      "text": "project_registry.json をパースしたトップレベルキー集合が version / last_updated / description / projects の4つに完全一致する。",
+      "test_name": "test_session_156_top_level_keys_match",
+      "completion_criteria_refs": ["CC-156-03"]
+    },
+    {
+      "id": "AC-156-04",
+      "text": "projects 配列の要素数が 10 であり project_id 値の集合が review_target.expected_project_ids に完全一致する。",
+      "test_name": "test_session_156_ten_projects_match_canonical",
+      "completion_criteria_refs": ["CC-156-04"]
+    },
+    {
+      "id": "AC-156-05",
+      "text": "projects の全 10 要素のそれぞれが review_target.expected_per_project_required_keys に列挙された必須キー 12 個をすべて持つ。",
+      "test_name": "test_session_156_each_project_has_required_keys",
+      "completion_criteria_refs": ["CC-156-05"]
+    },
+    {
+      "id": "AC-156-06",
+      "text": "session-154.json から `io_contract.actors[name=selector].inputs[name=project_registry].path` を抽出した値が文字列 'docs/config/project_registry.json' に一致する。",
+      "test_name": "test_session_156_path_matches_io_contract",
+      "completion_criteria_refs": ["CC-156-06"]
+    },
+    {
+      "id": "AC-156-07",
+      "text": "コマンド `grep -nE '(\\bdef [a-zA-Z_]+\\(|\\blambda \\b|\\beval\\(|\\bexec\\(|=>|function\\()' docs/config/project_registry.json` のマッチ件数が 0 である。",
+      "test_name": "test_session_156_no_function_definition_or_lambda",
+      "completion_criteria_refs": ["CC-156-07"]
+    },
+    {
+      "id": "AC-156-08",
+      "text": "コマンド `grep -nE '(^[[:space:]]*if [^:]|^[[:space:]]*elif |^[[:space:]]*else:)' docs/config/project_registry.json` のマッチ件数が 0 である。",
+      "test_name": "test_session_156_no_conditional_branch",
+      "completion_criteria_refs": ["CC-156-07"]
+    },
+    {
+      "id": "AC-156-09",
+      "text": "コマンド `grep -nE '(\\{\\{|\\}\\}|\\$\\{)' docs/config/project_registry.json` のマッチ件数が 0 である。",
+      "test_name": "test_session_156_no_template_expansion",
+      "completion_criteria_refs": ["CC-156-07"]
+    },
+    {
+      "id": "AC-156-10",
+      "text": "project_registry.json の値領域に文字列内式(== / != / >= / <= / && / || を含む文字列値)が存在しない。",
+      "test_name": "test_session_156_no_string_expression_in_values",
+      "completion_criteria_refs": ["CC-156-07", "CC-156-08"]
+    },
+    {
+      "id": "AC-156-11",
+      "text": "project_registry.json に selector の判断ロジック相当(優先度算出 / score 計算 / weight 計算 / 選定スコア)を記述したフィールドが存在しない。",
+      "test_name": "test_session_156_no_selector_logic_in_registry",
+      "completion_criteria_refs": ["CC-156-08"]
+    },
+    {
+      "id": "AC-156-12",
+      "text": "project_registry.json に queue の状態遷移ロジック(enqueue / dequeue / state_transition)を記述したフィールドが存在しない。",
+      "test_name": "test_session_156_no_queue_logic_in_registry",
+      "completion_criteria_refs": ["CC-156-09"]
+    },
+    {
+      "id": "AC-156-13",
+      "text": "project_registry.json に Command Center の表示ロジック(dashboard render / html template)を記述したフィールドが存在しない。",
+      "test_name": "test_session_156_no_command_center_logic_in_registry",
+      "completion_criteria_refs": ["CC-156-10"]
+    },
+    {
+      "id": "AC-156-14",
+      "text": "session-156 commit 前後で docs/config/project_registry.json のサイズと SHA256 が変化しない。具体的には commit 後の SHA256 が 01775f3a8fd7b930b9065e4c0efe2a4c47c09902b66e8600612cdf3cd2095cf9 でありサイズが 5496 bytes である。",
+      "test_name": "test_session_156_project_registry_json_unchanged",
+      "completion_criteria_refs": ["CC-156-11"]
+    },
+    {
+      "id": "AC-156-15",
+      "text": "session-156 commit の git show --name-only の結果が docs/sessions/session-156.json と docs/acceptance/session-156.yaml の2件のみである。",
+      "test_name": "test_session_156_changed_files_within_allowed_scope",
+      "completion_criteria_refs": ["CC-156-12"]
+    },
+    {
+      "id": "AC-156-16",
+      "text": "session-156 commit の git show --name-only に docs/config/project_registry.json が含まれない。",
+      "test_name": "test_session_156_does_not_modify_project_registry_json",
+      "completion_criteria_refs": ["CC-156-11", "CC-156-12"]
+    },
+    {
+      "id": "AC-156-17",
+      "text": "session-156 commit の git show --name-only に既存 session-01〜155 および対応 acceptance YAML が含まれない。",
+      "test_name": "test_session_156_does_not_modify_existing_sessions",
+      "completion_criteria_refs": ["CC-156-12"]
+    },
+    {
+      "id": "AC-156-18",
+      "text": "docs/acceptance/session-156.yaml が新規ファイルとして存在する。",
+      "test_name": "test_session_156_acceptance_yaml_exists",
+      "completion_criteria_refs": ["CC-156-13"]
+    },
+    {
+      "id": "AC-156-19",
+      "text": "session-156.json が allowed_changes_detail (list[str]) / forbidden_changes / completion_criteria (object 配列) / acceptance_criteria / review_points のすべてを構造化キーとして含む。",
+      "test_name": "test_session_156_json_contains_all_required_structural_keys",
+      "completion_criteria_refs": ["CC-156-14"]
+    }
+  ],
+  "review_points": [
+    "仕様一致(AC達成)",
+    "変更範囲遵守",
+    "副作用なし(既存破壊なし)",
+    "検証十分性"
+  ]
+}

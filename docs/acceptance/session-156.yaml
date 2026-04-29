@@ -1,0 +1,231 @@
+session_id: "session-156"
+goal: "既存の docs/config/project_registry.json が session-154 で確定した I/O 契約および責務分離(registry=10プロジェクトの事実データのみ / selector=判断 / queue=実行制御)に適合しているかを検収し、selector が読む正本 project registry data として承認する。project_registry.json 自体は変更しない。"
+scope:
+  - "既存 docs/config/project_registry.json の存在確認と JSON パース成立の検収。"
+  - "project_registry.json の必須トップレベルキー(version / last_updated / description / projects)存在確認。"
+  - "projects 配列が 10 要素であり review_target.expected_project_ids と一致することの検収。"
+  - "projects 各要素の必須キー 12 個の存在確認。"
+  - "project_registry.json が session-154 io_contract.actors[name=selector].inputs の path と一致することの検収。"
+  - "project_registry.json に判断実行ロジック(関数定義 / lambda / eval / 条件分岐 / 計算式 / テンプレート展開)が含まれないことの機械検証。"
+  - "project_registry.json が selector / queue / command_center の責務を侵食していないことの検収。"
+  - "session-156.json および session-156.yaml の起票による検収結果の正本化。"
+out_of_scope:
+  - "docs/config/project_registry.json の編集または上書き"
+  - "docs/config/project_registry.json の構造変更"
+  - "docs/config/project_registry.json への新規プロジェクト追加"
+  - "docs/config/queue_policy.yaml の編集または検収再実施"
+  - "docs/config/scheduler_plans.yaml の作成または編集または検収"
+  - "orchestration/queue/queue_state.json の作成または編集"
+  - "artifacts/selector/<timestamp>.json の生成処理の実装"
+  - "selector の Python 実装"
+  - "queue engine の実装または変更"
+  - "Command Center の実装"
+  - "dashboard HTML / UI ファイルの作成"
+  - "session-154 io_contract の変更"
+  - "session-153 queue_policy_schema の変更"
+  - "session-155 検収結果の変更"
+  - "A02_fina プロジェクトへの着手"
+  - "orchestration/run_session.py の変更"
+  - "providers 配下の変更"
+  - "backend 配下の変更"
+  - ".github 配下の変更"
+  - "docs/roadmap.yaml の変更"
+  - "orchestration/config.yaml の変更"
+  - "既存 session-01 から session-155 の json / yaml の変更"
+  - "既存 acceptance session-01 から session-155 の yaml の変更"
+acceptance:
+  - id: "AC-156-01"
+    requirement: "docs/config/project_registry.json が存在する。"
+    test_name: "test_session_156_project_registry_json_exists"
+    type: "auto"
+    manual_check: false
+    verification:
+      - "コマンド `test -f docs/config/project_registry.json && echo OK` を実行し OK が出力されることを確認する。"
+  - id: "AC-156-02"
+    requirement: "docs/config/project_registry.json が json.load でエラーなくパースできる。"
+    test_name: "test_session_156_project_registry_json_parses"
+    type: "auto"
+    manual_check: false
+    verification:
+      - "コマンド `python3 -c \"import json; json.load(open('docs/config/project_registry.json'))\"` を実行する。"
+      - "exit code が 0 であることを確認する。"
+  - id: "AC-156-03"
+    requirement: "トップレベルキーが version / last_updated / description / projects の4つに完全一致する。"
+    test_name: "test_session_156_top_level_keys_match"
+    type: "auto"
+    manual_check: false
+    verification:
+      - "project_registry.json をパースしトップレベルキー集合を抽出する。"
+      - "集合が {version, last_updated, description, projects} と完全一致することを確認する。"
+  - id: "AC-156-04"
+    requirement: "projects 配列の要素数が 10 であり project_id 値が review_target.expected_project_ids に完全一致する。"
+    test_name: "test_session_156_ten_projects_match_canonical"
+    type: "auto"
+    manual_check: false
+    verification:
+      - "project_registry.json をパースし projects[].project_id を抽出する。"
+      - "抽出値の集合が session-156.json の review_target.expected_project_ids と完全一致することを確認する。"
+  - id: "AC-156-05"
+    requirement: "projects の全 10 要素のそれぞれが review_target.expected_per_project_required_keys の必須キー 12 個をすべて持つ。"
+    test_name: "test_session_156_each_project_has_required_keys"
+    type: "auto"
+    manual_check: false
+    verification:
+      - "project_registry.json をパースし projects 各要素のキー集合を抽出する。"
+      - "全 10 要素が session-156.json の review_target.expected_per_project_required_keys をすべて含むことを確認する。"
+  - id: "AC-156-06"
+    requirement: "session-154.json の io_contract.actors[name=selector].inputs[name=project_registry].path が文字列 'docs/config/project_registry.json' に一致する。"
+    test_name: "test_session_156_path_matches_io_contract"
+    type: "auto"
+    manual_check: false
+    verification:
+      - "session-154.json をパースし当該 path 値を抽出する。"
+      - "値が 'docs/config/project_registry.json' と等しいことを確認する。"
+  - id: "AC-156-07"
+    requirement: "project_registry.json に関数定義 / lambda / eval / exec / => / function( のいずれも含まれない。"
+    test_name: "test_session_156_no_function_definition_or_lambda"
+    type: "auto"
+    manual_check: false
+    verification:
+      - "コマンド `grep -nE '(\\bdef [a-zA-Z_]+\\(|\\blambda \\b|\\beval\\(|\\bexec\\(|=>|function\\()' docs/config/project_registry.json` を実行する。"
+      - "マッチ件数が 0 であることを確認する。"
+  - id: "AC-156-08"
+    requirement: "project_registry.json に if / elif / else: の条件分岐キーワードが含まれない。"
+    test_name: "test_session_156_no_conditional_branch"
+    type: "auto"
+    manual_check: false
+    verification:
+      - "コマンド `grep -nE '(^[[:space:]]*if [^:]|^[[:space:]]*elif |^[[:space:]]*else:)' docs/config/project_registry.json` を実行する。"
+      - "マッチ件数が 0 であることを確認する。"
+  - id: "AC-156-09"
+    requirement: "project_registry.json にテンプレート展開記号 {{ }} ${ } が含まれない。"
+    test_name: "test_session_156_no_template_expansion"
+    type: "auto"
+    manual_check: false
+    verification:
+      - "コマンド `grep -nE '(\\{\\{|\\}\\}|\\$\\{)' docs/config/project_registry.json` を実行する。"
+      - "マッチ件数が 0 であることを確認する。"
+  - id: "AC-156-10"
+    requirement: "project_registry.json の値領域に文字列内式(== / != / >= / <= / && / || を含む文字列値)が存在しない。"
+    test_name: "test_session_156_no_string_expression_in_values"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "project_registry.json をパースし全文字列値を走査する。"
+      - "文字列値内に '==' '!=' '>=' '<=' '&&' '||' のいずれも含まれないことを確認する。"
+  - id: "AC-156-11"
+    requirement: "project_registry.json に selector の判断ロジック相当(優先度算出 / score 計算 / weight 計算 / 選定スコア)を記述したフィールドが存在しない。"
+    test_name: "test_session_156_no_selector_logic_in_registry"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "project_registry.json を全行確認する。"
+      - "score / weight / priority / selection_score 等の動的計算式記述が存在しないことを確認する。"
+  - id: "AC-156-12"
+    requirement: "project_registry.json に queue の状態遷移ロジック(enqueue / dequeue / state_transition)を記述したフィールドが存在しない。"
+    test_name: "test_session_156_no_queue_logic_in_registry"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "project_registry.json を全行確認する。"
+      - "enqueue / dequeue / state_transition の処理記述が存在しないことを確認する。"
+  - id: "AC-156-13"
+    requirement: "project_registry.json に Command Center の表示ロジック(dashboard render / html template)を記述したフィールドが存在しない。"
+    test_name: "test_session_156_no_command_center_logic_in_registry"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "project_registry.json を全行確認する。"
+      - "dashboard render / html template / view 関連の処理記述が存在しないことを確認する。"
+  - id: "AC-156-14"
+    requirement: "session-156 commit 前後で docs/config/project_registry.json のサイズおよび SHA256 が変化しない。"
+    test_name: "test_session_156_project_registry_json_unchanged"
+    type: "auto"
+    manual_check: false
+    verification:
+      - "commit 前: `wc -c docs/config/project_registry.json` および `shasum -a 256 docs/config/project_registry.json` を記録する。"
+      - "commit 後: 同コマンドを再実行し値が一致することを確認する。"
+      - "session-156 開始時のサイズは 5496 bytes / SHA256 は 01775f3a8fd7b930b9065e4c0efe2a4c47c09902b66e8600612cdf3cd2095cf9 である。"
+  - id: "AC-156-15"
+    requirement: "session-156 commit の git show --name-only の結果が docs/sessions/session-156.json と docs/acceptance/session-156.yaml の2件のみである。"
+    test_name: "test_session_156_changed_files_within_allowed_scope"
+    type: "auto"
+    manual_check: false
+    verification:
+      - "コマンド `git show --name-only <session-156 commit hash>` を実行する。"
+      - "出力ファイルが2件のみで session-156.json と session-156.yaml であることを確認する。"
+  - id: "AC-156-16"
+    requirement: "session-156 commit の git show --name-only に docs/config/project_registry.json が含まれない。"
+    test_name: "test_session_156_does_not_modify_project_registry_json"
+    type: "auto"
+    manual_check: false
+    verification:
+      - "コマンド `git show --name-only <session-156 commit hash> | grep -c 'docs/config/project_registry.json'` の結果が 0 であることを確認する。"
+  - id: "AC-156-17"
+    requirement: "session-156 commit の git show --name-only に既存 session-01〜155 および対応 acceptance YAML が含まれない。"
+    test_name: "test_session_156_does_not_modify_existing_sessions"
+    type: "auto"
+    manual_check: false
+    verification:
+      - "コマンド `git show --name-only <session-156 commit hash>` の結果に docs/sessions/session-{01..155}.json および docs/acceptance/session-{01..155}.yaml が一切含まれていないことを確認する。"
+  - id: "AC-156-18"
+    requirement: "docs/acceptance/session-156.yaml が新規ファイルとして存在する。"
+    test_name: "test_session_156_acceptance_yaml_exists"
+    type: "auto"
+    manual_check: false
+    verification:
+      - "コマンド `test -f docs/acceptance/session-156.yaml && echo OK` を実行し OK が出力されることを確認する。"
+  - id: "AC-156-19"
+    requirement: "session-156.json が allowed_changes_detail (list[str]) / forbidden_changes / completion_criteria (object 配列) / acceptance_criteria / review_points のすべてを構造化キーとして含む。"
+    test_name: "test_session_156_json_contains_all_required_structural_keys"
+    type: "auto"
+    manual_check: false
+    verification:
+      - "session-156.json をパースしトップレベルキーを確認する。"
+      - "allowed_changes_detail / forbidden_changes / completion_criteria / acceptance_criteria / review_points がすべて存在することを確認する。"
+      - "allowed_changes_detail が list[str] 型であることを確認する。"
+      - "completion_criteria が object 配列で各要素が id / type / condition を持つことを確認する。"
+completion_checks:
+  - "docs/config/project_registry.json が存在し JSON として正常にパースされる。"
+  - "トップレベルキーが version / last_updated / description / projects の4つに完全一致する。"
+  - "projects 配列が 10 要素で review_target.expected_project_ids と完全一致する。"
+  - "projects 各要素が必須キー 12 個をすべて持つ。"
+  - "project_registry.json のパスが session-154 io_contract と完全一致する。"
+  - "project_registry.json に判断実行ロジック(関数 / lambda / eval / 条件分岐 / テンプレート式)が含まれない。"
+  - "project_registry.json に selector / queue / command_center の責務侵食記述が含まれない。"
+  - "project_registry.json が session-156 commit 前後でサイズ・SHA256 ともに不変である。"
+  - "session-156 commit の変更ファイルが session-156.json と session-156.yaml の2件のみである。"
+  - "既存 session-01〜155 が変更されていない。"
+  - "docs/acceptance/session-156.yaml が新規作成保存されている。"
+  - "session-156.json が必須構造化キーをすべて含む。"
+change_guardrails:
+  allowed_changes:
+    - "docs/sessions/session-156.json"
+    - "docs/acceptance/session-156.yaml"
+  forbidden_changes:
+    - "docs/config/project_registry.json の編集または上書きまたは構造変更"
+    - "docs/config/project_registry.json への新規プロジェクト追加"
+    - "docs/config/queue_policy.yaml の編集"
+    - "docs/config/scheduler_plans.yaml の作成または編集"
+    - "orchestration/queue/queue_state.json の作成または編集"
+    - "artifacts/selector/ 配下のファイル生成"
+    - "selector の Python 実装の追加"
+    - "queue engine 実装の変更"
+    - "Command Center 実装の追加"
+    - "dashboard HTML / UI ファイルの作成"
+    - "session-154 io_contract の変更"
+    - "session-153 queue_policy_schema の変更"
+    - "session-155 検収結果の変更"
+    - "orchestration/run_session.py の変更"
+    - "providers 配下の変更"
+    - "backend 配下の変更"
+    - ".github 配下の変更"
+    - "docs/roadmap.yaml の変更"
+    - "orchestration/config.yaml の変更"
+    - "既存 session-01 から session-155 の json / yaml の変更"
+    - "A02_fina プロジェクトへの着手"
+review_points:
+  - "仕様一致(AC達成)"
+  - "変更範囲遵守"
+  - "副作用なし(既存破壊なし)"
+  - "検証十分性"
