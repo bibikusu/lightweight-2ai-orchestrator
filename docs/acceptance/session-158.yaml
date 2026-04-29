@@ -32,6 +32,7 @@ acceptance:
       - "writer.write() 後に artifacts/selector/ 配下にファイルが存在する"
       - "JSON parse 可能である"
       - "candidate_sessions / selected_session_id / selection_reason / metadata を必須キーとして含む"
+      - "metadata.skipped_sessions を必須キーとして含む"
       - "decision_steps / decision_trace を artifact 必須キーにしない"
       - "ファイル名 timestamp が UTC ISO8601 安全形式 (YYYY-MM-DDTHH-MM-SS-sssZ) である"
 
@@ -52,14 +53,33 @@ acceptance:
       - "同一の queue_policy / project_registry / session 群を 2 回投入"
       - "candidate_sessions と selected_session_id が完全一致 (timestamp 除く)"
 
+  - id: AC-158-07
+    description: "metadata.skipped_sessions が候補化されなかった session_id と reason を追跡する"
+    test_name: test_skipped_sessions_metadata
+    type: automated
+    verify:
+      - "selector_output.metadata.skipped_sessions が list[dict] であること"
+      - "session_id を持たない session 定義が candidate_sessions に含まれないこと"
+      - "skipped_sessions に reason を含むこと"
+
+  - id: AC-158-08
+    description: "skipped_sessions が同一入力で決定的 (deterministic) に動作する"
+    test_name: test_skipped_sessions_deterministic
+    type: automated
+    verify:
+      - "同一の session 群を 2 回投入"
+      - "metadata.skipped_sessions が完全一致すること"
+
 completion_checks:
   - "orchestration/selector/__init__.py が存在する"
   - "orchestration/selector/core.py が存在する"
   - "orchestration/selector/loader.py が存在する"
   - "orchestration/selector/writer.py が存在する"
-  - "tests/test_selector.py が存在し AC-158-01〜06 を全カバー"
+  - "tests/test_selector.py が存在し AC-158-01〜08 を全カバー"
   - "4-gate (ruff/pytest/mypy/compileall) 全 PASS"
+  - "unit test 8 件 PASS"
   - "artifacts/selector/<timestamp>.json が実際に出力される (smoke test)"
+  - "artifact の metadata.skipped_sessions で候補化されなかった session_id と reason を追跡できる"
   - "sandbox/session-158 ブランチで作業し、main 直接変更がない"
 
 change_guardrails:

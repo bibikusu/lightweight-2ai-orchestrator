@@ -10,6 +10,7 @@
     "docs/config/project_registry.json の読み取り (read-only)",
     "docs/sessions/session-*.json の読み取り (read-only)",
     "candidate_sessions 生成ロジック実装",
+    "metadata.skipped_sessions 生成ロジック実装",
     "selected_session_id 決定ロジック実装 (priority_rank_value のみ使用)",
     "artifacts/selector/<timestamp>.json 出力",
     "tests/test_selector.py 単体テスト作成"
@@ -30,6 +31,7 @@
     "selector は純関数的に動作すること (副作用は artifact 出力のみ)",
     "score 計算禁止、priority_rank_value のみ使用 (session-157 正本準拠)",
     "artifact 出力は session-157 selector_specification.output_schema に厳密準拠 (candidate_sessions / selected_session_id / selection_reason / metadata の 4 キーを必須とする)",
+    "metadata は skipped_sessions を必須キーとして含み、候補化されなかった session_id と reason を配列で記録する",
     "artifact timestamp は UTC ISO8601 形式 (YYYY-MM-DDTHH:MM:SS.sssZ)",
     "selector → policy/registry 書き戻し禁止 (逆流禁止、session-157 正本準拠)",
     "sandbox/session-158 ブランチで作業し、main 直接変更禁止 (global_rules.md 第7章)"
@@ -41,10 +43,10 @@
   },
   "allowed_changes_detail": [
     "orchestration/selector/__init__.py: 新規作成 (パッケージマーカー)",
-    "orchestration/selector/core.py: selector ロジック実装 (candidate_sessions 生成 + selected_session_id 決定)",
+    "orchestration/selector/core.py: selector ロジック実装 (candidate_sessions 生成 + skipped_sessions 生成 + selected_session_id 決定)",
     "orchestration/selector/loader.py: queue_policy / project_registry / session JSON 群の読み込み",
     "orchestration/selector/writer.py: artifacts/selector/<timestamp>.json 出力",
-    "tests/test_selector.py: 単体テスト 6 件 (AC-158-01〜06 対応)"
+    "tests/test_selector.py: 単体テスト 8 件 (AC-158-01〜08 対応)"
   ],
   "completion_criteria": [
     {
@@ -69,14 +71,19 @@
     },
     {
       "id": "CC-158-05",
+      "type": "artifact",
+      "condition": "metadata.skipped_sessions が必須キーとして出力され、候補化されなかった session_id と reason を追跡できる"
+    },
+    {
+      "id": "CC-158-06",
       "type": "non_regression",
-      "condition": "4-gate (.venv/bin/ruff check / PYTHONPATH=. .venv/bin/pytest -q / .venv/bin/python -m mypy --explicit-package-bases orchestration --ignore-missing-imports / .venv/bin/python -m compileall -q -f orchestration backend) 全 PASS"
+      "condition": "4-gate (.venv/bin/ruff check / PYTHONPATH=. .venv/bin/pytest -q / .venv/bin/python -m mypy --explicit-package-bases orchestration --ignore-missing-imports / .venv/bin/python -m compileall -q -f orchestration backend) 全 PASS、unit test 8 件 PASS"
     }
   ],
   "review_points": [
-    "仕様一致 (AC-158-01〜06 全達成、session-157 selector_specification.output_schema 4 キー準拠)",
+    "仕様一致 (AC-158-01〜08 全達成、session-157 selector_specification.output_schema 4 キー準拠)",
     "変更範囲遵守 (allowed_changes_detail 5 ファイル外への変更なし)",
     "副作用なし (queue_state.json 不作成、既存 config 不変、main 直接変更なし)",
-    "検証十分性 (4-gate PASS、unit test 6 件 PASS、artifact 実出力確認)"
+    "検証十分性 (4-gate PASS、unit test 8 件 PASS、artifact 実出力確認、skipped_sessions 追跡確認)"
   ]
 }
