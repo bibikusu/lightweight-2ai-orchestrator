@@ -1,0 +1,290 @@
+{
+  "session_id": "session-155",
+  "phase_id": "phase-07",
+  "title": "Acceptance review of existing docs/config/queue_policy.yaml against session-154 I/O contract (docs-only)",
+  "goal": "既存の docs/config/queue_policy.yaml が session-154 で確定した I/O 契約および責務分離(policy=宣言的データのみ / selector=判断 / queue=実行制御)に適合しているかを検収し、selector が読む正本 policy data として承認する。queue_policy.yaml 自体は変更しない。",
+  "scope": [
+    "既存 docs/config/queue_policy.yaml の存在確認と YAML パース成立の検収。",
+    "queue_policy.yaml の必須トップレベルキー存在確認。",
+    "queue_policy.yaml が session-154 io_contract.actors[name=selector].inputs の path と一致することの検収。",
+    "queue_policy.yaml に判断実行ロジック(関数定義 / lambda / eval / 条件分岐 / 計算式 / テンプレート展開)が含まれないことの機械検証。",
+    "queue_policy.yaml が selector / queue / command_center の責務を侵食していないことの検収。",
+    "session-155.json および session-155.yaml の起票による検収結果の正本化。"
+  ],
+  "out_of_scope": [
+    "docs/config/queue_policy.yaml の編集または上書き",
+    "docs/config/queue_policy.yaml の構造変更",
+    "docs/config/project_registry.json の作成または編集",
+    "docs/config/scheduler_plans.yaml の作成または編集",
+    "orchestration/queue/queue_state.json の作成または編集",
+    "artifacts/selector/<timestamp>.json の生成処理の実装",
+    "selector の Python 実装",
+    "queue engine の実装または変更",
+    "Command Center の実装",
+    "dashboard HTML / UI ファイルの作成",
+    "session-154 io_contract の変更",
+    "session-153 queue_policy_schema の変更",
+    "A02_fina プロジェクトへの着手",
+    "orchestration/run_session.py の変更",
+    "providers 配下の変更",
+    "backend 配下の変更",
+    ".github 配下の変更",
+    "docs/roadmap.yaml の変更",
+    "orchestration/config.yaml の変更",
+    "既存 session-01 から session-154 の json / yaml の変更",
+    "既存 acceptance session-01 から session-154 の yaml の変更"
+  ],
+  "constraints": [
+    "1セッション1目的",
+    "docs-only(実装コード非接触)",
+    "最大2ファイル以内で完結すること(session-155.json と session-155.yaml のみ)",
+    "docs/config/queue_policy.yaml は読み取り専用として扱うこと",
+    "session-154 io_contract と整合すること",
+    "session-153 queue_policy schema と整合すること",
+    "policy = 宣言的データのみ / selector = 判断ロジック / queue = 実行制御 の責務分離を破らないこと",
+    "allowed_if / forbidden_if 等の条件は YAML map(key:value AND 条件) 形式に限定すること",
+    "OR 条件 / ネスト / 比較演算子 / 文字列内式 を許容しないこと",
+    "allowed_changes_detail は list[str] 形式で記述すること",
+    "completion_criteria は id, type, condition を持つ object 配列で記述すること",
+    "acceptance_criteria の各要素は id, text, test_name を持つこと",
+    "曖昧語(適切に / 必要に応じて / など)を使用しないこと",
+    "ファイルパスは repository 相対パスで具体的に書くこと",
+    "正本ルールは master_instruction.md と global_rules.md を基準にすること"
+  ],
+  "acceptance_ref": "docs/acceptance/session-155.yaml",
+  "inputs": [
+    {
+      "name": "queue_policy_yaml_existing",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/config/queue_policy.yaml (既存・検収対象)"
+    },
+    {
+      "name": "session_154_json",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/sessions/session-154.json (I/O 契約正本・整合確認用)"
+    },
+    {
+      "name": "session_153_json",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/sessions/session-153.json (queue_policy schema 正本・整合確認用)"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "session_155_json",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/sessions/session-155.json (本セッション定義)"
+    },
+    {
+      "name": "session_155_yaml",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/acceptance/session-155.yaml (本セッション用 acceptance 定義)"
+    }
+  ],
+  "review_target": {
+    "file": "docs/config/queue_policy.yaml",
+    "size_bytes_at_session_start": 3288,
+    "review_mode": "acceptance_review_existing_artifact",
+    "review_basis": [
+      "session-154 io_contract.actors[name=selector].inputs[name=queue_policy].path との一致",
+      "session-153 queue_policy schema 必須キー充足",
+      "session-155 constraints の policy 制約(宣言的データのみ / 判断ロジック禁止)遵守"
+    ]
+  },
+  "allowed_changes": [
+    "docs/sessions/session-155.json",
+    "docs/acceptance/session-155.yaml"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/session-155.json: 本セッション定義の新規作成。受入検収型として review_target / acceptance_criteria を直書きで保存する。",
+    "docs/acceptance/session-155.yaml: 本セッション用 acceptance 定義の新規作成。session-12.yaml(検収型)構造に準拠する。"
+  ],
+  "forbidden_changes": [
+    "docs/config/queue_policy.yaml の編集または上書きまたは構造変更",
+    "docs/config/project_registry.json の作成または編集",
+    "docs/config/scheduler_plans.yaml の作成または編集",
+    "orchestration/queue/queue_state.json の作成または編集",
+    "artifacts/selector/ 配下のファイル生成",
+    "selector の Python 実装の追加",
+    "queue engine 実装の変更",
+    "Command Center 実装の追加",
+    "dashboard HTML / UI ファイルの作成",
+    "session-154 io_contract の変更",
+    "session-153 queue_policy_schema の変更",
+    "orchestration/run_session.py の変更",
+    "providers 配下の変更",
+    "backend 配下の変更",
+    ".github 配下の変更",
+    "docs/roadmap.yaml の変更",
+    "orchestration/config.yaml の変更",
+    "既存 session-01 から session-154 の json / yaml の変更",
+    "既存 acceptance session-01 から session-154 の yaml の変更",
+    "A02_fina プロジェクトへの着手"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-155-01",
+      "type": "artifact_existence",
+      "condition": "docs/config/queue_policy.yaml がリポジトリ内に存在すること。"
+    },
+    {
+      "id": "CC-155-02",
+      "type": "syntax_valid",
+      "condition": "docs/config/queue_policy.yaml が python3 yaml.safe_load でエラーなくパースできること。"
+    },
+    {
+      "id": "CC-155-03",
+      "type": "structural_consistency",
+      "condition": "docs/config/queue_policy.yaml のパス文字列が session-154.json の io_contract.actors[name=selector].inputs[name=queue_policy].path と完全一致すること。"
+    },
+    {
+      "id": "CC-155-04",
+      "type": "responsibility_separation",
+      "condition": "docs/config/queue_policy.yaml に判断実行ロジック(関数定義 def / lambda / eval / exec / 条件分岐 if/elif/else / 計算式 / テンプレート展開 {{ }} ${ } / arrow function => / function() )が含まれないこと。"
+    },
+    {
+      "id": "CC-155-05",
+      "type": "responsibility_separation",
+      "condition": "docs/config/queue_policy.yaml が selector の判断ロジックを記述しないこと(policy はデータ / selector が解釈)。"
+    },
+    {
+      "id": "CC-155-06",
+      "type": "responsibility_separation",
+      "condition": "docs/config/queue_policy.yaml が queue の実行制御ロジックを記述しないこと(queue 状態遷移は orchestration/queue/queue_state.json および queue engine の責任)。"
+    },
+    {
+      "id": "CC-155-07",
+      "type": "responsibility_separation",
+      "condition": "docs/config/queue_policy.yaml が Command Center の表示ロジックを記述しないこと(dashboard 生成は command_center actor の責任)。"
+    },
+    {
+      "id": "CC-155-08",
+      "type": "side_effect_free",
+      "condition": "本セッションの実行により docs/config/queue_policy.yaml のバイト内容および mtime が変更されないこと。"
+    },
+    {
+      "id": "CC-155-09",
+      "type": "scope_compliance",
+      "condition": "本セッション commit の git diff --name-only の結果が docs/sessions/session-155.json と docs/acceptance/session-155.yaml の2件のみであること。"
+    },
+    {
+      "id": "CC-155-10",
+      "type": "artifact",
+      "condition": "docs/acceptance/session-155.yaml が新規作成され保存されていること。"
+    },
+    {
+      "id": "CC-155-11",
+      "type": "document_rule",
+      "condition": "本セッション定義が allowed_changes_detail (list[str]) / forbidden_changes / completion_criteria (object 配列) / acceptance_criteria / review_points を含む構造化 JSON として保存されていること。"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-155-01",
+      "text": "コマンド `test -f docs/config/queue_policy.yaml && echo OK` の出力に 'OK' が含まれる。",
+      "test_name": "test_session_155_queue_policy_yaml_exists",
+      "completion_criteria_refs": ["CC-155-01"]
+    },
+    {
+      "id": "AC-155-02",
+      "text": "コマンド `python3 -c \"import yaml; yaml.safe_load(open('docs/config/queue_policy.yaml'))\"` がエラーなく終了する。",
+      "test_name": "test_session_155_queue_policy_yaml_parses",
+      "completion_criteria_refs": ["CC-155-02"]
+    },
+    {
+      "id": "AC-155-03",
+      "text": "session-154.json から `io_contract.actors[name=selector].inputs[name=queue_policy].path` を抽出した値が文字列 'docs/config/queue_policy.yaml' に一致する。",
+      "test_name": "test_session_155_path_matches_io_contract",
+      "completion_criteria_refs": ["CC-155-03"]
+    },
+    {
+      "id": "AC-155-04",
+      "text": "コマンド `grep -nE '(\\bdef [a-zA-Z_]+\\(|\\blambda \\b|\\beval\\(|\\bexec\\(|=>|function\\()' docs/config/queue_policy.yaml` のマッチ件数が 0 である。",
+      "test_name": "test_session_155_no_function_definition_or_lambda",
+      "completion_criteria_refs": ["CC-155-04"]
+    },
+    {
+      "id": "AC-155-05",
+      "text": "コマンド `grep -nE '(^[[:space:]]*if [^:]|^[[:space:]]*elif |^[[:space:]]*else:)' docs/config/queue_policy.yaml` のマッチ件数が 0 である。",
+      "test_name": "test_session_155_no_conditional_branch",
+      "completion_criteria_refs": ["CC-155-04"]
+    },
+    {
+      "id": "AC-155-06",
+      "text": "コマンド `grep -nE '(\\{\\{|\\}\\}|\\$\\{)' docs/config/queue_policy.yaml` のマッチ件数が 0 である。",
+      "test_name": "test_session_155_no_template_expansion",
+      "completion_criteria_refs": ["CC-155-04"]
+    },
+    {
+      "id": "AC-155-07",
+      "text": "docs/config/queue_policy.yaml の値領域に文字列内式(state == 'ready' のような比較演算子文字列)が含まれない。",
+      "test_name": "test_session_155_no_string_expression_in_values",
+      "completion_criteria_refs": ["CC-155-04", "CC-155-05"]
+    },
+    {
+      "id": "AC-155-08",
+      "text": "docs/config/queue_policy.yaml に selector の判断ロジック相当(優先度算出関数 / score 計算 / weight 計算)を記述した行が存在しない。",
+      "test_name": "test_session_155_no_selector_logic_in_policy",
+      "completion_criteria_refs": ["CC-155-05"]
+    },
+    {
+      "id": "AC-155-09",
+      "text": "docs/config/queue_policy.yaml に queue の状態遷移ロジック(enqueue / dequeue / state_transition)を記述したフィールドが存在しない。",
+      "test_name": "test_session_155_no_queue_logic_in_policy",
+      "completion_criteria_refs": ["CC-155-06"]
+    },
+    {
+      "id": "AC-155-10",
+      "text": "docs/config/queue_policy.yaml に Command Center の表示ロジック(dashboard render / html template)を記述したフィールドが存在しない。",
+      "test_name": "test_session_155_no_command_center_logic_in_policy",
+      "completion_criteria_refs": ["CC-155-07"]
+    },
+    {
+      "id": "AC-155-11",
+      "text": "session-155 commit 前後で docs/config/queue_policy.yaml のサイズと SHA256 が変化しない。",
+      "test_name": "test_session_155_queue_policy_yaml_unchanged",
+      "completion_criteria_refs": ["CC-155-08"]
+    },
+    {
+      "id": "AC-155-12",
+      "text": "session-155 commit の git show --name-only の結果が docs/sessions/session-155.json と docs/acceptance/session-155.yaml の2件のみである。",
+      "test_name": "test_session_155_changed_files_within_allowed_scope",
+      "completion_criteria_refs": ["CC-155-09"]
+    },
+    {
+      "id": "AC-155-13",
+      "text": "session-155 commit の git show --name-only に docs/config/queue_policy.yaml が含まれない。",
+      "test_name": "test_session_155_does_not_modify_queue_policy_yaml",
+      "completion_criteria_refs": ["CC-155-08", "CC-155-09"]
+    },
+    {
+      "id": "AC-155-14",
+      "text": "session-155 commit の git show --name-only に既存 session-01〜154 および対応 acceptance YAML が含まれない。",
+      "test_name": "test_session_155_does_not_modify_existing_sessions",
+      "completion_criteria_refs": ["CC-155-09"]
+    },
+    {
+      "id": "AC-155-15",
+      "text": "docs/acceptance/session-155.yaml が新規ファイルとして存在する。",
+      "test_name": "test_session_155_acceptance_yaml_exists",
+      "completion_criteria_refs": ["CC-155-10"]
+    },
+    {
+      "id": "AC-155-16",
+      "text": "session-155.json が allowed_changes_detail (list[str]) / forbidden_changes / completion_criteria (object 配列) / acceptance_criteria / review_points のすべてを構造化キーとして含む。",
+      "test_name": "test_session_155_json_contains_all_required_structural_keys",
+      "completion_criteria_refs": ["CC-155-11"]
+    }
+  ],
+  "review_points": [
+    "仕様一致(AC達成)",
+    "変更範囲遵守",
+    "副作用なし(既存破壊なし)",
+    "検証十分性"
+  ]
+}
