@@ -54,21 +54,25 @@ acceptance:
       - "candidate_sessions と selected_session_id が完全一致 (timestamp 除く)"
 
   - id: AC-158-07
-    description: "metadata.skipped_sessions が候補化されなかった session_id と reason を追跡する"
-    test_name: test_skipped_sessions_metadata
+    description: "壊れた session JSON が候補から除外され metadata.skipped_sessions に記録される"
+    test_name: test_skipped_sessions_recorded
     type: automated
     verify:
-      - "selector_output.metadata.skipped_sessions が list[dict] であること"
-      - "session_id を持たない session 定義が candidate_sessions に含まれないこと"
-      - "skipped_sessions に reason を含むこと"
+      - "tmp_path に壊れた session JSON (構文エラー) を 1 件配置"
+      - "selector を実行し artifact を取得"
+      - "metadata.skipped_sessions に該当 path が含まれること"
+      - "reason が 'json_parse_error' であること"
+      - "candidate_sessions に該当 session_id が含まれないこと"
 
   - id: AC-158-08
-    description: "skipped_sessions が同一入力で決定的 (deterministic) に動作する"
-    test_name: test_skipped_sessions_deterministic
+    description: "全て正常な JSON のみの場合、metadata.skipped_sessions は空配列"
+    test_name: test_skipped_sessions_empty_when_all_valid
     type: automated
     verify:
-      - "同一の session 群を 2 回投入"
-      - "metadata.skipped_sessions が完全一致すること"
+      - "tmp_path に正常な session JSON のみ配置"
+      - "selector を実行し artifact を取得"
+      - "metadata.skipped_sessions が [] (空配列) であること"
+      - "metadata.skipped_sessions キー自体は必ず存在すること"
 
 completion_checks:
   - "orchestration/selector/__init__.py が存在する"
@@ -79,8 +83,9 @@ completion_checks:
   - "4-gate (ruff/pytest/mypy/compileall) 全 PASS"
   - "unit test 8 件 PASS"
   - "artifacts/selector/<timestamp>.json が実際に出力される (smoke test)"
-  - "artifact の metadata.skipped_sessions で候補化されなかった session_id と reason を追跡できる"
   - "sandbox/session-158 ブランチで作業し、main 直接変更がない"
+  - "壊れた session JSON は loader で skip され metadata.skipped_sessions に記録される"
+  - "silent skip 禁止 (loader 内で例外を握り潰さず必ず skipped リストに追加)"
 
 change_guardrails:
   allowed_changes:
