@@ -1,0 +1,178 @@
+session_id: "session-157"
+goal: "next-session selector の責務、入力、出力、判断手順、artifacts 出力契約、人間承認フロー、queue 連携境界、session-158 への引き継ぎを docs-only で正本化する。実装コード、queue 状態、既存設定ファイルは変更しない。"
+scope:
+  - "selector_specification に responsibility / input_schema / output_schema / decision_steps / artifacts_schema / human_approval_flow / queue_payload_schema / handoff_to_session_158 を直書きで保存する。"
+  - "selector が docs/config/queue_policy.yaml、docs/config/project_registry.json、docs/sessions/session-*.json を read-only で解釈する境界を明文化する。"
+  - "candidate_sessions / selected_session_id / selection_reason / metadata を返す output_schema を明文化する。"
+  - "queue_policy と project_registry に書き戻さない責務分離を明文化する。"
+  - "session-158 の selector 単体 MVP 実装に必要な module placement、提案関数シグネチャ、受入テンプレートを引き継ぐ。"
+out_of_scope:
+  - "selector の Python 実装"
+  - "orchestration/selector/ 配下の作成または編集"
+  - "artifacts/selector/<timestamp>.json の実ファイル生成"
+  - "orchestration/queue/queue_state.json の作成または編集"
+  - "queue engine の実装または変更"
+  - "human approval 永続化の実装"
+  - "Command Center の実装"
+  - "dashboard HTML / UI ファイルの作成"
+  - "docs/config/queue_policy.yaml の編集または上書き"
+  - "docs/config/project_registry.json の編集または上書き"
+  - "docs/config/scheduler_plans.yaml の作成または編集"
+  - "session-154 io_contract の変更"
+  - "session-155 検収結果の変更"
+  - "session-156 検収結果の変更"
+  - "既存 session-01 から session-156 の json / yaml の変更"
+  - "既存 acceptance session-01 から session-156 の yaml の変更"
+  - "A02_fina プロジェクトへの着手"
+  - "orchestration/run_session.py の変更"
+  - "providers 配下の変更"
+  - "backend 配下の変更"
+  - ".github 配下の変更"
+  - "docs/roadmap.yaml の変更"
+  - "orchestration/config.yaml の変更"
+acceptance:
+  - id: "AC-157-01"
+    requirement: "selector_specification.responsibility が primary_role / interpretation_responsibility / non_responsibility / boundary_with_human を含む。"
+    test_name: "test_session_157_responsibility_keys"
+    type: "auto"
+    manual_check: false
+    verification:
+      - "docs/sessions/session-157.json をパースし selector_specification.responsibility のキー集合を確認する。"
+  - id: "AC-157-02"
+    requirement: "selector_specification.input_schema が queue_policy / project_registry / session_definitions を含み、queue_policy と project_registry の access が read-only である。"
+    test_name: "test_session_157_input_schema_read_only"
+    type: "auto"
+    manual_check: false
+    verification:
+      - "docs/sessions/session-157.json をパースし selector_specification.input_schema のキーと access 値を確認する。"
+  - id: "AC-157-03"
+    requirement: "output_schema.required が candidate_sessions / selected_session_id / selection_reason / metadata に完全一致する。"
+    test_name: "test_session_157_output_schema_required"
+    type: "auto"
+    manual_check: false
+    verification:
+      - "selector_specification.output_schema.required の集合を確認する。"
+  - id: "AC-157-04"
+    requirement: "candidate_sessions.items.required が session_id / rank / priority_rank_value / reason に完全一致する。"
+    test_name: "test_session_157_candidate_sessions_required"
+    type: "auto"
+    manual_check: false
+    verification:
+      - "selector_specification.output_schema.properties.candidate_sessions.items.required の集合を確認する。"
+  - id: "AC-157-05"
+    requirement: "decision_steps が文字列配列であり、関数定義、lambda、eval、テンプレート式を含まない。"
+    test_name: "test_session_157_decision_steps_declarative"
+    type: "auto"
+    manual_check: false
+    verification:
+      - "selector_specification.decision_steps の型と禁止語句を確認する。"
+  - id: "AC-157-06"
+    requirement: "decision_steps が10要素以上で queue_policy / project_registry / session_id / human approval を含む。"
+    test_name: "test_session_157_decision_steps_keywords"
+    type: "auto"
+    manual_check: false
+    verification:
+      - "selector_specification.decision_steps を連結し必須語句を確認する。"
+  - id: "AC-157-07"
+    requirement: "artifacts_schema が file_path_pattern / timestamp_format / encoding / required_top_level_keys を含み、file_path_pattern が artifacts/selector/<timestamp>.json である。"
+    test_name: "test_session_157_artifacts_schema"
+    type: "auto"
+    manual_check: false
+    verification:
+      - "selector_specification.artifacts_schema のキーと file_path_pattern 値を確認する。"
+  - id: "AC-157-08"
+    requirement: "human_approval_flow が trigger_condition / timing / blocking / event_payload_schema を含み、blocking が true である。"
+    test_name: "test_session_157_human_approval_flow"
+    type: "auto"
+    manual_check: false
+    verification:
+      - "selector_specification.human_approval_flow のキーと blocking 値を確認する。"
+  - id: "AC-157-09"
+    requirement: "queue_payload_schema.required が selected_session_id / selection_reason_subset / selector_artifact_path を含む。"
+    test_name: "test_session_157_queue_payload_schema"
+    type: "auto"
+    manual_check: false
+    verification:
+      - "selector_specification.queue_payload_schema.required の集合を確認する。"
+  - id: "AC-157-10"
+    requirement: "handoff_to_session_158 が module_placement / proposed_function_signatures / acceptance_template_for_session_158 を含み、module_placement が orchestration/selector/ である。"
+    test_name: "test_session_157_handoff_to_session_158"
+    type: "auto"
+    manual_check: false
+    verification:
+      - "selector_specification.handoff_to_session_158 のキーと module_placement 値を確認する。"
+  - id: "AC-157-11"
+    requirement: "handoff_to_session_158 に bare function_signatures キーが存在せず proposed_function_signatures が存在する。"
+    test_name: "test_session_157_proposed_function_signatures_only"
+    type: "auto"
+    manual_check: false
+    verification:
+      - "selector_specification.handoff_to_session_158 のキー集合を確認する。"
+  - id: "AC-157-12"
+    requirement: "docs/sessions/session-157.json と docs/acceptance/session-157.yaml が構文エラーなくパースできる。"
+    test_name: "test_session_157_syntax_valid"
+    type: "auto"
+    manual_check: false
+    verification:
+      - "python3 json.load で docs/sessions/session-157.json をパースする。"
+      - "python3 yaml.safe_load で docs/acceptance/session-157.yaml をパースする。"
+  - id: "AC-157-13"
+    requirement: "queue_policy.yaml と project_registry.json へ書き戻さない制約が non_responsibility と session-158 acceptance template に明記されている。"
+    test_name: "test_session_157_no_config_writeback"
+    type: "auto"
+    manual_check: false
+    verification:
+      - "selector_specification.responsibility.non_responsibility と handoff_to_session_158.acceptance_template_for_session_158 を確認する。"
+  - id: "AC-157-19"
+    requirement: "session-157.json が allowed_changes_detail / forbidden_changes / completion_criteria / acceptance_criteria / review_points を含み、completion_criteria の各要素が id / type / condition を持つ。"
+    test_name: "test_session_157_required_structural_keys"
+    type: "auto"
+    manual_check: false
+    verification:
+      - "docs/sessions/session-157.json のトップレベルキーと completion_criteria の構造を確認する。"
+completion_checks:
+  - "docs/sessions/session-157.json と docs/acceptance/session-157.yaml が存在し構文エラーなくパースされる。"
+  - "selector_specification.responsibility が必須キーを含む。"
+  - "input_schema が3入力を含み queue_policy と project_registry が read-only である。"
+  - "output_schema.required が4要素に完全一致する。"
+  - "candidate_sessions.items.required が4要素に完全一致する。"
+  - "decision_steps が宣言的な自然言語手順である。"
+  - "artifacts_schema が artifacts/selector/<timestamp>.json を出力対象パターンとして定義する。"
+  - "human_approval_flow が blocking=true を明記する。"
+  - "queue_payload_schema が queue へ渡す最小 payload を定義する。"
+  - "handoff_to_session_158 が orchestration/selector/ と提案関数シグネチャと受入テンプレートを含む。"
+  - "queue_policy.yaml と project_registry.json に書き戻さない制約が明記されている。"
+  - "既存設定ファイルの SHA256 が不変である。"
+change_guardrails:
+  allowed_changes:
+    - "docs/sessions/session-157.json"
+    - "docs/acceptance/session-157.yaml"
+  forbidden_changes:
+    - "docs/config/queue_policy.yaml の編集または上書き"
+    - "docs/config/project_registry.json の編集または上書き"
+    - "docs/config/scheduler_plans.yaml の作成または編集"
+    - "orchestration/selector/ 配下の作成または編集"
+    - "orchestration/queue/queue_state.json の作成または編集"
+    - "artifacts/selector/ 配下のファイル生成"
+    - "selector の Python 実装の追加"
+    - "queue engine 実装の変更"
+    - "Command Center 実装の追加"
+    - "dashboard HTML / UI ファイルの作成"
+    - "session-154 io_contract の変更"
+    - "session-155 検収結果の変更"
+    - "session-156 検収結果の変更"
+    - "orchestration/run_session.py の変更"
+    - "providers 配下の変更"
+    - "backend 配下の変更"
+    - ".github 配下の変更"
+    - "docs/roadmap.yaml の変更"
+    - "orchestration/config.yaml の変更"
+    - "既存 session-01 から session-156 の json / yaml の変更"
+    - "既存 acceptance session-01 から session-156 の yaml の変更"
+    - "A02_fina プロジェクトへの着手"
+review_points:
+  - "仕様一致(AC達成)"
+  - "責務分離(selector / queue / command_center)"
+  - "変更範囲遵守"
+  - "副作用なし(既存設定ファイル不変)"
+  - "session-158 への実装引き継ぎ十分性"

@@ -1,0 +1,508 @@
+{
+  "session_id": "session-157",
+  "phase_id": "phase-07",
+  "title": "Define next-session selector specification with responsibility, I/O, decision steps, artifacts, and handoff (docs-only)",
+  "goal": "next-session selector の責務、入力、出力、判断手順、artifacts 出力契約、人間承認フロー、queue 連携境界、session-158 への引き継ぎを docs-only で正本化する。実装コード、queue 状態、既存設定ファイルは変更しない。",
+  "scope": [
+    "selector_specification に responsibility / input_schema / output_schema / decision_steps / artifacts_schema / human_approval_flow / queue_payload_schema / handoff_to_session_158 を直書きで保存する。",
+    "selector が docs/config/queue_policy.yaml、docs/config/project_registry.json、docs/sessions/session-*.json を read-only で解釈する境界を明文化する。",
+    "candidate_sessions / selected_session_id / selection_reason / metadata を返す output_schema を明文化する。",
+    "queue_policy と project_registry に書き戻さない責務分離を明文化する。",
+    "session-158 の selector 単体 MVP 実装に必要な module placement、提案関数シグネチャ、受入テンプレートを引き継ぐ。"
+  ],
+  "out_of_scope": [
+    "selector の Python 実装",
+    "orchestration/selector/ 配下の作成または編集",
+    "artifacts/selector/<timestamp>.json の実ファイル生成",
+    "orchestration/queue/queue_state.json の作成または編集",
+    "queue engine の実装または変更",
+    "human approval 永続化の実装",
+    "Command Center の実装",
+    "dashboard HTML / UI ファイルの作成",
+    "docs/config/queue_policy.yaml の編集または上書き",
+    "docs/config/project_registry.json の編集または上書き",
+    "docs/config/scheduler_plans.yaml の作成または編集",
+    "session-154 io_contract の変更",
+    "session-155 検収結果の変更",
+    "session-156 検収結果の変更",
+    "既存 session-01 から session-156 の json / yaml の変更",
+    "既存 acceptance session-01 から session-156 の yaml の変更",
+    "A02_fina プロジェクトへの着手",
+    "orchestration/run_session.py の変更",
+    "providers 配下の変更",
+    "backend 配下の変更",
+    ".github 配下の変更",
+    "docs/roadmap.yaml の変更",
+    "orchestration/config.yaml の変更"
+  ],
+  "constraints": [
+    "1セッション1目的",
+    "docs-only(実装コード非接触)",
+    "最大2ファイル以内で完結すること(session-157.json と session-157.yaml のみ)",
+    "docs/config/queue_policy.yaml は読み取り専用として扱うこと",
+    "docs/config/project_registry.json は読み取り専用として扱うこと",
+    "selector は判断担当、queue は実行制御担当、command_center は可視化担当という責務分離を破らないこと",
+    "decision_steps は自然言語の手順のみで記述し、関数定義、lambda、eval、テンプレート式を含めないこと",
+    "candidate_sessions の順位根拠は priority_rank_value と reason で表現すること",
+    "output_schema.required は candidate_sessions / selected_session_id / selection_reason / metadata の4要素に限定すること",
+    "allowed_changes_detail は list[str] 形式で記述すること",
+    "completion_criteria は id, type, condition を持つ object 配列で記述すること",
+    "completion_criteria.type は state_transition_consistent / non_regression / side_effect_free / artifact / document_rule のいずれかに限定すること",
+    "acceptance_criteria の各要素は id, text, test_name を持つこと",
+    "曖昧語(適切に / 必要に応じて / など)を使用しないこと",
+    "ファイルパスは repository 相対パスで具体的に書くこと"
+  ],
+  "acceptance_ref": "docs/acceptance/session-157.yaml",
+  "inputs": [
+    {
+      "name": "queue_policy_yaml_existing",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/config/queue_policy.yaml (既存・読み取り専用)"
+    },
+    {
+      "name": "project_registry_json_existing",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/config/project_registry.json (既存・読み取り専用)"
+    },
+    {
+      "name": "session_definitions_existing",
+      "type": "file:glob",
+      "required": true,
+      "description": "docs/sessions/session-*.json (候補セッション定義群・読み取り専用)"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "session_157_json",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/sessions/session-157.json (本セッション定義 + selector_specification)"
+    },
+    {
+      "name": "session_157_yaml",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/acceptance/session-157.yaml (本セッション用 acceptance 定義)"
+    }
+  ],
+  "selector_specification": {
+    "version": "v0",
+    "responsibility": {
+      "primary_role": "次に実行候補とする session_id を、queue_policy、project_registry、session_definitions の3入力から選定する判断担当。",
+      "interpretation_responsibility": [
+        "queue_policy.yaml の宣言的条件を読み取り、project_registry.json の事実データと照合する。",
+        "session_definitions から候補セッションを抽出し、除外理由と採用理由を構造化する。",
+        "queue 投入前に human approval が必要な条件を判定し、停止すべき状態を出力に含める。"
+      ],
+      "non_responsibility": [
+        "docs/config/queue_policy.yaml へ書き戻ししない。",
+        "docs/config/project_registry.json へ書き戻ししない。",
+        "orchestration/queue/queue_state.json を作成、更新、削除しない。",
+        "queue engine へ直接 enqueue しない。",
+        "human approval の承認イベントを永続化しない。",
+        "Command Center 用 dashboard を生成しない。",
+        "設定ファイルの判断結果を設定ファイル側へ逆流させない。"
+      ],
+      "boundary_with_human": "human approval が必要な場合、selector は human_approval_required=true を出力し、queue 投入前の停止状態を表現する。承認または却下の判断自体は人間の責務とする。"
+    },
+    "input_schema": {
+      "queue_policy": {
+        "type": "file:path",
+        "path": "docs/config/queue_policy.yaml",
+        "access": "read-only",
+        "purpose": "除外条件、優先順位、human gate 条件の宣言的データ。"
+      },
+      "project_registry": {
+        "type": "file:path",
+        "path": "docs/config/project_registry.json",
+        "access": "read-only",
+        "purpose": "プロジェクト状態、deploy_risk、db_touch_allowed、night_batch_allowed 等の事実データ。"
+      },
+      "session_definitions": {
+        "type": "file:glob",
+        "path": "docs/sessions/session-*.json",
+        "access": "read-only",
+        "purpose": "候補となるセッション定義群。"
+      }
+    },
+    "output_schema": {
+      "type": "object",
+      "required": [
+        "candidate_sessions",
+        "selected_session_id",
+        "selection_reason",
+        "metadata"
+      ],
+      "properties": {
+        "candidate_sessions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "session_id",
+              "rank",
+              "priority_rank_value",
+              "reason"
+            ],
+            "properties": {
+              "session_id": {
+                "type": "string"
+              },
+              "rank": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "priority_rank_value": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "reason": {
+                "type": "object",
+                "required": [
+                  "matched_rules",
+                  "rejected_rules",
+                  "registry_facts"
+                ]
+              }
+            }
+          }
+        },
+        "selected_session_id": {
+          "type": "string"
+        },
+        "selection_reason": {
+          "type": "object",
+          "required": [
+            "selected_by",
+            "matched_rules",
+            "rejected_rules",
+            "human_approval_required"
+          ]
+        },
+        "metadata": {
+          "type": "object",
+          "required": [
+            "selector_spec_version",
+            "source_files",
+            "generated_at"
+          ]
+        }
+      }
+    },
+    "decision_steps": [
+      "Step 1: 入力3種(queue_policy.yaml / project_registry.json / docs/sessions/session-*.json)を読み込む。",
+      "Step 2: session_definitions から候補セッションを抽出する。",
+      "Step 3: queue_policy の forbidden_if 等の除外条件を参照し、project_registry の status 等の事実データと照合して、候補から除外すべきセッションを除く。",
+      "Step 4: queue_policy の priority_order 宣言的データを参照して、候補セッションを並べる。priority_order 内の位置がそのまま並び順の参照値となる。",
+      "Step 5: project_registry の deploy_risk / db_touch_allowed / night_batch_allowed 等の事実データを参照して、候補ごとに matched_rules / rejected_rules を記録する。",
+      "Step 6: 同順位が発生した場合は session_id の昇順で安定化する。",
+      "Step 7: 並び順の最上位を初期採用候補とする。",
+      "Step 8: queue_policy の route_to_human_if に該当する場合は human approval gate として human_approval_required=true を設定し、queue 投入前に停止する。",
+      "Step 9: selected_session_id および selection_reason を確定し、output_schema に準拠した dict を構築する。",
+      "Step 10: selector_output を artifacts 出力対象として構築する(実際のファイル書き込みは session-158 の実装責務とする / timestamp 形式は ISO 8601 UTC コンパクト形式)。"
+    ],
+    "artifacts_schema": {
+      "file_path_pattern": "artifacts/selector/<timestamp>.json",
+      "timestamp_format": "ISO 8601 UTC compact format: YYYYMMDDTHHMMSSZ",
+      "encoding": "UTF-8",
+      "required_top_level_keys": [
+        "candidate_sessions",
+        "selected_session_id",
+        "selection_reason",
+        "metadata"
+      ]
+    },
+    "human_approval_flow": {
+      "trigger_condition": "selection_reason.human_approval_required が true の場合。",
+      "timing": "selector_output 構築後、queue payload 受け渡し前。",
+      "blocking": true,
+      "event_payload_schema": {
+        "type": "object",
+        "required": [
+          "event_type",
+          "selected_session_id",
+          "selector_artifact_path",
+          "approved_by",
+          "approved_at"
+        ],
+        "properties": {
+          "event_type": {
+            "const": "human_approval"
+          },
+          "selected_session_id": {
+            "type": "string"
+          },
+          "selector_artifact_path": {
+            "type": "string"
+          },
+          "approved_by": {
+            "type": "string"
+          },
+          "approved_at": {
+            "type": "string"
+          }
+        }
+      },
+      "approval_persistence": "session-157 では確定しない。session-158 でも human approval 永続化は実装しない。"
+    },
+    "queue_payload_schema": {
+      "type": "object",
+      "required": [
+        "selected_session_id",
+        "selection_reason_subset",
+        "selector_artifact_path",
+        "human_approval_required"
+      ],
+      "properties": {
+        "selected_session_id": {
+          "type": "string"
+        },
+        "selection_reason_subset": {
+          "type": "object",
+          "required": [
+            "matched_rules",
+            "rejected_rules",
+            "priority_rank_value"
+          ]
+        },
+        "selector_artifact_path": {
+          "type": "string",
+          "pattern": "artifacts/selector/<timestamp>.json"
+        },
+        "human_approval_required": {
+          "type": "boolean"
+        }
+      }
+    },
+    "handoff_to_session_158": {
+      "module_placement": "orchestration/selector/",
+      "proposed_function_signatures": [
+        "load_queue_policy(path: str) -> dict",
+        "load_project_registry(path: str) -> dict",
+        "load_session_definitions(pattern: str) -> list[dict]",
+        "select_next_session(queue_policy: dict, project_registry: dict, session_definitions: list[dict]) -> dict",
+        "build_selector_artifact(selector_output: dict, timestamp: str) -> dict"
+      ],
+      "acceptance_template_for_session_158": [
+        "docs/config/queue_policy.yaml を読み取り専用として扱い、書き戻さない。",
+        "docs/config/project_registry.json を読み取り専用として扱い、書き戻さない。",
+        "orchestration/queue/queue_state.json を作成せず、書き込みを試みない。",
+        "selector は artifacts/selector/<timestamp>.json の出力だけを担当し、queue engine へ直接連携しない。",
+        "candidate_sessions / selected_session_id / selection_reason / metadata を含む selector_output を生成する。",
+        "最低5件の unit test を追加し、除外条件、優先順位、同順位安定化、human approval gate、artifact 形状を検証する。",
+        "変更ファイルは最大5ファイル以内に収める。"
+      ]
+    }
+  },
+  "allowed_changes": [
+    "docs/sessions/session-157.json",
+    "docs/acceptance/session-157.yaml"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/session-157.json: selector_specification を含む本セッション定義の新規作成。",
+    "docs/acceptance/session-157.yaml: 本セッション用 acceptance 定義の新規作成。"
+  ],
+  "forbidden_changes": [
+    "docs/config/queue_policy.yaml の編集または上書き",
+    "docs/config/project_registry.json の編集または上書き",
+    "docs/config/scheduler_plans.yaml の作成または編集",
+    "orchestration/selector/ 配下の作成または編集",
+    "orchestration/queue/queue_state.json の作成または編集",
+    "artifacts/selector/ 配下のファイル生成",
+    "selector の Python 実装の追加",
+    "queue engine 実装の変更",
+    "Command Center 実装の追加",
+    "dashboard HTML / UI ファイルの作成",
+    "session-154 io_contract の変更",
+    "session-155 検収結果の変更",
+    "session-156 検収結果の変更",
+    "orchestration/run_session.py の変更",
+    "providers 配下の変更",
+    "backend 配下の変更",
+    ".github 配下の変更",
+    "docs/roadmap.yaml の変更",
+    "orchestration/config.yaml の変更",
+    "既存 session-01 から session-156 の json / yaml の変更",
+    "既存 acceptance session-01 から session-156 の yaml の変更",
+    "A02_fina プロジェクトへの着手"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-157-01",
+      "type": "artifact",
+      "condition": "docs/sessions/session-157.json と docs/acceptance/session-157.yaml が新規作成され保存されていること。"
+    },
+    {
+      "id": "CC-157-02",
+      "type": "document_rule",
+      "condition": "session-157.json が selector_specification.responsibility に primary_role / interpretation_responsibility / non_responsibility / boundary_with_human を含むこと。"
+    },
+    {
+      "id": "CC-157-03",
+      "type": "document_rule",
+      "condition": "selector_specification.input_schema が queue_policy / project_registry / session_definitions を含み、queue_policy と project_registry の access が read-only であること。"
+    },
+    {
+      "id": "CC-157-04",
+      "type": "document_rule",
+      "condition": "selector_specification.output_schema.required が candidate_sessions / selected_session_id / selection_reason / metadata の4要素に完全一致すること。"
+    },
+    {
+      "id": "CC-157-05",
+      "type": "document_rule",
+      "condition": "candidate_sessions.items.required が session_id / rank / priority_rank_value / reason の4要素に完全一致すること。"
+    },
+    {
+      "id": "CC-157-06",
+      "type": "document_rule",
+      "condition": "decision_steps が10要素以上の文字列配列であり、関数定義、lambda、eval、テンプレート式を含まないこと。"
+    },
+    {
+      "id": "CC-157-07",
+      "type": "document_rule",
+      "condition": "decision_steps に queue_policy / project_registry / session_id / human approval の語が含まれること。"
+    },
+    {
+      "id": "CC-157-08",
+      "type": "document_rule",
+      "condition": "artifacts_schema が file_path_pattern / timestamp_format / encoding / required_top_level_keys を含み、file_path_pattern が artifacts/selector/<timestamp>.json であること。"
+    },
+    {
+      "id": "CC-157-09",
+      "type": "document_rule",
+      "condition": "human_approval_flow が trigger_condition / timing / blocking / event_payload_schema を含み、blocking が true であること。"
+    },
+    {
+      "id": "CC-157-10",
+      "type": "document_rule",
+      "condition": "queue_payload_schema.required が selected_session_id / selection_reason_subset / selector_artifact_path を含むこと。"
+    },
+    {
+      "id": "CC-157-11",
+      "type": "document_rule",
+      "condition": "handoff_to_session_158 が module_placement / proposed_function_signatures / acceptance_template_for_session_158 を含み、module_placement が orchestration/selector/ であること。"
+    },
+    {
+      "id": "CC-157-12",
+      "type": "document_rule",
+      "condition": "handoff_to_session_158 に proposed_function_signatures が存在し、bare function_signatures キーが存在しないこと。"
+    },
+    {
+      "id": "CC-157-13",
+      "type": "side_effect_free",
+      "condition": "docs/config/queue_policy.yaml と docs/config/project_registry.json に書き戻さない制約が responsibility と handoff に明記されていること。"
+    },
+    {
+      "id": "CC-157-14",
+      "type": "side_effect_free",
+      "condition": "本セッションの実行により docs/config/queue_policy.yaml の SHA256 が 8cb2ff1120579b4c24242b15d064959983ecbbead510cab1ad326839046ce8a7 のまま変化しないこと。"
+    },
+    {
+      "id": "CC-157-15",
+      "type": "side_effect_free",
+      "condition": "本セッションの実行により docs/config/project_registry.json の SHA256 が 01775f3a8fd7b930b9065e4c0efe2a4c47c09902b66e8600612cdf3cd2095cf9 のまま変化しないこと。"
+    },
+    {
+      "id": "CC-157-16",
+      "type": "non_regression",
+      "condition": "本セッション commit の変更対象が docs/sessions/session-157.json と docs/acceptance/session-157.yaml の2件に限定されること。"
+    },
+    {
+      "id": "CC-157-17",
+      "type": "state_transition_consistent",
+      "condition": "selector は queue_state を変更せず、queue 投入前の payload 境界までを定義すること。"
+    },
+    {
+      "id": "CC-157-18",
+      "type": "document_rule",
+      "condition": "Step 10 が selector_output を artifacts 出力対象として構築する記述であり、実際のファイル書き込みを session-158 の実装責務として明記すること。"
+    },
+    {
+      "id": "CC-157-19",
+      "type": "document_rule",
+      "condition": "session-157.json が allowed_changes_detail / forbidden_changes / completion_criteria / acceptance_criteria / review_points をトップレベルキーとして含み、completion_criteria の各要素が id / type / condition を持つこと。"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-157-01",
+      "text": "selector_specification.responsibility が primary_role / interpretation_responsibility / non_responsibility / boundary_with_human を含む。",
+      "test_name": "test_session_157_responsibility_keys"
+    },
+    {
+      "id": "AC-157-02",
+      "text": "selector_specification.input_schema が queue_policy / project_registry / session_definitions を含み、queue_policy と project_registry の access が read-only である。",
+      "test_name": "test_session_157_input_schema_read_only"
+    },
+    {
+      "id": "AC-157-03",
+      "text": "output_schema.required が candidate_sessions / selected_session_id / selection_reason / metadata に完全一致する。",
+      "test_name": "test_session_157_output_schema_required"
+    },
+    {
+      "id": "AC-157-04",
+      "text": "candidate_sessions.items.required が session_id / rank / priority_rank_value / reason に完全一致する。",
+      "test_name": "test_session_157_candidate_sessions_required"
+    },
+    {
+      "id": "AC-157-05",
+      "text": "decision_steps が文字列配列であり、関数定義、lambda、eval、テンプレート式を含まない。",
+      "test_name": "test_session_157_decision_steps_declarative"
+    },
+    {
+      "id": "AC-157-06",
+      "text": "decision_steps が10要素以上で queue_policy / project_registry / session_id / human approval を含む。",
+      "test_name": "test_session_157_decision_steps_keywords"
+    },
+    {
+      "id": "AC-157-07",
+      "text": "artifacts_schema が file_path_pattern / timestamp_format / encoding / required_top_level_keys を含み、file_path_pattern が artifacts/selector/<timestamp>.json である。",
+      "test_name": "test_session_157_artifacts_schema"
+    },
+    {
+      "id": "AC-157-08",
+      "text": "human_approval_flow が trigger_condition / timing / blocking / event_payload_schema を含み、blocking が true である。",
+      "test_name": "test_session_157_human_approval_flow"
+    },
+    {
+      "id": "AC-157-09",
+      "text": "queue_payload_schema.required が selected_session_id / selection_reason_subset / selector_artifact_path を含む。",
+      "test_name": "test_session_157_queue_payload_schema"
+    },
+    {
+      "id": "AC-157-10",
+      "text": "handoff_to_session_158 が module_placement / proposed_function_signatures / acceptance_template_for_session_158 を含み、module_placement が orchestration/selector/ である。",
+      "test_name": "test_session_157_handoff_to_session_158"
+    },
+    {
+      "id": "AC-157-11",
+      "text": "handoff_to_session_158 に bare function_signatures キーが存在せず proposed_function_signatures が存在する。",
+      "test_name": "test_session_157_proposed_function_signatures_only"
+    },
+    {
+      "id": "AC-157-12",
+      "text": "docs/sessions/session-157.json と docs/acceptance/session-157.yaml が構文エラーなくパースできる。",
+      "test_name": "test_session_157_syntax_valid"
+    },
+    {
+      "id": "AC-157-13",
+      "text": "queue_policy.yaml と project_registry.json へ書き戻さない制約が non_responsibility と session-158 acceptance template に明記されている。",
+      "test_name": "test_session_157_no_config_writeback"
+    },
+    {
+      "id": "AC-157-19",
+      "text": "session-157.json が allowed_changes_detail / forbidden_changes / completion_criteria / acceptance_criteria / review_points を含み、completion_criteria の各要素が id / type / condition を持つ。",
+      "test_name": "test_session_157_required_structural_keys"
+    }
+  ],
+  "review_points": [
+    "仕様一致(AC達成)",
+    "責務分離(selector / queue / command_center)",
+    "変更範囲遵守",
+    "副作用なし(既存設定ファイル不変)",
+    "session-158 への実装引き継ぎ十分性"
+  ]
+}
