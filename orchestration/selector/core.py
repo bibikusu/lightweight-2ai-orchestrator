@@ -12,6 +12,14 @@ def _session_id(session: dict[str, Any]) -> str:
     return str(value)
 
 
+def _candidate_sessions(session_definitions: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [
+        session
+        for session in session_definitions
+        if session.get("session_id") not in (None, "")
+    ]
+
+
 def _registry_projects(project_registry: dict[str, Any]) -> dict[str, dict[str, Any]]:
     projects = project_registry.get("projects", [])
     if not isinstance(projects, list):
@@ -54,7 +62,23 @@ def _priority_rank_value(
 
 
 def generate_candidates(session_definitions: list[dict[str, Any]]) -> list[str]:
-    return sorted(_session_id(session) for session in session_definitions)
+    return sorted(_session_id(session) for session in _candidate_sessions(session_definitions))
+
+
+def generate_skipped_sessions(
+    session_definitions: list[dict[str, Any]],
+) -> list[dict[str, str]]:
+    skipped_sessions: list[dict[str, str]] = []
+    for session in session_definitions:
+        session_id = session.get("session_id")
+        if session_id in (None, ""):
+            skipped_sessions.append(
+                {
+                    "session_id": "",
+                    "reason": "session_id missing",
+                }
+            )
+    return skipped_sessions
 
 
 def select(
@@ -62,10 +86,11 @@ def select(
     project_registry: dict[str, Any],
     session_definitions: list[dict[str, Any]],
 ) -> str:
-    if not session_definitions:
+    candidates = _candidate_sessions(session_definitions)
+    if not candidates:
         return ""
     ranked = sorted(
-        session_definitions,
+        candidates,
         key=lambda session: (
             -_priority_rank_value(session, queue_policy, project_registry),
             _session_id(session),
@@ -83,11 +108,12 @@ def build_selector_output(
     registry_source: str = "docs/config/project_registry.json",
 ) -> dict[str, Any]:
     candidate_sessions = generate_candidates(session_definitions)
+    skipped_sessions = generate_skipped_sessions(session_definitions)
     selected_session_id = select(queue_policy, project_registry, session_definitions)
     selected_session = next(
         (
             session
-            for session in session_definitions
+            for session in _candidate_sessions(session_definitions)
             if _session_id(session) == selected_session_id
         ),
         {},
@@ -112,5 +138,6 @@ def build_selector_output(
             "policy_source": policy_source,
             "registry_source": registry_source,
             "session_count_scanned": len(session_definitions),
+            "skipped_sessions": skipped_sessions,
         },
     }

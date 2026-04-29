@@ -108,6 +108,7 @@ def test_artifact_output(tmp_path: Path) -> None:
     assert loaded["candidate_sessions"] == ["session-high", "session-low"]
     assert loaded["selected_session_id"] == "session-high"
     assert loaded["metadata"]["timestamp"] == timestamp
+    assert loaded["metadata"]["skipped_sessions"] == []
 
 
 def test_no_queue_state_touch(tmp_path: Path) -> None:
@@ -147,3 +148,59 @@ def test_deterministic() -> None:
 
     assert first["candidate_sessions"] == second["candidate_sessions"]
     assert first["selected_session_id"] == second["selected_session_id"]
+
+
+def test_skipped_sessions_metadata() -> None:
+    from orchestration.selector import core
+
+    sessions = [
+        *_sessions(),
+        {
+            "project_id": "P_LOW",
+            "priority_rank_value": 100,
+        },
+    ]
+
+    selector_output = core.build_selector_output(
+        _policy(),
+        _registry(),
+        sessions,
+        "2026-04-29T15:30:45.123Z",
+    )
+
+    assert selector_output["candidate_sessions"] == ["session-high", "session-low"]
+    assert selector_output["selected_session_id"] == "session-high"
+    assert selector_output["metadata"]["skipped_sessions"] == [
+        {
+            "session_id": "",
+            "reason": "session_id missing",
+        }
+    ]
+
+
+def test_skipped_sessions_deterministic() -> None:
+    from orchestration.selector import core
+
+    sessions = [
+        {
+            "project_id": "P_LOW",
+            "priority_rank_value": 100,
+        },
+        *_sessions(),
+    ]
+    first = core.build_selector_output(
+        _policy(),
+        _registry(),
+        sessions,
+        "2026-04-29T15:30:45.123Z",
+    )
+    second = core.build_selector_output(
+        _policy(),
+        _registry(),
+        sessions,
+        "2026-04-29T15:30:45.123Z",
+    )
+
+    assert first["metadata"]["skipped_sessions"] == second["metadata"][
+        "skipped_sessions"
+    ]
