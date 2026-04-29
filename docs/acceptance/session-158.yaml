@@ -1,0 +1,79 @@
+session_id: session-158
+
+acceptance:
+  - id: AC-158-01
+    description: "orchestration/selector/ モジュールが import 可能な状態で存在する"
+    test_name: test_selector_module_exists
+    type: automated
+    verify:
+      - "from orchestration.selector import core, loader, writer が成功する"
+
+  - id: AC-158-02
+    description: "candidate_sessions が 1 件以上生成される (空入力時は空配列を返す)"
+    test_name: test_candidate_generation
+    type: automated
+    verify:
+      - "core.generate_candidates() の戻り値が list[str] であること"
+      - "ダミー session JSON 群を渡した時に該当 session_id が含まれること"
+
+  - id: AC-158-03
+    description: "selected_session_id が 1 つ決定される (priority_rank_value 最高位)"
+    test_name: test_single_selection
+    type: automated
+    verify:
+      - "core.select() の戻り値が単一の str であること"
+      - "priority_rank_value が最も高い session が選ばれること"
+
+  - id: AC-158-04
+    description: "artifacts/selector/<timestamp>.json が session-157 output_schema に準拠して出力される"
+    test_name: test_artifact_output
+    type: automated
+    verify:
+      - "writer.write() 後に artifacts/selector/ 配下にファイルが存在する"
+      - "JSON parse 可能である"
+      - "candidate_sessions / selected_session_id / selection_reason / metadata を必須キーとして含む"
+      - "decision_steps / decision_trace を artifact 必須キーにしない"
+      - "ファイル名 timestamp が UTC ISO8601 安全形式 (YYYY-MM-DDTHH-MM-SS-sssZ) である"
+
+  - id: AC-158-05
+    description: "selector 実行後、orchestration/queue/queue_state.json が作成されない"
+    test_name: test_no_queue_state_touch
+    type: automated
+    verify:
+      - "selector 実行前に queue_state.json が不在であることを確認"
+      - "selector 実行後も queue_state.json が不在であることを assert"
+      - "tmp_path fixture で隔離環境を構築し、queue ディレクトリへの書き込みが無いこと"
+
+  - id: AC-158-06
+    description: "同一入力に対して selector が決定的 (deterministic) に動作する"
+    test_name: test_deterministic
+    type: automated
+    verify:
+      - "同一の queue_policy / project_registry / session 群を 2 回投入"
+      - "candidate_sessions と selected_session_id が完全一致 (timestamp 除く)"
+
+completion_checks:
+  - "orchestration/selector/__init__.py が存在する"
+  - "orchestration/selector/core.py が存在する"
+  - "orchestration/selector/loader.py が存在する"
+  - "orchestration/selector/writer.py が存在する"
+  - "tests/test_selector.py が存在し AC-158-01〜06 を全カバー"
+  - "4-gate (ruff/pytest/mypy/compileall) 全 PASS"
+  - "artifacts/selector/<timestamp>.json が実際に出力される (smoke test)"
+  - "sandbox/session-158 ブランチで作業し、main 直接変更がない"
+
+change_guardrails:
+  allowed_changes:
+    - "orchestration/selector/__init__.py"
+    - "orchestration/selector/core.py"
+    - "orchestration/selector/loader.py"
+    - "orchestration/selector/writer.py"
+    - "tests/test_selector.py"
+  forbidden_changes:
+    - "orchestration/run_session.py を変更しない"
+    - "orchestration/queue/ 配下を変更しない (queue_state.json を含む)"
+    - "docs/config/queue_policy.yaml を変更しない"
+    - "docs/config/project_registry.json を変更しない"
+    - "docs/sessions/ 配下を変更しない"
+    - "docs/acceptance/ 配下を変更しない (本 yaml 自身は除く)"
+    - "main ブランチへの直接 commit を行わない"

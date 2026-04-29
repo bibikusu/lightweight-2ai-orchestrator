@@ -1,0 +1,82 @@
+{
+  "session_id": "session-158",
+  "phase_id": "P8",
+  "title": "selector 単体MVP実装",
+  "tldr": "selector仕様(session-157)に基づき、candidate_sessions生成・selected_session_id決定・artifact出力までを単体で実装する。queue/scheduler/dashboard連携は行わない。",
+  "goal": "selectorが入力JSON群からselected_session_idを決定し、artifacts/selector/<timestamp>.json へ出力できる状態にする",
+  "scope": [
+    "orchestration/selector/ パッケージの新設",
+    "docs/config/queue_policy.yaml の読み取り (read-only)",
+    "docs/config/project_registry.json の読み取り (read-only)",
+    "docs/sessions/session-*.json の読み取り (read-only)",
+    "candidate_sessions 生成ロジック実装",
+    "selected_session_id 決定ロジック実装 (priority_rank_value のみ使用)",
+    "artifacts/selector/<timestamp>.json 出力",
+    "tests/test_selector.py 単体テスト作成"
+  ],
+  "out_of_scope": [
+    "orchestration/queue/queue_state.json への書き込み",
+    "queue engine 連携",
+    "orchestration/run_session.py への連携",
+    "Command Center 連携",
+    "scheduler 連携",
+    "dashboard 表示",
+    "human approval 永続化",
+    "score 計算ロジックの実装",
+    "artifact 出力に decision_steps / decision_trace 等の独自キーを追加すること"
+  ],
+  "constraints": [
+    "既存 config ファイル (queue_policy.yaml / project_registry.json) は read-only",
+    "selector は純関数的に動作すること (副作用は artifact 出力のみ)",
+    "score 計算禁止、priority_rank_value のみ使用 (session-157 正本準拠)",
+    "artifact 出力は session-157 selector_specification.output_schema に厳密準拠 (candidate_sessions / selected_session_id / selection_reason / metadata の 4 キーを必須とする)",
+    "artifact timestamp は UTC ISO8601 形式 (YYYY-MM-DDTHH:MM:SS.sssZ)",
+    "selector → policy/registry 書き戻し禁止 (逆流禁止、session-157 正本準拠)",
+    "sandbox/session-158 ブランチで作業し、main 直接変更禁止 (global_rules.md 第7章)"
+  ],
+  "git_strategy": {
+    "branch_name": "sandbox/session-158",
+    "base_branch": "main",
+    "merge_method": "cherry-pick to main after PASS"
+  },
+  "allowed_changes_detail": [
+    "orchestration/selector/__init__.py: 新規作成 (パッケージマーカー)",
+    "orchestration/selector/core.py: selector ロジック実装 (candidate_sessions 生成 + selected_session_id 決定)",
+    "orchestration/selector/loader.py: queue_policy / project_registry / session JSON 群の読み込み",
+    "orchestration/selector/writer.py: artifacts/selector/<timestamp>.json 出力",
+    "tests/test_selector.py: 単体テスト 6 件 (AC-158-01〜06 対応)"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-158-01",
+      "type": "artifact",
+      "condition": "artifacts/selector/<timestamp>.json が生成される"
+    },
+    {
+      "id": "CC-158-02",
+      "type": "non_regression",
+      "condition": "既存コード (orchestration/run_session.py 等) に影響を与えない"
+    },
+    {
+      "id": "CC-158-03",
+      "type": "side_effect_free",
+      "condition": "orchestration/queue/queue_state.json を作成・変更しない"
+    },
+    {
+      "id": "CC-158-04",
+      "type": "state_transition_consistent",
+      "condition": "同一入力で同一 selected_session_id および同一 candidate_sessions が返る"
+    },
+    {
+      "id": "CC-158-05",
+      "type": "non_regression",
+      "condition": "4-gate (.venv/bin/ruff check / PYTHONPATH=. .venv/bin/pytest -q / .venv/bin/python -m mypy --explicit-package-bases orchestration --ignore-missing-imports / .venv/bin/python -m compileall -q -f orchestration backend) 全 PASS"
+    }
+  ],
+  "review_points": [
+    "仕様一致 (AC-158-01〜06 全達成、session-157 selector_specification.output_schema 4 キー準拠)",
+    "変更範囲遵守 (allowed_changes_detail 5 ファイル外への変更なし)",
+    "副作用なし (queue_state.json 不作成、既存 config 不変、main 直接変更なし)",
+    "検証十分性 (4-gate PASS、unit test 6 件 PASS、artifact 実出力確認)"
+  ]
+}
