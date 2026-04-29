@@ -1,0 +1,367 @@
+{
+  "session_id": "session-154",
+  "phase_id": "phase-07",
+  "title": "Define I/O contract among next-session selector, queue, and Command Center (docs-only)",
+  "goal": "次セッション selector、queue、Command Center の3 actor 間における入力・出力・参照先・永続化先・表示先を契約として正本化し、後続の queue_policy.yaml 実体化(session-155 想定)と selector 実装の前提を確立する。",
+  "scope": [
+    "selector / queue / command_center の3 actor の役割定義を session-154.json の io_contract フィールドに直書きで保存する。",
+    "各 actor の inputs(読み取り対象ファイルおよびデータ)を明文化する。",
+    "各 actor の outputs(出力データ構造)を明文化する。",
+    "各 actor の output_destination または永続化先(保存パス)を明文化する。",
+    "actor 間のデータフロー(selector → queue → command_center)を data_flow フィールドに明文化する。"
+  ],
+  "out_of_scope": [
+    "docs/config/queue_policy.yaml の作成または編集",
+    "docs/config/project_registry.json の作成または編集",
+    "orchestration/queue/queue_state.json の作成または編集",
+    "artifacts/selector/<timestamp>.json の生成処理の実装",
+    "selector の Python 実装",
+    "queue engine の実装または変更",
+    "Command Center の実装",
+    "dashboard HTML/UI ファイルの作成",
+    "A02_fina プロジェクトへの着手",
+    "orchestration/run_session.py の変更",
+    "providers 配下の変更",
+    "backend 配下の変更",
+    ".github 配下の変更",
+    "docs/roadmap.yaml の変更",
+    "orchestration/config.yaml の変更",
+    "既存 session-01 から session-153 の変更",
+    "既存 acceptance session-01 から session-153 の変更",
+    "session-154 で定義する3 actor 以外への拡張"
+  ],
+  "constraints": [
+    "1セッション1目的",
+    "docs-only(実装コード非接触)",
+    "最大2ファイル以内で完結すること",
+    "session-153 で確定した queue_policy.yaml schema と整合すること",
+    "io_contract は3 actor(selector / queue / command_center)に限定すること",
+    "allowed_changes_detail は list[str] 形式で記述すること",
+    "completion_criteria は id, type, condition を持つ object 配列で記述すること",
+    "acceptance_criteria の各要素は id, text, test_name を持つこと",
+    "曖昧語(適切に / 必要に応じて / など)を使用しないこと",
+    "ファイルパスは repository 相対パスで具体的に書くこと",
+    "正本ルールは master_instruction.md と global_rules.md を基準にすること"
+  ],
+  "acceptance_ref": "docs/acceptance/session-154.yaml",
+  "inputs": [
+    {
+      "name": "session_153_json",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/sessions/session-153.json (queue_policy.yaml schema 正本)"
+    },
+    {
+      "name": "session_153_yaml",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/acceptance/session-153.yaml (queue_policy.yaml schema acceptance)"
+    },
+    {
+      "name": "session_152_json",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/sessions/session-152.json (next-session selector 最小仕様)"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "session_154_json",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/sessions/session-154.json (本セッション定義 + io_contract 直書き)"
+    },
+    {
+      "name": "session_154_yaml",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/acceptance/session-154.yaml (本セッション用 acceptance 定義)"
+    }
+  ],
+  "io_contract": {
+    "version": "v0",
+    "purpose": "3 actor 間の制御プロトコルを契約として固定する。実装に先立つ言語の確定。",
+    "actors": [
+      {
+        "name": "selector",
+        "role": "意思決定: 次セッション候補の優先度算出および採用候補の選定",
+        "inputs": [
+          {
+            "name": "queue_policy",
+            "type": "file:path",
+            "path": "docs/config/queue_policy.yaml",
+            "description": "session-153 で schema 確定。優先度算出ルール / 排他ルール / フィルタ条件を保持する。"
+          },
+          {
+            "name": "project_registry",
+            "type": "file:path",
+            "path": "docs/config/project_registry.json",
+            "description": "10プロジェクト(A01〜A10)の一覧と現在状態を保持する。"
+          },
+          {
+            "name": "session_definitions",
+            "type": "file:glob",
+            "path": "docs/sessions/session-*.json",
+            "description": "候補となる全 session 定義群。"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "candidate_sessions",
+            "type": "ordered_list[object]",
+            "description": "優先度順に並んだ候補セッション群。各要素は session_id / score / reason を持つ。最低1件。"
+          },
+          {
+            "name": "selected_session_id",
+            "type": "string",
+            "description": "candidate_sessions から採用された1件の session_id。"
+          },
+          {
+            "name": "selection_reason",
+            "type": "object",
+            "description": "選定ロジックの構造化 JSON。policy のどのルールが適用されたかを含む。"
+          }
+        ],
+        "output_destination": "artifacts/selector/<timestamp>.json",
+        "destination_note": "session-154 では出力先パス規約を契約として固定する。<timestamp> 形式の正規化は session-156 以降で確定する。"
+      },
+      {
+        "name": "queue",
+        "role": "実行制御: 採用された次セッションを enqueue し、状態遷移(enqueue → active → done)を保持する",
+        "inputs": [
+          {
+            "name": "selector_output",
+            "type": "object",
+            "description": "selector の output(candidate_sessions / selected_session_id / selection_reason)を artifacts/selector/<timestamp>.json から読み込む。"
+          },
+          {
+            "name": "human_approval_event",
+            "type": "event",
+            "description": "司令塔(人間)による承認イベント。承認なしでは active 遷移しない。"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "queue_state",
+            "type": "object",
+            "description": "現在のキュー状態(enqueued / active / done それぞれの session_id 群と timestamp)。"
+          }
+        ],
+        "persistence": "orchestration/queue/queue_state.json",
+        "persistence_note": "v1 仕様準拠。SQLite 化は v2 以降のため本契約では JSON ファイルで固定する。"
+      },
+      {
+        "name": "command_center",
+        "role": "可視化: selector の出力 / queue 状態 / 過去セッション結果を読み込み、dashboard JSON を生成する",
+        "inputs": [
+          {
+            "name": "selector_output",
+            "type": "file:path",
+            "path": "artifacts/selector/<timestamp>.json",
+            "description": "selector の最新出力。"
+          },
+          {
+            "name": "queue_state",
+            "type": "file:path",
+            "path": "orchestration/queue/queue_state.json",
+            "description": "queue の現在状態。"
+          },
+          {
+            "name": "session_reports",
+            "type": "file:glob",
+            "path": "artifacts/<session_id>/report.json",
+            "description": "過去全セッションの検収用 report.json 群。"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "dashboard_json",
+            "type": "object",
+            "access": "read-only",
+            "description": "dashboard 表示用の構造化 JSON。candidate_sessions / queue_state / session_reports の集約ビュー。"
+          }
+        ],
+        "html_output_status": "out_of_scope",
+        "html_output_note": "HTML / UI 実装は別セッション(session-145b/c 等)で扱う。本契約では JSON 生成までを定義する。"
+      }
+    ],
+    "data_flow": [
+      {
+        "step": 1,
+        "from": "selector.outputs",
+        "to": "artifacts/selector/<timestamp>.json",
+        "description": "selector が候補一覧 / 採用 ID / 理由を artifacts に永続化する。"
+      },
+      {
+        "step": 2,
+        "from": "artifacts/selector/<timestamp>.json + human_approval_event",
+        "to": "queue.queue_state",
+        "description": "queue が selector 出力と人間承認を入力として受け取り、queue_state を更新する。"
+      },
+      {
+        "step": 3,
+        "from": "artifacts/selector/<timestamp>.json + orchestration/queue/queue_state.json + artifacts/<session_id>/report.json",
+        "to": "command_center.dashboard_json",
+        "description": "command_center が3入力を集約して dashboard JSON を生成する。"
+      }
+    ]
+  },
+  "allowed_changes": [
+    "docs/sessions/session-154.json",
+    "docs/acceptance/session-154.yaml"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/session-154.json: 本セッション定義の新規作成。io_contract フィールドに3 actor(selector / queue / command_center)の inputs / outputs / 永続化先 / data_flow を直書きで保存する。",
+    "docs/acceptance/session-154.yaml: 本セッション用 acceptance 定義の新規作成。session-12.yaml 構造に準拠する。"
+  ],
+  "forbidden_changes": [
+    "docs/config/queue_policy.yaml の作成または編集",
+    "docs/config/project_registry.json の作成または編集",
+    "orchestration/queue/queue_state.json の作成または編集",
+    "artifacts/selector/ 配下のファイル生成",
+    "selector の Python 実装の追加",
+    "queue engine 実装の変更",
+    "Command Center 実装の追加",
+    "dashboard HTML / UI ファイルの作成",
+    "orchestration/run_session.py の変更",
+    "providers 配下の変更",
+    "backend 配下の変更",
+    ".github 配下の変更",
+    "docs/roadmap.yaml の変更",
+    "orchestration/config.yaml の変更",
+    "既存 session-01 から session-153 の json / yaml の変更",
+    "既存 acceptance session-01 から session-153 の yaml の変更",
+    "A02_fina プロジェクトへの着手"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-154-01",
+      "type": "contract_definition",
+      "condition": "io_contract.actors に selector / queue / command_center の3要素がすべて定義されていること。"
+    },
+    {
+      "id": "CC-154-02",
+      "type": "contract_definition",
+      "condition": "selector.inputs に docs/config/queue_policy.yaml / docs/config/project_registry.json / docs/sessions/session-*.json が明記されていること。"
+    },
+    {
+      "id": "CC-154-03",
+      "type": "contract_definition",
+      "condition": "selector.outputs に candidate_sessions / selected_session_id / selection_reason の3要素が明記されていること。"
+    },
+    {
+      "id": "CC-154-04",
+      "type": "contract_definition",
+      "condition": "selector.output_destination が artifacts/selector/<timestamp>.json と明記されていること。"
+    },
+    {
+      "id": "CC-154-05",
+      "type": "contract_definition",
+      "condition": "queue.persistence が orchestration/queue/queue_state.json と明記されていること。"
+    },
+    {
+      "id": "CC-154-06",
+      "type": "contract_definition",
+      "condition": "command_center.outputs が dashboard JSON (read-only) のみで、HTML 出力が html_output_status: out_of_scope と明記されていること。"
+    },
+    {
+      "id": "CC-154-07",
+      "type": "contract_definition",
+      "condition": "io_contract.data_flow が3ステップ(step=1, 2, 3)で selector → artifacts → queue / queue → command_center 集約 の方向で定義されていること。"
+    },
+    {
+      "id": "CC-154-08",
+      "type": "structural_consistency",
+      "condition": "session-153 で確定した queue_policy.yaml schema との整合(パス参照レベル)が破られていないこと。"
+    },
+    {
+      "id": "CC-154-09",
+      "type": "side_effect_free",
+      "condition": "本セッションの実行により実装コード(orchestration / providers / backend / .github)に副作用が発生しないこと。"
+    },
+    {
+      "id": "CC-154-10",
+      "type": "artifact",
+      "condition": "docs/acceptance/session-154.yaml が新規作成され保存されていること。"
+    },
+    {
+      "id": "CC-154-11",
+      "type": "document_rule",
+      "condition": "本セッション定義が allowed_changes_detail (list[str]) / forbidden_changes / completion_criteria (object 配列) / acceptance_criteria / review_points を含む構造化 JSON として保存されていること。"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-154-01",
+      "text": "session-154.json の io_contract.actors に name=selector / name=queue / name=command_center の3要素がすべて含まれる。",
+      "test_name": "test_session_154_io_contract_contains_three_actors",
+      "completion_criteria_refs": ["CC-154-01"]
+    },
+    {
+      "id": "AC-154-02",
+      "text": "selector.inputs の path に docs/config/queue_policy.yaml / docs/config/project_registry.json / docs/sessions/session-*.json の3パスが含まれる。",
+      "test_name": "test_session_154_selector_inputs_paths_match_contract",
+      "completion_criteria_refs": ["CC-154-02"]
+    },
+    {
+      "id": "AC-154-03",
+      "text": "selector.outputs に name=candidate_sessions / name=selected_session_id / name=selection_reason の3要素が含まれる。",
+      "test_name": "test_session_154_selector_outputs_three_elements",
+      "completion_criteria_refs": ["CC-154-03"]
+    },
+    {
+      "id": "AC-154-04",
+      "text": "selector.output_destination の値が文字列 'artifacts/selector/<timestamp>.json' に一致する。",
+      "test_name": "test_session_154_selector_output_destination_path",
+      "completion_criteria_refs": ["CC-154-04"]
+    },
+    {
+      "id": "AC-154-05",
+      "text": "queue.persistence の値が文字列 'orchestration/queue/queue_state.json' に一致する。",
+      "test_name": "test_session_154_queue_persistence_path",
+      "completion_criteria_refs": ["CC-154-05"]
+    },
+    {
+      "id": "AC-154-06",
+      "text": "command_center.outputs の唯一の要素が name=dashboard_json かつ access=read-only であり、html_output_status=out_of_scope と明記されている。",
+      "test_name": "test_session_154_command_center_outputs_dashboard_json_only",
+      "completion_criteria_refs": ["CC-154-06"]
+    },
+    {
+      "id": "AC-154-07",
+      "text": "io_contract.data_flow が step=1, 2, 3 の3要素で構成され、step1 が selector → artifacts、step2 が selector_output + approval → queue、step3 が3入力 → command_center の方向で定義されている。",
+      "test_name": "test_session_154_data_flow_three_steps_correct_direction",
+      "completion_criteria_refs": ["CC-154-07"]
+    },
+    {
+      "id": "AC-154-08",
+      "text": "session-154 commit の git diff --name-only の結果が docs/sessions/session-154.json と docs/acceptance/session-154.yaml の2件のみである。",
+      "test_name": "test_session_154_changed_files_within_allowed_scope",
+      "completion_criteria_refs": ["CC-154-09"]
+    },
+    {
+      "id": "AC-154-09",
+      "text": "session-154 commit の git diff --name-only に既存 session-01〜153 および対応 acceptance YAML が含まれない。",
+      "test_name": "test_session_154_does_not_modify_existing_sessions",
+      "completion_criteria_refs": ["CC-154-09"]
+    },
+    {
+      "id": "AC-154-10",
+      "text": "docs/acceptance/session-154.yaml が新規ファイルとして存在する。",
+      "test_name": "test_session_154_acceptance_yaml_exists",
+      "completion_criteria_refs": ["CC-154-10"]
+    },
+    {
+      "id": "AC-154-11",
+      "text": "session-154.json が allowed_changes_detail (list[str]) / forbidden_changes / completion_criteria (object 配列) / acceptance_criteria / review_points のすべてを構造化キーとして含む。",
+      "test_name": "test_session_154_json_contains_all_required_structural_keys",
+      "completion_criteria_refs": ["CC-154-11"]
+    }
+  ],
+  "review_points": [
+    "仕様一致(AC達成)",
+    "変更範囲遵守",
+    "副作用なし(既存破壊なし)",
+    "検証十分性"
+  ]
+}

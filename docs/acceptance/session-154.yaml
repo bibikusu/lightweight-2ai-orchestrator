@@ -1,0 +1,148 @@
+session_id: "session-154"
+goal: "次セッション selector、queue、Command Center の3 actor 間における入力・出力・参照先・永続化先・表示先を契約として正本化し、後続の queue_policy.yaml 実体化(session-155 想定)と selector 実装の前提を確立する。"
+scope:
+  - "selector / queue / command_center の3 actor の役割定義を session-154.json の io_contract フィールドに直書きで保存する。"
+  - "各 actor の inputs(読み取り対象ファイルおよびデータ)を明文化する。"
+  - "各 actor の outputs(出力データ構造)を明文化する。"
+  - "各 actor の output_destination または永続化先(保存パス)を明文化する。"
+  - "actor 間のデータフロー(selector → queue → command_center)を data_flow フィールドに明文化する。"
+out_of_scope:
+  - "docs/config/queue_policy.yaml の作成または編集"
+  - "docs/config/project_registry.json の作成または編集"
+  - "orchestration/queue/queue_state.json の作成または編集"
+  - "artifacts/selector/<timestamp>.json の生成処理の実装"
+  - "selector の Python 実装"
+  - "queue engine の実装または変更"
+  - "Command Center の実装"
+  - "dashboard HTML/UI ファイルの作成"
+  - "A02_fina プロジェクトへの着手"
+  - "orchestration/run_session.py の変更"
+  - "providers 配下の変更"
+  - "backend 配下の変更"
+  - ".github 配下の変更"
+  - "docs/roadmap.yaml の変更"
+  - "orchestration/config.yaml の変更"
+  - "既存 session-01 から session-153 の変更"
+  - "既存 acceptance session-01 から session-153 の変更"
+  - "session-154 で定義する3 actor 以外への拡張"
+acceptance:
+  - id: "AC-154-01"
+    requirement: "session-154.json の io_contract.actors に name=selector / name=queue / name=command_center の3要素がすべて含まれる。"
+    test_name: "test_session_154_io_contract_contains_three_actors"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "docs/sessions/session-154.json を確認し、io_contract.actors の name 値に 'selector' / 'queue' / 'command_center' の3つが揃っていることを確認する。"
+  - id: "AC-154-02"
+    requirement: "selector.inputs の path に docs/config/queue_policy.yaml / docs/config/project_registry.json / docs/sessions/session-*.json の3パスが含まれる。"
+    test_name: "test_session_154_selector_inputs_paths_match_contract"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "session-154.json の io_contract.actors[name=selector].inputs を確認し、3つの path が含まれていることを確認する。"
+  - id: "AC-154-03"
+    requirement: "selector.outputs に name=candidate_sessions / name=selected_session_id / name=selection_reason の3要素が含まれる。"
+    test_name: "test_session_154_selector_outputs_three_elements"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "session-154.json の io_contract.actors[name=selector].outputs を確認し、3つの name 値が揃っていることを確認する。"
+  - id: "AC-154-04"
+    requirement: "selector.output_destination の値が文字列 'artifacts/selector/<timestamp>.json' に一致する。"
+    test_name: "test_session_154_selector_output_destination_path"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "session-154.json の io_contract.actors[name=selector].output_destination を確認し、値が一致することを確認する。"
+  - id: "AC-154-05"
+    requirement: "queue.persistence の値が文字列 'orchestration/queue/queue_state.json' に一致する。"
+    test_name: "test_session_154_queue_persistence_path"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "session-154.json の io_contract.actors[name=queue].persistence を確認し、値が一致することを確認する。"
+  - id: "AC-154-06"
+    requirement: "command_center.outputs の唯一の要素が name=dashboard_json かつ access=read-only であり、html_output_status=out_of_scope と明記されている。"
+    test_name: "test_session_154_command_center_outputs_dashboard_json_only"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "session-154.json の io_contract.actors[name=command_center] を確認し、outputs が1要素で name=dashboard_json / access=read-only であることを確認する。"
+      - "同 actor の html_output_status が 'out_of_scope' に設定されていることを確認する。"
+  - id: "AC-154-07"
+    requirement: "io_contract.data_flow が step=1, 2, 3 の3要素で構成され、step1 が selector → artifacts、step2 が selector_output + approval → queue、step3 が3入力 → command_center の方向で定義されている。"
+    test_name: "test_session_154_data_flow_three_steps_correct_direction"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "session-154.json の io_contract.data_flow を確認し、step=1/2/3 の3要素が定義されていることを確認する。"
+      - "各 step の from / to が指定方向と一致することを確認する。"
+  - id: "AC-154-08"
+    requirement: "session-154 commit の git diff --name-only の結果が docs/sessions/session-154.json と docs/acceptance/session-154.yaml の2件のみである。"
+    test_name: "test_session_154_changed_files_within_allowed_scope"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "git show --name-only <session-154 commit hash> を実行し、出力ファイルが2件のみであることを確認する。"
+      - "出力ファイル名が docs/sessions/session-154.json および docs/acceptance/session-154.yaml であることを確認する。"
+  - id: "AC-154-09"
+    requirement: "session-154 commit の git diff --name-only に既存 session-01〜153 および対応 acceptance YAML が含まれない。"
+    test_name: "test_session_154_does_not_modify_existing_sessions"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "git show --name-only <session-154 commit hash> の結果に docs/sessions/session-{01..153}.json および docs/acceptance/session-{01..153}.yaml が一切含まれていないことを確認する。"
+  - id: "AC-154-10"
+    requirement: "docs/acceptance/session-154.yaml が新規ファイルとして存在する。"
+    test_name: "test_session_154_acceptance_yaml_exists"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "ls docs/acceptance/session-154.yaml を実行し、ファイルが存在することを確認する。"
+  - id: "AC-154-11"
+    requirement: "session-154.json が allowed_changes_detail (list[str]) / forbidden_changes / completion_criteria (object 配列) / acceptance_criteria / review_points のすべてを構造化キーとして含む。"
+    test_name: "test_session_154_json_contains_all_required_structural_keys"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "session-154.json をパースし、トップレベルキーに allowed_changes_detail / forbidden_changes / completion_criteria / acceptance_criteria / review_points がすべて存在することを確認する。"
+      - "allowed_changes_detail が list[str] 型であることを確認する。"
+      - "completion_criteria が object 配列で、各要素が id / type / condition を持つことを確認する。"
+completion_checks:
+  - "session-154.json の io_contract.actors に selector / queue / command_center が定義されている。"
+  - "selector.inputs に docs/config/queue_policy.yaml / docs/config/project_registry.json / docs/sessions/session-*.json が明記されている。"
+  - "selector.outputs に candidate_sessions / selected_session_id / selection_reason が明記されている。"
+  - "selector.output_destination = artifacts/selector/<timestamp>.json と明記されている。"
+  - "queue.persistence = orchestration/queue/queue_state.json と明記されている。"
+  - "command_center.outputs = dashboard JSON (read-only) のみで HTML 出力が out_of_scope と明記されている。"
+  - "io_contract.data_flow が selector → queue → command_center の3ステップで定義されている。"
+  - "session-153 で確定した queue_policy.yaml schema との整合がパス参照レベルで破られていない。"
+  - "本セッションの実行により実装コードに副作用が発生していない。"
+  - "docs/acceptance/session-154.yaml が新規作成保存されている。"
+  - "session-154.json が必須構造化キーをすべて含む。"
+change_guardrails:
+  allowed_changes:
+    - "docs/sessions/session-154.json"
+    - "docs/acceptance/session-154.yaml"
+  forbidden_changes:
+    - "docs/config/queue_policy.yaml の作成または編集(session-155 以降)"
+    - "docs/config/project_registry.json の作成または編集"
+    - "orchestration/queue/queue_state.json の作成または編集"
+    - "artifacts/selector/ 配下のファイル生成"
+    - "selector の Python 実装の追加"
+    - "queue engine 実装の変更"
+    - "Command Center 実装の追加"
+    - "dashboard HTML / UI ファイルの作成"
+    - "orchestration/run_session.py の変更"
+    - "providers 配下の変更"
+    - "backend 配下の変更"
+    - ".github 配下の変更"
+    - "docs/roadmap.yaml の変更"
+    - "orchestration/config.yaml の変更"
+    - "既存 session-01 から session-153 の json / yaml の変更"
+    - "A02_fina プロジェクトへの着手"
+review_points:
+  - "仕様一致(AC達成)"
+  - "変更範囲遵守"
+  - "副作用なし(既存破壊なし)"
+  - "検証十分性"
