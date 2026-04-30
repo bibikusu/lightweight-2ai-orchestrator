@@ -1,0 +1,111 @@
+{
+  "session_id": "session-159c",
+  "phase_id": "phase-orchestrator-hygiene",
+  "title": "Repair session-120.json syntax error and verify all session JSON files parse",
+  "goal": "selector の入力母集団 (docs/sessions/*.json) を全件 JSON.parse 可能な状態に正本化する。session-120.json の既知構文エラー (リネーム途中中断による out_of_scope ブロック消失) を修復し、同時に全件一括検査で同類エラーの有無を確定する。",
+  "scope": [
+    "docs/sessions/session-*.json を全件 json.loads で検査する",
+    "検査結果を artifacts/session-159c/json_lint_report.json に出力する",
+    "session-120.json の構文エラーを git commit (9ef856c / cf9d917 / 48f871a のうち VALID なもの) から out_of_scope ブロックを復元して修復する",
+    "修復後の session-120.json が必須 8 キーを保持することを確認する",
+    "selector を再実行し metadata.skipped_sessions に session-120 が含まれないことを実証する",
+    "session-120 以外で fail が新規検出された場合は report 記録のみで本 session では修復しない"
+  ],
+  "out_of_scope": [
+    "session-120 以外の docs/sessions/*.json の内容変更",
+    "session-120 の意味的内容の改訂 (構文修復のみ、scope/constraints/allowed_changes 等は元 commit 準拠)",
+    "selector / loader / writer / core 実装変更",
+    "orchestration/run_session.py の変更",
+    "providers / backend / DL / docs/templates の変更",
+    ".github / .gitignore の変更",
+    "docs/config/queue_policy.yaml / project_registry.json の変更",
+    "session JSON スキーマ仕様の改訂",
+    "tests/test_selector.py の変更",
+    "新規検出 fail session の修復",
+    "Master Orchestrator M01 実装コードへの変更 (実装は既に f75d36e で完了済)"
+  ],
+  "constraints": [
+    "1 セッション 1 目的",
+    "最大 5 ファイル以内",
+    "sandbox/session-159c branch で作業 (起票 docs-only commit は main 直接 OK)",
+    "session-120 修復前に元意図を git show で確認する",
+    "新規 fail 検出時は本 session で修復せず別 session 起票",
+    "4-gate 全 PASS で commit",
+    "silent skip 禁止",
+    "session-120 の修復は構文修復のみ",
+    "復元元は git commit 9ef856c / cf9d917 / 48f871a のいずれか VALID なもの"
+  ],
+  "acceptance_ref": "docs/acceptance/session-159c.yaml",
+  "inputs": [
+    {"name": "session_json_dir", "type": "file:path", "required": true, "description": "docs/sessions/"},
+    {"name": "session_120_target", "type": "file:path", "required": true, "description": "docs/sessions/session-120.json"},
+    {"name": "session_120_restore_source", "type": "string", "required": true, "description": "git commit 9ef856c / cf9d917 / 48f871a のいずれか VALID なもの"},
+    {"name": "selector_module", "type": "file:path", "required": true, "description": "orchestration/selector/"}
+  ],
+  "outputs": [
+    {"name": "json_lint_report", "type": "json", "required": true, "description": "artifacts/session-159c/json_lint_report.json"},
+    {"name": "session_120_repaired", "type": "json", "required": true, "description": "docs/sessions/session-120.json (修復後)"},
+    {"name": "selector_postfix_artifact", "type": "json", "required": true, "description": "artifacts/selector/<timestamp>.json"}
+  ],
+  "allowed_changes": [
+    "docs/sessions/session-120.json",
+    "artifacts/session-159c/json_lint_report.json",
+    "scripts/lint_session_json.py"
+  ],
+  "allowed_changes_detail": {
+    "docs/sessions/session-120.json": [
+      "16 行目 'out_再定義' 残骸の削除",
+      "17 行目余分な ] の削除",
+      "out_of_scope ブロック (キー名 + 配列) を空配列で暫定復旧 (案 B: git commit 全件 INVALID のため)",
+      "completion_criteria 破損行 (CC-M01-02/03 マージ) を最小分割修復 (案 B-1)",
+      "必須 8 キー保持",
+      "それ以外のキー (session_id / project_id / target_repo / phase_id / title / goal / scope / constraints / acceptance_ref / allowed_changes 等) の改訂禁止"
+    ],
+    "artifacts/session-159c/json_lint_report.json": [
+      "新規作成のみ",
+      "schema = {checked_at, total, pass_count, fail_count, fail_details, repaired_with_note}",
+      "fail_details は [{path, error_message, line, col}] の配列",
+      "repaired_with_note は修復時の注記を記録する配列"
+    ],
+    "scripts/lint_session_json.py": [
+      "新規作成のみ",
+      "stdlib のみ (json/glob/pathlib/sys/argparse/datetime)",
+      "silent skip 禁止 (例外を握り潰さない)",
+      "戻り値 0=全pass / 1=fail有り",
+      "type hints 必須",
+      "ruff/mypy PASS"
+    ]
+  },
+  "forbidden_changes": [
+    "docs/sessions/session-120.json 以外の docs/sessions/*.json",
+    "orchestration/selector/",
+    "orchestration/run_session.py",
+    "tests/test_selector.py",
+    "providers/", "backend/", "docs/templates/", "DL/", ".github/", ".gitignore",
+    "docs/config/queue_policy.yaml", "docs/config/project_registry.json"
+  ],
+  "completion_criteria": [
+    {"id": "CC-159c-01", "type": "artifact", "condition": "artifacts/session-159c/json_lint_report.json が生成され total/pass_count/fail_count/fail_details 4 キーを含む"},
+    {"id": "CC-159c-02", "type": "state_transition_consistent", "condition": "session-120.json が json.load() で例外なく読み込める"},
+    {"id": "CC-159c-03", "type": "non_regression", "condition": "selector 再実行で metadata.skipped_sessions に session-120 が含まれない"},
+    {"id": "CC-159c-04", "type": "side_effect_free", "condition": "git diff --name-only base..HEAD が allowed_changes の 3 ファイルのみ"},
+    {"id": "CC-159c-05", "type": "document_rule", "condition": "4-gate (ruff/pytest/mypy/compileall) 全 PASS"}
+  ],
+  "acceptance_criteria": [
+    {"id": "AC-159c-01", "text": "scripts/lint_session_json.py を実行すると docs/sessions/session-*.json 全件を JSON.parse し、結果を artifacts/session-159c/json_lint_report.json に出力する。", "test_name": "test_lint_session_json_outputs_report"},
+    {"id": "AC-159c-02", "text": "修復後の session-120.json が json.load() で例外なく読み込める。", "test_name": "test_session_120_json_parses"},
+    {"id": "AC-159c-03", "text": "修復後の session-120.json が必須 8 キーを保持する。", "test_name": "test_session_120_required_keys_present"},
+    {"id": "AC-159c-04", "text": "修復後 selector 再実行で metadata.skipped_sessions に session-120 が含まれない。", "test_name": "test_selector_skipped_sessions_excludes_session_120"},
+    {"id": "AC-159c-05", "text": "lint_session_json.py の戻り値は全 pass 時 0、fail 時 1。", "test_name": "test_lint_session_json_exit_code"},
+    {"id": "AC-159c-06", "text": "新規 fail (session-120 以外) は report 記録のみで本 session では修復しない。", "test_name": "test_lint_session_json_records_new_fails_without_repair"},
+    {"id": "AC-159c-07", "text": "git diff --name-only base..HEAD が allowed_changes の 3 ファイルのみ。", "test_name": "test_changed_files_within_allowed_changes"},
+    {"id": "AC-159c-08", "text": "4-gate 全 PASS。", "test_name": "test_four_gate_all_pass"}
+  ],
+  "review_points": [
+    "仕様一致 (AC 全達成)",
+    "変更範囲遵守 (allowed_changes 3 ファイル以内)",
+    "副作用なし (selector / 他 session / 既存テスト群への影響 0)",
+    "検証十分性 (lint report + selector 再実行 + parse test + 4-gate の 4 系統)"
+  ],
+  "execution_mode": "fast_path"
+}

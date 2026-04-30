@@ -1,0 +1,113 @@
+session_id: "session-159c"
+goal: "selector の入力母集団を全件 JSON.parse 可能な状態に正本化する。"
+scope:
+  - "docs/sessions/session-*.json を全件 json.loads で検査"
+  - "結果を artifacts/session-159c/json_lint_report.json に出力"
+  - "session-120.json の構文エラー修復 (案 B: git commit 全件 INVALID のため out_of_scope は空配列で暫定復旧)"
+  - "session-120.json の completion_criteria 破損行修復 (案 B-1: CC-M01-02/03 最小分割)"
+  - "selector 再実行で session-120 が skipped_sessions から外れることを実証"
+  - "新規 fail は report 記録のみ"
+out_of_scope:
+  - "session-120 以外の session JSON の内容変更"
+  - "session-120 の意味的内容の改訂"
+  - "selector 実装変更"
+  - "orchestration/run_session.py の変更"
+  - "providers / backend / DL / docs/templates の変更"
+  - "新規検出 fail の修復"
+  - "Master Orchestrator M01 実装コードへの変更"
+acceptance:
+  - id: "AC-159c-01"
+    requirement: "lint_session_json.py が全件検査し report を生成。"
+    test_name: "test_lint_session_json_outputs_report"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "scripts/lint_session_json.py 実行"
+      - "artifacts/session-159c/json_lint_report.json 存在確認"
+      - "report の total/pass_count/fail_count/fail_details 確認"
+  - id: "AC-159c-02"
+    requirement: "session-120.json が json.load() で読める。"
+    test_name: "test_session_120_json_parses"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "python -c 'import json; json.load(open(\"docs/sessions/session-120.json\"))' が exit 0"
+  - id: "AC-159c-03"
+    requirement: "session-120.json が必須 8 キーを保持。"
+    test_name: "test_session_120_required_keys_present"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "session_id / phase_id / title / goal / scope / out_of_scope / constraints / acceptance_ref の 8 キー存在確認"
+  - id: "AC-159c-04"
+    requirement: "selector 再実行で skipped_sessions に session-120 が含まれない。"
+    test_name: "test_selector_skipped_sessions_excludes_session_120"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "selector 再実行"
+      - "最新 artifact の skipped_sessions 確認"
+  - id: "AC-159c-05"
+    requirement: "lint_session_json.py 戻り値 0/1。"
+    test_name: "test_lint_session_json_exit_code"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "全 pass 状態で exit 0"
+      - "壊れた tmp 混入で exit 1"
+  - id: "AC-159c-06"
+    requirement: "新規 fail は report 記録のみ。"
+    test_name: "test_lint_session_json_records_new_fails_without_repair"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "git diff --name-only base..HEAD で session-120.json 以外の docs/sessions/*.json 変更が 0"
+  - id: "AC-159c-07"
+    requirement: "変更ファイル 3 件以内。"
+    test_name: "test_changed_files_within_allowed_changes"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "git diff --name-only main..HEAD"
+      - "出力が 3 ファイルのみ"
+  - id: "AC-159c-08"
+    requirement: "4-gate 全 PASS。"
+    test_name: "test_four_gate_all_pass"
+    type: "automated"
+    manual_check: false
+    verification:
+      - ".venv/bin/ruff check 成功"
+      - ".venv/bin/pytest -q 成功"
+      - ".venv/bin/python -m mypy 成功"
+      - ".venv/bin/python -m compileall 成功"
+completion_checks:
+  - "lint_session_json.py が glob で全 session JSON 検査"
+  - "report.json に 4 キー存在"
+  - "session-120.json が parse 可能"
+  - "selector 再実行で session-120 が skipped_sessions に含まれない"
+  - "git diff が allowed_changes 内"
+  - "4-gate 全 PASS"
+change_guardrails:
+  allowed_changes:
+    - "docs/sessions/session-120.json"
+    - "artifacts/session-159c/json_lint_report.json"
+    - "scripts/lint_session_json.py"
+  forbidden_changes:
+    - "docs/sessions/session-120.json 以外の docs/sessions/*.json"
+    - "orchestration/selector/"
+    - "orchestration/run_session.py"
+    - "tests/test_selector.py"
+    - "providers/"
+    - "backend/"
+    - "DL/"
+    - "docs/templates/"
+    - ".github/"
+    - "docs/config/queue_policy.yaml"
+    - "docs/config/project_registry.json"
+  required_branch: "sandbox/session-159c"
+  forbidden_main_commit: true
+review_points:
+  - "仕様一致 (AC 全達成)"
+  - "変更範囲遵守"
+  - "副作用なし"
+  - "検証十分性"
