@@ -1,0 +1,161 @@
+{
+  "session_id": "session-154b",
+  "project_id": "A01_orchestrator",
+  "phase_id": "phase-policy-acceptance",
+  "title": "既存 queue_policy.yaml の受入検収（docs-only）",
+  "goal": "docs/config/queue_policy.yaml が既存ファイルとして存在することを確認し、session-153 の queue_policy_schema_v0.md との整合性・session-162 の selector execution_mode 実装との依存関係を docs-only で検収・記録する。新規作成・編集は行わない。",
+  "scope": [
+    "docs/config/queue_policy.yaml の存在確認と構造抽出",
+    "session-153 の queue_policy_schema_v0.md との構造整合確認（キー名の対応・乖離を記録）",
+    "session-162 の _resolve_execution_mode() が queue_policy.yaml に直接依存していないことの確認",
+    "AC-154b-01〜08 の検証結果を docs/reports/session-154b_queue_policy_acceptance.md に記録",
+    "docs/sessions/session-154b.json および docs/acceptance/session-154b.yaml の新規作成"
+  ],
+  "out_of_scope": [
+    "docs/config/queue_policy.yaml の編集・新規作成",
+    "docs/sessions/session-154.json の変更（旧定義の正本として保持）",
+    "docs/acceptance/session-154.yaml の変更（旧定義の正本として保持）",
+    "docs/config/queue_policy.yaml の schema 変更",
+    "Python 実装・CLI・テストコードの変更",
+    "orchestration/selector/ 配下の変更",
+    "tests/ 配下の変更",
+    "scheduler / queue engine の実装",
+    ".claude/ 配下のあらゆる変更",
+    "DL/ 配下の操作",
+    "docs/config/project_registry.json の変更",
+    "既存 session JSON / acceptance YAML の改変"
+  ],
+  "constraints": [
+    "変更ファイル上限 3 件（docs/sessions/session-154b.json / docs/acceptance/session-154b.yaml / docs/reports/session-154b_queue_policy_acceptance.md のみ）",
+    "docs/config/queue_policy.yaml の直接編集禁止",
+    "docs/sessions/session-154.json および docs/acceptance/session-154.yaml の編集禁止（旧定義の正本として保持）",
+    "allowed_changes_detail は list[str]",
+    "acceptance_criteria のキーは text（description 禁止）",
+    "git push / cherry-pick は実行しない（Kunihide 手動）",
+    "queue_policy.yaml が存在しない場合は勝手に新規作成せず STOP して報告"
+  ],
+  "acceptance_ref": "docs/acceptance/session-154b.yaml",
+  "references": [
+    {
+      "session_id": "session-153",
+      "role": "queue_policy_schema_v0 正本",
+      "spec": "docs/specs/queue_policy_schema_v0.md"
+    },
+    {
+      "session_id": "session-161-pre",
+      "role": "selector I/O 契約 v1 正本",
+      "spec": "docs/specs/selector_output_execution_mode_v0.md"
+    },
+    {
+      "session_id": "session-162",
+      "role": "selector execution_mode 実装",
+      "spec": "orchestration/selector/core.py (_resolve_execution_mode)"
+    }
+  ],
+  "allowed_changes": [
+    "docs/sessions/session-154b.json",
+    "docs/acceptance/session-154b.yaml",
+    "docs/reports/session-154b_queue_policy_acceptance.md"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/session-154b.json: session-154b の起票定義のみ新規作成",
+    "docs/acceptance/session-154b.yaml: session-154b の受入条件のみ新規作成",
+    "docs/reports/session-154b_queue_policy_acceptance.md: AC-154b-01〜08 の検証結果を記録する検収レポートの新規作成"
+  ],
+  "forbidden_changes": [
+    "docs/config/queue_policy.yaml",
+    "docs/config/project_registry.json",
+    "docs/sessions/session-154.json",
+    "docs/acceptance/session-154.yaml",
+    "orchestration/",
+    "backend/",
+    "providers/",
+    "tests/",
+    "scripts/",
+    "docs/specs/",
+    ".claude/",
+    ".github/",
+    "DL/",
+    ".gitignore"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-154b-01",
+      "type": "artifact",
+      "condition": "docs/config/queue_policy.yaml の存在が確認され、主要構造が検収レポートに抽出されている"
+    },
+    {
+      "id": "CC-154b-02",
+      "type": "side_effect_free",
+      "condition": "git diff に docs/config/queue_policy.yaml が含まれない（0 行差分）"
+    },
+    {
+      "id": "CC-154b-03",
+      "type": "artifact",
+      "condition": "docs/reports/session-154b_queue_policy_acceptance.md が新規作成され、AC-154b-01〜08 の検証結果が記録されている"
+    },
+    {
+      "id": "CC-154b-04",
+      "type": "document_rule",
+      "condition": "session-153 の queue_policy_schema_v0.md との整合確認（キー名対応・乖離）が検収レポートに記録されている"
+    },
+    {
+      "id": "CC-154b-05",
+      "type": "document_rule",
+      "condition": "_resolve_execution_mode() が queue_policy.yaml に直接依存していないことが検収レポートに記録されている"
+    },
+    {
+      "id": "CC-154b-06",
+      "type": "side_effect_free",
+      "condition": "docs/sessions/session-154.json および docs/acceptance/session-154.yaml が変更されていない"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-154b-01",
+      "text": "docs/config/queue_policy.yaml が既存ファイルとして存在することが確認されている。",
+      "test_name": "manual_acceptance_queue_policy_yaml_exists"
+    },
+    {
+      "id": "AC-154b-02",
+      "text": "本セッションで docs/config/queue_policy.yaml を新規作成していない。",
+      "test_name": "manual_acceptance_queue_policy_yaml_not_created"
+    },
+    {
+      "id": "AC-154b-03",
+      "text": "condition_dsl / queues / execution_rules / retry_policy / human_gate 相当の主要構造が確認されており、検収レポートに実体キー名が記録されている。",
+      "test_name": "manual_acceptance_main_structure_confirmed"
+    },
+    {
+      "id": "AC-154b-04",
+      "text": "session-153 の queue_policy_schema_v0.md との整合確認（schema 期待キーと実ファイルのキー名対応・乖離）が検収レポートに記録されている。",
+      "test_name": "manual_acceptance_schema_v0_alignment_recorded"
+    },
+    {
+      "id": "AC-154b-05",
+      "text": "session-162 の selector 実装（_resolve_execution_mode()）が queue_policy.yaml に直接依存していないことが確認されている。",
+      "test_name": "manual_acceptance_execution_mode_no_queue_policy_dependency"
+    },
+    {
+      "id": "AC-154b-06",
+      "text": "docs/config/queue_policy.yaml 本体に破壊的変更がない（git diff で 0 行差分）。",
+      "test_name": "manual_acceptance_queue_policy_yaml_not_modified"
+    },
+    {
+      "id": "AC-154b-07",
+      "text": ".claude/ と DL/ に変更がない。",
+      "test_name": "manual_acceptance_no_claude_or_dl_changes"
+    },
+    {
+      "id": "AC-154b-08",
+      "text": "JSON / YAML 構文確認 PASS（session-154b.json / session-154b.yaml / 既存 queue_policy.yaml の 3 ファイル）。",
+      "test_name": "cli_acceptance_json_yaml_syntax_pass"
+    }
+  ],
+  "review_points": [
+    "仕様一致",
+    "変更範囲遵守",
+    "副作用なし",
+    "検証十分性"
+  ]
+}

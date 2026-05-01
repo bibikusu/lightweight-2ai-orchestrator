@@ -1,0 +1,126 @@
+session_id: "session-154b"
+goal: "docs/config/queue_policy.yaml が既存ファイルとして存在することを確認し、session-153 の queue_policy_schema_v0.md との整合性・session-162 の selector execution_mode 実装との依存関係を docs-only で検収・記録する。"
+
+scope:
+  - "docs/config/queue_policy.yaml の存在確認と構造抽出"
+  - "session-153 の queue_policy_schema_v0.md との構造整合確認（キー名の対応・乖離を記録）"
+  - "session-162 の _resolve_execution_mode() が queue_policy.yaml に直接依存していないことの確認"
+  - "AC-154b-01〜08 の検証結果を検収レポートに記録"
+
+out_of_scope:
+  - "docs/config/queue_policy.yaml の編集・新規作成"
+  - "docs/sessions/session-154.json の変更（旧定義の正本として保持）"
+  - "docs/acceptance/session-154.yaml の変更（旧定義の正本として保持）"
+  - "Python 実装・CLI・テストコードの変更"
+  - "orchestration/selector/ 配下の変更"
+  - "tests/ 配下の変更"
+  - "scheduler / queue engine の実装"
+  - ".claude/ 配下のあらゆる変更"
+  - "DL/ 配下の操作"
+  - "docs/config/project_registry.json の変更"
+
+acceptance:
+  - id: "AC-154b-01"
+    text: "docs/config/queue_policy.yaml が既存ファイルとして存在することが確認されている。"
+    test_name: "manual_acceptance_queue_policy_yaml_exists"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "ls -la docs/config/queue_policy.yaml でファイル存在とサイズを確認する"
+
+  - id: "AC-154b-02"
+    text: "本セッションで docs/config/queue_policy.yaml を新規作成していない。"
+    test_name: "manual_acceptance_queue_policy_yaml_not_created"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "git diff --name-only で docs/config/queue_policy.yaml が含まれていないことを確認する"
+
+  - id: "AC-154b-03"
+    text: "condition_dsl / queues / execution_rules / retry_policy / human_gate 相当の主要構造が確認されており、検収レポートに実体キー名が記録されている。"
+    test_name: "manual_acceptance_main_structure_confirmed"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "検収レポートに queue_policy.yaml の実体トップレベルキー一覧が記録されていることを確認する"
+      - "condition_dsl / queues / execution_rules / retry_policy / human_gate の各概念に対応する実体キーが記録されていることを確認する"
+
+  - id: "AC-154b-04"
+    text: "session-153 の queue_policy_schema_v0.md との整合確認（schema 期待キーと実ファイルのキー名対応・乖離）が検収レポートに記録されている。"
+    test_name: "manual_acceptance_schema_v0_alignment_recorded"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "schema_v0 が定義する selection_rules / stop_reason_reference / human_approval_enforcement と実ファイルの対応が記録されていることを確認する"
+      - "キー名の乖離（実ファイルが異なる名称を使用している場合）が BACKLOG として記録されていることを確認する"
+
+  - id: "AC-154b-05"
+    text: "session-162 の selector 実装（_resolve_execution_mode()）が queue_policy.yaml に直接依存していないことが確認されている。"
+    test_name: "manual_acceptance_execution_mode_no_queue_policy_dependency"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "_resolve_execution_mode() が参照するデータソース（session.json / project_registry）を検収レポートで確認する"
+      - "queue_policy.yaml のキーを直接参照するコードがないことを確認する"
+
+  - id: "AC-154b-06"
+    text: "docs/config/queue_policy.yaml 本体に破壊的変更がない（git diff で 0 行差分）。"
+    test_name: "manual_acceptance_queue_policy_yaml_not_modified"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "git diff -- docs/config/queue_policy.yaml の出力が空であることを確認する"
+
+  - id: "AC-154b-07"
+    text: ".claude/ と DL/ に変更がない。"
+    test_name: "manual_acceptance_no_claude_or_dl_changes"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "git status --short に .claude/ または DL/ の変更が含まれないことを確認する"
+
+  - id: "AC-154b-08"
+    text: "JSON / YAML 構文確認 PASS（session-154b.json / session-154b.yaml / 既存 queue_policy.yaml の 3 ファイル）。"
+    test_name: "cli_acceptance_json_yaml_syntax_pass"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "python3 -m json.tool docs/sessions/session-154b.json が exit 0 で終了する"
+      - "python3 -c \"import yaml; yaml.safe_load(open('docs/acceptance/session-154b.yaml'))\" が exit 0 で終了する"
+      - "python3 -c \"import yaml; yaml.safe_load(open('docs/config/queue_policy.yaml'))\" が exit 0 で終了する"
+
+completion_checks:
+  - "docs/sessions/session-154b.json が保存されている"
+  - "docs/acceptance/session-154b.yaml が保存されている"
+  - "docs/reports/session-154b_queue_policy_acceptance.md が保存されている"
+  - "docs/config/queue_policy.yaml が変更されていない（git diff 0 行）"
+  - "docs/sessions/session-154.json が変更されていない（旧定義保持）"
+  - "acceptance_criteria のキーが text である"
+  - "変更ファイルが 3 件以内"
+
+change_guardrails:
+  allowed_changes:
+    - "docs/sessions/session-154b.json"
+    - "docs/acceptance/session-154b.yaml"
+    - "docs/reports/session-154b_queue_policy_acceptance.md"
+  forbidden_changes:
+    - "docs/config/queue_policy.yaml"
+    - "docs/config/project_registry.json"
+    - "docs/sessions/session-154.json"
+    - "docs/acceptance/session-154.yaml"
+    - "orchestration/"
+    - "backend/"
+    - "providers/"
+    - "tests/"
+    - "scripts/"
+    - "docs/specs/"
+    - ".claude/"
+    - ".github/"
+    - "DL/"
+    - ".gitignore"
+
+review_points:
+  - "仕様一致"
+  - "変更範囲遵守"
+  - "副作用なし"
+  - "検証十分性"
