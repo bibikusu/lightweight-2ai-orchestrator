@@ -101,6 +101,7 @@ def test_artifact_output(tmp_path: Path) -> None:
         "candidate_sessions",
         "selected_session_id",
         "selection_reason",
+        "execution_mode",
         "metadata",
     }
     assert "decision_steps" not in loaded
@@ -205,3 +206,94 @@ def test_skipped_sessions_empty_when_all_valid(tmp_path: Path) -> None:
 
     assert "skipped_sessions" in selector_output["metadata"]
     assert selector_output["metadata"]["skipped_sessions"] == []
+
+
+# --- execution_mode テスト群 (session-162) ---
+
+
+def test_selector_output_contains_execution_mode() -> None:
+    """build_selector_output() の返り値に execution_mode キーが存在する。"""
+    from orchestration.selector import core
+
+    result = core.build_selector_output(
+        _policy(),
+        _registry(),
+        _sessions(),
+        "2026-05-01T00:00:00.000Z",
+    )
+    assert "execution_mode" in result
+
+
+def test_execution_mode_from_session_json() -> None:
+    """session.json に execution_mode が明示されている場合、その値が採用される。"""
+    from orchestration.selector import core
+
+    sessions = [
+        {
+            "session_id": "session-a",
+            "project_id": "P_LOW",
+            "priority_rank_value": 10,
+            "execution_mode": "full_stack",
+        },
+    ]
+    result = core.build_selector_output(_policy(), _registry(), sessions, "ts")
+    assert result["execution_mode"] == "full_stack"
+
+
+def test_execution_mode_from_project_default() -> None:
+    """session.json に execution_mode がない場合、project_registry の default_execution_mode が使われる。"""
+    from orchestration.selector import core
+
+    registry = {
+        "projects": [
+            {
+                "project_id": "P_DEFAULT",
+                "deploy_risk": "low",
+                "default_execution_mode": "fast_path",
+            },
+        ],
+    }
+    sessions = [
+        {
+            "session_id": "session-b",
+            "project_id": "P_DEFAULT",
+            "priority_rank_value": 5,
+        },
+    ]
+    result = core.build_selector_output(_policy(), registry, sessions, "ts")
+    assert result["execution_mode"] == "fast_path"
+
+
+def test_execution_mode_none_when_not_defined() -> None:
+    """session.json にも project_registry にも execution_mode がない場合、None になる。"""
+    from orchestration.selector import core
+
+    sessions = [
+        {
+            "session_id": "session-c",
+            "project_id": "P_LOW",
+            "priority_rank_value": 5,
+        },
+    ]
+    result = core.build_selector_output(_policy(), _registry(), sessions, "ts")
+    assert result["execution_mode"] is None
+
+
+def test_existing_output_keys_not_broken() -> None:
+    """既存キー candidate_sessions / selected_session_id / selection_reason / metadata が維持される。"""
+    from orchestration.selector import core
+
+    result = core.build_selector_output(
+        _policy(),
+        _registry(),
+        _sessions(),
+        "2026-05-01T00:00:00.000Z",
+    )
+    assert "candidate_sessions" in result
+    assert "selected_session_id" in result
+    assert "selection_reason" in result
+    assert "metadata" in result
+    assert isinstance(result["candidate_sessions"], list)
+    assert isinstance(result["selected_session_id"], str)
+    assert isinstance(result["selection_reason"], str)
+    assert isinstance(result["metadata"], dict)
