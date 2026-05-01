@@ -4,9 +4,13 @@ lightweight_2ai_orchestrator.egg-info/
 docs/files.zip
 .DS_Store
 .venv/
-artifacts/
+artifacts/*
 .pycache_compileall/
 __pycache__/
 *.pyc
 backend/tests/test_live_api_validation.py
 docs/pipeline_v0/dashboard_latest.*
+
+# session-159c artifact tracking exception (案 P-1)
+!artifacts/session-159c/
+!artifacts/session-159c/**

@@ -1,0 +1,11 @@
+{
+  "checked_at": "2026-04-30T16:36:27.501207+00:00",
+  "total": 120,
+  "pass_count": 120,
+  "fail_count": 0,
+  "fail_details": [],
+  "repaired_with_note": [
+    "session-120.json: out_of_scope は空配列 [] で暫定復旧。有効な git 履歴ソースが存在しないため意味的内容の復元は不可。後続 BACKLOG-S120-OUT-OF-SCOPE-RESTORE で正本化を候補化。",
+    "session-120.json: completion_criteria CC-M01-02/03 が 1 行に混在する構文破損を最小分割修復 (案 B-1)。CC-M01-02 の condition 末尾は欠落のため残存文字列のみ保持。後続 BACKLOG-S120-003-COMPLETION-CRITERIA-RESTORE で正本化を候補化。"
+  ]
+}
