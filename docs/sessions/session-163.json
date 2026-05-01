@@ -1,0 +1,136 @@
+{
+  "session_id": "session-163",
+  "phase_id": "P7",
+  "title": "Add --use-selector flag to run_session.py (M-B step 1 implementation)",
+  "goal": "run_session.py の parse_args() に --use-selector flag を追加し、指定時に subprocess.run で select_next.py --dry-run を呼び出して stdout JSON から selected_session_id を取得し、既存の --session-id 実行パスへ渡す。orchestration.selector の直接 import は行わない。",
+  "scope": [
+    "orchestration/run_session.py の parse_args() に --use-selector flag を追加する",
+    "--use-selector 指定時に subprocess.run(['python', 'orchestration/select_next.py', '--dry-run'], capture_output=True, text=True) で selector CLI を呼び出す",
+    "stdout を json.loads() して selected_session_id を取得し、既存の _run_single_session_impl() 実行パスへ渡す",
+    "--use-selector / --session-id / --batch を argparse mutually_exclusive_group で排他化する",
+    "selector の exit code が非ゼロの場合は stderr を表示して exit 1 で停止する",
+    "tests/test_run_session_selector.py を新規作成し AC-163-01〜06 に対応するテストを追加する"
+  ],
+  "out_of_scope": [
+    "orchestration/selector/ 配下のロジック変更",
+    "orchestration/select_next.py の変更",
+    "from orchestration.selector import ... による内部 import",
+    "human approval ゲート機構の追加",
+    "execution_mode (full_stack / fast_path) 分岐実装",
+    "queue / scheduler 接続",
+    "自動実行本体 (--dry-run なし実行) の挙動変更",
+    "session-164 以降の起票",
+    "docs/sessions/session-163-pre.json の変更 (確定済 commit c4720a8)",
+    "docs/acceptance/session-163-pre.yaml の変更 (確定済 commit c4720a8)",
+    "--use-selector と --dry-run の同時指定の動作定義 (session-164 以降の責務)"
+  ],
+  "constraints": [
+    "1セッション1目的",
+    "変更ファイル上限 4 件 (run_session.py / test_run_session_selector.py / session-163.json / session-163.yaml)",
+    "selector 呼び出しは subprocess 境界とすること (直接 import 禁止)",
+    "既存の main() 内 if 文による排他制御ロジックには触らないこと (mutually_exclusive_group 導入は新規分岐のみ、既存ロジック整理は別 session)",
+    "session-163 の実装ルートは Claude Code または Cursor による手動実装に限定すること (オーケストレーター経由不可)",
+    "Plan Mode 必須 (Claude Code 利用時)",
+    "preflight_session.sh フックを突破禁止 (hook 失敗時は STOP して報告)",
+    "git push は実行しない (Kunihide 手動承認が必要)",
+    "git pull は fetch のみ可、merge/rebase は手動承認",
+    ".claude/settings.json の改変監視必須 (Skill/Agent 機能発動リスク)",
+    "sandbox commit までで STOP",
+    "acceptance_criteria のキーは text (description 禁止)",
+    "allowed_changes_detail は list[str]",
+    "曖昧語を使用しないこと",
+    "acceptance_ref は repository 相対パスとすること"
+  ],
+  "acceptance_ref": "docs/acceptance/session-163.yaml",
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "tests/test_run_session_selector.py",
+    "docs/sessions/session-163.json",
+    "docs/acceptance/session-163.yaml"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/run_session.py: parse_args() に --use-selector flag 追加、main() に selector subprocess 呼び出しロジック追加",
+    "orchestration/run_session.py: --use-selector / --session-id / --batch を argparse mutually_exclusive_group で排他化する新規分岐のみ追加 (既存 if 文ロジックは変更しない)",
+    "tests/test_run_session_selector.py: AC-163-01〜06 対応テスト新規作成",
+    "docs/sessions/session-163.json: session-163 起票定義の新規作成",
+    "docs/acceptance/session-163.yaml: session-163 受入条件の新規作成"
+  ],
+  "forbidden_changes": [
+    "orchestration/select_next.py",
+    "orchestration/selector/",
+    "docs/sessions/session-163-pre.json",
+    "docs/acceptance/session-163-pre.yaml",
+    ".claude/settings.json",
+    "tests/test_selector.py",
+    "tests/test_select_next_cli.py",
+    "backend/",
+    "providers/",
+    ".github/",
+    "DL/"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-163-01",
+      "type": "artifact",
+      "condition": "orchestration/run_session.py に --use-selector flag が追加されている"
+    },
+    {
+      "id": "CC-163-02",
+      "type": "artifact",
+      "condition": "tests/test_run_session_selector.py が新規作成され AC-163-01〜06 のテストが含まれる"
+    },
+    {
+      "id": "CC-163-03",
+      "type": "document_rule",
+      "condition": "orchestration.selector の直接 import がコード内に存在しない"
+    },
+    {
+      "id": "CC-163-04",
+      "type": "non_regression",
+      "condition": "session-163 実装の sandbox commit 後の HEAD 上で、既存テスト tests/test_selector.py / tests/test_select_next_cli.py が全件 PASS"
+    },
+    {
+      "id": "CC-163-05",
+      "type": "side_effect_free",
+      "condition": "forbidden_changes に列挙したファイルが変更されていない (git diff 0 行)"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-163-01",
+      "text": "orchestration/run_session.py の parse_args() に --use-selector flag が argparse で追加されている。",
+      "test_name": "test_parse_args_has_use_selector_flag"
+    },
+    {
+      "id": "AC-163-02",
+      "text": "--use-selector 指定時に subprocess で select_next.py --dry-run が呼ばれ、stdout JSON から selected_session_id が取得される。",
+      "test_name": "test_use_selector_calls_subprocess_and_extracts_session_id"
+    },
+    {
+      "id": "AC-163-03",
+      "text": "取得した selected_session_id が既存の _run_single_session_impl() の session_id として使用される。",
+      "test_name": "test_use_selector_session_id_passed_to_impl"
+    },
+    {
+      "id": "AC-163-04",
+      "text": "orchestration/run_session.py に 'from orchestration.selector' または 'import orchestration.selector' が含まれない。",
+      "test_name": "test_no_direct_selector_import"
+    },
+    {
+      "id": "AC-163-05",
+      "text": "session-163 実装の sandbox commit 後の HEAD 上で、既存テスト tests/test_selector.py / tests/test_select_next_cli.py が全件 PASS (regression なし)。",
+      "test_name": "test_existing_tests_pass_no_regression"
+    },
+    {
+      "id": "AC-163-06",
+      "text": "--use-selector / --session-id / --batch が mutually exclusive であり、2つ以上指定すると argparse エラーになる。",
+      "test_name": "test_use_selector_mutually_exclusive_with_session_id_and_batch"
+    }
+  ],
+  "review_points": [
+    "仕様一致 (AC達成)",
+    "変更範囲遵守",
+    "副作用なし (既存破壊なし、selector 直接 import なし)",
+    "検証十分性"
+  ]
+}
