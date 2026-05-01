@@ -1,0 +1,168 @@
+{
+  "session_id": "session-161-pre",
+  "project_id": "A01_orchestrator",
+  "phase_id": "phase-spec-v0",
+  "title": "selector output に execution_mode を追加する I/O 契約 v1",
+  "goal": "session-152（selector I/O 契約）と session-160-pre（execution_mode v0 仕様）を正本参照し、selector 出力に execution_mode フィールドを追加する統合 I/O 契約を docs-only で正本化する。",
+  "scope": [
+    "docs/specs/selector_output_execution_mode_v0.md を新規作成し、selector 出力の v1 I/O 契約を docs-only で定義する",
+    "selector 出力の必須キーとして next_session_candidate / human_required_flag / stop_reason / execution_mode の 4 つを明示する",
+    "session-152（selector I/O 契約）と session-160-pre（execution_mode v0 仕様）への正本参照を spec 文書に明示する",
+    "execution_mode の enum 値は session-160-pre を正本とし、本文書では参照のみ行う",
+    "stop_reason の enum 値は session-152 を正本とし、本文書では参照のみ行う",
+    "selector が pending_sessions と queue_policy.yaml をどう読んで execution_mode を決めるかの抽象契約を定義する",
+    "human_required_flag と execution_mode の整合性条件（矛盾を許さない条件）を定義する",
+    "v0 では selector による execution_mode 自動判定を行わず、session.json 明示値または project default を読み取るにとどまることを明記する"
+  ],
+  "out_of_scope": [
+    "selector Python 実装の変更（session-156 以降の対象）",
+    "queue engine / scheduler / 自動実行の実装",
+    "queue_policy.yaml 実ファイルの作成または編集（session-154 以降の対象）",
+    "project_registry.json の変更（session-155 以降の対象）",
+    "execution_mode の自動判定ロジックの実装（v1 以降の対象）",
+    "既存 docs/specs/ 配下ファイルの改変（session-152 / session-160-pre / queue_policy_schema_v0 は参照のみ）",
+    "orchestration/run_session.py の変更",
+    "HTML / CSS / JavaScript / React / Vue の変更",
+    "ClaudeCode hooks / MCP 設定変更",
+    "DL/ 配下の操作",
+    ".claude/ 配下のあらゆる変更",
+    "CLI・テストコードの作成"
+  ],
+  "constraints": [
+    "docs-only session",
+    "1 session 1 目的",
+    "Python 実装・CLI・テスト・設定ファイルを一切作成しない",
+    "execution_mode の enum 値は session-160-pre を正本とし本文書では再定義しない",
+    "stop_reason の enum 値は session-152 を正本とし本文書では再定義しない",
+    "session-152 / session-160-pre は正本参照のみ、改変禁止",
+    "すべてのファイルは UTF-8、改行 LF",
+    "acceptance_criteria のキーは text を使用（description 禁止）",
+    "最大 3 ファイル"
+  ],
+  "acceptance_ref": "docs/acceptance/session-161-pre.yaml",
+  "references": [
+    {
+      "session_id": "session-152",
+      "role": "selector I/O 契約 正本",
+      "spec": "docs/specs/next_session_selector_v0.md（selector 入出力・stop_reason enum・自動実行禁止の正本）"
+    },
+    {
+      "session_id": "session-160-pre",
+      "role": "execution_mode v0 仕様 正本",
+      "spec": "docs/specs/execution_mode_v0.md（execution_mode enum・優先順位・fallback ポリシーの正本）"
+    },
+    {
+      "session_id": "session-153",
+      "role": "queue_policy_schema_v0 正本",
+      "spec": "docs/specs/queue_policy_schema_v0.md（queue_policy.yaml schema・load→validate→apply 契約の正本）"
+    }
+  ],
+  "allowed_changes": [
+    "docs/sessions/session-161-pre.json",
+    "docs/acceptance/session-161-pre.yaml",
+    "docs/specs/selector_output_execution_mode_v0.md"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/session-161-pre.json: session-161-pre の起票定義のみ作成",
+    "docs/acceptance/session-161-pre.yaml: session-161-pre の受入条件のみ作成",
+    "docs/specs/selector_output_execution_mode_v0.md: selector 出力 v1 I/O 契約（execution_mode 追加）の新規作成"
+  ],
+  "forbidden_changes": [
+    "orchestration/",
+    "backend/",
+    "providers/",
+    "tests/",
+    "scripts/",
+    "docs/config/queue_policy.yaml",
+    "docs/config/project_registry.json",
+    "docs/specs/next_session_selector_v0.md",
+    "docs/specs/queue_policy_schema_v0.md",
+    "docs/specs/execution_mode_v0.md",
+    "docs/specs/command_center_v0.md",
+    "docs/templates/",
+    "DL/",
+    ".claude/",
+    ".github/",
+    ".gitignore"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-161-01",
+      "type": "artifact",
+      "condition": "docs/specs/selector_output_execution_mode_v0.md が新規作成されている"
+    },
+    {
+      "id": "CC-161-02",
+      "type": "document_rule",
+      "condition": "spec 文書に session-152 と session-160-pre への正本参照が明示されている"
+    },
+    {
+      "id": "CC-161-03",
+      "type": "document_rule",
+      "condition": "selector 出力の必須キーとして next_session_candidate / human_required_flag / stop_reason / execution_mode の 4 つが明示されている"
+    },
+    {
+      "id": "CC-161-04",
+      "type": "document_rule",
+      "condition": "execution_mode の enum 値が本文書内で再定義されておらず session-160-pre 参照のみ"
+    },
+    {
+      "id": "CC-161-05",
+      "type": "document_rule",
+      "condition": "stop_reason の enum 値が本文書内で再定義されておらず session-152 参照のみ"
+    },
+    {
+      "id": "CC-161-06",
+      "type": "document_rule",
+      "condition": "human_required_flag と execution_mode の整合性条件が定義されている"
+    },
+    {
+      "id": "CC-161-07",
+      "type": "side_effect_free",
+      "condition": "git diff が allowed_changes の 3 ファイル以内であり既存 spec / session / acceptance の変更がない"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-161-01",
+      "text": "docs/specs/selector_output_execution_mode_v0.md が新規作成されている。",
+      "test_name": "manual_acceptance_selector_output_execution_mode_spec_created"
+    },
+    {
+      "id": "AC-161-02",
+      "text": "spec 文書に session-152 と session-160-pre への参照が明示されている。",
+      "test_name": "manual_acceptance_references_to_session_152_and_160_pre"
+    },
+    {
+      "id": "AC-161-03",
+      "text": "execution_mode の enum 値が本文書内で再定義されていない（session-160-pre 参照のみ）。",
+      "test_name": "manual_acceptance_execution_mode_enum_not_redefined"
+    },
+    {
+      "id": "AC-161-04",
+      "text": "stop_reason の enum 値が本文書内で再定義されていない（session-152 参照のみ）。",
+      "test_name": "manual_acceptance_stop_reason_enum_not_redefined"
+    },
+    {
+      "id": "AC-161-05",
+      "text": "selector 出力の必須キーとして next_session_candidate / human_required_flag / stop_reason / execution_mode の 4 つが明示されている。",
+      "test_name": "manual_acceptance_four_required_output_keys_defined"
+    },
+    {
+      "id": "AC-161-06",
+      "text": "Python 実装、CLI、queue_policy.yaml 実ファイルへの言及がない（docs-only スコープ厳格化）。",
+      "test_name": "manual_acceptance_no_implementation_artifacts"
+    },
+    {
+      "id": "AC-161-07",
+      "text": "JSON / YAML 構文 PASS（python3 -m json.tool / python3 -c 'import yaml; yaml.safe_load(...)'）。",
+      "test_name": "cli_acceptance_json_yaml_syntax_pass"
+    }
+  ],
+  "review_points": [
+    "目的整合性",
+    "スコープ逸脱なし",
+    "破壊的変更なし",
+    "検証十分性"
+  ]
+}

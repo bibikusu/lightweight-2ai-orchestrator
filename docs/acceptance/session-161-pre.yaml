@@ -1,0 +1,127 @@
+session_id: "session-161-pre"
+goal: "session-152（selector I/O 契約）と session-160-pre（execution_mode v0 仕様）を正本参照し、selector 出力に execution_mode フィールドを追加する統合 I/O 契約を docs-only で正本化する。"
+
+scope:
+  - "docs/specs/selector_output_execution_mode_v0.md を新規作成し、selector 出力の v1 I/O 契約を定義する"
+  - "selector 出力の必須キー 4 つ（next_session_candidate / human_required_flag / stop_reason / execution_mode）を明示する"
+  - "session-152 と session-160-pre への正本参照を spec 文書に明示する"
+  - "execution_mode の enum 値は session-160-pre を正本とし本文書では参照のみ"
+  - "stop_reason の enum 値は session-152 を正本とし本文書では参照のみ"
+  - "execution_mode 決定の抽象契約（session.json 明示値 > project default）を定義する"
+  - "human_required_flag と execution_mode の整合性条件を定義する"
+  - "v0 では execution_mode 自動判定を行わず読み取りにとどまることを明記する"
+
+out_of_scope:
+  - "selector Python 実装の変更（session-156 以降）"
+  - "queue engine / scheduler / 自動実行の実装"
+  - "queue_policy.yaml 実ファイルの作成または編集（session-154 以降）"
+  - "project_registry.json の変更（session-155 以降）"
+  - "execution_mode 自動判定ロジックの実装（v1 以降）"
+  - "既存 docs/specs/ 配下ファイルの改変（参照のみ）"
+  - "orchestration/run_session.py の変更"
+  - "ClaudeCode hooks / MCP 設定変更"
+  - "DL/ 配下の操作"
+  - ".claude/ 配下のあらゆる変更"
+  - "CLI・テストコードの作成"
+
+acceptance:
+  - id: "AC-161-01"
+    text: "docs/specs/selector_output_execution_mode_v0.md が新規作成されている。"
+    test_name: "manual_acceptance_selector_output_execution_mode_spec_created"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "ls docs/specs/selector_output_execution_mode_v0.md でファイル存在を確認する"
+
+  - id: "AC-161-02"
+    text: "spec 文書に session-152 と session-160-pre への参照が明示されている。"
+    test_name: "manual_acceptance_references_to_session_152_and_160_pre"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "spec 文書内に session-152 への言及が存在することを目視確認する"
+      - "spec 文書内に session-160-pre への言及が存在することを目視確認する"
+
+  - id: "AC-161-03"
+    text: "execution_mode の enum 値が本文書内で再定義されていない（session-160-pre 参照のみ）。"
+    test_name: "manual_acceptance_execution_mode_enum_not_redefined"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "spec 文書内で execution_mode の enum 値が新規定義されておらず session-160-pre 参照である旨が記述されていることを目視確認する"
+
+  - id: "AC-161-04"
+    text: "stop_reason の enum 値が本文書内で再定義されていない（session-152 参照のみ）。"
+    test_name: "manual_acceptance_stop_reason_enum_not_redefined"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "spec 文書内で stop_reason の enum 値が新規定義されておらず session-152 参照である旨が記述されていることを目視確認する"
+
+  - id: "AC-161-05"
+    text: "selector 出力の必須キーとして next_session_candidate / human_required_flag / stop_reason / execution_mode の 4 つが明示されている。"
+    test_name: "manual_acceptance_four_required_output_keys_defined"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "spec 文書内に next_session_candidate が必須キーとして記述されていることを確認する"
+      - "spec 文書内に human_required_flag が必須キーとして記述されていることを確認する"
+      - "spec 文書内に stop_reason が必須キーとして記述されていることを確認する"
+      - "spec 文書内に execution_mode が必須キーとして記述されていることを確認する"
+
+  - id: "AC-161-06"
+    text: "Python 実装、CLI、queue_policy.yaml 実ファイルへの言及がない（docs-only スコープ厳格化）。"
+    test_name: "manual_acceptance_no_implementation_artifacts"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "spec 文書内に Python コード・CLI コマンド・queue_policy.yaml 実値が含まれていないことを目視確認する"
+
+  - id: "AC-161-07"
+    text: "JSON / YAML 構文 PASS（python3 -m json.tool / python3 -c 'import yaml; yaml.safe_load(...)'）。"
+    test_name: "cli_acceptance_json_yaml_syntax_pass"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "python3 -m json.tool docs/sessions/session-161-pre.json が exit 0 で終了する"
+      - "python3 -c \"import yaml; yaml.safe_load(open('docs/acceptance/session-161-pre.yaml'))\" が exit 0 で終了する"
+
+completion_checks:
+  - "docs/sessions/session-161-pre.json が保存されている"
+  - "docs/acceptance/session-161-pre.yaml が保存されている"
+  - "docs/specs/selector_output_execution_mode_v0.md が保存されている"
+  - "session-161-pre.json に session_id / project_id / phase_id / title / goal / scope / out_of_scope / constraints / acceptance_ref / references / review_points が存在する"
+  - "acceptance_criteria のキーが text である（description でない）"
+  - "execution_mode enum が本文書内で再定義されていない"
+  - "stop_reason enum が本文書内で再定義されていない"
+  - "必須キー 4 つが spec 文書に明示されている"
+  - "変更ファイルが 3 件以内"
+
+change_guardrails:
+  allowed_changes:
+    - "docs/sessions/session-161-pre.json"
+    - "docs/acceptance/session-161-pre.yaml"
+    - "docs/specs/selector_output_execution_mode_v0.md"
+  forbidden_changes:
+    - "orchestration/"
+    - "backend/"
+    - "providers/"
+    - "tests/"
+    - "scripts/"
+    - "docs/config/queue_policy.yaml"
+    - "docs/config/project_registry.json"
+    - "docs/specs/next_session_selector_v0.md"
+    - "docs/specs/queue_policy_schema_v0.md"
+    - "docs/specs/execution_mode_v0.md"
+    - "docs/specs/command_center_v0.md"
+    - "docs/templates/"
+    - "DL/"
+    - ".claude/"
+    - ".github/"
+    - ".gitignore"
+
+review_points:
+  - "目的整合性"
+  - "スコープ逸脱なし"
+  - "破壊的変更なし"
+  - "検証十分性"
