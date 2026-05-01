@@ -1,0 +1,145 @@
+session_id: "session-155b"
+goal: "docs/config/project_registry.json が既存ファイルとして存在することを確認し、selector 実装（session-162）の execution_mode fallback との整合、queue_policy.yaml が参照する field の存在確認を docs-only で検収・記録する。"
+
+scope:
+  - "docs/config/project_registry.json の存在確認・JSON 構文確認・構造抽出"
+  - "projects 配列の件数確認（10 件）"
+  - "各 project の実行判断フィールド 7 種の存在確認"
+  - "session-162 の _resolve_execution_mode() と None fallback との整合確認"
+  - "queue_policy.yaml が参照する field（deploy_risk / db_touch_allowed / night_batch_allowed）の全 project 存在確認"
+  - "AC-155b-01〜10 の検証結果を検収レポートに記録"
+
+out_of_scope:
+  - "docs/config/project_registry.json の編集・新規作成"
+  - "docs/config/queue_policy.yaml の編集"
+  - "docs/sessions/session-155.json の変更（旧定義の正本として保持）"
+  - "docs/acceptance/session-155.yaml の変更（旧定義の正本として保持）"
+  - "Python 実装・CLI・テストコードの変更"
+  - "orchestration/selector/ 配下の変更"
+  - "scheduler / queue engine の実装"
+  - ".claude/ 配下のあらゆる変更"
+  - "DL/ 配下の操作"
+  - "default_execution_mode の project_registry.json への追記"
+
+acceptance:
+  - id: "AC-155b-01"
+    text: "docs/config/project_registry.json が既存ファイルとして存在することが確認されている。"
+    test_name: "manual_acceptance_project_registry_json_exists"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "ls -la docs/config/project_registry.json でファイル存在とサイズを確認する"
+
+  - id: "AC-155b-02"
+    text: "本セッションで docs/config/project_registry.json を新規作成していない。"
+    test_name: "manual_acceptance_project_registry_json_not_created"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "git diff --name-only で docs/config/project_registry.json が含まれていないことを確認する"
+
+  - id: "AC-155b-03"
+    text: "docs/config/project_registry.json の JSON 構文確認が PASS している。"
+    test_name: "cli_acceptance_project_registry_json_syntax_pass"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "python3 -m json.tool docs/config/project_registry.json が exit 0 で終了する"
+
+  - id: "AC-155b-04"
+    text: "projects 配列が存在し、10 件の project が確認されている。"
+    test_name: "manual_acceptance_projects_count_10"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "検収レポートに project 件数 10 件が記録されていることを確認する"
+      - "A01〜A10 の project_id が全て存在することを確認する"
+
+  - id: "AC-155b-05"
+    text: "各 project に project_id / repo_path / status / deploy_risk / db_touch_allowed / night_batch_allowed / default_agents の 7 フィールドが存在する。"
+    test_name: "manual_acceptance_required_fields_present"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "検収レポートの field 存在確認表で全 10 project × 7 フィールドが PASS であることを確認する"
+
+  - id: "AC-155b-06"
+    text: "queue_policy.yaml が condition_dsl で参照する field（deploy_risk / db_touch_allowed / night_batch_allowed）が全 10 project に存在し整合している。"
+    test_name: "manual_acceptance_queue_policy_fields_aligned"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "検収レポートの field 整合表を確認する"
+      - "deploy_risk / db_touch_allowed / night_batch_allowed が全 10 project に存在することを確認する"
+
+  - id: "AC-155b-07"
+    text: "session-162 の _resolve_execution_mode() が参照する default_execution_mode が全 project に未定義であり、None fallback で矛盾しないことが確認されている。"
+    test_name: "manual_acceptance_execution_mode_none_fallback_safe"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "検収レポートで全 10 project の default_execution_mode 未定義が記録されていることを確認する"
+      - "_resolve_execution_mode() が None を返すことが仕様上許容されることを確認する"
+
+  - id: "AC-155b-08"
+    text: "docs/config/project_registry.json 本体に破壊的変更がない（git diff で 0 行差分）。"
+    test_name: "manual_acceptance_project_registry_json_not_modified"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "git diff -- docs/config/project_registry.json の出力が空であることを確認する"
+
+  - id: "AC-155b-09"
+    text: ".claude/ と DL/ に変更がない。"
+    test_name: "manual_acceptance_no_claude_or_dl_changes"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "git status --short に .claude/ または DL/ の変更が含まれないことを確認する"
+
+  - id: "AC-155b-10"
+    text: "JSON / YAML 構文確認 PASS（session-155b.json / session-155b.yaml / 既存 project_registry.json の 3 ファイル）。"
+    test_name: "cli_acceptance_json_yaml_syntax_pass"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "python3 -m json.tool docs/sessions/session-155b.json が exit 0 で終了する"
+      - "python3 -c \"import yaml; yaml.safe_load(open('docs/acceptance/session-155b.yaml'))\" が exit 0 で終了する"
+      - "python3 -m json.tool docs/config/project_registry.json が exit 0 で終了する"
+
+completion_checks:
+  - "docs/sessions/session-155b.json が保存されている"
+  - "docs/acceptance/session-155b.yaml が保存されている"
+  - "docs/reports/session-155b_project_registry_acceptance.md が保存されている"
+  - "docs/config/project_registry.json が変更されていない（git diff 0 行）"
+  - "docs/sessions/session-155.json が変更されていない（旧定義保持）"
+  - "projects 配列 10 件が確認されている"
+  - "acceptance_criteria のキーが text である"
+  - "変更ファイルが 3 件以内"
+
+change_guardrails:
+  allowed_changes:
+    - "docs/sessions/session-155b.json"
+    - "docs/acceptance/session-155b.yaml"
+    - "docs/reports/session-155b_project_registry_acceptance.md"
+  forbidden_changes:
+    - "docs/config/project_registry.json"
+    - "docs/config/queue_policy.yaml"
+    - "docs/sessions/session-155.json"
+    - "docs/acceptance/session-155.yaml"
+    - "orchestration/"
+    - "backend/"
+    - "providers/"
+    - "tests/"
+    - "scripts/"
+    - "docs/specs/"
+    - ".claude/"
+    - ".github/"
+    - "DL/"
+    - ".gitignore"
+
+review_points:
+  - "仕様一致（AC達成）"
+  - "変更範囲遵守"
+  - "副作用なし（既存破壊なし）"
+  - "検証十分性"
