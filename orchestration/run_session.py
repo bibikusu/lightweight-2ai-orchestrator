@@ -4908,14 +4908,47 @@ def generate_report(
     return "\n".join(lines)
 
 
+def _run_selector_subprocess() -> str:
+    """subprocess で select_next.py --dry-run を実行し selected_session_id を返す。"""
+    cmd = [sys.executable, str(ROOT_DIR / "orchestration" / "select_next.py"), "--dry-run"]
+    proc = subprocess.run(cmd, text=True, capture_output=True, cwd=ROOT_DIR)
+    if proc.returncode != 0:
+        print(
+            f"[ERROR] select_next.py が終了コード {proc.returncode} で終了しました。\n"
+            f"stderr: {proc.stderr.strip()}",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    try:
+        data = json.loads(proc.stdout)
+    except json.JSONDecodeError as exc:
+        print(
+            f"[ERROR] select_next.py の出力が JSON として解析できません: {exc}",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    session_id = data.get("selected_session_id")
+    if not session_id:
+        print("[ERROR] select_next.py の出力に selected_session_id が含まれていません。", file=sys.stderr)
+        sys.exit(1)
+    return session_id
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--session-id", default=None, help="e.g. session-01（--batch 未指定時は必須）")
-    parser.add_argument(
+    _session_group = parser.add_mutually_exclusive_group()
+    _session_group.add_argument("--session-id", default=None, help="e.g. session-01（--batch 未指定時は必須）")
+    _session_group.add_argument(
         "--batch",
         default=None,
         metavar="IDS",
         help='複数 session を順実行（カンマ区切り、例: "session-01,session-02"）。--session-id と併用不可。',
+    )
+    _session_group.add_argument(
+        "--use-selector",
+        action="store_true",
+        default=False,
+        help="select_next.py --dry-run を呼び出して session を自動選択する。--session-id / --batch と併用不可。",
     )
     parser.add_argument("--max-retries", type=int, default=None)
     parser.add_argument("--dry-run", action="store_true")
@@ -4962,6 +4995,11 @@ def main() -> int:
                 file=sys.stderr,
             )
             return 1
+    # --- --use-selector 分岐（新規） ---
+    if args.use_selector:
+        args.session_id = _run_selector_subprocess()
+        return _run_single_session_impl(args)
+    # --- ここまで ---
     if args.batch is not None:
         batch_csv = args.batch.strip()
         if not batch_csv:
