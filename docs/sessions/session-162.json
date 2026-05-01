@@ -1,0 +1,168 @@
+{
+  "session_id": "session-162",
+  "project_id": "A01_orchestrator",
+  "phase_id": "phase-selector-impl-v1",
+  "title": "selector output に execution_mode を追加する Python 実装",
+  "goal": "docs/specs/selector_output_execution_mode_v0.md（I/O 契約 v1）に従い、orchestration/selector/core.py の build_selector_output() に execution_mode フィールドを追加し、session.json 明示値 → project default の優先順位で値を読み取る実装を行う。既存キーおよび skipped_sessions の挙動を破壊しない。",
+  "scope": [
+    "orchestration/selector/core.py を改修し、build_selector_output() の返り値に execution_mode を含める",
+    "execution_mode の決定ロジックを実装する（優先順位: session.json 明示値 → project_registry の project default → None）",
+    "tests/test_selector.py に execution_mode の決定ルール・出力含有・既存キー非破壊を検証するテストを追加する",
+    "改修後 4-gate（ruff / pytest / mypy / compileall）が全 PASS することを確認する"
+  ],
+  "out_of_scope": [
+    "orchestration/selector/writer.py の変更（write() は selector_output dict をそのまま書き出すため execution_mode 追加のみで対応可能）",
+    "queue engine / scheduler / orchestration/run_session.py の変更",
+    ".claude/ 配下のあらゆる変更",
+    "DL/ 配下の操作",
+    "docs/config/queue_policy.yaml 実ファイルの変更",
+    "docs/config/project_registry.json 実ファイルの変更",
+    "execution_mode enum の再定義（session-160-pre / selector_output_execution_mode_v0.md を参照のみ）",
+    "stop_reason enum の再定義（session-152 を参照のみ）",
+    "fallback 自動切替の実装（次 session 起票時推奨変更のみ、session-160-pre 正本）",
+    "execution_mode 自動判定ロジックの実装（v1 以降の対象）",
+    "orchestration/selector/loader.py の変更",
+    "orchestration/selector/__init__.py の変更"
+  ],
+  "constraints": [
+    "実装変更ファイル上限 3 件（orchestration/selector/core.py / tests/test_selector.py の 2 件を基本とし、必要な場合のみ orchestration/selector/writer.py を追加）",
+    "既存キー candidate_sessions / selected_session_id / selection_reason / metadata を破壊しない",
+    "既存挙動 skipped_sessions を破壊しない",
+    "execution_mode enum は session-160-pre および selector_output_execution_mode_v0.md を参照のみとし再定義しない",
+    "execution_mode の決定は session.json 明示値 → project default の優先順位で行い、どちらも存在しない場合は None を返す",
+    "4-gate 全 PASS（既知 fail test_aggregate_reports_passes_validation_suite のみ許容）",
+    "allowed_changes_detail は list[str]",
+    "型アノテーション必須（mypy PASS）",
+    "ruff PASS"
+  ],
+  "acceptance_ref": "docs/acceptance/session-162.yaml",
+  "references": [
+    {
+      "session_id": "session-161-pre",
+      "role": "selector output I/O 契約 v1 正本",
+      "spec": "docs/specs/selector_output_execution_mode_v0.md"
+    },
+    {
+      "session_id": "session-160-pre",
+      "role": "execution_mode v0 仕様 正本",
+      "spec": "docs/specs/execution_mode_v0.md"
+    },
+    {
+      "session_id": "session-152",
+      "role": "selector 入出力契約 正本",
+      "spec": "docs/specs/next_session_selector_v0.md"
+    }
+  ],
+  "allowed_changes": [
+    "orchestration/selector/core.py",
+    "tests/test_selector.py",
+    "orchestration/selector/writer.py"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/selector/core.py: build_selector_output() に execution_mode フィールドを追加。_resolve_execution_mode() ヘルパーを追加し session.json 明示値 → project_registry default → None の優先順位で決定する",
+    "tests/test_selector.py: execution_mode の決定ルール（session 明示値採用・project default フォールバック・None 時の挙動）と既存キー非破壊を検証するテストを追加する",
+    "orchestration/selector/writer.py: execution_mode が None の場合の null シリアライズを検証するためにのみ変更を許容する（変更不要と判断した場合は変更しない）"
+  ],
+  "forbidden_changes": [
+    "orchestration/selector/loader.py",
+    "orchestration/selector/__init__.py",
+    "orchestration/run_session.py",
+    "backend/",
+    "providers/",
+    ".github/",
+    ".claude/",
+    "DL/",
+    "docs/config/queue_policy.yaml",
+    "docs/config/project_registry.json",
+    "docs/specs/selector_output_execution_mode_v0.md",
+    "docs/specs/execution_mode_v0.md",
+    "docs/specs/queue_policy_schema_v0.md",
+    "docs/specs/command_center_v0.md",
+    ".gitignore"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-162-01",
+      "type": "artifact",
+      "condition": "orchestration/selector/core.py の build_selector_output() 返り値に execution_mode キーが存在する"
+    },
+    {
+      "id": "CC-162-02",
+      "type": "artifact",
+      "condition": "tests/test_selector.py に execution_mode に関するテストが追加されている"
+    },
+    {
+      "id": "CC-162-03",
+      "type": "document_rule",
+      "condition": "execution_mode の決定ロジックが session.json 明示値 → project default → None の優先順位で実装されている"
+    },
+    {
+      "id": "CC-162-04",
+      "type": "non_regression",
+      "condition": "既存キー candidate_sessions / selected_session_id / selection_reason / metadata が出力に含まれ続ける"
+    },
+    {
+      "id": "CC-162-05",
+      "type": "non_regression",
+      "condition": "skipped_sessions の既存挙動が破壊されていない（test_skipped_sessions_recorded / test_skipped_sessions_empty_when_all_valid が PASS）"
+    },
+    {
+      "id": "CC-162-06",
+      "type": "side_effect_free",
+      "condition": "変更ファイルが allowed_changes の 3 件以内（writer.py は変更不要と判断した場合は 2 件）"
+    },
+    {
+      "id": "CC-162-07",
+      "type": "document_rule",
+      "condition": "4-gate 全 PASS（ruff exit 0 / pytest fail は test_aggregate_reports_passes_validation_suite のみ / mypy exit 0 / compileall exit 0）"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-162-01",
+      "text": "orchestration/selector/core.py が改修され、build_selector_output() の返り値に execution_mode が含まれる。",
+      "test_name": "test_selector_output_contains_execution_mode"
+    },
+    {
+      "id": "AC-162-02",
+      "text": "session.json に execution_mode が明示されている場合、その値が selector 出力の execution_mode に採用される。",
+      "test_name": "test_execution_mode_from_session_json"
+    },
+    {
+      "id": "AC-162-03",
+      "text": "session.json に execution_mode が存在しない場合、project_registry の project default が参照される。",
+      "test_name": "test_execution_mode_from_project_default"
+    },
+    {
+      "id": "AC-162-04",
+      "text": "session.json にも project_registry にも execution_mode が存在しない場合、selector 出力の execution_mode が None になる。",
+      "test_name": "test_execution_mode_none_when_not_defined"
+    },
+    {
+      "id": "AC-162-05",
+      "text": "既存キー candidate_sessions / selected_session_id / selection_reason / metadata が改修後も出力に含まれ破壊されていない。",
+      "test_name": "test_existing_output_keys_not_broken"
+    },
+    {
+      "id": "AC-162-06",
+      "text": "skipped_sessions の既存挙動が破壊されていない（test_skipped_sessions_recorded / test_skipped_sessions_empty_when_all_valid が PASS）。",
+      "test_name": "test_skipped_sessions_not_broken"
+    },
+    {
+      "id": "AC-162-07",
+      "text": "execution_mode enum が selector 実装内で再定義されていない（session-160-pre / selector_output_execution_mode_v0.md 参照のみ）。",
+      "test_name": "test_execution_mode_enum_not_redefined_in_impl"
+    },
+    {
+      "id": "AC-162-08",
+      "text": "4-gate 全 PASS（ruff / pytest 既知 fail 1 件のみ / mypy / compileall）。",
+      "test_name": "test_four_gate_all_pass"
+    }
+  ],
+  "review_points": [
+    "目的整合性",
+    "スコープ逸脱なし",
+    "破壊的変更なし",
+    "検証十分性"
+  ]
+}

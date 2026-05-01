@@ -1,0 +1,136 @@
+session_id: "session-162"
+goal: "docs/specs/selector_output_execution_mode_v0.md（I/O 契約 v1）に従い、orchestration/selector/core.py に execution_mode フィールドを追加し、session.json 明示値 → project default → None の優先順位で決定する実装を行う。"
+
+scope:
+  - "orchestration/selector/core.py を改修し、build_selector_output() 返り値に execution_mode を含める"
+  - "execution_mode の決定ロジックを実装する（session.json 明示値 → project_registry project default → None）"
+  - "tests/test_selector.py に execution_mode の決定ルール・出力含有・既存キー非破壊のテストを追加する"
+  - "改修後 4-gate（ruff / pytest / mypy / compileall）が全 PASS することを確認する"
+
+out_of_scope:
+  - "orchestration/selector/writer.py の変更（原則不要、execution_mode 追加で対応可能）"
+  - "queue engine / scheduler / orchestration/run_session.py の変更"
+  - ".claude/ 配下のあらゆる変更"
+  - "DL/ 配下の操作"
+  - "docs/config/queue_policy.yaml 実ファイルの変更"
+  - "docs/config/project_registry.json 実ファイルの変更"
+  - "execution_mode enum の再定義（session-160-pre 参照のみ）"
+  - "stop_reason enum の再定義（session-152 参照のみ）"
+  - "fallback 自動切替の実装"
+  - "execution_mode 自動判定ロジックの実装（v1 以降）"
+  - "orchestration/selector/loader.py の変更"
+  - "orchestration/selector/__init__.py の変更"
+
+acceptance:
+  - id: "AC-162-01"
+    text: "orchestration/selector/core.py が改修され、build_selector_output() の返り値に execution_mode が含まれる。"
+    test_name: "test_selector_output_contains_execution_mode"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "pytest tests/test_selector.py::test_selector_output_contains_execution_mode が PASS する"
+
+  - id: "AC-162-02"
+    text: "session.json に execution_mode が明示されている場合、その値が selector 出力の execution_mode に採用される。"
+    test_name: "test_execution_mode_from_session_json"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "pytest tests/test_selector.py::test_execution_mode_from_session_json が PASS する"
+
+  - id: "AC-162-03"
+    text: "session.json に execution_mode が存在しない場合、project_registry の project default が参照される。"
+    test_name: "test_execution_mode_from_project_default"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "pytest tests/test_selector.py::test_execution_mode_from_project_default が PASS する"
+
+  - id: "AC-162-04"
+    text: "session.json にも project_registry にも execution_mode が存在しない場合、selector 出力の execution_mode が None になる。"
+    test_name: "test_execution_mode_none_when_not_defined"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "pytest tests/test_selector.py::test_execution_mode_none_when_not_defined が PASS する"
+
+  - id: "AC-162-05"
+    text: "既存キー candidate_sessions / selected_session_id / selection_reason / metadata が改修後も出力に含まれ破壊されていない。"
+    test_name: "test_existing_output_keys_not_broken"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "pytest tests/test_selector.py::test_existing_output_keys_not_broken が PASS する"
+      - "既存テスト test_artifact_output / test_single_selection / test_candidate_generation が PASS し続ける"
+
+  - id: "AC-162-06"
+    text: "skipped_sessions の既存挙動が破壊されていない（test_skipped_sessions_recorded / test_skipped_sessions_empty_when_all_valid が PASS）。"
+    test_name: "test_skipped_sessions_not_broken"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "pytest tests/test_selector.py::test_skipped_sessions_recorded が PASS する"
+      - "pytest tests/test_selector.py::test_skipped_sessions_empty_when_all_valid が PASS する"
+
+  - id: "AC-162-07"
+    text: "execution_mode enum が selector 実装内で再定義されていない（session-160-pre / selector_output_execution_mode_v0.md 参照のみ）。"
+    test_name: "test_execution_mode_enum_not_redefined_in_impl"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "orchestration/selector/core.py に enum 値を文字列定数として列挙する定義がないことを目視確認する"
+      - "session-160-pre の enum 値に拘束されない汎用的な読み取り実装（文字列をそのまま転記）になっていることを確認する"
+
+  - id: "AC-162-08"
+    text: "4-gate 全 PASS（ruff / pytest 既知 fail 1 件のみ / mypy / compileall）。"
+    test_name: "test_four_gate_all_pass"
+    type: "automated"
+    manual_check: false
+    verification:
+      - ".venv/bin/ruff check orchestration tests scripts が exit 0"
+      - "PYTHONPATH=. .venv/bin/pytest -q --tb=no が fail 1 件のみ（test_aggregate_reports_passes_validation_suite）"
+      - ".venv/bin/python -m mypy --explicit-package-bases orchestration scripts --ignore-missing-imports が exit 0"
+      - ".venv/bin/python -m compileall -q -f orchestration backend scripts が exit 0"
+
+completion_checks:
+  - "orchestration/selector/core.py の build_selector_output() 返り値に execution_mode キーが存在する"
+  - "execution_mode 決定ロジックが session.json 明示値 → project default → None の優先順位で実装されている"
+  - "tests/test_selector.py に AC-162-01〜04 に対応するテストが追加されている"
+  - "既存テスト（test_artifact_output / test_skipped_sessions_recorded 等）が PASS し続ける"
+  - "execution_mode enum が selector 実装内で再定義されていない"
+  - "変更ファイルが allowed_changes の 3 件以内"
+  - "4-gate 全 PASS（既知 fail 1 件のみ許容）"
+
+change_guardrails:
+  allowed_changes:
+    - "orchestration/selector/core.py"
+    - "tests/test_selector.py"
+    - "orchestration/selector/writer.py"
+  forbidden_changes:
+    - "orchestration/selector/loader.py"
+    - "orchestration/selector/__init__.py"
+    - "orchestration/run_session.py"
+    - "backend/"
+    - "providers/"
+    - ".github/"
+    - ".claude/"
+    - "DL/"
+    - "docs/config/queue_policy.yaml"
+    - "docs/config/project_registry.json"
+    - "docs/specs/selector_output_execution_mode_v0.md"
+    - "docs/specs/execution_mode_v0.md"
+    - "docs/specs/queue_policy_schema_v0.md"
+    - "docs/specs/command_center_v0.md"
+    - ".gitignore"
+
+quality_gate:
+  ruff: pass
+  pytest: "pass（既知 fail test_aggregate_reports_passes_validation_suite のみ許容）"
+  mypy: pass
+  compileall: pass
+
+review_points:
+  - "目的整合性"
+  - "スコープ逸脱なし"
+  - "破壊的変更なし"
+  - "検証十分性"
