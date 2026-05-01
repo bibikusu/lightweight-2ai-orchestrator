@@ -1,0 +1,156 @@
+{
+  "session_id": "session-164",
+  "phase_id": "P7",
+  "title": "Define execution_mode integration contract for selector output",
+  "goal": "session-163 で追加された --use-selector 実行入口の次段として、selector output に execution_mode を含める契約を docs-only で定義する。session-160-pre で確定した execution_mode v0 仕様（enum[full_stack,fast_path]、人間明示選択、同一session内fallback禁止）を尊重し、selector layer は UI/project default layer と直交する補助レイヤーとして位置付ける。",
+  "scope": [
+    "selector output に execution_mode を含める契約を定義する",
+    "execution_mode の許可値を full_stack / fast_path に限定する",
+    "run_session.py 側が将来 selected_session_id と execution_mode を受け取る前提を定義する",
+    "fast_path の本体実装は本セッションでは行わない",
+    "session-160-pre の execution_mode v0 仕様との関係を、直交する補助レイヤーとして明記する",
+    "session-165 以降への handoff を明記する"
+  ],
+  "out_of_scope": [
+    "orchestration/run_session.py の変更",
+    "orchestration/select_next.py の変更",
+    "orchestration/selector/ 配下の変更",
+    "tests/ 配下の変更",
+    "execution_mode 分岐の実装",
+    "fast_path のステージスキップ実装",
+    "queue / scheduler / UI 接続",
+    "human approval ゲート機構の追加",
+    "session-160-pre の execution_mode v0 仕様の改変",
+    "git push"
+  ],
+  "constraints": [
+    "docs-only",
+    "1セッション1目的",
+    "実装コードを変更しない",
+    "session-163 の実装結果を前提とする",
+    "session-160-pre の execution_mode v0 仕様を破壊しない",
+    "execution_mode enum は full_stack / fast_path の2値のみ",
+    "selector output の既存 selected_session_id 契約を破壊しない",
+    "allowed_changes_detail は list[str]",
+    "acceptance_criteria のキーは text",
+    "曖昧語を使用しないこと"
+  ],
+  "acceptance_ref": "docs/acceptance/session-164.yaml",
+  "allowed_changes": [
+    "docs/sessions/session-164.json",
+    "docs/acceptance/session-164.yaml"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/session-164.json: session-164 の docs-only 起票定義を新規作成",
+    "docs/acceptance/session-164.yaml: session-164 の受入条件を新規作成"
+  ],
+  "forbidden_changes": [
+    "orchestration/run_session.py",
+    "orchestration/select_next.py",
+    "orchestration/selector/",
+    "tests/",
+    ".claude/settings.json",
+    "backend/",
+    "providers/",
+    ".github/",
+    "DL/"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-164-01",
+      "type": "artifact",
+      "condition": "docs/sessions/session-164.json が存在する"
+    },
+    {
+      "id": "CC-164-02",
+      "type": "artifact",
+      "condition": "docs/acceptance/session-164.yaml が存在する"
+    },
+    {
+      "id": "CC-164-03",
+      "type": "document_rule",
+      "condition": "execution_mode enum が full_stack / fast_path の2値として定義されている"
+    },
+    {
+      "id": "CC-164-04",
+      "type": "side_effect_free",
+      "condition": "forbidden_changes に列挙したファイルが変更されていない"
+    },
+    {
+      "id": "CC-164-05",
+      "type": "document_rule",
+      "condition": "session-160-pre の execution_mode v0 仕様への参照と、selector layer を直交する補助レイヤーとして位置付ける記述が goal および scope に含まれている"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-164-01",
+      "text": "selector output contract に selected_session_id と execution_mode が必須フィールドとして定義されている。",
+      "test_name": "test_session_164_selector_output_contract"
+    },
+    {
+      "id": "AC-164-02",
+      "text": "execution_mode の許可値が full_stack / fast_path の2値に限定されている。",
+      "test_name": "test_session_164_execution_mode_enum"
+    },
+    {
+      "id": "AC-164-03",
+      "text": "fast_path の本体実装が out_of_scope として明記されている。",
+      "test_name": "test_session_164_fast_path_implementation_out_of_scope"
+    },
+    {
+      "id": "AC-164-04",
+      "text": "allowed_changes が docs/sessions/session-164.json と docs/acceptance/session-164.yaml の2件に限定されている。",
+      "test_name": "test_session_164_allowed_changes_docs_only"
+    },
+    {
+      "id": "AC-164-05",
+      "text": "goal および scope に session-160-pre の execution_mode v0 仕様（enum[full_stack,fast_path]、人間明示選択、同一session内fallback禁止）への参照と、selector layer を UI/project default layer と直交する補助レイヤーとして位置付ける記述が含まれている。",
+      "test_name": "test_session_164_session_160_pre_relation_documented"
+    }
+  ],
+  "selector_output_contract": {
+    "type": "object",
+    "required": [
+      "selected_session_id",
+      "execution_mode"
+    ],
+    "properties": {
+      "selected_session_id": {
+        "type": "str"
+      },
+      "execution_mode": {
+        "type": "enum[full_stack,fast_path]"
+      }
+    }
+  },
+  "relation_to_session_160_pre": {
+    "purpose": "session-160-pre で確定した execution_mode v0 仕様と本セッションの selector layer 仕様の関係を明示する",
+    "session_160_pre_layer": "UI / project default / session.json (人間明示選択、優先順位=session.json>project default、同一session内fallback禁止)",
+    "session_164_layer": "selector output (selector が決定、run_session.py へ渡す補助レイヤー)",
+    "orthogonality": "両者は意思決定主体が異なる直交する補助レイヤーである",
+    "priority_resolution_deferred_to": "session-165"
+  },
+  "handoff_to_session_165": {
+    "type": "object",
+    "purpose": {
+      "type": "str",
+      "value": "session-165 では selector CLI または run_session.py のどちらを先に変更するかを、現物確認後に決定する"
+    },
+    "candidate_scope": {
+      "type": "list[str]",
+      "value": [
+        "select_next.py stdout JSON に execution_mode を含める",
+        "run_session.py の _run_selector_subprocess() が execution_mode を読み取る",
+        "execution_mode 未指定時の backward compatibility を定義する",
+        "session-160-pre の UI/project default/session.json 優先順位と selector output の接続順を定義する"
+      ]
+    }
+  },
+  "review_points": [
+    "仕様一致 (AC達成)",
+    "変更範囲遵守",
+    "副作用なし (既存破壊なし)",
+    "検証十分性"
+  ]
+}

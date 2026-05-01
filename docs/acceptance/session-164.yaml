@@ -1,0 +1,79 @@
+session_id: "session-164"
+goal: "session-163 で追加された --use-selector 実行入口の次段として、selector output に execution_mode を含める契約を docs-only で定義する。session-160-pre で確定した execution_mode v0 仕様（enum[full_stack,fast_path]、人間明示選択、同一session内fallback禁止）を尊重し、selector layer は UI/project default layer と直交する補助レイヤーとして位置付ける。"
+scope:
+  - "selector output contract の定義"
+  - "execution_mode enum の定義"
+  - "session-160-pre の execution_mode v0 仕様との関係を、直交する補助レイヤーとして明記する"
+  - "session-165 以降への handoff 明記"
+out_of_scope:
+  - "orchestration/run_session.py の変更"
+  - "orchestration/select_next.py の変更"
+  - "orchestration/selector/ 配下の変更"
+  - "tests/ 配下の変更"
+  - "execution_mode 分岐の実装"
+  - "session-160-pre の execution_mode v0 仕様の改変"
+acceptance:
+  - id: "AC-164-01"
+    text: "selector output contract に selected_session_id と execution_mode が必須フィールドとして定義されている。"
+    test_name: "test_session_164_selector_output_contract"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "docs/sessions/session-164.json の selector_output_contract.required に selected_session_id と execution_mode が含まれることを確認する"
+  - id: "AC-164-02"
+    text: "execution_mode の許可値が full_stack / fast_path の2値に限定されている。"
+    test_name: "test_session_164_execution_mode_enum"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "docs/sessions/session-164.json の execution_mode 型が enum[full_stack,fast_path] であることを確認する"
+  - id: "AC-164-03"
+    text: "fast_path の本体実装が out_of_scope として明記されている。"
+    test_name: "test_session_164_fast_path_implementation_out_of_scope"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "out_of_scope に fast_path のステージスキップ実装または本体実装が含まれることを確認する"
+  - id: "AC-164-04"
+    text: "allowed_changes が docs/sessions/session-164.json と docs/acceptance/session-164.yaml の2件に限定されている。"
+    test_name: "test_session_164_allowed_changes_docs_only"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "allowed_changes が2件のみであることを確認する"
+      - "forbidden_changes に orchestration/ と tests/ が含まれることを確認する"
+  - id: "AC-164-05"
+    text: "goal および scope に session-160-pre の execution_mode v0 仕様（enum[full_stack,fast_path]、人間明示選択、同一session内fallback禁止）への参照と、selector layer を UI/project default layer と直交する補助レイヤーとして位置付ける記述が含まれている。"
+    test_name: "test_session_164_session_160_pre_relation_documented"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "goal に 'session-160-pre' の文字列が含まれることを確認する"
+      - "goal に '直交' または 'orthogonal' を意味する記述が含まれることを確認する"
+      - "scope に session-160-pre の execution_mode v0 仕様との関係を明記する記述が含まれることを確認する"
+completion_checks:
+  - "docs/sessions/session-164.json が存在する"
+  - "docs/acceptance/session-164.yaml が存在する"
+  - "selector_output_contract.required に selected_session_id と execution_mode が含まれる"
+  - "execution_mode が enum[full_stack,fast_path] で定義されている"
+  - "実装コードが変更されていない"
+  - "session-160-pre 仕様への参照が goal および scope に含まれる"
+change_guardrails:
+  allowed_changes:
+    - "docs/sessions/session-164.json"
+    - "docs/acceptance/session-164.yaml"
+  forbidden_changes:
+    - "orchestration/run_session.py"
+    - "orchestration/select_next.py"
+    - "orchestration/selector/"
+    - "tests/"
+    - ".claude/settings.json"
+    - "backend/"
+    - "providers/"
+    - ".github/"
+    - "DL/"
+review_points:
+  - "仕様一致 (AC達成)"
+  - "変更範囲遵守"
+  - "副作用なし (既存破壊なし)"
+  - "検証十分性"
