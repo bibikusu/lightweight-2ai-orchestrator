@@ -61,6 +61,25 @@ def _priority_rank_value(
     return 0
 
 
+def _resolve_execution_mode(
+    selected_session: dict[str, Any],
+    project_registry: dict[str, Any],
+) -> str | None:
+    # 優先順位 1: session.json 明示値
+    mode = selected_session.get("execution_mode")
+    if mode is not None:
+        return str(mode)
+    # 優先順位 2: project_registry の default_execution_mode
+    project_id = selected_session.get("project_id")
+    projects = _registry_projects(project_registry)
+    project = projects.get(str(project_id)) if project_id is not None else None
+    if project is not None:
+        default_mode = project.get("default_execution_mode")
+        if default_mode is not None:
+            return str(default_mode)
+    return None
+
+
 def generate_candidates(session_definitions: list[dict[str, Any]]) -> list[str]:
     return sorted(_session_id(session) for session in _candidate_sessions(session_definitions))
 
@@ -112,10 +131,16 @@ def build_selector_output(
         if selected_session_id
         else "候補 session が存在しないため未選定"
     )
+    execution_mode = (
+        _resolve_execution_mode(selected_session, project_registry)
+        if selected_session
+        else None
+    )
     return {
         "candidate_sessions": candidate_sessions,
         "selected_session_id": selected_session_id,
         "selection_reason": selection_reason,
+        "execution_mode": execution_mode,
         "metadata": {
             "selector_version": SELECTOR_VERSION,
             "timestamp": timestamp,
