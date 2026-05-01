@@ -50,7 +50,8 @@
   "allowed_changes": [
     "docs/sessions/session-120.json",
     "artifacts/session-159c/json_lint_report.json",
-    "scripts/lint_session_json.py"
+    "scripts/lint_session_json.py",
+    ".gitignore"
   ],
   "allowed_changes_detail": {
     "docs/sessions/session-120.json": [
@@ -74,6 +75,10 @@
       "戻り値 0=全pass / 1=fail有り",
       "type hints 必須",
       "ruff/mypy PASS"
+    ],
+    ".gitignore": [
+      "!artifacts/session-159c/ と !artifacts/session-159c/** の例外設定追加のみ (案 P-1 司令塔判定済)",
+      "他の .gitignore エントリの変更禁止"
     ]
   },
   "forbidden_changes": [

@@ -12,8 +12,7 @@
     "Master plan 全体の dry-run 構造検証の最小導線追加",
     "M01 対応テストの追加"
   ],
-  "out_再定義"
-  ],
+  "out_of_scope": [],
   "constraints": [
     "1セッション1目的を厳守すること",
     "Master Orchestrator は run_session.py の上位ラッパ前提とし、session executor の責務を侵食しないこと",
@@ -58,7 +57,11 @@
     {
       "id": "CC-M01-02",
       "type": "artifact",
-      "condition": "plan loader が required keys を fail-fast 検証し、dry-run で session 実行を行わず構造確認の  "type": "non_regression",
+      "condition": "plan loader が required keys を fail-fast 検証し、dry-run で session 実行を行わず構造確認の"
+    },
+    {
+      "id": "CC-M01-03",
+      "type": "non_regression",
       "condition": "run_session.py の retry_loop に影響を与えない"
     },
     {
