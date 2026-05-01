@@ -1,0 +1,133 @@
+{
+  "session_id": "session-163-pre",
+  "phase_id": "P7-pre",
+  "title": "Define run_session.py --use-selector integration spec for M-B step 1",
+  "goal": "run_session.py に --use-selector flag を追加して selector CLI から selected_session_id を取得する仕様を docs-only で固定する。M-B (推薦 → 実行接続) の最初のステップに該当する。",
+  "scope": [
+    "docs/sessions/session-163-pre.json: session-163 実装前の仕様・scope・acceptance を定義する。",
+    "docs/acceptance/session-163-pre.yaml: session-163-pre の受入条件を定義する。",
+    "session-163 実装の境界を確定する: --use-selector flag 追加と subprocess 境界からの selected_session_id 取得のみ。",
+    "session-163 が Cursor 手動実行ルートであることを明文化する。",
+    "M-B (推薦 → 実行接続) における本 session の位置付けを明確化する。",
+    "human approval / execution_mode 分岐 / queue 接続を後続 session の責務として明示する。"
+  ],
+  "out_of_scope": [
+    "orchestration/run_session.py の実装変更",
+    "orchestration/select_next.py の実装変更",
+    "orchestration/selector/ 配下のロジック変更",
+    "human approval ゲート機構の追加",
+    "execution_mode (full_stack / fast_path) 分岐実装",
+    "queue / scheduler 接続",
+    "自動実行本体の変更",
+    "selector の内部 import を run_session.py から行う実装",
+    "session-163 本体の実装",
+    "session-164 以降の起票",
+    "docs/roadmap.yaml への phase 追加"
+  ],
+  "constraints": [
+    "1セッション1目的",
+    "最大5ファイル以内で完結すること",
+    "docs-only セッションであり実装コードを変更しないこと",
+    "session-163 の実装ルートは Cursor 手動実行に限定すること",
+    "selector 呼び出しは subprocess 境界とすること",
+    "曖昧語を使用しないこと",
+    "acceptance_ref は repository 相対パスとすること"
+  ],
+  "acceptance_ref": "docs/acceptance/session-163-pre.yaml",
+  "inputs": [
+    {
+      "name": "select_next_cli",
+      "type": "file:path",
+      "required": true,
+      "description": "orchestration/select_next.py (現状確認用、変更対象ではない)"
+    },
+    {
+      "name": "run_session_current",
+      "type": "file:path",
+      "required": true,
+      "description": "orchestration/run_session.py (現状確認用、変更対象ではない)"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "session_163_pre_json",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/sessions/session-163-pre.json"
+    },
+    {
+      "name": "session_163_pre_yaml",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/acceptance/session-163-pre.yaml"
+    }
+  ],
+  "allowed_changes": [
+    "docs/sessions/session-163-pre.json",
+    "docs/acceptance/session-163-pre.yaml"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/session-163-pre.json: session-163 実装前の仕様・scope・acceptance を定義する。",
+    "docs/acceptance/session-163-pre.yaml: session-163-pre の受入条件を定義する。"
+  ],
+  "forbidden_changes": [
+    "orchestration/run_session.py を変更しない。",
+    "orchestration/select_next.py を変更しない。",
+    "orchestration/selector/ 配下を変更しない。",
+    "tests/ 配下を変更しない。",
+    "docs/sessions/session-163.json を作成しない。",
+    "docs/acceptance/session-163.yaml を作成しない。",
+    "docs/roadmap.yaml を変更しない。",
+    "providers 配下を変更しない。",
+    ".github 配下を変更しない。"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-163-PRE-01",
+      "type": "artifact",
+      "condition": "docs/sessions/session-163-pre.json が保存されている。"
+    },
+    {
+      "id": "CC-163-PRE-02",
+      "type": "artifact",
+      "condition": "docs/acceptance/session-163-pre.yaml が保存されている。"
+    },
+    {
+      "id": "CC-163-PRE-03",
+      "type": "document_rule",
+      "condition": "session-163-pre.json の scope に --use-selector flag 追加と subprocess 境界からの selected_session_id 取得が明記されている。"
+    },
+    {
+      "id": "CC-163-PRE-04",
+      "type": "document_rule",
+      "condition": "session-163-pre.json の out_of_scope に human approval / execution_mode 分岐 / queue 接続が明記されている。"
+    },
+    {
+      "id": "CC-163-PRE-05",
+      "type": "document_rule",
+      "condition": "session-163-pre.json の constraints に Cursor 手動実行ルート限定が明記されている。"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-163-PRE-01",
+      "text": "session-163-pre.json の scope が --use-selector flag 追加と subprocess 経由の selected_session_id 取得に限定されている。",
+      "test_name": "test_session_163_pre_scope_is_selector_flag_only"
+    },
+    {
+      "id": "AC-163-PRE-02",
+      "text": "session-163-pre.json の forbidden_changes と out_of_scope に orchestration.selector の内部 import を禁止する記述が含まれ、constraints に subprocess 境界が明示されている。",
+      "test_name": "test_session_163_pre_selector_subprocess_boundary"
+    },
+    {
+      "id": "AC-163-PRE-03",
+      "text": "session-163-pre.json の out_of_scope に human approval / execution_mode 分岐 / queue 接続が明示的に列挙されている。",
+      "test_name": "test_session_163_pre_future_scope_excluded"
+    },
+    {
+      "id": "AC-163-PRE-04",
+      "text": "session-163-pre.json の constraints に session-163 実装ルートが Cursor 手動実行限定であることが明示されている。",
+      "test_name": "test_session_163_pre_manual_cursor_route_required"
+    }
+  ]
+}
