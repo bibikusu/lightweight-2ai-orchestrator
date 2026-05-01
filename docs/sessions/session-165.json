@@ -1,0 +1,198 @@
+{
+  "session_id": "session-165",
+  "phase_id": "P7",
+  "title": "Accept existing selector CLI execution_mode output (session-162 implementation)",
+  "goal": "select_next.py --dry-run の stdout JSON が session-164 の selector_output_contract を既に満たしていることを docs-only で受入検収する。selector/core.py の execution_mode 出力ロジックは session-162 で実装済であり、tests/test_selector.py に対応するテスト群が既存する事実を併せて正本化する。run_session.py 側の execution_mode 読取実装を session-166 へ引き渡す。",
+  "scope": [
+    "select_next.py --dry-run stdout JSON が selected_session_id と execution_mode を含む事実を正本化する",
+    "session-162 で実装済の execution_mode 出力ロジック (selector/core.py の _resolve_execution_mode 関数) を正本化する",
+    "execution_mode の許可値を full_stack / fast_path に限定する (session-164 contract と整合)",
+    "既存 tests/test_select_next_cli.py が execution_mode required key を検証済みであることを記録する",
+    "既存 tests/test_selector.py に session-162 起源の execution_mode テスト群が含まれることを記録する",
+    "execution_mode の値が None の場合の扱いを session-166 へ handoff する",
+    "run_session.py 側の execution_mode 読取実装を session-166 へ handoff する",
+    "session-164 selector_output_contract との整合 (キーレベル) を検収する"
+  ],
+  "out_of_scope": [
+    "orchestration/select_next.py の変更",
+    "orchestration/run_session.py の変更",
+    "orchestration/selector/ 配下の変更",
+    "tests/ 配下の変更",
+    "execution_mode による実行分岐",
+    "execution_mode None 値の扱い決定 (session-166 以降の責務)",
+    "fast_path のステージスキップ実装",
+    "queue / scheduler / UI 接続",
+    "session-160-pre の execution_mode v0 仕様の改変",
+    "session-164 の契約変更",
+    "session-162 の実装変更",
+    "git push"
+  ],
+  "constraints": [
+    "docs-only",
+    "1セッション1目的",
+    "実装コードを変更しない",
+    "現物確認結果 (STEP 0.7) を前提にする",
+    "select_next.py --dry-run stdout JSON の既存キーを破壊しない",
+    "execution_mode enum は full_stack / fast_path の2値のみ (session-164 整合)",
+    "session-162 の既存実装を破壊しない",
+    "run_session.py は session-165 では変更しない",
+    "allowed_changes_detail は list[str]",
+    "acceptance_criteria のキーは text",
+    "曖昧語を使用しないこと"
+  ],
+  "acceptance_ref": "docs/acceptance/session-165.yaml",
+  "allowed_changes": [
+    "docs/sessions/session-165.json",
+    "docs/acceptance/session-165.yaml"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/session-165.json: session-165 の既存 selector CLI output 受入検収定義を新規作成",
+    "docs/acceptance/session-165.yaml: session-165 の受入条件を新規作成"
+  ],
+  "forbidden_changes": [
+    "orchestration/select_next.py",
+    "orchestration/run_session.py",
+    "orchestration/selector/",
+    "tests/",
+    ".claude/settings.json",
+    "backend/",
+    "providers/",
+    ".github/",
+    "DL/"
+  ],
+  "observed_selector_cli_output": {
+    "type": "object",
+    "command": {
+      "type": "str",
+      "value": "PYTHONPATH=. .venv/bin/python orchestration/select_next.py --dry-run"
+    },
+    "observed_keys": {
+      "type": "list[str]",
+      "value": [
+        "candidate_sessions",
+        "selected_session_id",
+        "selection_reason",
+        "execution_mode",
+        "metadata"
+      ]
+    },
+    "observed_value_state": {
+      "type": "object",
+      "selected_session_id_example": "session-119",
+      "execution_mode_value_at_observation": "None",
+      "execution_mode_value_resolution_logic": "selector/core.py の _resolve_execution_mode() が session.json (優先順位 1) → project_registry default_execution_mode (優先順位 2) の順に解決し、両者未定義時は None を返す"
+    },
+    "implementation_origin": {
+      "type": "object",
+      "session_id": "session-162",
+      "files": {
+        "type": "list[str]",
+        "value": [
+          "orchestration/selector/core.py (_resolve_execution_mode 関数 L64-77, build_selector_output L143)",
+          "tests/test_selector.py (execution_mode テスト群 L211-243+)"
+        ]
+      }
+    },
+    "contract_status": {
+      "type": "enum[already_satisfied,key_satisfied_value_pending,missing,unknown]",
+      "value": "key_satisfied_value_pending"
+    }
+  },
+  "completion_criteria": [
+    {
+      "id": "CC-165-01",
+      "type": "artifact",
+      "condition": "docs/sessions/session-165.json が存在する"
+    },
+    {
+      "id": "CC-165-02",
+      "type": "artifact",
+      "condition": "docs/acceptance/session-165.yaml が存在する"
+    },
+    {
+      "id": "CC-165-03",
+      "type": "document_rule",
+      "condition": "observed_selector_cli_output に selected_session_id と execution_mode が含まれている"
+    },
+    {
+      "id": "CC-165-04",
+      "type": "document_rule",
+      "condition": "run_session.py 側の execution_mode 読取実装が session-166 へ handoff されている"
+    },
+    {
+      "id": "CC-165-05",
+      "type": "side_effect_free",
+      "condition": "forbidden_changes に列挙したファイルが変更されていない"
+    },
+    {
+      "id": "CC-165-06",
+      "type": "document_rule",
+      "condition": "observed_selector_cli_output.implementation_origin に session-162 と関連ファイル (selector/core.py + tests/test_selector.py) が記録されている"
+    },
+    {
+      "id": "CC-165-07",
+      "type": "document_rule",
+      "condition": "execution_mode None 値の扱いが session-166 へ handoff されている"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-165-01",
+      "text": "select_next.py --dry-run stdout JSON に selected_session_id と execution_mode が含まれる事実が記録されている。",
+      "test_name": "test_session_165_observed_selector_keys"
+    },
+    {
+      "id": "AC-165-02",
+      "text": "observed_selector_cli_output.contract_status が key_satisfied_value_pending として定義されている。",
+      "test_name": "test_session_165_contract_status_recorded"
+    },
+    {
+      "id": "AC-165-03",
+      "text": "execution_mode の許可値が full_stack / fast_path の2値に限定されている (session-164 contract 整合)。",
+      "test_name": "test_session_165_execution_mode_enum"
+    },
+    {
+      "id": "AC-165-04",
+      "text": "run_session.py 側の execution_mode 読取実装が session-166 へ handoff されている。",
+      "test_name": "test_session_165_handoff_to_session_166"
+    },
+    {
+      "id": "AC-165-05",
+      "text": "allowed_changes が docs/sessions/session-165.json と docs/acceptance/session-165.yaml の2件に限定されている。",
+      "test_name": "test_session_165_allowed_changes_docs_only"
+    },
+    {
+      "id": "AC-165-06",
+      "text": "selector/core.py の _resolve_execution_mode 関数 (session-162 実装) と tests/test_selector.py の execution_mode テスト群 (session-162 起源) が既存することが observed_selector_cli_output.implementation_origin に記録されている。",
+      "test_name": "test_session_165_implementation_origin_session_162"
+    },
+    {
+      "id": "AC-165-07",
+      "text": "execution_mode の値が None の場合の扱いが session-166 への handoff として明記されている。",
+      "test_name": "test_session_165_none_value_handoff"
+    }
+  ],
+  "handoff_to_session_166": {
+    "type": "object",
+    "purpose": {
+      "type": "str",
+      "value": "session-166 では run_session.py の _run_selector_subprocess() が select_next.py --dry-run stdout JSON から selected_session_id と execution_mode を読み取り、session-164 の selector_output_contract と接続する。execution_mode が None の場合の扱い (session-160-pre の fallback 禁止仕様との整合) も session-166 で定義する。"
+    },
+    "candidate_scope": {
+      "type": "list[str]",
+      "value": [
+        "run_session.py の _run_selector_subprocess() が selected_session_id と execution_mode を返せるようにする",
+        "execution_mode 未指定時は full_stack として扱う backward compatibility を実装する",
+        "execution_mode が None の場合の扱い (session-160-pre fallback 禁止仕様との整合) を定義する",
+        "tests/test_run_session_selector.py に execution_mode 読取テストを追加する",
+        "fast_path の実行分岐本体は session-167 以降に分離する"
+      ]
+    }
+  },
+  "review_points": [
+    "仕様一致 (AC達成)",
+    "変更範囲遵守",
+    "副作用なし (既存破壊なし)",
+    "検証十分性"
+  ]
+}
