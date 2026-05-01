@@ -1,0 +1,174 @@
+session_id: "session-160-pre"
+goal: "Project Command Center に execution_mode を組み込み、UI 構造を docs-only で正本化する。"
+
+scope:
+  - "UI 5 領域の定義"
+  - "Mode Selector の推奨モード+理由併記仕様"
+  - "execution_mode enum[full_stack, fast_path] 定義"
+  - "execution_mode 優先順位 session.json > project default"
+  - "fallback 制約"
+  - "selector output 連携方針"
+  - "api_route との関係整理"
+  - "v0 人間選択ルール"
+  - "Spec Builder の入出力定義"
+  - "future_extensions として Roadmap Builder / Session Queue View 列挙"
+
+out_of_scope:
+  - "UI 実装"
+  - "HTML/CSS/JS/React/Vue 変更"
+  - "selector/queue/scheduler 実装変更"
+  - "orchestration/run_session.py 変更"
+  - "docs/config/ 変更"
+  - "既存 session JSON への一括追記"
+  - "自動判定ロジック実装"
+  - "fallback 自動切替実装"
+  - "ClaudeCode hooks / MCP 設定変更"
+  - "技術選定"
+  - "deploy"
+  - "session-159c 領域への介入"
+  - ".claude/ 配下変更"
+  - "事務所 LLM 接続"
+
+acceptance:
+  - id: "AC-160-01"
+    requirement: "command_center_v0.md に 5 領域が定義されている。"
+    test_name: "test_command_center_five_areas_defined"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "Overview / Mode Selector / Spec Builder / Session Generator / Execution Panel が記載"
+
+  - id: "AC-160-02"
+    requirement: "execution_mode_v0.md に enum[full_stack, fast_path] が定義されている。"
+    test_name: "test_execution_mode_enum_defined"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "enum type 定義"
+      - "full_stack 値定義"
+      - "fast_path 値定義"
+
+  - id: "AC-160-03"
+    requirement: "優先順位が session.json > project default として定義されている。"
+    test_name: "test_execution_mode_priority_defined"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "session.json 優先記述"
+      - "project default フォールバック記述"
+
+  - id: "AC-160-04"
+    requirement: "fallback が次 session 起票時のみと定義されている。"
+    test_name: "test_execution_mode_fallback_policy_defined"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "同一 session 内自動切替禁止記述"
+      - "次 session 推奨変更記述"
+
+  - id: "AC-160-05"
+    requirement: "execution_mode = 戦略、api_route = 実装詳細として定義されている。"
+    test_name: "test_execution_mode_api_route_relationship_defined"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "execution_mode 上位概念記述"
+      - "api_route 派生記述"
+
+  - id: "AC-160-06"
+    requirement: "v0 では人間が UI 上で明示選択すると定義されている。"
+    test_name: "test_execution_mode_manual_selection_defined"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "自動判定 v0 scope 外記述"
+      - "人間明示選択記述"
+
+  - id: "AC-160-07"
+    requirement: "Spec Builder の入出力が定義されている。"
+    test_name: "test_spec_builder_inputs_outputs_defined"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "入力項目記述"
+      - "出力項目記述"
+
+  - id: "AC-160-08"
+    requirement: "MVP 範囲が read-only + session 生成支援に限定されている。"
+    test_name: "test_mvp_scope_limited"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "MVP 限定記述"
+      - "UI 実装 out_of_scope 記述"
+      - "自動実行 out_of_scope 記述"
+      - "設定変更 out_of_scope 記述"
+
+  - id: "AC-160-09"
+    requirement: "Mode Selector の推奨モード+理由併記が定義されている。"
+    test_name: "test_mode_selector_recommendation_with_reason_defined"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "推奨モード表示記述"
+      - "推奨理由併記記述"
+
+  - id: "AC-160-10"
+    requirement: "execution_mode を selector output に含める将来拡張方針が明記されている。"
+    test_name: "test_execution_mode_selector_output_extension_defined"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "selector output に execution_mode フィールド追加方針記述"
+      - "実装は後続 session 対象である記述"
+
+  - id: "AC-160-11"
+    requirement: "変更ファイルが allowed_changes の 4 ファイル以内。"
+    test_name: "test_changed_files_within_allowed_changes"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "git diff --name-only main..HEAD"
+      - "出力が 4 ファイル以内"
+
+completion_checks:
+  - "command_center_v0.md 作成済"
+  - "execution_mode_v0.md 作成済"
+  - "enum[full_stack, fast_path] 定義済"
+  - "優先順位定義済"
+  - "fallback 制約定義済"
+  - "Mode Selector 推奨理由併記定義済"
+  - "selector output 連携方針定義済"
+  - "Spec Builder 入出力定義済"
+  - "MVP 範囲限定定義済"
+  - "変更ファイル 4 件以内"
+
+change_guardrails:
+  allowed_changes:
+    - "docs/sessions/session-160-pre.json"
+    - "docs/acceptance/session-160-pre.yaml"
+    - "docs/specs/command_center_v0.md"
+    - "docs/specs/execution_mode_v0.md"
+  forbidden_changes:
+    - "orchestration/"
+    - "backend/"
+    - "providers/"
+    - "tests/"
+    - "scripts/"
+    - "docs/config/project_registry.json"
+    - "docs/config/queue_policy.yaml"
+    - "docs/sessions/session-120.json"
+    - "docs/sessions/session-159c.json"
+    - "docs/acceptance/session-159c.yaml"
+    - "artifacts/"
+    - "docs/templates/"
+    - "DL/"
+    - ".claude/"
+    - ".github/"
+    - ".gitignore"
+
+review_points:
+  - "仕様一致(AC達成)"
+  - "変更範囲遵守"
+  - "副作用なし(既存破壊なし)"
+  - "検証十分性"

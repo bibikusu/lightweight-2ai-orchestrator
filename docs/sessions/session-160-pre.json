@@ -1,0 +1,214 @@
+{
+  "session_id": "session-160-pre",
+  "phase_id": "phase-command-center-design",
+  "title": "Project Command Center v2 の execution_mode UI と Spec Builder 設計を正本化する",
+  "goal": "Project Command Center に execution_mode を組み込み、人間が各プロジェクトの目的・仕様書・session 状態を一目で理解し、開発が止まらないレベルの session JSON / acceptance YAML / 投入文を生成できる UI 構造を docs-only で正本化する。",
+  "scope": [
+    "Project Command Center v2 の UI 領域を Overview / Mode Selector / Spec Builder / Session Generator / Execution Panel の 5 領域に分解して定義する",
+    "Mode Selector は推奨モードと推奨理由を併記表示する仕様とする",
+    "execution_mode を enum[full_stack, fast_path] として定義する",
+    "execution_mode の優先順位を session.json 明示値 > project default として定義する",
+    "fallback は同一 session 内自動切替ではなく次 session 起票時の推奨モード変更に限定する",
+    "execution_mode を selector output に含める将来拡張方針を明記する",
+    "execution_mode と api_route の関係を execution_mode = 戦略、api_route = 実装詳細として整理する",
+    "v0 では execution_mode の自動判定を行わず、人間が UI 上で明示選択する方針を定義する",
+    "Spec Builder が生成すべき session JSON / acceptance YAML / GPT / Claude / ClaudeCode 投入文の入力項目を定義する",
+    "v2 候補として Roadmap Builder / Session Queue View を future_extensions に列挙する"
+  ],
+  "out_of_scope": [
+    "UI 実装",
+    "HTML / CSS / JavaScript / React / Vue の変更",
+    "selector / queue engine / scheduler の実装変更",
+    "orchestration/run_session.py の変更",
+    "docs/config/project_registry.json の変更",
+    "docs/config/queue_policy.yaml の変更",
+    "既存 session JSON への execution_mode 一括追記",
+    "execution_mode 自動判定ロジックの実装",
+    "fallback 自動切替の実装",
+    "ClaudeCode hooks / MCP 設定変更",
+    "Directus / Windmill / LiteLLM 等の技術選定",
+    "mane.bikusu.net への deploy",
+    "session-159c の修復対象への介入",
+    "事務所 LLM サーバー接続"
+  ],
+  "constraints": [
+    "docs-only session",
+    "1 session 1 目的",
+    "実装コードを変更しない",
+    "execution_mode の自動判定は v0 では禁止",
+    "fallback は次 session 起票時の推奨変更に限定",
+    "同一 session 内で自動昇格しない",
+    "UI は read-only + session 生成支援を優先",
+    "編集可能対象は docs/sessions/*.json と docs/acceptance/*.yaml に限定する設計",
+    "project_registry.json / queue_policy.yaml / run_session.py は v0 UI から直接編集しない",
+    ".claude/ 配下を変更しない",
+    "最大 4 ファイル"
+  ],
+  "acceptance_ref": "docs/acceptance/session-160-pre.yaml",
+  "inputs": [
+    {
+      "name": "project_registry",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/config/project_registry.json 参照のみ"
+    },
+    {
+      "name": "queue_policy",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/config/queue_policy.yaml 参照のみ"
+    },
+    {
+      "name": "sessions_dir",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/sessions/ 参照のみ"
+    },
+    {
+      "name": "acceptance_dir",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/acceptance/ 参照のみ"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "command_center_spec",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/specs/command_center_v0.md"
+    },
+    {
+      "name": "execution_mode_spec",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/specs/execution_mode_v0.md"
+    }
+  ],
+  "allowed_changes": [
+    "docs/sessions/session-160-pre.json",
+    "docs/acceptance/session-160-pre.yaml",
+    "docs/specs/command_center_v0.md",
+    "docs/specs/execution_mode_v0.md"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/session-160-pre.json: session-160-pre の起票定義のみ作成",
+    "docs/acceptance/session-160-pre.yaml: session-160-pre の受入条件のみ作成",
+    "docs/specs/command_center_v0.md: Project Command Center v2 の UI 5 領域、責務、入力、出力、編集権限、MVP 範囲、禁止操作を定義する",
+    "docs/specs/execution_mode_v0.md: execution_mode enum、優先順位、fallback 制約、selector 連携方針、api_route との関係、人間選択ルールを定義する"
+  ],
+  "forbidden_changes": [
+    "orchestration/",
+    "backend/",
+    "providers/",
+    "tests/",
+    "scripts/",
+    "docs/config/project_registry.json",
+    "docs/config/queue_policy.yaml",
+    "docs/sessions/session-120.json",
+    "docs/sessions/session-159c.json",
+    "docs/acceptance/session-159c.yaml",
+    "artifacts/",
+    "docs/templates/",
+    "DL/",
+    ".claude/",
+    ".github/",
+    ".gitignore"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-160-01",
+      "type": "artifact",
+      "condition": "docs/specs/command_center_v0.md が作成され 5 領域が定義されている"
+    },
+    {
+      "id": "CC-160-02",
+      "type": "artifact",
+      "condition": "docs/specs/execution_mode_v0.md が作成され enum[full_stack, fast_path] が定義されている"
+    },
+    {
+      "id": "CC-160-03",
+      "type": "document_rule",
+      "condition": "execution_mode 優先順位が session.json > project default として明記されている"
+    },
+    {
+      "id": "CC-160-04",
+      "type": "document_rule",
+      "condition": "fallback が次 session 起票時推奨変更のみと明記されている"
+    },
+    {
+      "id": "CC-160-05",
+      "type": "side_effect_free",
+      "condition": "git diff が allowed_changes の 4 ファイル以内"
+    },
+    {
+      "id": "CC-160-06",
+      "type": "non_regression",
+      "condition": "実装コード・設定・既存 session JSON / acceptance YAML に変更なし"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-160-01",
+      "description": "docs/specs/command_center_v0.md に 5 領域 Overview / Mode Selector / Spec Builder / Session Generator / Execution Panel が定義されている。",
+      "test_name": "test_command_center_five_areas_defined"
+    },
+    {
+      "id": "AC-160-02",
+      "description": "docs/specs/execution_mode_v0.md に execution_mode enum[full_stack, fast_path] が定義されている。",
+      "test_name": "test_execution_mode_enum_defined"
+    },
+    {
+      "id": "AC-160-03",
+      "description": "execution_mode の優先順位が session.json 明示値 > project default として定義されている。",
+      "test_name": "test_execution_mode_priority_defined"
+    },
+    {
+      "id": "AC-160-04",
+      "description": "fallback は同一 session 内自動切替禁止、次 session 起票時の推奨変更のみと定義されている。",
+      "test_name": "test_execution_mode_fallback_policy_defined"
+    },
+    {
+      "id": "AC-160-05",
+      "description": "execution_mode と api_route の関係が execution_mode = 戦略、api_route = 実装詳細として定義されている。",
+      "test_name": "test_execution_mode_api_route_relationship_defined"
+    },
+    {
+      "id": "AC-160-06",
+      "description": "v0 では execution_mode の自動判定を行わず、人間が UI 上で明示選択すると定義されている。",
+      "test_name": "test_execution_mode_manual_selection_defined"
+    },
+    {
+      "id": "AC-160-07",
+      "description": "Spec Builder の入力項目と GPT / Claude / ClaudeCode 投入文の出力仕様が定義されている。",
+      "test_name": "test_spec_builder_inputs_outputs_defined"
+    },
+    {
+      "id": "AC-160-08",
+      "description": "MVP 範囲が read-only + session 生成支援に限定され、UI 実装・自動実行・設定変更が out_of_scope として明記されている。",
+      "test_name": "test_mvp_scope_limited"
+    },
+    {
+      "id": "AC-160-09",
+      "description": "Mode Selector 仕様に推奨モードと推奨理由を併記表示する要件が定義されている。",
+      "test_name": "test_mode_selector_recommendation_with_reason_defined"
+    },
+    {
+      "id": "AC-160-10",
+      "description": "execution_mode を selector output に含める将来拡張方針が明記されている。",
+      "test_name": "test_execution_mode_selector_output_extension_defined"
+    },
+    {
+      "id": "AC-160-11",
+      "description": "変更ファイルが allowed_changes の 4 ファイル以内である。",
+      "test_name": "test_changed_files_within_allowed_changes"
+    }
+  ],
+  "review_points": [
+    "仕様一致(AC達成)",
+    "変更範囲遵守",
+    "副作用なし(既存破壊なし)",
+    "検証十分性"
+  ],
+  "execution_mode": "full_stack"
+}
