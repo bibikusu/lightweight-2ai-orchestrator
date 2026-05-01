@@ -1,0 +1,185 @@
+{
+  "session_id": "session-156b",
+  "project_id": "A01_orchestrator",
+  "phase_id": "phase-cli-dry-run",
+  "title": "selector CLI dry-run 実装（select_next.py）",
+  "goal": "python orchestration/select_next.py --dry-run で selector を CLI から実行し、candidate_sessions / selected_session_id / selection_reason / execution_mode / metadata を JSON 標準出力で確認できる状態にする。",
+  "scope": [
+    "orchestration/select_next.py の新規実装",
+    "tests/test_select_next_cli.py の新規作成",
+    "docs/sessions/session-156b.json の新規作成",
+    "docs/acceptance/session-156b.yaml の新規作成",
+    "--dry-run フラグによる実行・状態変更禁止の保証",
+    "metadata への status_field_scan 追記（total_sessions / has_status / no_status / pending_count）",
+    "invalid session JSON の skipped_sessions 記録（silent skip なし）"
+  ],
+  "out_of_scope": [
+    "docs/sessions/session-156.json / docs/acceptance/session-156.yaml の編集（旧定義の正本として保持）",
+    "docs/config/project_registry.json の編集",
+    "docs/config/queue_policy.yaml の編集",
+    "queue engine / scheduler / run_session.py の変更",
+    "実行モード（--dry-run なし）の実装",
+    "artifacts への書き込み",
+    "status field による candidate フィルタ（案 C: status フィルタなし、全件を selector に委ねる）",
+    ".claude/ / DL/ への変更"
+  ],
+  "constraints": [
+    "変更ファイル上限 4 件",
+    "--dry-run 必須: なしで実行した場合は exit 2 + stderr メッセージ",
+    "既存 selector テスト（tests/test_selector.py 13 件）を壊さない",
+    "acceptance_criteria のキーは text（description 禁止）",
+    "git push / cherry-pick は実行しない（Kunihide 手動）",
+    "sandbox commit までで STOP"
+  ],
+  "backlog_candidates": [
+    {
+      "id": "BACKLOG-S156b-001",
+      "title": "status field 正本化 session の起票",
+      "detail": "docs/sessions/*.json のうち 135/137 件が status フィールド未定義（2026-05-01 時点）。pending 判定仕様の正本化は別 session で対処する。"
+    }
+  ],
+  "acceptance_ref": "docs/acceptance/session-156b.yaml",
+  "references": [
+    {
+      "session_id": "session-156",
+      "role": "旧定義の正本（上書き禁止）",
+      "spec": "docs/sessions/session-156.json"
+    },
+    {
+      "session_id": "session-162",
+      "role": "selector execution_mode 実装",
+      "spec": "orchestration/selector/core.py (_resolve_execution_mode)"
+    },
+    {
+      "session_id": "session-155b",
+      "role": "project_registry.json 受入検収",
+      "spec": "docs/reports/session-155b_project_registry_acceptance.md"
+    },
+    {
+      "session_id": "session-154b",
+      "role": "queue_policy.yaml 受入検収",
+      "spec": "docs/reports/session-154b_queue_policy_acceptance.md"
+    }
+  ],
+  "allowed_changes": [
+    "orchestration/select_next.py",
+    "tests/test_select_next_cli.py",
+    "docs/sessions/session-156b.json",
+    "docs/acceptance/session-156b.yaml"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/select_next.py: selector CLI dry-run エントリーポイント新規実装",
+    "tests/test_select_next_cli.py: CLI テスト新規作成",
+    "docs/sessions/session-156b.json: session-156b 起票定義の新規作成",
+    "docs/acceptance/session-156b.yaml: session-156b 受入条件の新規作成"
+  ],
+  "forbidden_changes": [
+    "docs/sessions/session-156.json",
+    "docs/acceptance/session-156.yaml",
+    "docs/config/project_registry.json",
+    "docs/config/queue_policy.yaml",
+    "orchestration/selector/",
+    "backend/",
+    "providers/",
+    "docs/specs/",
+    ".claude/",
+    ".github/",
+    "DL/",
+    ".gitignore"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-156b-01",
+      "type": "artifact",
+      "condition": "orchestration/select_next.py が新規作成され、--dry-run で正常実行できる"
+    },
+    {
+      "id": "CC-156b-02",
+      "type": "artifact",
+      "condition": "tests/test_select_next_cli.py が新規作成され、CLI テストが含まれる"
+    },
+    {
+      "id": "CC-156b-03",
+      "type": "document_rule",
+      "condition": "--dry-run なしで exit 2 + stderr メッセージが出ることが確認されている"
+    },
+    {
+      "id": "CC-156b-04",
+      "type": "document_rule",
+      "condition": "metadata に status_field_scan（total / has_status / no_status / pending_count）が含まれる"
+    },
+    {
+      "id": "CC-156b-05",
+      "type": "side_effect_free",
+      "condition": "dry-run 実行後に project_registry.json / queue_policy.yaml / session ファイルが変更されていない"
+    },
+    {
+      "id": "CC-156b-06",
+      "type": "side_effect_free",
+      "condition": "既存 tests/test_selector.py 全件（13 件）が PASS"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-156b-01",
+      "text": "python orchestration/select_next.py --dry-run が引数なしで実行できる（exit 0）。",
+      "test_name": "cli_acceptance_dry_run_no_args"
+    },
+    {
+      "id": "AC-156b-02",
+      "text": "dry-run が queue state / artifacts / session files / project_registry / queue_policy を変更しない。",
+      "test_name": "cli_acceptance_dry_run_no_side_effects"
+    },
+    {
+      "id": "AC-156b-03",
+      "text": "出力に candidate_sessions / selected_session_id / selection_reason / execution_mode / metadata が含まれる（JSON 形式）。",
+      "test_name": "cli_acceptance_output_keys_present"
+    },
+    {
+      "id": "AC-156b-04",
+      "text": "project_registry.json / queue_policy.yaml / docs/sessions/*.json をデフォルトパスで読む。",
+      "test_name": "cli_acceptance_default_paths"
+    },
+    {
+      "id": "AC-156b-05",
+      "text": "invalid session JSON が skipped_sessions に記録される（silent skip なし）。",
+      "test_name": "cli_acceptance_skipped_sessions_recorded"
+    },
+    {
+      "id": "AC-156b-06",
+      "text": "tests/test_select_next_cli.py に CLI テストが追加される。",
+      "test_name": "cli_acceptance_test_file_exists"
+    },
+    {
+      "id": "AC-156b-07",
+      "text": "既存 selector テスト（tests/test_selector.py 13 件）が壊れない。",
+      "test_name": "cli_acceptance_existing_tests_pass"
+    },
+    {
+      "id": "AC-156b-08",
+      "text": "--dry-run なしで実行すると exit 2 で停止し stderr に '--dry-run is required in current scope (session-156b)' が出る。",
+      "test_name": "cli_acceptance_no_dry_run_exit2"
+    },
+    {
+      "id": "AC-156b-09",
+      "text": ".claude/ と DL/ に変更がない。",
+      "test_name": "cli_acceptance_no_claude_or_dl_changes"
+    },
+    {
+      "id": "AC-156b-10",
+      "text": "変更ファイルが許可 4 ファイル範囲内。",
+      "test_name": "cli_acceptance_change_count_within_limit"
+    },
+    {
+      "id": "AC-156b-11",
+      "text": "ruff / pytest / mypy / compileall 全 PASS（既知 fail 1 件のみ許容）。",
+      "test_name": "cli_acceptance_4gate_pass"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし、CLI 副作用なし）",
+    "検証十分性"
+  ]
+}
