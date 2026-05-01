@@ -1,0 +1,148 @@
+session_id: "session-156b"
+goal: "python orchestration/select_next.py --dry-run で selector を CLI から実行し、candidate_sessions / selected_session_id / selection_reason / execution_mode / metadata を JSON 標準出力で確認できる状態にする。"
+
+scope:
+  - "orchestration/select_next.py の新規実装"
+  - "tests/test_select_next_cli.py の新規作成"
+  - "--dry-run フラグによる実行・状態変更禁止の保証"
+  - "metadata への status_field_scan 追記（total_sessions / has_status / no_status / pending_count）"
+  - "invalid session JSON の skipped_sessions 記録（silent skip なし）"
+
+out_of_scope:
+  - "docs/sessions/session-156.json / docs/acceptance/session-156.yaml の編集（旧定義の正本として保持）"
+  - "docs/config/project_registry.json の編集"
+  - "docs/config/queue_policy.yaml の編集"
+  - "queue engine / scheduler / run_session.py の変更"
+  - "実行モード（--dry-run なし）の実装"
+  - "artifacts への書き込み"
+  - "status field による candidate フィルタ（案 C: status フィルタなし、全件を selector に委ねる）"
+  - ".claude/ / DL/ への変更"
+
+acceptance:
+  - id: "AC-156b-01"
+    text: "python orchestration/select_next.py --dry-run が引数なしで実行できる（exit 0）。"
+    test_name: "cli_acceptance_dry_run_no_args"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "python orchestration/select_next.py --dry-run が exit 0 で終了する"
+      - "標準出力が JSON として parse できる"
+
+  - id: "AC-156b-02"
+    text: "dry-run が queue state / artifacts / session files / project_registry / queue_policy を変更しない。"
+    test_name: "cli_acceptance_dry_run_no_side_effects"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "実行前後で git diff が 0 行差分であることを確認する"
+
+  - id: "AC-156b-03"
+    text: "出力に candidate_sessions / selected_session_id / selection_reason / execution_mode / metadata が含まれる（JSON 形式）。"
+    test_name: "cli_acceptance_output_keys_present"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "標準出力 JSON に 5 キーが全て存在することを確認する"
+
+  - id: "AC-156b-04"
+    text: "project_registry.json / queue_policy.yaml / docs/sessions/*.json をデフォルトパスで読む。"
+    test_name: "cli_acceptance_default_paths"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "引数なし（デフォルトパス）で CLI が正常動作することを確認する"
+
+  - id: "AC-156b-05"
+    text: "invalid session JSON が skipped_sessions に記録される（silent skip なし）。"
+    test_name: "cli_acceptance_skipped_sessions_recorded"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "tests/test_select_next_cli.py で broken JSON をセットアップし skipped_sessions を検証する"
+
+  - id: "AC-156b-06"
+    text: "tests/test_select_next_cli.py に CLI テストが追加される。"
+    test_name: "cli_acceptance_test_file_exists"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "tests/test_select_next_cli.py が存在することを確認する"
+
+  - id: "AC-156b-07"
+    text: "既存 selector テスト（tests/test_selector.py 13 件）が壊れない。"
+    test_name: "cli_acceptance_existing_tests_pass"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "pytest tests/test_selector.py が全件 PASS することを確認する"
+
+  - id: "AC-156b-08"
+    text: "--dry-run なしで実行すると exit 2 で停止し stderr に '--dry-run is required in current scope (session-156b)' が出る。"
+    test_name: "cli_acceptance_no_dry_run_exit2"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "python orchestration/select_next.py が exit 2 で終了することを確認する"
+      - "stderr に '--dry-run is required in current scope (session-156b)' が含まれることを確認する"
+
+  - id: "AC-156b-09"
+    text: ".claude/ と DL/ に変更がない。"
+    test_name: "cli_acceptance_no_claude_or_dl_changes"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "git status --short に .claude/ または DL/ の変更が含まれないことを確認する"
+
+  - id: "AC-156b-10"
+    text: "変更ファイルが許可 4 ファイル範囲内。"
+    test_name: "cli_acceptance_change_count_within_limit"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "git diff --name-only で 4 件以下であることを確認する"
+
+  - id: "AC-156b-11"
+    text: "ruff / pytest / mypy / compileall 全 PASS（既知 fail 1 件のみ許容）。"
+    test_name: "cli_acceptance_4gate_pass"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "ruff check が exit 0 で終了する"
+      - "PYTHONPATH=. pytest tests/ が PASS する（既知 fail 1 件のみ許容）"
+      - "mypy orchestration/select_next.py が exit 0 で終了する"
+      - "python -m compileall orchestration/ が exit 0 で終了する"
+
+completion_checks:
+  - "orchestration/select_next.py が保存されている"
+  - "tests/test_select_next_cli.py が保存されている"
+  - "docs/sessions/session-156b.json が保存されている"
+  - "docs/acceptance/session-156b.yaml が保存されている"
+  - "docs/sessions/session-156.json が変更されていない（旧定義保持）"
+  - "acceptance_criteria のキーが text である"
+  - "変更ファイルが 4 件以内"
+
+change_guardrails:
+  allowed_changes:
+    - "orchestration/select_next.py"
+    - "tests/test_select_next_cli.py"
+    - "docs/sessions/session-156b.json"
+    - "docs/acceptance/session-156b.yaml"
+  forbidden_changes:
+    - "docs/sessions/session-156.json"
+    - "docs/acceptance/session-156.yaml"
+    - "docs/config/project_registry.json"
+    - "docs/config/queue_policy.yaml"
+    - "orchestration/selector/"
+    - "backend/"
+    - "providers/"
+    - "docs/specs/"
+    - ".claude/"
+    - ".github/"
+    - "DL/"
+    - ".gitignore"
+
+review_points:
+  - "仕様一致（AC達成）"
+  - "変更範囲遵守"
+  - "副作用なし（既存破壊なし、CLI 副作用なし）"
+  - "検証十分性"
