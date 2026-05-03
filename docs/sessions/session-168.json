@@ -1,0 +1,129 @@
+{
+  "session_id": "session-168",
+  "phase_id": "P7",
+  "title": "Implement execution_mode branching (fast_path v0) in run_session.py",
+  "goal": "session-168-pre で定義した fast_path v0 仕様に基づき、run_session.py に execution_mode 分岐を実装する",
+  "scope": [
+    "_run_single_session_impl() 冒頭で execution_mode による分岐を追加",
+    "fast_path 用の新規関数 _run_session_fast_path(args) を実装",
+    "fast_path v0 の execute_stages を実装",
+    "fast_path v0 の skip_stages を保証",
+    "fast_path 専用 minimal report を生成",
+    "既存 full_stack 挙動を完全に維持",
+    "tests/test_run_session_fast_path.py を新規作成",
+    "session-167 の既存テストが全て PASS することを保証"
+  ],
+  "out_of_scope": [
+    "orchestration/selector/ 配下の変更",
+    "orchestration/select_next.py の変更",
+    "queue / scheduler の変更",
+    "docs/config/ の変更",
+    "execution_mode enum の追加",
+    "同一 session 内 fallback 実装",
+    "full_stack 挙動の変更"
+  ],
+  "constraints": {
+    "depends_on": "session-168-pre",
+    "allowed_changes_detail": [
+      "orchestration/run_session.py: execution_mode 分岐と fast_path 実装のみ変更",
+      "tests/test_run_session_fast_path.py: fast_path テスト新規作成",
+      "tests/test_run_session_selector.py: 必要最小限の修正のみ"
+    ],
+    "forbidden_changes": [
+      "orchestration/selector/",
+      "orchestration/select_next.py",
+      "orchestration/queue/",
+      "orchestration/scheduler/",
+      "docs/config/",
+      "providers/"
+    ],
+    "execution_mode_enum": [
+      "full_stack",
+      "fast_path"
+    ],
+    "test_command_policy": {
+      "pytest": "PYTHONPATH=. .venv/bin/pytest tests/ -q"
+    }
+  },
+  "acceptance_ref": "docs/acceptance/session-168.yaml",
+  "completion_criteria": [
+    {
+      "id": "CC-168-01",
+      "type": "artifact",
+      "condition": "docs/sessions/session-168.json と docs/acceptance/session-168.yaml が存在する"
+    },
+    {
+      "id": "CC-168-02",
+      "type": "state_transition_consistent",
+      "condition": "execution_mode により full_stack と fast_path が分岐する"
+    },
+    {
+      "id": "CC-168-03",
+      "type": "side_effect_free",
+      "condition": "selector 側に変更がない"
+    },
+    {
+      "id": "CC-168-04",
+      "type": "non_regression",
+      "condition": "session-167 の既存テストが全て PASS する"
+    },
+    {
+      "id": "CC-168-05",
+      "type": "non_regression",
+      "condition": "ruff / pytest / mypy / compileall の 4-gate が PASS する"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-168-01",
+      "description": "execution_mode=full_stack の場合、既存挙動が完全に維持される",
+      "test_name": "test_full_stack_unchanged"
+    },
+    {
+      "id": "AC-168-02",
+      "description": "execution_mode=fast_path の場合、fast_path 分岐が実行される",
+      "test_name": "test_fast_path_branch_selected"
+    },
+    {
+      "id": "AC-168-03",
+      "description": "fast_path で execute_stages が実行される",
+      "test_name": "test_fast_path_executes_required_stages"
+    },
+    {
+      "id": "AC-168-04",
+      "description": "fast_path で provider 呼び出しが行われない",
+      "test_name": "test_fast_path_skips_provider_call"
+    },
+    {
+      "id": "AC-168-05",
+      "description": "fast_path で patch_apply が実行されない",
+      "test_name": "test_fast_path_skips_patch_apply"
+    },
+    {
+      "id": "AC-168-06",
+      "description": "fast_path 失敗時に full_stack へ fallback しない",
+      "test_name": "test_fast_path_no_fallback"
+    },
+    {
+      "id": "AC-168-07",
+      "description": "fast_path 実行時に minimal report が生成される",
+      "test_name": "test_fast_path_writes_minimal_report"
+    },
+    {
+      "id": "AC-168-08",
+      "description": "selector 側に変更がない",
+      "test_name": "test_selector_unchanged"
+    },
+    {
+      "id": "AC-168-09",
+      "description": "session-167 の既存テストがすべて PASS する",
+      "test_name": "test_existing_tests_still_pass"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ]
+}
