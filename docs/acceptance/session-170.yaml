@@ -1,0 +1,60 @@
+session_id: "session-170"
+goal: "Decision Engine の selected_session_id を Queue Engine へ enqueue する接続責務を最小仕様として定義する"
+scope:
+  - "Decision Engine → Queue Engine 接続責務の明示"
+  - "enqueue interface signature の最小定義"
+  - "session-170 起票"
+out_of_scope:
+  - "Queue Engine 内部実装"
+  - "selector の変更"
+  - "run_session.py の変更"
+  - "Decision Engine (engine.py) の変更"
+  - "Lock Manager 実装"
+  - "Review / Feedback Engine 実装"
+  - "Dashboard 実装"
+acceptance:
+  - id: "AC-170-01"
+    requirement: "selected_session_id → enqueue 接続責務が constraints.connection_rule として明示されている"
+    test_name: "test_session_170_defines_connection_rule"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "docs/sessions/session-170.json の constraints.connection_rule に selected_session_id → enqueue が存在する"
+  - id: "AC-170-02"
+    requirement: "enqueue interface が function_name=enqueue / args.session_id=str / return=None として定義されている"
+    test_name: "test_session_170_defines_enqueue_interface"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "docs/sessions/session-170.json の constraints.queue_enqueue_interface に function_name=enqueue / args.session_id=str / return=None が存在する"
+  - id: "AC-170-03"
+    requirement: "エラーポリシーが policy=raise_error かつ fallback=prohibited として定義されている"
+    test_name: "test_session_170_defines_error_handling"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "docs/sessions/session-170.json の constraints.error_handling に policy=raise_error かつ fallback=prohibited が存在する"
+  - id: "AC-170-04"
+    requirement: "6 component 責務分離 (Decision/Queue/Lock/Review/Feedback/Dashboard) が constraints.responsibility_split として定義されている"
+    test_name: "test_session_170_defines_responsibility_split"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "docs/sessions/session-170.json の constraints.responsibility_split に Decision/Queue/Lock/Review/Feedback/Dashboard の 6 entries が存在する"
+completion_checks:
+  - "session-170.json が存在する"
+  - "session-170.yaml が存在する"
+  - "docs-only の変更に限定されている"
+change_guardrails:
+  allowed_changes:
+    - "docs/sessions/session-170.json"
+    - "docs/acceptance/session-170.yaml"
+  forbidden_changes:
+    - "orchestration/selector/**"
+    - "orchestration/run_session.py"
+    - "orchestration/decision/**"
+    - "orchestration/queue/**"
+    - "orchestration/lock/**"
+    - "orchestration/review/**"
+    - "orchestration/dashboard/**"
+    - "DL/**"

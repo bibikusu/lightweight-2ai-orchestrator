@@ -1,0 +1,125 @@
+{
+  "session_id": "session-170",
+  "phase_id": "M-C",
+  "title": "Decision → Queue 接続仕様 (docs-only)",
+  "goal": "Decision Engine の selected_session_id を Queue Engine へ enqueue する接続責務を最小仕様として定義する",
+  "scope": [
+    "Decision Engine → Queue Engine 接続責務の明示",
+    "enqueue interface signature の最小定義",
+    "session-170 起票"
+  ],
+  "out_of_scope": [
+    "Queue Engine 内部実装",
+    "selector の変更",
+    "run_session.py の変更",
+    "Decision Engine (engine.py) の変更",
+    "Lock Manager 実装",
+    "Review / Feedback Engine 実装",
+    "Dashboard 実装",
+    "自動実行"
+  ],
+  "constraints": {
+    "allowed_changes_detail": [
+      "docs/sessions/session-170.json: session-170 起票のみ",
+      "docs/acceptance/session-170.yaml: session-170 acceptance 起票のみ"
+    ],
+    "forbidden_changes": [
+      "orchestration/selector/**",
+      "orchestration/run_session.py",
+      "orchestration/decision/**",
+      "orchestration/queue/**",
+      "orchestration/lock/**",
+      "orchestration/review/**",
+      "orchestration/dashboard/**",
+      "DL/**"
+    ],
+    "input_schema": {
+      "selected_session_id": "str"
+    },
+    "queue_enqueue_interface": {
+      "function_name": "enqueue",
+      "args": {
+        "session_id": "str"
+      },
+      "return": "None"
+    },
+    "connection_rule": "Decision Engine が selected_session_id を決定した後、enqueue(session_id=selected_session_id) を呼び出して Queue Engine に渡す",
+    "error_handling": {
+      "policy": "raise_error",
+      "fallback": "prohibited",
+      "description": "enqueue 失敗時は例外を raise する。full_stack への自動 fallback は禁止。"
+    },
+    "responsibility_split": {
+      "Decision": "goal に最も近い session_id を選択する (engine.py)",
+      "Queue": "selected_session_id を受け取りキューに追加する",
+      "Lock": "並列実行衝突を防止するロック管理",
+      "Review": "実行結果を評価しフィードバックする",
+      "Feedback": "評価結果を次セッション選択に反映する",
+      "Dashboard": "M-C 状態と実行履歴を表示する"
+    },
+    "review_points": [
+      "仕様一致（AC達成）",
+      "変更範囲遵守",
+      "副作用なし（既存破壊なし）",
+      "検証十分性"
+    ]
+  },
+  "allowed_changes_detail": [
+    "docs/sessions/session-170.json: session-170 起票のみ",
+    "docs/acceptance/session-170.yaml: session-170 acceptance 起票のみ"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-170-01",
+      "type": "document_rule",
+      "condition": "session-170.json が Decision → Queue 接続責務・interface signature・error_handling を定義している"
+    },
+    {
+      "id": "CC-170-02",
+      "type": "side_effect_free",
+      "condition": "docs/sessions/session-170.json と docs/acceptance/session-170.yaml 以外を変更していない"
+    },
+    {
+      "id": "CC-170-03",
+      "type": "state_transition_consistent",
+      "condition": "session-171 が Lock Manager であることを next として明示している"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-170-01",
+      "description": "selected_session_id → enqueue 接続責務が constraints.connection_rule として明示されている",
+      "test_name": "test_session_170_defines_connection_rule"
+    },
+    {
+      "id": "AC-170-02",
+      "description": "enqueue interface が function_name=enqueue / args.session_id=str / return=None として定義されている",
+      "test_name": "test_session_170_defines_enqueue_interface"
+    },
+    {
+      "id": "AC-170-03",
+      "description": "エラーポリシーが policy=raise_error かつ fallback=prohibited として定義されている",
+      "test_name": "test_session_170_defines_error_handling"
+    },
+    {
+      "id": "AC-170-04",
+      "description": "6 component の責務分離 (Decision/Queue/Lock/Review/Feedback/Dashboard) が constraints.responsibility_split として定義されている",
+      "test_name": "test_session_170_defines_responsibility_split"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ],
+  "failure_type": "spec_missing",
+  "next": [
+    "session-170 implementation",
+    "session-171 Lock Manager",
+    "session-172 Review / Feedback Engine",
+    "session-173 Dashboard 表示",
+    "session-174 M-C 統合テスト"
+  ],
+  "acceptance_ref": "docs/acceptance/session-170.yaml"
+}
