@@ -1,0 +1,113 @@
+session_id: "session-166"
+goal: "selector 出力の execution_mode を run_session.py 側で解釈するための接続仕様を docs-only で固定する"
+scope:
+  - "SelectorResult NamedTuple の仕様化"
+  - "execution_mode 正規化責任の明記"
+  - "session-167 実装範囲の事前固定"
+out_of_scope:
+  - "orchestration/run_session.py の変更"
+  - "tests/test_run_session_selector.py の変更"
+  - "orchestration/selector/ 配下の変更"
+acceptance:
+  - id: "AC-166-01"
+    requirement: "docs/sessions/session-166.json と docs/acceptance/session-166.yaml の 2 ファイルが存在する"
+    test_name: "test_session_166_files_exist"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "test -f docs/sessions/session-166.json"
+      - "test -f docs/acceptance/session-166.yaml"
+
+  - id: "AC-166-02"
+    requirement: "_run_selector_subprocess() の戻り値型として SelectorResult NamedTuple を採用する仕様が明記されている"
+    test_name: "test_session_166_selector_result_namedtuple_specified"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "grep -n \"SelectorResult\" docs/sessions/session-166.json"
+      - "grep -n \"NamedTuple\" docs/sessions/session-166.json"
+
+  - id: "AC-166-03"
+    requirement: "SelectorResult は selected_session_id: str と execution_mode: str を持つ仕様として明記されている"
+    test_name: "test_session_166_selector_result_fields_specified"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "grep -n \"selected_session_id: str\" docs/sessions/session-166.json"
+      - "grep -n \"execution_mode: str\" docs/sessions/session-166.json"
+
+  - id: "AC-166-04"
+    requirement: "execution_mode の正規化責任は selector 側ではなく run_session.py 側に置くことが明記されている"
+    test_name: "test_session_166_normalization_owner_is_run_session"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "grep -n \"run_session.py 側\" docs/sessions/session-166.json"
+      - "grep -n \"selector 側\" docs/sessions/session-166.json"
+
+  - id: "AC-166-05"
+    requirement: "execution_mode の欠損と null は full_stack に正規化することが明記されている"
+    test_name: "test_session_166_missing_or_null_defaults_to_full_stack"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "grep -n \"missing_key\" docs/sessions/session-166.json"
+      - "grep -n \"null_value\" docs/sessions/session-166.json"
+      - "grep -n \"full_stack\" docs/sessions/session-166.json"
+
+  - id: "AC-166-06"
+    requirement: "execution_mode の許可値は full_stack と fast_path のみで、不正値は stderr 出力後 exit 1 とすることが明記されている"
+    test_name: "test_session_166_invalid_execution_mode_exits_1"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "grep -n \"fast_path\" docs/sessions/session-166.json"
+      - "grep -n \"exit_1_with_stderr\" docs/sessions/session-166.json"
+
+  - id: "AC-166-07"
+    requirement: "execution_mode は起動時 1 回だけ確定し、同一 session 内 fallback を行わないことが明記されている"
+    test_name: "test_session_166_execution_mode_fixed_once"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "grep -n \"起動時に 1 回だけ確定\" docs/sessions/session-166.json"
+      - "grep -n \"同一 session 内 fallback\" docs/sessions/session-166.json"
+
+  - id: "AC-166-08"
+    requirement: "session-166 では run_session.py、tests、orchestration/selector 配下を変更禁止としている"
+    test_name: "test_session_166_docs_only_forbidden_paths"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "grep -n \"orchestration/run_session.py\" docs/sessions/session-166.json"
+      - "grep -n \"tests/test_run_session_selector.py\" docs/sessions/session-166.json"
+      - "grep -n \"orchestration/selector/\" docs/sessions/session-166.json"
+
+  - id: "AC-166-09"
+    requirement: "review_points 4 軸が仕様一致、変更範囲遵守、副作用なし、検証十分性で明記されている"
+    test_name: "test_session_166_review_points_four_axes"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "grep -n \"仕様一致（AC達成）\" docs/sessions/session-166.json"
+      - "grep -n \"変更範囲遵守\" docs/sessions/session-166.json"
+      - "grep -n \"副作用なし（既存破壊なし）\" docs/sessions/session-166.json"
+      - "grep -n \"検証十分性\" docs/sessions/session-166.json"
+
+completion_checks:
+  - "docs/sessions/session-166.json と docs/acceptance/session-166.yaml が存在する"
+  - "SelectorResult NamedTuple の selected_session_id: str と execution_mode: str が仕様として明記されている"
+  - "execution_mode は起動時に 1 回だけ確定し、同一 session 内 fallback を行わない"
+  - "docs/sessions/session-166.json と docs/acceptance/session-166.yaml 以外に変更がない"
+  - "docs-only 起票として 4-gate が実行され、既存テスト破壊がない"
+
+change_guardrails:
+  allowed_changes:
+    - "docs/sessions/session-166.json"
+    - "docs/acceptance/session-166.yaml"
+  forbidden_changes:
+    - "orchestration/run_session.py"
+    - "tests/test_run_session_selector.py"
+    - "orchestration/selector/"
+    - "docs/config/"
+    - "orchestration/config.yaml"

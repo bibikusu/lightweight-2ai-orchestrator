@@ -1,0 +1,139 @@
+{
+  "session_id": "session-166",
+  "phase_id": "M-B",
+  "title": "run_session selector execution_mode 接続仕様の正本化",
+  "goal": "selector 出力の execution_mode を run_session.py 側で解釈するための接続仕様を docs-only で固定する",
+  "scope": [
+    "selector 出力を受ける _run_selector_subprocess() の戻り値型を SelectorResult NamedTuple として仕様化する",
+    "execution_mode の正規化責任を run_session.py 側に置くことを仕様化する",
+    "欠損・null・正常値・不正値の正規化ルールを明記する",
+    "session-167 で扱う実装範囲を事前に固定する"
+  ],
+  "out_of_scope": [
+    "orchestration/run_session.py の変更",
+    "tests/test_run_session_selector.py の変更",
+    "orchestration/selector/ 配下の変更",
+    "execution_mode 分岐処理の実装",
+    "selector 側の execution_mode 値生成ロジック変更"
+  ],
+  "constraints": {
+    "docs_only": true,
+    "allowed_changes_detail": [
+      "docs/sessions/session-166.json: session-166 の仕様定義のみ作成",
+      "docs/acceptance/session-166.yaml: session-166 の受入条件のみ作成"
+    ],
+    "forbidden_changes": [
+      "orchestration/run_session.py",
+      "tests/test_run_session_selector.py",
+      "orchestration/selector/",
+      "docs/config/",
+      "orchestration/config.yaml"
+    ],
+    "execution_mode_enum": [
+      "full_stack",
+      "fast_path"
+    ],
+    "normalization_rules": {
+      "missing_key": "full_stack",
+      "null_value": "full_stack",
+      "full_stack": "full_stack",
+      "fast_path": "fast_path",
+      "invalid_value": "exit_1_with_stderr"
+    }
+  },
+  "acceptance_ref": "docs/acceptance/session-166.yaml",
+  "completion_criteria": [
+    {
+      "id": "CC-166-01",
+      "type": "artifact",
+      "condition": "docs/sessions/session-166.json と docs/acceptance/session-166.yaml が存在する"
+    },
+    {
+      "id": "CC-166-02",
+      "type": "document_rule",
+      "condition": "SelectorResult NamedTuple の selected_session_id: str と execution_mode: str が仕様として明記されている"
+    },
+    {
+      "id": "CC-166-03",
+      "type": "state_transition_consistent",
+      "condition": "execution_mode は起動時に 1 回だけ確定し、同一 session 内 fallback を行わない"
+    },
+    {
+      "id": "CC-166-04",
+      "type": "side_effect_free",
+      "condition": "docs/sessions/session-166.json と docs/acceptance/session-166.yaml 以外に変更がない"
+    },
+    {
+      "id": "CC-166-05",
+      "type": "non_regression",
+      "condition": "docs-only 起票として 4-gate が実行され、既存テスト破壊がない"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-166-01",
+      "description": "docs/sessions/session-166.json と docs/acceptance/session-166.yaml の 2 ファイルが存在する",
+      "test_name": "test_session_166_files_exist"
+    },
+    {
+      "id": "AC-166-02",
+      "description": "_run_selector_subprocess() の戻り値型として SelectorResult NamedTuple を採用する仕様が明記されている",
+      "test_name": "test_session_166_selector_result_namedtuple_specified"
+    },
+    {
+      "id": "AC-166-03",
+      "description": "SelectorResult は selected_session_id: str と execution_mode: str を持つ仕様として明記されている",
+      "test_name": "test_session_166_selector_result_fields_specified"
+    },
+    {
+      "id": "AC-166-04",
+      "description": "execution_mode の正規化責任は selector 側ではなく run_session.py 側に置くことが明記されている",
+      "test_name": "test_session_166_normalization_owner_is_run_session"
+    },
+    {
+      "id": "AC-166-05",
+      "description": "execution_mode の欠損と null は full_stack に正規化することが明記されている",
+      "test_name": "test_session_166_missing_or_null_defaults_to_full_stack"
+    },
+    {
+      "id": "AC-166-06",
+      "description": "execution_mode の許可値は full_stack と fast_path のみで、不正値は stderr 出力後 exit 1 とすることが明記されている",
+      "test_name": "test_session_166_invalid_execution_mode_exits_1"
+    },
+    {
+      "id": "AC-166-07",
+      "description": "execution_mode は起動時 1 回だけ確定し、同一 session 内 fallback を行わないことが明記されている",
+      "test_name": "test_session_166_execution_mode_fixed_once"
+    },
+    {
+      "id": "AC-166-08",
+      "description": "session-166 では run_session.py、tests、orchestration/selector 配下を変更禁止としている",
+      "test_name": "test_session_166_docs_only_forbidden_paths"
+    },
+    {
+      "id": "AC-166-09",
+      "description": "review_points 4 軸が仕様一致、変更範囲遵守、副作用なし、検証十分性で明記されている",
+      "test_name": "test_session_166_review_points_four_axes"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ],
+  "relation_to_next_session": {
+    "next_session_id": "session-167",
+    "allowed_in_next_session": [
+      "orchestration/run_session.py: SelectorResult NamedTuple 追加と _run_selector_subprocess() 戻り値変更",
+      "orchestration/run_session.py: execution_mode 正規化関数追加",
+      "orchestration/run_session.py: --use-selector 実行時に args.execution_mode へ反映",
+      "tests/test_run_session_selector.py: execution_mode 正規化と不正値検出のテスト追加"
+    ],
+    "forbidden_in_next_session": [
+      "orchestration/selector/ 側の execution_mode 値生成ロジック変更",
+      "同一 session 内 fallback 実装",
+      "execution_mode enum 追加"
+    ]
+  }
+}
