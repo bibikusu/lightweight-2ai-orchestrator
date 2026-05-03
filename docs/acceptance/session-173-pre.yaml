@@ -1,0 +1,50 @@
+session_id: session-173-pre
+phase_id: phase-mc
+acceptance_ref_for: docs/sessions/session-173-pre.json
+
+acceptance_criteria:
+  - id: AC-173-01
+    text: selector_complete_design.md に selector の input_schema が定義されている。
+    test_name: test_selector_complete_design_defines_input_schema
+
+  - id: AC-173-02
+    text: selector_complete_design.md に selector の output_schema が定義されている。
+    test_name: test_selector_complete_design_defines_output_schema
+
+  - id: AC-173-03
+    text: selector_complete_design.md で selected_session_id が必須項目として明記されている。
+    test_name: test_selector_complete_design_marks_selected_session_id_required
+
+  - id: AC-173-04
+    text: selector_complete_design.md で execution_mode が enum (full_stack, fast_path) として定義されている。
+    test_name: test_selector_complete_design_defines_execution_mode_enum
+
+  - id: AC-173-05
+    text: selector_complete_design.md に metadata.skipped_sessions の構造が定義されている。
+    test_name: test_selector_complete_design_defines_skipped_sessions
+
+  - id: AC-173-06
+    text: selector_complete_design.md で selection_reason が必須項目として明記されている。
+    test_name: test_selector_complete_design_marks_selection_reason_required
+
+  - id: AC-173-07
+    text: selector_complete_design.md に priority_rank_value の評価ルールが記述されている。
+    test_name: test_selector_complete_design_describes_priority_rank_value
+
+  - id: AC-173-08
+    text: selector_complete_design.md に決定論性 (同一入力同一出力) の契約が記述されている。
+    test_name: test_selector_complete_design_states_determinism_contract
+
+  - id: AC-173-09
+    text: session-173-pre.json の forbidden_changes に既存 selector / run_session / decision 実装ファイルが含まれている。
+    test_name: test_session_173_pre_forbidden_changes_protects_implementation
+
+  - id: AC-173-10
+    text: session-173-pre.json の forbidden_changes に既存 session-170/171/172 起票が含まれている。
+    test_name: test_session_173_pre_forbidden_changes_protects_prior_sessions
+
+review_points:
+  - 仕様一致（AC達成）
+  - 変更範囲遵守
+  - 副作用なし（既存破壊なし）
+  - 検証十分性

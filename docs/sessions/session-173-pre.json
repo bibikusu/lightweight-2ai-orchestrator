@@ -1,0 +1,205 @@
+{
+  "session_id": "session-173-pre",
+  "phase_id": "phase-mc",
+  "title": "selector 完成形を設計テンプレとして正本化する (docs-only)",
+  "goal": "selector が次に実行すべき session を再現可能・説明可能・決定論的に選択できる完成形を設計テンプレとして正本化する。実装変更は伴わない docs-only セッションとする。",
+  "scope": [
+    "selector の責務を canonical 形式で明文化する",
+    "selector の input_schema を定義する",
+    "selector の output_schema を定義する",
+    "priority_rank_value の評価ルールを明文化する",
+    "skip_reason の標準値を定義する",
+    "selected_session_id の戻り値契約を固定する",
+    "execution_mode を enum (full_stack, fast_path) として正本化する",
+    "metadata.skipped_sessions の構造を定義する",
+    "selection_reason を必須項目として明文化する",
+    "決定論性 (同一入力に対する同一出力) を契約として記述する"
+  ],
+  "out_of_scope": [
+    "orchestration/selector/**/*.py の実装変更",
+    "orchestration/run_session.py の変更",
+    "orchestration/decision/**/*.py の実装変更",
+    "queue 接続実装",
+    "scheduler 接続実装",
+    "UI 設計および実装",
+    "selector 自動実行",
+    "Decision Engine 完成仕様 (session-174-pre で扱う)",
+    "session-170/171/172 の起票内容変更",
+    "Dashboard 設計 (将来 session-173 で扱う)"
+  ],
+  "constraints": [
+    "1セッション1目的",
+    "docs-only (実装コードを変更しない)",
+    "最大5ファイル以内で完結すること",
+    "正本ルールは master_instruction.md と global_rules.md を基準とすること",
+    "review_points は固定4軸 (仕様一致, 変更範囲遵守, 副作用なし, 検証十分性) を使用すること",
+    "completion_criteria は id, type, condition を持つ object 配列とすること",
+    "completion_criteria.type は document_rule, artifact, side_effect_free のいずれかとすること",
+    "allowed_changes_detail は list[str] 形式とすること",
+    "acceptance_ref は repository 相対パスとすること",
+    "曖昧語禁止"
+  ],
+  "acceptance_ref": "docs/acceptance/session-173-pre.yaml",
+  "allowed_changes": [
+    "docs/templates/selector_complete_design.md",
+    "docs/sessions/session-173-pre.json",
+    "docs/acceptance/session-173-pre.yaml",
+    "docs/reports/session-173-pre_specification_review.md"
+  ],
+  "allowed_changes_detail": [
+    "docs/templates/selector_complete_design.md: selector 完成形の正本テンプレを新規作成",
+    "docs/sessions/session-173-pre.json: 本セッション定義の新規作成",
+    "docs/acceptance/session-173-pre.yaml: 本セッション acceptance の新規作成",
+    "docs/reports/session-173-pre_specification_review.md: 本セッション検収レポートの新規作成"
+  ],
+  "forbidden_changes": [
+    "orchestration/selector/__init__.py",
+    "orchestration/selector/core.py",
+    "orchestration/selector/loader.py",
+    "orchestration/selector/writer.py",
+    "orchestration/run_session.py",
+    "orchestration/decision/__init__.py",
+    "orchestration/decision/engine.py",
+    "docs/config/queue_policy.yaml",
+    "docs/config/project_registry.json",
+    "docs/sessions/session-170.json",
+    "docs/sessions/session-171.json",
+    "docs/sessions/session-172.json",
+    "docs/acceptance/session-170.yaml",
+    "docs/acceptance/session-171.yaml",
+    "docs/acceptance/session-172.yaml",
+    "docs/reports/session-170_specification_review.md",
+    "docs/reports/session-171_specification_review.md",
+    "docs/reports/session-172_specification_review.md"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-173-01",
+      "type": "artifact",
+      "condition": "docs/templates/selector_complete_design.md が新規作成されている。"
+    },
+    {
+      "id": "CC-173-02",
+      "type": "artifact",
+      "condition": "docs/sessions/session-173-pre.json が新規作成されている。"
+    },
+    {
+      "id": "CC-173-03",
+      "type": "artifact",
+      "condition": "docs/acceptance/session-173-pre.yaml が新規作成されている。"
+    },
+    {
+      "id": "CC-173-04",
+      "type": "artifact",
+      "condition": "docs/reports/session-173-pre_specification_review.md が新規作成されている。"
+    },
+    {
+      "id": "CC-173-05",
+      "type": "document_rule",
+      "condition": "selector_complete_design.md に input_schema が定義されている。"
+    },
+    {
+      "id": "CC-173-06",
+      "type": "document_rule",
+      "condition": "selector_complete_design.md に output_schema が定義されている。"
+    },
+    {
+      "id": "CC-173-07",
+      "type": "document_rule",
+      "condition": "selector_complete_design.md で selected_session_id が必須項目として明記されている。"
+    },
+    {
+      "id": "CC-173-08",
+      "type": "document_rule",
+      "condition": "selector_complete_design.md で execution_mode が enum (full_stack, fast_path) として定義されている。"
+    },
+    {
+      "id": "CC-173-09",
+      "type": "document_rule",
+      "condition": "selector_complete_design.md に metadata.skipped_sessions の構造が定義されている。"
+    },
+    {
+      "id": "CC-173-10",
+      "type": "document_rule",
+      "condition": "selector_complete_design.md で selection_reason が必須項目として明記されている。"
+    },
+    {
+      "id": "CC-173-11",
+      "type": "document_rule",
+      "condition": "selector_complete_design.md に priority_rank_value の評価ルールが記述されている。"
+    },
+    {
+      "id": "CC-173-12",
+      "type": "document_rule",
+      "condition": "selector_complete_design.md に決定論性 (同一入力同一出力) の契約が記述されている。"
+    },
+    {
+      "id": "CC-173-13",
+      "type": "side_effect_free",
+      "condition": "orchestration/selector / orchestration/run_session.py / orchestration/decision の md5 baseline が変更されていない。"
+    },
+    {
+      "id": "CC-173-14",
+      "type": "side_effect_free",
+      "condition": "session-170/171/172 の起票・acceptance・検収レポートが変更されていない。"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-173-01",
+      "text": "selector_complete_design.md に selector の input_schema が定義されている。",
+      "test_name": "test_selector_complete_design_defines_input_schema"
+    },
+    {
+      "id": "AC-173-02",
+      "text": "selector_complete_design.md に selector の output_schema が定義されている。",
+      "test_name": "test_selector_complete_design_defines_output_schema"
+    },
+    {
+      "id": "AC-173-03",
+      "text": "selector_complete_design.md で selected_session_id が必須項目として明記されている。",
+      "test_name": "test_selector_complete_design_marks_selected_session_id_required"
+    },
+    {
+      "id": "AC-173-04",
+      "text": "selector_complete_design.md で execution_mode が enum (full_stack, fast_path) として定義されている。",
+      "test_name": "test_selector_complete_design_defines_execution_mode_enum"
+    },
+    {
+      "id": "AC-173-05",
+      "text": "selector_complete_design.md に metadata.skipped_sessions の構造が定義されている。",
+      "test_name": "test_selector_complete_design_defines_skipped_sessions"
+    },
+    {
+      "id": "AC-173-06",
+      "text": "selector_complete_design.md で selection_reason が必須項目として明記されている。",
+      "test_name": "test_selector_complete_design_marks_selection_reason_required"
+    },
+    {
+      "id": "AC-173-07",
+      "text": "selector_complete_design.md に priority_rank_value の評価ルールが記述されている。",
+      "test_name": "test_selector_complete_design_describes_priority_rank_value"
+    },
+    {
+      "id": "AC-173-08",
+      "text": "selector_complete_design.md に決定論性 (同一入力同一出力) の契約が記述されている。",
+      "test_name": "test_selector_complete_design_states_determinism_contract"
+    },
+    {
+      "id": "AC-173-09",
+      "text": "session-173-pre.json の forbidden_changes に既存 selector / run_session / decision 実装ファイルが含まれている。",
+      "test_name": "test_session_173_pre_forbidden_changes_protects_implementation"
+    },
+    {
+      "id": "AC-173-10",
+      "text": "session-173-pre.json の forbidden_changes に既存 session-170/171/172 起票が含まれている。",
+      "test_name": "test_session_173_pre_forbidden_changes_protects_prior_sessions"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ]
+}
