@@ -1,0 +1,119 @@
+{
+  "session_id": "session-171",
+  "phase_id": "M-C",
+  "title": "Lock Manager 最小実装仕様 (docs-only)",
+  "goal": "同一 session_id の二重実行を防ぐ最小 Lock Manager を定義する",
+  "scope": [
+    "orchestration/lock/manager.py の新規作成仕様を定義する",
+    "Lock Manager は in-memory dict ベースの最小実装として定義する",
+    "acquire_lock(key: str) -> bool / release_lock(key: str) -> None の 2 関数を定義する",
+    "二重 acquire 不可 / release 後再 acquire 可の semantics を定義する"
+  ],
+  "out_of_scope": [
+    "分散ロック",
+    "thread safety (single-thread 前提)",
+    "timeout 機構",
+    "Queue Engine 実装",
+    "Review / Feedback Engine 実装",
+    "Decision Engine の変更",
+    "selector の変更",
+    "run_session.py の変更",
+    "Dashboard 実装",
+    "自動実行ループの完成"
+  ],
+  "constraints": {
+    "allowed_changes_detail": [
+      "docs/sessions/session-171.json: session-171 起票のみ",
+      "docs/acceptance/session-171.yaml: session-171 acceptance 起票のみ"
+    ],
+    "forbidden_changes": [
+      "orchestration/selector/**",
+      "orchestration/run_session.py",
+      "orchestration/decision/**",
+      "orchestration/queue/**",
+      "orchestration/review/**",
+      "orchestration/dashboard/**",
+      "DL/**"
+    ],
+    "input_schema": {
+      "key": "str"
+    },
+    "acquire_lock_interface": {
+      "function_name": "acquire_lock",
+      "args": {
+        "key": "str"
+      },
+      "return": "bool"
+    },
+    "release_lock_interface": {
+      "function_name": "release_lock",
+      "args": {
+        "key": "str"
+      },
+      "return": "None"
+    },
+    "lock_semantics": {
+      "double_acquire": "second acquire returns False (key already locked)",
+      "release_then_reacquire": "release_lock removes the key, subsequent acquire_lock returns True",
+      "release_unlocked": "release_lock on non-existent key is no-op (no error)",
+      "storage": "in-memory dict / module-level singleton"
+    }
+  },
+  "allowed_changes_detail": [
+    "docs/sessions/session-171.json: session-171 起票のみ",
+    "docs/acceptance/session-171.yaml: session-171 acceptance 起票のみ"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-171-01",
+      "type": "document_rule",
+      "condition": "session-171.json が Lock Manager の interface・semantics・制約を定義している"
+    },
+    {
+      "id": "CC-171-02",
+      "type": "side_effect_free",
+      "condition": "docs/sessions/session-171.json と docs/acceptance/session-171.yaml 以外を変更していない"
+    },
+    {
+      "id": "CC-171-03",
+      "type": "state_transition_consistent",
+      "condition": "session-170 (Queue Engine) が Lock Manager を使用することを next として明示している"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-171-01",
+      "description": "acquire_lock の interface signature が key: str -> bool として定義されている",
+      "test_name": "test_session_171_defines_acquire_lock_interface"
+    },
+    {
+      "id": "AC-171-02",
+      "description": "release_lock の interface signature が key: str -> None として定義されている",
+      "test_name": "test_session_171_defines_release_lock_interface"
+    },
+    {
+      "id": "AC-171-03",
+      "description": "二重 acquire 不可 / release 後再 acquire 可の semantics が定義されている",
+      "test_name": "test_session_171_defines_lock_semantics"
+    },
+    {
+      "id": "AC-171-04",
+      "description": "selector / run_session.py / decision/** / queue/** / review/** の変更禁止が明示されている",
+      "test_name": "test_session_171_forbids_existing_modules_changes"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ],
+  "failure_type": "spec_missing",
+  "next": [
+    "session-171 implementation",
+    "session-170 Queue Engine implementation (Lock Manager 連携)",
+    "session-172 Review / Feedback Engine implementation",
+    "session-173 Dashboard 表示"
+  ],
+  "acceptance_ref": "docs/acceptance/session-171.yaml"
+}

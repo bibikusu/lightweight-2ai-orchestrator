@@ -1,0 +1,68 @@
+session_id: "session-171"
+goal: "同一 session_id の二重実行を防ぐ最小 Lock Manager を定義する"
+scope:
+  - "Lock Manager 最小仕様"
+  - "session-171 起票"
+out_of_scope:
+  - "分散ロック"
+  - "thread safety"
+  - "timeout 機構"
+  - "Queue Engine 実装"
+  - "Review / Feedback Engine 実装"
+  - "Decision Engine の変更"
+  - "selector の変更"
+  - "run_session.py の変更"
+acceptance:
+  - id: "AC-171-01"
+    requirement: "acquire_lock の interface signature が key: str -> bool として定義されている"
+    test_name: "test_session_171_defines_acquire_lock_interface"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "constraints.acquire_lock_interface.function_name = acquire_lock"
+      - "constraints.acquire_lock_interface.args.key = str"
+      - "constraints.acquire_lock_interface.return = bool"
+  - id: "AC-171-02"
+    requirement: "release_lock の interface signature が key: str -> None として定義されている"
+    test_name: "test_session_171_defines_release_lock_interface"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "constraints.release_lock_interface.function_name = release_lock"
+      - "constraints.release_lock_interface.args.key = str"
+      - "constraints.release_lock_interface.return = None"
+  - id: "AC-171-03"
+    requirement: "二重 acquire 不可 / release 後再 acquire 可の semantics が定義されている"
+    test_name: "test_session_171_defines_lock_semantics"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "constraints.lock_semantics.double_acquire に二重 acquire 不可の記述"
+      - "constraints.lock_semantics.release_then_reacquire に再取得可能の記述"
+  - id: "AC-171-04"
+    requirement: "selector / run_session.py / decision/** / queue/** / review/** の変更禁止が明示されている"
+    test_name: "test_session_171_forbids_existing_modules_changes"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "constraints.forbidden_changes に orchestration/selector/** が含まれる"
+      - "constraints.forbidden_changes に orchestration/run_session.py が含まれる"
+      - "constraints.forbidden_changes に orchestration/decision/** が含まれる"
+      - "constraints.forbidden_changes に orchestration/queue/** が含まれる"
+      - "constraints.forbidden_changes に orchestration/review/** が含まれる"
+completion_checks:
+  - "session-171.json が存在する"
+  - "session-171.yaml が存在する"
+  - "docs-only の変更に限定されている"
+change_guardrails:
+  allowed_changes:
+    - "docs/sessions/session-171.json"
+    - "docs/acceptance/session-171.yaml"
+  forbidden_changes:
+    - "orchestration/selector/**"
+    - "orchestration/run_session.py"
+    - "orchestration/decision/**"
+    - "orchestration/queue/**"
+    - "orchestration/review/**"
+    - "orchestration/dashboard/**"
+    - "DL/**"
