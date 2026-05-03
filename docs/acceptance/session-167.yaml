@@ -1,0 +1,106 @@
+session_id: "session-167"
+goal: "selector 出力の execution_mode を run_session.py 側で正規化し、--use-selector 実行時に args.execution_mode へ反映する"
+scope:
+  - "orchestration/run_session.py の selector 接続実装"
+  - "tests/test_run_session_selector.py の execution_mode テスト追加"
+out_of_scope:
+  - "orchestration/selector/ 配下の変更"
+  - "selector 側 execution_mode 生成ロジックの変更"
+  - "execution_mode enum の追加"
+  - "同一 session 内 fallback 実装"
+acceptance:
+  - id: "AC-167-01"
+    requirement: "SelectorResult NamedTuple が run_session.py に追加され、selected_session_id: str と execution_mode: str を持つ"
+    test_name: "test_selector_result_namedtuple_has_session_id_and_execution_mode"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "grep -n \"class SelectorResult\" orchestration/run_session.py"
+      - "grep -n \"selected_session_id: str\" orchestration/run_session.py"
+      - "grep -n \"execution_mode: str\" orchestration/run_session.py"
+
+  - id: "AC-167-02"
+    requirement: "_run_selector_subprocess() は selected_session_id だけでなく execution_mode も返す"
+    test_name: "test_run_selector_subprocess_returns_selector_result"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "PYTHONPATH=. .venv/bin/pytest tests/test_run_session_selector.py::test_run_selector_subprocess_returns_selector_result -q"
+
+  - id: "AC-167-03"
+    requirement: "selector 出力に execution_mode が欠損している場合、full_stack に正規化される"
+    test_name: "test_run_selector_subprocess_defaults_missing_execution_mode_to_full_stack"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "PYTHONPATH=. .venv/bin/pytest tests/test_run_session_selector.py::test_run_selector_subprocess_defaults_missing_execution_mode_to_full_stack -q"
+
+  - id: "AC-167-04"
+    requirement: "selector 出力の execution_mode が null の場合、full_stack に正規化される"
+    test_name: "test_run_selector_subprocess_defaults_null_execution_mode_to_full_stack"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "PYTHONPATH=. .venv/bin/pytest tests/test_run_session_selector.py::test_run_selector_subprocess_defaults_null_execution_mode_to_full_stack -q"
+
+  - id: "AC-167-05"
+    requirement: "selector 出力の execution_mode が full_stack または fast_path の場合、その値が維持される"
+    test_name: "test_run_selector_subprocess_accepts_valid_execution_mode"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "PYTHONPATH=. .venv/bin/pytest tests/test_run_session_selector.py::test_run_selector_subprocess_accepts_valid_execution_mode -q"
+
+  - id: "AC-167-06"
+    requirement: "selector 出力の execution_mode が不正値の場合、stderr にエラーを出して exit 1 する"
+    test_name: "test_run_selector_subprocess_exits_on_invalid_execution_mode"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "PYTHONPATH=. .venv/bin/pytest tests/test_run_session_selector.py::test_run_selector_subprocess_exits_on_invalid_execution_mode -q"
+
+  - id: "AC-167-07"
+    requirement: "--use-selector 実行時に args.session_id と args.execution_mode が SelectorResult から設定される"
+    test_name: "test_main_use_selector_sets_session_id_and_execution_mode"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "PYTHONPATH=. .venv/bin/pytest tests/test_run_session_selector.py::test_main_use_selector_sets_session_id_and_execution_mode -q"
+
+  - id: "AC-167-08"
+    requirement: "orchestration/selector/ 配下を変更していない"
+    test_name: "test_session_167_does_not_modify_selector_package"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "git diff 7632569..HEAD --name-only -- orchestration/selector/ | wc -l | tr -d ' ' | grep -q '^0$'"
+
+  - id: "AC-167-09"
+    requirement: "既存の --use-selector 排他制御テストが引き続き PASS する"
+    test_name: "test_use_selector_existing_exclusion_rules_still_pass"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "PYTHONPATH=. .venv/bin/pytest tests/test_run_session_selector.py -q"
+
+completion_checks:
+  - "docs/sessions/session-167.json と docs/acceptance/session-167.yaml が存在する"
+  - "変更ファイルが orchestration/run_session.py と tests/test_run_session_selector.py に限定されている"
+  - "--use-selector 実行時に selected_session_id と execution_mode が起動時 1 回だけ確定する"
+  - "orchestration/selector/ 配下に変更がない"
+  - "ruff / pytest / mypy / compileall の 4-gate が PASS する"
+
+change_guardrails:
+  allowed_changes:
+    - "orchestration/run_session.py"
+    - "tests/test_run_session_selector.py"
+    - "docs/sessions/session-167.json"
+    - "docs/acceptance/session-167.yaml"
+  forbidden_changes:
+    - "orchestration/selector/"
+    - "orchestration/select_next.py"
+    - "orchestration/queue/"
+    - "orchestration/scheduler/"
+    - "docs/config/"
+    - "backend/"
+    - "providers/"

@@ -1,0 +1,152 @@
+{
+  "session_id": "session-167",
+  "phase_id": "M-B",
+  "title": "run_session selector execution_mode 接続実装",
+  "goal": "selector 出力の execution_mode を run_session.py 側で正規化し、--use-selector 実行時に args.execution_mode へ反映する",
+  "scope": [
+    "orchestration/run_session.py に SelectorResult NamedTuple を追加する",
+    "_run_selector_subprocess() の戻り値を str から SelectorResult に変更する",
+    "execution_mode 正規化ロジックを run_session.py 側に追加する",
+    "--use-selector 実行時に selected_session_id と execution_mode を args に反映する",
+    "tests/test_run_session_selector.py に execution_mode 関連テストを追加する"
+  ],
+  "out_of_scope": [
+    "orchestration/selector/ 配下の変更",
+    "selector 側 execution_mode 生成ロジックの変更",
+    "execution_mode enum の追加",
+    "同一 session 内 fallback 実装",
+    "UI / dashboard / queue / scheduler の変更"
+  ],
+  "constraints": {
+    "depends_on": "session-166",
+    "allowed_changes_detail": [
+      "orchestration/run_session.py: SelectorResult NamedTuple、execution_mode 正規化、--use-selector 反映処理のみ変更",
+      "tests/test_run_session_selector.py: execution_mode 接続・正規化・不正値検出テストのみ追加"
+    ],
+    "forbidden_changes": [
+      "orchestration/selector/",
+      "orchestration/select_next.py",
+      "orchestration/queue/",
+      "orchestration/scheduler/",
+      "docs/config/",
+      "backend/",
+      "providers/"
+    ],
+    "execution_mode_enum": [
+      "full_stack",
+      "fast_path"
+    ],
+    "normalization_rules": {
+      "missing_key": "full_stack",
+      "null_value": "full_stack",
+      "full_stack": "full_stack",
+      "fast_path": "fast_path",
+      "invalid_value": "exit_1_with_stderr"
+    },
+    "test_command_policy": {
+      "pytest": "PYTHONPATH=. .venv/bin/pytest tests/test_run_session_selector.py -q",
+      "full_gate_pytest": "PYTHONPATH=. .venv/bin/pytest tests/ -q"
+    }
+  },
+  "acceptance_ref": "docs/acceptance/session-167.yaml",
+  "completion_criteria": [
+    {
+      "id": "CC-167-01",
+      "type": "artifact",
+      "condition": "docs/sessions/session-167.json と docs/acceptance/session-167.yaml が存在する"
+    },
+    {
+      "id": "CC-167-02",
+      "type": "document_rule",
+      "condition": "変更ファイルが orchestration/run_session.py と tests/test_run_session_selector.py に限定されている"
+    },
+    {
+      "id": "CC-167-03",
+      "type": "state_transition_consistent",
+      "condition": "--use-selector 実行時に selected_session_id と execution_mode が起動時 1 回だけ確定する"
+    },
+    {
+      "id": "CC-167-04",
+      "type": "side_effect_free",
+      "condition": "orchestration/selector/ 配下に変更がない"
+    },
+    {
+      "id": "CC-167-05",
+      "type": "non_regression",
+      "condition": "ruff / pytest / mypy / compileall の 4-gate が PASS する"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-167-01",
+      "description": "SelectorResult NamedTuple が run_session.py に追加され、selected_session_id: str と execution_mode: str を持つ",
+      "test_name": "test_selector_result_namedtuple_has_session_id_and_execution_mode"
+    },
+    {
+      "id": "AC-167-02",
+      "description": "_run_selector_subprocess() は selected_session_id だけでなく execution_mode も返す",
+      "test_name": "test_run_selector_subprocess_returns_selector_result"
+    },
+    {
+      "id": "AC-167-03",
+      "description": "selector 出力に execution_mode が欠損している場合、full_stack に正規化される",
+      "test_name": "test_run_selector_subprocess_defaults_missing_execution_mode_to_full_stack"
+    },
+    {
+      "id": "AC-167-04",
+      "description": "selector 出力の execution_mode が null の場合、full_stack に正規化される",
+      "test_name": "test_run_selector_subprocess_defaults_null_execution_mode_to_full_stack"
+    },
+    {
+      "id": "AC-167-05",
+      "description": "selector 出力の execution_mode が full_stack または fast_path の場合、その値が維持される",
+      "test_name": "test_run_selector_subprocess_accepts_valid_execution_mode"
+    },
+    {
+      "id": "AC-167-06",
+      "description": "selector 出力の execution_mode が不正値の場合、stderr にエラーを出して exit 1 する",
+      "test_name": "test_run_selector_subprocess_exits_on_invalid_execution_mode"
+    },
+    {
+      "id": "AC-167-07",
+      "description": "--use-selector 実行時に args.session_id と args.execution_mode が SelectorResult から設定される",
+      "test_name": "test_main_use_selector_sets_session_id_and_execution_mode"
+    },
+    {
+      "id": "AC-167-08",
+      "description": "orchestration/selector/ 配下を変更していない",
+      "test_name": "test_session_167_does_not_modify_selector_package"
+    },
+    {
+      "id": "AC-167-09",
+      "description": "既存の --use-selector 排他制御テストが引き続き PASS する",
+      "test_name": "test_use_selector_existing_exclusion_rules_still_pass"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ],
+  "existing_tests_to_preserve": [
+    "test_parse_args_has_use_selector_flag",
+    "test_parse_args_use_selector_default_false",
+    "test_run_selector_subprocess_returns_session_id",
+    "test_run_selector_subprocess_exits_on_nonzero",
+    "test_run_selector_subprocess_exits_on_bad_json",
+    "test_run_selector_subprocess_exits_on_missing_session_id",
+    "test_main_use_selector_sets_session_id_and_calls_impl",
+    "test_no_direct_selector_import_in_run_session",
+    "test_run_session_importable",
+    "test_use_selector_and_session_id_mutually_exclusive",
+    "test_use_selector_and_batch_mutually_exclusive"
+  ],
+  "backlog_candidates": [
+    {
+      "id": "BACKLOG-PYPATH-001",
+      "title": "4-gate pytest 実行時の PYTHONPATH=. 必須ルールを全体規律として正本化する",
+      "reason": "session-166/167 で PYTHONPATH 未設定時に orchestration import error が発生するため"
+    }
+  ]
+}
