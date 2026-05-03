@@ -1,0 +1,124 @@
+{
+  "session_id": "session-172",
+  "phase_id": "M-C",
+  "title": "Review / Feedback Engine 最小実装仕様 (docs-only)",
+  "goal": "session 実行結果 (success/failure + reason) を append-only で記録する Review / Feedback Engine を定義する",
+  "scope": [
+    "orchestration/review/engine.py の新規作成仕様を定義する",
+    "record_result(session_id: str, success: bool, reason: str) -> None の関数 signature を定義する",
+    "in-memory list ベースの append-only storage を定義する",
+    "結果取得 (get_results) の最小 interface を定義する"
+  ],
+  "out_of_scope": [
+    "分析ロジック",
+    "学習ロジック (Feedback Engine の next-decision 反映は別 session)",
+    "永続化 (DB / file)",
+    "thread safety",
+    "Lock Manager 実装",
+    "Queue Engine 実装",
+    "Decision Engine の変更",
+    "selector の変更",
+    "run_session.py の変更",
+    "Dashboard 実装"
+  ],
+  "constraints": {
+    "allowed_changes_detail": [
+      "docs/sessions/session-172.json: session-172 起票のみ",
+      "docs/acceptance/session-172.yaml: session-172 acceptance 起票のみ"
+    ],
+    "forbidden_changes": [
+      "orchestration/selector/**",
+      "orchestration/run_session.py",
+      "orchestration/decision/**",
+      "orchestration/queue/**",
+      "orchestration/lock/**",
+      "orchestration/dashboard/**",
+      "DL/**"
+    ],
+    "input_schema": {
+      "session_id": "str",
+      "success": "bool",
+      "reason": "str"
+    },
+    "record_result_interface": {
+      "function_name": "record_result",
+      "args": {
+        "session_id": "str",
+        "success": "bool",
+        "reason": "str"
+      },
+      "return": "None"
+    },
+    "get_results_interface": {
+      "function_name": "get_results",
+      "args": {},
+      "return": "list[dict]"
+    },
+    "storage_semantics": {
+      "type": "in-memory list / module-level singleton",
+      "policy": "append-only",
+      "record_format": {
+        "session_id": "str",
+        "success": "bool",
+        "reason": "str"
+      },
+      "out_of_scope": "永続化・分析・学習ロジックは含まない"
+    }
+  },
+  "allowed_changes_detail": [
+    "docs/sessions/session-172.json: session-172 起票のみ",
+    "docs/acceptance/session-172.yaml: session-172 acceptance 起票のみ"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-172-01",
+      "type": "document_rule",
+      "condition": "session-172.json が Review / Feedback Engine の interface・storage semantics・制約を定義している"
+    },
+    {
+      "id": "CC-172-02",
+      "type": "side_effect_free",
+      "condition": "docs/sessions/session-172.json と docs/acceptance/session-172.yaml 以外を変更していない"
+    },
+    {
+      "id": "CC-172-03",
+      "type": "state_transition_consistent",
+      "condition": "session-173 (Dashboard) が Review storage を可視化対象とすることを next として明示している"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-172-01",
+      "description": "record_result の interface signature が (session_id: str, success: bool, reason: str) -> None として定義されている",
+      "test_name": "test_session_172_defines_record_result_interface"
+    },
+    {
+      "id": "AC-172-02",
+      "description": "結果は in-memory list で append-only 保持される storage semantics が定義されている",
+      "test_name": "test_session_172_defines_storage_semantics"
+    },
+    {
+      "id": "AC-172-03",
+      "description": "分析・学習・永続化ロジックが out_of_scope として明示されている",
+      "test_name": "test_session_172_defines_out_of_scope"
+    },
+    {
+      "id": "AC-172-04",
+      "description": "selector / run_session.py / decision/** / queue/** / lock/** の変更禁止が明示されている",
+      "test_name": "test_session_172_forbids_existing_modules_changes"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ],
+  "failure_type": "spec_missing",
+  "next": [
+    "session-172 implementation",
+    "session-173 Dashboard 表示 (Review storage 可視化)",
+    "future: Feedback Engine による next-decision 反映"
+  ],
+  "acceptance_ref": "docs/acceptance/session-172.yaml"
+}

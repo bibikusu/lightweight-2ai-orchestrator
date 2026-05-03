@@ -1,0 +1,69 @@
+session_id: "session-172"
+goal: "session 実行結果 (success/failure + reason) を append-only で記録する Review / Feedback Engine を定義する"
+scope:
+  - "Review / Feedback Engine 最小仕様"
+  - "session-172 起票"
+out_of_scope:
+  - "分析ロジック"
+  - "学習ロジック"
+  - "永続化"
+  - "thread safety"
+  - "Lock Manager 実装"
+  - "Queue Engine 実装"
+  - "Decision Engine の変更"
+  - "selector の変更"
+  - "run_session.py の変更"
+acceptance:
+  - id: "AC-172-01"
+    requirement: "record_result の interface signature が (session_id: str, success: bool, reason: str) -> None として定義されている"
+    test_name: "test_session_172_defines_record_result_interface"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "constraints.record_result_interface.function_name = record_result"
+      - "constraints.record_result_interface.args に session_id / success / reason が含まれる"
+      - "constraints.record_result_interface.return = None"
+  - id: "AC-172-02"
+    requirement: "結果は in-memory list で append-only 保持される storage semantics が定義されている"
+    test_name: "test_session_172_defines_storage_semantics"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "constraints.storage_semantics.type に in-memory list の記述"
+      - "constraints.storage_semantics.policy = append-only"
+  - id: "AC-172-03"
+    requirement: "分析・学習・永続化ロジックが out_of_scope として明示されている"
+    test_name: "test_session_172_defines_out_of_scope"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "out_of_scope に 分析ロジック が含まれる"
+      - "out_of_scope に 学習ロジック が含まれる"
+      - "out_of_scope に 永続化 が含まれる"
+  - id: "AC-172-04"
+    requirement: "selector / run_session.py / decision/** / queue/** / lock/** の変更禁止が明示されている"
+    test_name: "test_session_172_forbids_existing_modules_changes"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "constraints.forbidden_changes に orchestration/selector/** が含まれる"
+      - "constraints.forbidden_changes に orchestration/run_session.py が含まれる"
+      - "constraints.forbidden_changes に orchestration/decision/** が含まれる"
+      - "constraints.forbidden_changes に orchestration/queue/** が含まれる"
+      - "constraints.forbidden_changes に orchestration/lock/** が含まれる"
+completion_checks:
+  - "session-172.json が存在する"
+  - "session-172.yaml が存在する"
+  - "docs-only の変更に限定されている"
+change_guardrails:
+  allowed_changes:
+    - "docs/sessions/session-172.json"
+    - "docs/acceptance/session-172.yaml"
+  forbidden_changes:
+    - "orchestration/selector/**"
+    - "orchestration/run_session.py"
+    - "orchestration/decision/**"
+    - "orchestration/queue/**"
+    - "orchestration/lock/**"
+    - "orchestration/dashboard/**"
+    - "DL/**"
