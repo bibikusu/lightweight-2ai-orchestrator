@@ -1,0 +1,54 @@
+session_id: session-174-pre
+phase_id: phase-mc
+acceptance_ref_for: docs/sessions/session-174-pre.json
+
+acceptance_criteria:
+  - id: AC-174-01
+    text: decision_engine_complete_spec.md に Decision Engine の責務が明文化されている。
+    test_name: test_decision_engine_complete_spec_defines_responsibility
+
+  - id: AC-174-02
+    text: decision_engine_complete_spec.md に selector_output 受け取り契約が定義されている。
+    test_name: test_decision_engine_complete_spec_defines_selector_output_input
+
+  - id: AC-174-03
+    text: decision_engine_complete_spec.md の selector_output 契約が session-173-pre の output_schema と整合している。
+    test_name: test_decision_engine_complete_spec_aligned_with_session_173_pre
+
+  - id: AC-174-04
+    text: decision_engine_complete_spec.md に Decision Engine の output_schema が定義されている。
+    test_name: test_decision_engine_complete_spec_defines_output_schema
+
+  - id: AC-174-05
+    text: decision_engine_complete_spec.md で queue_route が enum (ready, blocked_human, retry_waiting, failed) として定義されている。
+    test_name: test_decision_engine_complete_spec_defines_queue_route_enum
+
+  - id: AC-174-06
+    text: decision_engine_complete_spec.md に human_required 判定ルールが記述されている。
+    test_name: test_decision_engine_complete_spec_defines_human_required_rule
+
+  - id: AC-174-07
+    text: decision_engine_complete_spec.md に queue_payload 生成契約が記述されている。
+    test_name: test_decision_engine_complete_spec_defines_queue_payload_contract
+
+  - id: AC-174-08
+    text: decision_engine_complete_spec.md で decision_id と decision_reason が必須項目として明記されている。
+    test_name: test_decision_engine_complete_spec_marks_decision_id_and_reason_required
+
+  - id: AC-174-09
+    text: decision_engine_complete_spec.md に決定論性契約が記述されている。
+    test_name: test_decision_engine_complete_spec_states_determinism_contract
+
+  - id: AC-174-10
+    text: decision_engine_complete_spec.md に selector / queue / run_session / scheduler / UI との境界が明記されている。
+    test_name: test_decision_engine_complete_spec_defines_layer_boundaries
+
+  - id: AC-174-11
+    text: session-174-pre.json の forbidden_changes に既存実装層と既存起票 (170/171/172/173-pre) が含まれている。
+    test_name: test_session_174_pre_forbidden_changes_protects_prior_artifacts
+
+review_points:
+  - 仕様一致（AC達成）
+  - 変更範囲遵守
+  - 副作用なし（既存破壊なし）
+  - 検証十分性

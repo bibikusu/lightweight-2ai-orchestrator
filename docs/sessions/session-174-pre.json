@@ -1,0 +1,232 @@
+{
+  "session_id": "session-174-pre",
+  "phase_id": "phase-mc",
+  "title": "Decision Engine 完成仕様を正本化する (docs-only)",
+  "goal": "selector を単体選択器から実行判断の脳 (Decision Engine) に昇格させる完成仕様を正本化する。selector_output を受け取り、queue 接続前の実行可否判断と queue_payload 生成契約を canonical として固定する。実装変更は伴わない docs-only セッションとする。",
+  "scope": [
+    "Decision Engine の責務を canonical 形式で明文化する",
+    "selector_output 受け取り契約を定義する (session-173-pre の output_schema と整合)",
+    "queue_policy.yaml 解釈ルールを正本化する",
+    "project_registry.json 解釈ルールを正本化する",
+    "Decision Engine の output_schema を定義する",
+    "queue_route を enum (ready, blocked_human, retry_waiting, failed) として正本化する",
+    "human_required 判定ルールを正本化する",
+    "queue_payload 生成契約を正本化する",
+    "decision_id および decision_reason を必須項目として明文化する",
+    "決定論性契約を記述する",
+    "selector / queue / Lock / Review / run_session / scheduler / UI との境界を明記する"
+  ],
+  "out_of_scope": [
+    "orchestration/decision/**/*.py の実装変更",
+    "orchestration/selector/**/*.py の変更",
+    "orchestration/run_session.py の変更",
+    "queue engine 実装",
+    "Lock Manager 実装",
+    "Review Engine 実装",
+    "scheduler 接続実装",
+    "Dashboard / UI 設計",
+    "selector 完成仕様 (session-173-pre で扱い済)",
+    "session-170/171/172 の起票内容変更",
+    "session-173-pre の起票内容変更"
+  ],
+  "constraints": [
+    "1セッション1目的",
+    "docs-only (実装コードを変更しない)",
+    "最大5ファイル以内で完結すること",
+    "正本ルールは master_instruction.md と global_rules.md を基準とすること",
+    "review_points は固定4軸 (仕様一致, 変更範囲遵守, 副作用なし, 検証十分性) を使用すること",
+    "completion_criteria は id, type, condition を持つ object 配列とすること",
+    "completion_criteria.type は document_rule, artifact, side_effect_free のいずれかとすること",
+    "allowed_changes_detail は list[str] 形式とすること",
+    "acceptance_ref は repository 相対パスとすること",
+    "曖昧語禁止",
+    "selector_output 契約は session-173-pre の output_schema と完全整合すること"
+  ],
+  "acceptance_ref": "docs/acceptance/session-174-pre.yaml",
+  "allowed_changes": [
+    "docs/templates/decision_engine_complete_spec.md",
+    "docs/sessions/session-174-pre.json",
+    "docs/acceptance/session-174-pre.yaml",
+    "docs/reports/session-174-pre_specification_review.md"
+  ],
+  "allowed_changes_detail": [
+    "docs/templates/decision_engine_complete_spec.md: Decision Engine 完成仕様の正本テンプレを新規作成",
+    "docs/sessions/session-174-pre.json: 本セッション定義の新規作成",
+    "docs/acceptance/session-174-pre.yaml: 本セッション acceptance の新規作成",
+    "docs/reports/session-174-pre_specification_review.md: 本セッション検収レポートの新規作成"
+  ],
+  "forbidden_changes": [
+    "orchestration/selector/__init__.py",
+    "orchestration/selector/core.py",
+    "orchestration/selector/loader.py",
+    "orchestration/selector/writer.py",
+    "orchestration/run_session.py",
+    "orchestration/decision/__init__.py",
+    "orchestration/decision/engine.py",
+    "docs/config/queue_policy.yaml",
+    "docs/config/project_registry.json",
+    "docs/sessions/session-170.json",
+    "docs/sessions/session-171.json",
+    "docs/sessions/session-172.json",
+    "docs/sessions/session-173-pre.json",
+    "docs/acceptance/session-170.yaml",
+    "docs/acceptance/session-171.yaml",
+    "docs/acceptance/session-172.yaml",
+    "docs/acceptance/session-173-pre.yaml",
+    "docs/reports/session-170_specification_review.md",
+    "docs/reports/session-171_specification_review.md",
+    "docs/reports/session-172_specification_review.md",
+    "docs/reports/session-173-pre_specification_review.md",
+    "docs/templates/selector_complete_design.md"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-174-01",
+      "type": "artifact",
+      "condition": "docs/templates/decision_engine_complete_spec.md が新規作成されている。"
+    },
+    {
+      "id": "CC-174-02",
+      "type": "artifact",
+      "condition": "docs/sessions/session-174-pre.json が新規作成されている。"
+    },
+    {
+      "id": "CC-174-03",
+      "type": "artifact",
+      "condition": "docs/acceptance/session-174-pre.yaml が新規作成されている。"
+    },
+    {
+      "id": "CC-174-04",
+      "type": "artifact",
+      "condition": "docs/reports/session-174-pre_specification_review.md が新規作成されている。"
+    },
+    {
+      "id": "CC-174-05",
+      "type": "document_rule",
+      "condition": "decision_engine_complete_spec.md に Decision Engine の責務が明文化されている。"
+    },
+    {
+      "id": "CC-174-06",
+      "type": "document_rule",
+      "condition": "decision_engine_complete_spec.md に selector_output 受け取り契約が定義されている。"
+    },
+    {
+      "id": "CC-174-07",
+      "type": "document_rule",
+      "condition": "decision_engine_complete_spec.md の selector_output 契約が session-173-pre の output_schema と整合している。"
+    },
+    {
+      "id": "CC-174-08",
+      "type": "document_rule",
+      "condition": "decision_engine_complete_spec.md に Decision Engine の output_schema が定義されている。"
+    },
+    {
+      "id": "CC-174-09",
+      "type": "document_rule",
+      "condition": "decision_engine_complete_spec.md で queue_route が enum (ready, blocked_human, retry_waiting, failed) として定義されている。"
+    },
+    {
+      "id": "CC-174-10",
+      "type": "document_rule",
+      "condition": "decision_engine_complete_spec.md に human_required 判定ルールが記述されている。"
+    },
+    {
+      "id": "CC-174-11",
+      "type": "document_rule",
+      "condition": "decision_engine_complete_spec.md に queue_payload 生成契約が記述されている。"
+    },
+    {
+      "id": "CC-174-12",
+      "type": "document_rule",
+      "condition": "decision_engine_complete_spec.md で decision_id と decision_reason が必須項目として明記されている。"
+    },
+    {
+      "id": "CC-174-13",
+      "type": "document_rule",
+      "condition": "decision_engine_complete_spec.md に決定論性契約が記述されている。"
+    },
+    {
+      "id": "CC-174-14",
+      "type": "document_rule",
+      "condition": "decision_engine_complete_spec.md に selector / queue / run_session / scheduler / UI との境界が明記されている。"
+    },
+    {
+      "id": "CC-174-15",
+      "type": "side_effect_free",
+      "condition": "orchestration/selector / orchestration/run_session.py / orchestration/decision の md5 baseline が変更されていない。"
+    },
+    {
+      "id": "CC-174-16",
+      "type": "side_effect_free",
+      "condition": "session-173-pre の起票・acceptance・テンプレ・検収レポートが変更されていない。"
+    },
+    {
+      "id": "CC-174-17",
+      "type": "side_effect_free",
+      "condition": "session-170/171/172 の起票・acceptance・検収レポートが変更されていない。"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-174-01",
+      "text": "decision_engine_complete_spec.md に Decision Engine の責務が明文化されている。",
+      "test_name": "test_decision_engine_complete_spec_defines_responsibility"
+    },
+    {
+      "id": "AC-174-02",
+      "text": "decision_engine_complete_spec.md に selector_output 受け取り契約が定義されている。",
+      "test_name": "test_decision_engine_complete_spec_defines_selector_output_input"
+    },
+    {
+      "id": "AC-174-03",
+      "text": "decision_engine_complete_spec.md の selector_output 契約が session-173-pre の output_schema と整合している。",
+      "test_name": "test_decision_engine_complete_spec_aligned_with_session_173_pre"
+    },
+    {
+      "id": "AC-174-04",
+      "text": "decision_engine_complete_spec.md に Decision Engine の output_schema が定義されている。",
+      "test_name": "test_decision_engine_complete_spec_defines_output_schema"
+    },
+    {
+      "id": "AC-174-05",
+      "text": "decision_engine_complete_spec.md で queue_route が enum (ready, blocked_human, retry_waiting, failed) として定義されている。",
+      "test_name": "test_decision_engine_complete_spec_defines_queue_route_enum"
+    },
+    {
+      "id": "AC-174-06",
+      "text": "decision_engine_complete_spec.md に human_required 判定ルールが記述されている。",
+      "test_name": "test_decision_engine_complete_spec_defines_human_required_rule"
+    },
+    {
+      "id": "AC-174-07",
+      "text": "decision_engine_complete_spec.md に queue_payload 生成契約が記述されている。",
+      "test_name": "test_decision_engine_complete_spec_defines_queue_payload_contract"
+    },
+    {
+      "id": "AC-174-08",
+      "text": "decision_engine_complete_spec.md で decision_id と decision_reason が必須項目として明記されている。",
+      "test_name": "test_decision_engine_complete_spec_marks_decision_id_and_reason_required"
+    },
+    {
+      "id": "AC-174-09",
+      "text": "decision_engine_complete_spec.md に決定論性契約が記述されている。",
+      "test_name": "test_decision_engine_complete_spec_states_determinism_contract"
+    },
+    {
+      "id": "AC-174-10",
+      "text": "decision_engine_complete_spec.md に selector / queue / run_session / scheduler / UI との境界が明記されている。",
+      "test_name": "test_decision_engine_complete_spec_defines_layer_boundaries"
+    },
+    {
+      "id": "AC-174-11",
+      "text": "session-174-pre.json の forbidden_changes に既存実装層と既存起票 (170/171/172/173-pre) が含まれている。",
+      "test_name": "test_session_174_pre_forbidden_changes_protects_prior_artifacts"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ]
+}
