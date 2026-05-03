@@ -5047,6 +5047,89 @@ def main() -> int:
     return _run_single_session_impl(args)
 
 
+def _build_fast_path_report(
+    session_id: str,
+    execution_mode: str,
+    execute_stages: List[str],
+    skip_stages: List[str],
+    started_at: str,
+    finished_at: str,
+    status: str,
+    error_message: Optional[str] = None,
+) -> str:
+    """fast_path v0 専用の minimal session_report.md を生成する。"""
+    lines = [
+        f"# Session Report: {session_id}",
+        "",
+        "## execution_mode",
+        execution_mode,
+        "",
+        "## executed_stages",
+        *[f"- {s}" for s in execute_stages],
+        "",
+        "## skipped_stages",
+        *[f"- {s}" for s in skip_stages],
+        "",
+        "## timestamp",
+        f"- started_at: {started_at}",
+        f"- finished_at: {finished_at}",
+        "",
+        "## status",
+        status,
+    ]
+    if error_message:
+        lines += ["", "## error", error_message]
+    return "\n".join(lines) + "\n"
+
+
+def _run_session_fast_path(
+    args: argparse.Namespace,
+    session_dir: Path,
+    started_at: str,
+) -> int:
+    """fast_path v0: 軽量検証モード（session-168-pre 仕様）。
+    失敗時に full_stack へ自動 fallback しない。
+    """
+    execute_stages = [
+        "session_context_loading",
+        "acceptance_loading",
+        "session_schema_validation",
+        "allowed_changes_forbidden_changes_check",
+        "execution_mode_recording",
+        "minimal_report_output",
+    ]
+    skip_stages = [
+        "provider_api_call",
+        "claude_or_gpt_execution",
+        "patch_apply",
+        "retry_loop",
+        "git_operation",
+        "long_running_test_gate",
+    ]
+    status = "failure"
+    error_message: Optional[str] = None
+    try:
+        ctx = load_session_context(args.session_id)  # stages 1-2
+        validate_session_context(ctx)                # stages 3-4
+        _ = getattr(args, "execution_mode", "fast_path")  # stage 5
+        status = "success"
+    except Exception as exc:  # noqa: BLE001
+        error_message = str(exc)
+    finished_at = _iso_utc_now()
+    report_md = _build_fast_path_report(
+        session_id=args.session_id,
+        execution_mode=getattr(args, "execution_mode", "fast_path"),
+        execute_stages=execute_stages,
+        skip_stages=skip_stages,
+        started_at=started_at,
+        finished_at=finished_at,
+        status=status,
+        error_message=error_message,
+    )
+    save_text(session_dir / "reports" / "session_report.md", report_md)
+    return 0 if status == "success" else 1
+
+
 def _run_single_session_impl(args: argparse.Namespace) -> int:
     session_dir = ensure_artifact_dirs(args.session_id)
     started_at = _iso_utc_now()
@@ -5055,6 +5138,10 @@ def _run_single_session_impl(args: argparse.Namespace) -> int:
     checkpoint_completed: List[str] = []
     resume_mode = False
     resume_completed_stages: List[str] = []
+
+    # execution_mode 分岐: fast_path は軽量検証モード（session-168-pre 仕様）
+    if getattr(args, "execution_mode", "full_stack") == "fast_path":
+        return _run_session_fast_path(args, session_dir, started_at)
 
     try:
         enforce_run_session_duplicate_definition_preflight(Path(__file__).resolve())
