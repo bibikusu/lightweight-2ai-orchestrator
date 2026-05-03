@@ -1,0 +1,123 @@
+{
+  "session_id": "session-169",
+  "phase_id": "M-C",
+  "title": "Decision Engine 最小実装仕様",
+  "goal": "selector の candidate_sessions から goal に最も近づく 1 件を選択する Decision Engine を最小実装する",
+  "scope": [
+    "orchestration/decision/engine.py の新規作成仕様を定義する",
+    "Decision Engine は stateless な純粋判定関数として定義する",
+    "goal: str と candidate_sessions: list[object] を入力として扱う",
+    "selected_session_id: str と score_detail: list[object] を返す仕様を定義する",
+    "固定スコアリングルールを定義する"
+  ],
+  "out_of_scope": [
+    "selector の変更",
+    "run_session.py の変更",
+    "Queue Engine 接続",
+    "Lock Manager 実装",
+    "Policy Engine 実装",
+    "Risk Gate 実装",
+    "Review / Feedback Engine 実装",
+    "Dashboard 実装",
+    "自動実行",
+    "fallback 実装",
+    "複数件選択"
+  ],
+  "constraints": {
+    "allowed_changes_detail": [
+      "docs/sessions/session-169.json: session-169 起票のみ",
+      "docs/acceptance/session-169.yaml: session-169 acceptance 起票のみ"
+    ],
+    "forbidden_changes": [
+      "orchestration/selector/**",
+      "orchestration/run_session.py",
+      "orchestration/decision/**",
+      "DL/**"
+    ],
+    "input_schema": {
+      "goal": "str",
+      "candidate_sessions": "list[object]"
+    },
+    "candidate_session_schema": {
+      "session_id": "str",
+      "title": "str",
+      "goal": "str",
+      "tags": "list[str]",
+      "blocks": "list[str]",
+      "next_effect": "str"
+    },
+    "output_schema": {
+      "selected_session_id": "str",
+      "score_detail": "list[object]"
+    },
+    "score_detail_schema": {
+      "session_id": "str",
+      "score": "int",
+      "matched_rules": "list[str]"
+    },
+    "scoring_rules": [
+      "+3 goal_direct",
+      "+2 blocker_resolution",
+      "+1 next_step"
+    ],
+    "selection_rule": "highest_score の candidate を 1 件のみ selected_session_id として返す。同点時は入力順で先に出た candidate を選ぶ。"
+  },
+  "allowed_changes_detail": [
+    "docs/sessions/session-169.json: session-169 起票のみ",
+    "docs/acceptance/session-169.yaml: session-169 acceptance 起票のみ"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-169-01",
+      "type": "document_rule",
+      "condition": "session-169.json が Decision Engine の目的・入力・出力・制約を定義している"
+    },
+    {
+      "id": "CC-169-02",
+      "type": "side_effect_free",
+      "condition": "docs/sessions/session-169.json と docs/acceptance/session-169.yaml 以外を変更していない"
+    },
+    {
+      "id": "CC-169-03",
+      "type": "state_transition_consistent",
+      "condition": "session-170 が Queue Engine 接続であることを next として明示している"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-169-01",
+      "description": "Decision Engine の入力 schema が goal: str と candidate_sessions: list[object] として定義されている",
+      "test_name": "test_session_169_defines_input_schema"
+    },
+    {
+      "id": "AC-169-02",
+      "description": "Decision Engine の出力 schema が selected_session_id: str と score_detail: list[object] を含む",
+      "test_name": "test_session_169_defines_output_schema"
+    },
+    {
+      "id": "AC-169-03",
+      "description": "スコアリングルールが +3 goal_direct / +2 blocker_resolution / +1 next_step に固定されている",
+      "test_name": "test_session_169_defines_fixed_scoring_rules"
+    },
+    {
+      "id": "AC-169-04",
+      "description": "selector と run_session.py の変更禁止が明示されている",
+      "test_name": "test_session_169_forbids_selector_and_run_session_changes"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ],
+  "failure_type": "spec_missing",
+  "next": [
+    "session-169 implementation",
+    "session-170 Queue Engine 接続",
+    "session-171 Lock Manager",
+    "session-172 Review / Feedback Engine",
+    "session-173 Dashboard 表示"
+  ],
+  "acceptance_ref": "docs/acceptance/session-169.yaml"
+}

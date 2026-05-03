@@ -1,0 +1,56 @@
+session_id: "session-169"
+goal: "selector の candidate_sessions から goal に最も近づく 1 件を選択する Decision Engine を最小実装する"
+scope:
+  - "Decision Engine 最小仕様"
+  - "session-169 起票"
+out_of_scope:
+  - "selector の変更"
+  - "run_session.py の変更"
+  - "Queue Engine 接続"
+  - "Lock Manager 実装"
+  - "Policy Engine 実装"
+  - "Risk Gate 実装"
+  - "Review / Feedback Engine 実装"
+  - "Dashboard 実装"
+acceptance:
+  - id: "AC-169-01"
+    requirement: "Decision Engine の入力 schema が goal: str と candidate_sessions: list[object] として定義されている"
+    test_name: "test_session_169_defines_input_schema"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "docs/sessions/session-169.json の constraints.input_schema に goal: str と candidate_sessions: list[object] が存在する"
+  - id: "AC-169-02"
+    requirement: "Decision Engine の出力 schema が selected_session_id: str と score_detail: list[object] を含む"
+    test_name: "test_session_169_defines_output_schema"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "docs/sessions/session-169.json の constraints.output_schema に selected_session_id: str と score_detail: list[object] が存在する"
+  - id: "AC-169-03"
+    requirement: "スコアリングルールが +3 goal_direct / +2 blocker_resolution / +1 next_step に固定されている"
+    test_name: "test_session_169_defines_fixed_scoring_rules"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "constraints.scoring_rules に +3 goal_direct / +2 blocker_resolution / +1 next_step が存在する"
+  - id: "AC-169-04"
+    requirement: "selector と run_session.py の変更禁止が明示されている"
+    test_name: "test_session_169_forbids_selector_and_run_session_changes"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "constraints.forbidden_changes に orchestration/selector/** と orchestration/run_session.py が含まれる"
+completion_checks:
+  - "session-169.json が存在する"
+  - "session-169.yaml が存在する"
+  - "docs-only の変更に限定されている"
+change_guardrails:
+  allowed_changes:
+    - "docs/sessions/session-169.json"
+    - "docs/acceptance/session-169.yaml"
+  forbidden_changes:
+    - "orchestration/selector/**"
+    - "orchestration/run_session.py"
+    - "orchestration/decision/**"
+    - "DL/**"
