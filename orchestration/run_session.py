@@ -4908,8 +4908,37 @@ def generate_report(
     return "\n".join(lines)
 
 
-def _run_selector_subprocess() -> str:
-    """subprocess で select_next.py --dry-run を実行し selected_session_id を返す。"""
+class SelectorResult(NamedTuple):
+    """selector CLI から取得する結果。"""
+
+    selected_session_id: str
+    execution_mode: str
+
+
+def _normalize_execution_mode(value: object) -> str:
+    """execution_mode を正規化する (session-166/167 仕様)。
+
+    None (missing_key / null_value) → "full_stack"
+    "full_stack" → "full_stack"
+    "fast_path" → "fast_path"
+    その他 → stderr エラー出力後 sys.exit(1)
+    """
+    if value is None:
+        return "full_stack"
+    if value == "full_stack":
+        return "full_stack"
+    if value == "fast_path":
+        return "fast_path"
+    print(
+        f"[ERROR] execution_mode の値が不正です: {value!r}。"
+        f"許可値は full_stack または fast_path のみです。",
+        file=sys.stderr,
+    )
+    sys.exit(1)
+
+
+def _run_selector_subprocess() -> SelectorResult:
+    """subprocess で select_next.py --dry-run を実行し SelectorResult を返す。"""
     cmd = [sys.executable, str(ROOT_DIR / "orchestration" / "select_next.py"), "--dry-run"]
     proc = subprocess.run(cmd, text=True, capture_output=True, cwd=ROOT_DIR)
     if proc.returncode != 0:
@@ -4931,7 +4960,8 @@ def _run_selector_subprocess() -> str:
     if not session_id:
         print("[ERROR] select_next.py の出力に selected_session_id が含まれていません。", file=sys.stderr)
         sys.exit(1)
-    return session_id
+    execution_mode = _normalize_execution_mode(data.get("execution_mode"))
+    return SelectorResult(selected_session_id=session_id, execution_mode=execution_mode)
 
 
 def parse_args() -> argparse.Namespace:
@@ -4997,7 +5027,9 @@ def main() -> int:
             return 1
     # --- --use-selector 分岐（新規） ---
     if args.use_selector:
-        args.session_id = _run_selector_subprocess()
+        result = _run_selector_subprocess()
+        args.session_id = result.selected_session_id
+        args.execution_mode = result.execution_mode
         return _run_single_session_impl(args)
     # --- ここまで ---
     if args.batch is not None:

@@ -1,5 +1,6 @@
 """
 AC-163-01〜06 対応テスト: run_session.py の --use-selector flag
+AC-167-01〜07 対応テスト: execution_mode 接続・正規化
 """
 
 import json
@@ -38,12 +39,12 @@ def test_parse_args_use_selector_default_false():
 
 
 # ---------------------------------------------------------------------------
-# AC-163-02: subprocess で select_next.py --dry-run が呼ばれ selected_session_id が取得される
+# AC-163-02 (修正版): _run_selector_subprocess() が SelectorResult を返す
 # ---------------------------------------------------------------------------
 
 def test_run_selector_subprocess_returns_session_id():
-    """正常系: selected_session_id を返す。"""
-    from orchestration.run_session import _run_selector_subprocess
+    """正常系: selected_session_id を SelectorResult.selected_session_id で返す。"""
+    from orchestration.run_session import _run_selector_subprocess, SelectorResult
 
     mock_proc = MagicMock()
     mock_proc.returncode = 0
@@ -52,7 +53,8 @@ def test_run_selector_subprocess_returns_session_id():
     with patch("subprocess.run", return_value=mock_proc) as mock_run:
         result = _run_selector_subprocess()
 
-    assert result == "session-99"
+    assert isinstance(result, SelectorResult)
+    assert result.selected_session_id == "session-99"
     mock_run.assert_called_once()
     call_args = mock_run.call_args[0][0]
     assert "select_next.py" in " ".join(call_args)
@@ -102,11 +104,11 @@ def test_run_selector_subprocess_exits_on_missing_session_id():
 
 
 # ---------------------------------------------------------------------------
-# AC-163-03: selected_session_id が _run_single_session_impl() に渡される
+# AC-163-03 (修正版): selected_session_id と execution_mode が args に反映される
 # ---------------------------------------------------------------------------
 
 def test_main_use_selector_sets_session_id_and_calls_impl():
-    """--use-selector 指定時に selected_session_id が args.session_id にセットされ _run_single_session_impl が呼ばれる。"""
+    """--use-selector 指定時に session_id と execution_mode が args にセットされ _run_single_session_impl が呼ばれる。"""
     from orchestration import run_session
 
     mock_proc = MagicMock()
@@ -117,6 +119,7 @@ def test_main_use_selector_sets_session_id_and_calls_impl():
 
     def fake_impl(args):
         captured_args["session_id"] = args.session_id
+        captured_args["execution_mode"] = args.execution_mode
         return 0
 
     with patch("sys.argv", ["run_session.py", "--use-selector"]), \
@@ -128,6 +131,7 @@ def test_main_use_selector_sets_session_id_and_calls_impl():
 
     assert result == 0
     assert captured_args.get("session_id") == "session-42"
+    assert captured_args.get("execution_mode") == "full_stack"
 
 
 # ---------------------------------------------------------------------------
@@ -173,3 +177,160 @@ def test_use_selector_and_batch_mutually_exclusive():
     with patch("sys.argv", ["run_session.py", "--use-selector", "--batch", "session-01,session-02"]):
         with pytest.raises(SystemExit):
             parse_args()
+
+
+# ---------------------------------------------------------------------------
+# AC-167-01: SelectorResult NamedTuple の構造確認
+# ---------------------------------------------------------------------------
+
+def test_selector_result_namedtuple_has_session_id_and_execution_mode():
+    """SelectorResult NamedTuple が selected_session_id と execution_mode を持つ。"""
+    from orchestration.run_session import SelectorResult
+
+    result = SelectorResult(selected_session_id="session-119", execution_mode="full_stack")
+    assert result.selected_session_id == "session-119"
+    assert result.execution_mode == "full_stack"
+    assert hasattr(result, "selected_session_id")
+    assert hasattr(result, "execution_mode")
+
+
+# ---------------------------------------------------------------------------
+# AC-167-02: _run_selector_subprocess() が SelectorResult を返す
+# ---------------------------------------------------------------------------
+
+def test_run_selector_subprocess_returns_selector_result():
+    """_run_selector_subprocess() の戻り値が SelectorResult 型である。"""
+    from orchestration.run_session import _run_selector_subprocess, SelectorResult
+
+    fake_stdout = json.dumps({
+        "selected_session_id": "session-119",
+        "execution_mode": "full_stack",
+    })
+    mock_proc = MagicMock()
+    mock_proc.returncode = 0
+    mock_proc.stdout = fake_stdout
+
+    with patch("subprocess.run", return_value=mock_proc):
+        result = _run_selector_subprocess()
+
+    assert isinstance(result, SelectorResult)
+    assert result.selected_session_id == "session-119"
+    assert result.execution_mode == "full_stack"
+
+
+# ---------------------------------------------------------------------------
+# AC-167-03: execution_mode 欠損 → full_stack に正規化
+# ---------------------------------------------------------------------------
+
+def test_run_selector_subprocess_defaults_missing_execution_mode_to_full_stack():
+    """execution_mode キーが欠損している場合 full_stack に正規化される。"""
+    from orchestration.run_session import _run_selector_subprocess
+
+    fake_stdout = json.dumps({"selected_session_id": "session-119"})
+    mock_proc = MagicMock()
+    mock_proc.returncode = 0
+    mock_proc.stdout = fake_stdout
+
+    with patch("subprocess.run", return_value=mock_proc):
+        result = _run_selector_subprocess()
+
+    assert result.execution_mode == "full_stack"
+
+
+# ---------------------------------------------------------------------------
+# AC-167-04: execution_mode が null → full_stack に正規化
+# ---------------------------------------------------------------------------
+
+def test_run_selector_subprocess_defaults_null_execution_mode_to_full_stack():
+    """execution_mode が null の場合 full_stack に正規化される。"""
+    from orchestration.run_session import _run_selector_subprocess
+
+    fake_stdout = json.dumps({"selected_session_id": "session-119", "execution_mode": None})
+    mock_proc = MagicMock()
+    mock_proc.returncode = 0
+    mock_proc.stdout = fake_stdout
+
+    with patch("subprocess.run", return_value=mock_proc):
+        result = _run_selector_subprocess()
+
+    assert result.execution_mode == "full_stack"
+
+
+# ---------------------------------------------------------------------------
+# AC-167-05: execution_mode が full_stack / fast_path → そのまま維持
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("mode", ["full_stack", "fast_path"])
+def test_run_selector_subprocess_accepts_valid_execution_mode(mode):
+    """execution_mode が full_stack または fast_path の場合そのまま維持される。"""
+    from orchestration.run_session import _run_selector_subprocess
+
+    fake_stdout = json.dumps({"selected_session_id": "session-119", "execution_mode": mode})
+    mock_proc = MagicMock()
+    mock_proc.returncode = 0
+    mock_proc.stdout = fake_stdout
+
+    with patch("subprocess.run", return_value=mock_proc):
+        result = _run_selector_subprocess()
+
+    assert result.execution_mode == mode
+
+
+# ---------------------------------------------------------------------------
+# AC-167-06: execution_mode が不正値 → stderr エラー + exit 1
+# ---------------------------------------------------------------------------
+
+def test_run_selector_subprocess_exits_on_invalid_execution_mode(capsys):
+    """execution_mode が不正値の場合 stderr エラー + exit 1。"""
+    from orchestration.run_session import _run_selector_subprocess
+
+    fake_stdout = json.dumps({
+        "selected_session_id": "session-119",
+        "execution_mode": "invalid_mode_xyz",
+    })
+    mock_proc = MagicMock()
+    mock_proc.returncode = 0
+    mock_proc.stdout = fake_stdout
+
+    with patch("subprocess.run", return_value=mock_proc):
+        with pytest.raises(SystemExit) as exc_info:
+            _run_selector_subprocess()
+
+    assert exc_info.value.code == 1
+    captured = capsys.readouterr()
+    assert "execution_mode" in captured.err
+    assert "invalid_mode_xyz" in captured.err
+
+
+# ---------------------------------------------------------------------------
+# AC-167-07: --use-selector 実行時に args.session_id と args.execution_mode が設定される
+# ---------------------------------------------------------------------------
+
+def test_main_use_selector_sets_session_id_and_execution_mode():
+    """--use-selector 実行時に args.session_id と args.execution_mode が SelectorResult から設定される。"""
+    from orchestration import run_session
+
+    mock_proc = MagicMock()
+    mock_proc.returncode = 0
+    mock_proc.stdout = json.dumps({
+        "selected_session_id": "session-88",
+        "execution_mode": "fast_path",
+    })
+
+    captured_args = {}
+
+    def fake_impl(args):
+        captured_args["session_id"] = args.session_id
+        captured_args["execution_mode"] = args.execution_mode
+        return 0
+
+    with patch("sys.argv", ["run_session.py", "--use-selector"]), \
+         patch("subprocess.run", return_value=mock_proc), \
+         patch.object(run_session, "_run_single_session_impl", side_effect=fake_impl), \
+         patch.object(run_session, "_ensure_repo_root_on_sys_path"), \
+         patch.object(run_session, "set_active_repo_root"):
+        result = run_session.main()
+
+    assert result == 0
+    assert captured_args.get("session_id") == "session-88"
+    assert captured_args.get("execution_mode") == "fast_path"
