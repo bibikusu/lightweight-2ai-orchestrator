@@ -1,0 +1,160 @@
+{
+  "session_id": "session-168-pre",
+  "phase_id": "P7",
+  "title": "Define execution_mode fast_path v0 behavior for run_session.py",
+  "goal": "run_session.py が受け取る execution_mode のうち fast_path の実行範囲・スキップ範囲・dry-run との違い・fallback 禁止を docs-only で正本化する。",
+  "scope": [
+    "execution_mode=full_stack は既存通常実行と同じであることを明記する",
+    "execution_mode=fast_path v0 の目的を軽量検証モードとして定義する",
+    "fast_path v0 で実行する stage を定義する",
+    "fast_path v0 でスキップする stage を定義する",
+    "fast_path と既存 --dry-run の違いを定義する",
+    "fast_path 失敗時の同一 session 内 fallback 禁止を明記する",
+    "fast_path v0 の artifact / report 最小出力仕様を定義する"
+  ],
+  "out_of_scope": [
+    "orchestration/run_session.py の変更",
+    "tests/ 配下の変更",
+    "orchestration/selector/ 配下の変更",
+    "orchestration/select_next.py の変更",
+    "queue / scheduler の変更",
+    "docs/config/ 配下の変更",
+    "fast_path 実装",
+    "full_stack 挙動変更"
+  ],
+  "constraints": [
+    "docs-only セッションであり実装コードを変更しない",
+    "1セッション1目的",
+    "変更ファイル上限は2ファイル",
+    "allowed_changes_detail は list[str]",
+    "acceptance_criteria のキーは text を使う",
+    "review_points は固定4軸とする",
+    "同一 session 内 fallback を禁止する"
+  ],
+  "acceptance_ref": "docs/acceptance/session-168-pre.yaml",
+  "allowed_changes": [
+    "docs/sessions/session-168-pre.json",
+    "docs/acceptance/session-168-pre.yaml"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/session-168-pre.json: fast_path v0 仕様起票のみ作成",
+    "docs/acceptance/session-168-pre.yaml: fast_path v0 受入条件のみ作成"
+  ],
+  "forbidden_changes": [
+    "orchestration/run_session.py",
+    "tests/",
+    "orchestration/selector/",
+    "orchestration/select_next.py",
+    "orchestration/queue/",
+    "orchestration/scheduler/",
+    "docs/config/",
+    ".claude/",
+    "DL/"
+  ],
+  "fast_path_v0": {
+    "full_stack": "既存の run_session.py 通常実行と同じ",
+    "fast_path_purpose": "実API呼び出しや patch 適用を行わず、session の読込・検証・最小 report 出力までを軽量に実行する",
+    "execute_stages": [
+      "session_context_loading",
+      "acceptance_loading",
+      "session_schema_validation",
+      "allowed_changes_forbidden_changes_check",
+      "execution_mode_recording",
+      "minimal_report_output"
+    ],
+    "skip_stages": [
+      "provider_api_call",
+      "claude_or_gpt_execution",
+      "patch_apply",
+      "retry_loop",
+      "git_operation",
+      "long_running_test_gate"
+    ],
+    "dry_run_difference": {
+      "dry_run": "既存の安全確認モード。通常実行の代替ではなく、API呼び出し・patch適用を行わない事前確認。",
+      "fast_path": "selector が選んだ session を軽量に処理する execution_mode。run_session.py の execution_mode 分岐として扱う。"
+    },
+    "fallback_rule": "fast_path 失敗時に同一 session 内で full_stack へ自動 fallback しない",
+    "artifact_policy": [
+      "artifacts/<session_id>/reports/session_report.md に fast_path 実行であることを記録する",
+      "execution_mode=fast_path を report または metadata に記録する",
+      "provider response artifact は生成しない"
+    ]
+  },
+  "completion_criteria": [
+    {
+      "id": "CC-168-PRE-01",
+      "type": "artifact",
+      "condition": "docs/sessions/session-168-pre.json と docs/acceptance/session-168-pre.yaml が存在する"
+    },
+    {
+      "id": "CC-168-PRE-02",
+      "type": "document_rule",
+      "condition": "fast_path v0 の実行 stage と skip stage が明記されている"
+    },
+    {
+      "id": "CC-168-PRE-03",
+      "type": "document_rule",
+      "condition": "fast_path と --dry-run の違いが明記されている"
+    },
+    {
+      "id": "CC-168-PRE-04",
+      "type": "state_transition_consistent",
+      "condition": "fast_path 失敗時の同一 session 内 fallback 禁止が明記されている"
+    },
+    {
+      "id": "CC-168-PRE-05",
+      "type": "side_effect_free",
+      "condition": "docs/sessions/session-168-pre.json と docs/acceptance/session-168-pre.yaml 以外に変更がない"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-168-PRE-01",
+      "text": "session-168-pre.json と session-168-pre.yaml が存在する",
+      "test_name": "test_session_168_pre_files_exist"
+    },
+    {
+      "id": "AC-168-PRE-02",
+      "text": "full_stack が既存通常実行と同じであることが明記されている",
+      "test_name": "test_session_168_pre_full_stack_defined"
+    },
+    {
+      "id": "AC-168-PRE-03",
+      "text": "fast_path v0 の実行 stage が明記されている",
+      "test_name": "test_session_168_pre_fast_path_execute_stages_defined"
+    },
+    {
+      "id": "AC-168-PRE-04",
+      "text": "fast_path v0 の skip stage が明記されている",
+      "test_name": "test_session_168_pre_fast_path_skip_stages_defined"
+    },
+    {
+      "id": "AC-168-PRE-05",
+      "text": "fast_path と --dry-run の違いが明記されている",
+      "test_name": "test_session_168_pre_dry_run_difference_defined"
+    },
+    {
+      "id": "AC-168-PRE-06",
+      "text": "fast_path 失敗時に同一 session 内 fallback しないことが明記されている",
+      "test_name": "test_session_168_pre_no_same_session_fallback"
+    },
+    {
+      "id": "AC-168-PRE-07",
+      "text": "fast_path v0 の artifact / report 最小出力仕様が明記されている",
+      "test_name": "test_session_168_pre_artifact_policy_defined"
+    },
+    {
+      "id": "AC-168-PRE-08",
+      "text": "run_session.py / tests / selector / docs/config を変更禁止としている",
+      "test_name": "test_session_168_pre_forbidden_changes_defined"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ],
+  "next_session": "session-168"
+}
