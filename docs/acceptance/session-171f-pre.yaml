@@ -1,0 +1,72 @@
+session_id: "session-171f-pre"
+goal: "push 前に発生する hook test false-positive を仕様として正規化する"
+scope:
+  - "validation phase を定義する"
+  - "hook test の評価タイミングを post_push に固定する"
+  - "false-positive 判定条件を明文化する"
+  - "push 判定ルールを定義する"
+out_of_scope:
+  - "tests/hooks の実装変更"
+  - "run_session.py の変更"
+  - "auto_runner の変更"
+  - "queue engine の変更"
+  - "CI/CD の導入"
+acceptance:
+  - id: "AC-171F-PRE-01"
+    requirement: "session JSON が valid"
+    test_name: "test_session_171f_pre_json_valid"
+    type: "automated"
+    manual_check: false
+    verification:
+      - ".venv/bin/python -m json.tool docs/sessions/session-171f-pre.json が exit 0"
+  - id: "AC-171F-PRE-02"
+    requirement: "validation phase が 3 段階定義されている"
+    test_name: "test_session_171f_pre_phase_defined"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "validation_phase.value が pre_commit / post_commit_pre_push / post_push の順である"
+  - id: "AC-171F-PRE-03"
+    requirement: "hook test が post_push 評価である"
+    test_name: "test_session_171f_pre_hook_timing"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "hook_test_policy.schema.evaluation_phase.value が post_push である"
+  - id: "AC-171F-PRE-04"
+    requirement: "false-positive 条件が定義されている"
+    test_name: "test_session_171f_pre_false_positive"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "false_positive_definition.schema.classification.value が false_positive である"
+      - "condition に HEAD != origin/main が含まれる"
+  - id: "AC-171F-PRE-05"
+    requirement: "docs-only scope"
+    test_name: "test_session_171f_pre_scope"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "変更ファイルが docs/sessions/session-171f-pre.json と docs/acceptance/session-171f-pre.yaml のみ"
+completion_checks:
+  - "CC-171F-PRE-01: validation phase が定義されている"
+  - "CC-171F-PRE-02: hook test は post_push で評価されることが明記されている"
+  - "CC-171F-PRE-03: false-positive 条件が定義されている"
+  - "CC-171F-PRE-04: push 判定ルールが定義されている"
+  - "CC-171F-PRE-05: 実装・テスト・設定ファイルに変更がない"
+change_guardrails:
+  allowed_changes:
+    - "docs/sessions/session-171f-pre.json"
+    - "docs/acceptance/session-171f-pre.yaml"
+  forbidden_changes:
+    - "orchestration/"
+    - "tests/"
+    - "scripts/"
+    - ".claude/"
+    - "DL/"
+    - "docs/global_rules.md"
+    - "docs/master_instruction.md"
+    - "docs/config/"
+    - "pyproject.toml"
+    - "requirements.txt"
+    - "requirements-dev.txt"

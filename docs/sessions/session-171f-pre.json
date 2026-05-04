@@ -1,0 +1,162 @@
+{
+  "session_id": "session-171f-pre",
+  "phase_id": "M-B",
+  "title": "normalize hook test evaluation timing and false-positive handling",
+  "goal": "push 前に発生する hook test false-positive を仕様として正規化する",
+  "scope": [
+    "validation phase を定義する",
+    "hook test の評価タイミングを post_push に固定する",
+    "false-positive 判定条件を明文化する",
+    "push 判定ルールを定義する"
+  ],
+  "out_of_scope": [
+    "tests/hooks の実装変更",
+    "run_session.py の変更",
+    "auto_runner の変更",
+    "queue engine の変更",
+    "CI/CD の導入"
+  ],
+  "constraints": [
+    "docs-only session とする",
+    "既存テストは変更しない",
+    "評価ルールのみを追加する",
+    "MUST / MUST NOT を明示する"
+  ],
+  "acceptance_ref": "docs/acceptance/session-171f-pre.yaml",
+  "validation_phase": {
+    "type": "list[str]",
+    "value": ["pre_commit", "post_commit_pre_push", "post_push"]
+  },
+  "hook_test_policy": {
+    "type": "object",
+    "schema": {
+      "evaluation_phase": {
+        "type": "enum[post_push]",
+        "value": "post_push"
+      },
+      "pre_push_handling": {
+        "type": "str",
+        "value": "hook test failure in pre_push phase MUST NOT block push when false_positive_definition is satisfied"
+      }
+    }
+  },
+  "false_positive_definition": {
+    "type": "object",
+    "schema": {
+      "condition": {
+        "type": "list[str]",
+        "value": [
+          "HEAD != origin/main",
+          "failure caused by diff against origin/main only",
+          "changed files are within current session allowed_changes"
+        ]
+      },
+      "classification": {
+        "type": "enum[false_positive]",
+        "value": "false_positive"
+      }
+    }
+  },
+  "push_decision_rule": {
+    "type": "object",
+    "schema": {
+      "push_allowed": {
+        "type": "list[str]",
+        "value": [
+          "all unit tests pass",
+          "hook test failure classified as false_positive",
+          "post_push full pytest is expected to pass"
+        ]
+      },
+      "push_blocked": {
+        "type": "list[str]",
+        "value": [
+          "unit test failure",
+          "hook test failure not matching false_positive condition",
+          "scope violation outside current session allowed_changes"
+        ]
+      }
+    }
+  },
+  "allowed_changes": [
+    "docs/sessions/session-171f-pre.json",
+    "docs/acceptance/session-171f-pre.yaml"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/session-171f-pre.json: validation phase と hook test 評価ルールの定義追加",
+    "docs/acceptance/session-171f-pre.yaml: acceptance 定義のみ作成"
+  ],
+  "forbidden_changes": [
+    "orchestration/",
+    "tests/",
+    "scripts/",
+    ".claude/",
+    "DL/",
+    "docs/global_rules.md",
+    "docs/master_instruction.md",
+    "docs/config/",
+    "pyproject.toml",
+    "requirements.txt",
+    "requirements-dev.txt"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-171F-PRE-01",
+      "type": "document_rule",
+      "condition": "validation phase が定義されている"
+    },
+    {
+      "id": "CC-171F-PRE-02",
+      "type": "document_rule",
+      "condition": "hook test は post_push で評価されることが明記されている"
+    },
+    {
+      "id": "CC-171F-PRE-03",
+      "type": "document_rule",
+      "condition": "false-positive 条件が定義されている"
+    },
+    {
+      "id": "CC-171F-PRE-04",
+      "type": "state_transition_consistent",
+      "condition": "push 判定ルールが定義されている"
+    },
+    {
+      "id": "CC-171F-PRE-05",
+      "type": "side_effect_free",
+      "condition": "実装・テスト・設定ファイルに変更がない"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-171F-PRE-01",
+      "description": "session JSON が valid",
+      "test_name": "test_session_171f_pre_json_valid"
+    },
+    {
+      "id": "AC-171F-PRE-02",
+      "description": "validation phase が 3 段階定義されている",
+      "test_name": "test_session_171f_pre_phase_defined"
+    },
+    {
+      "id": "AC-171F-PRE-03",
+      "description": "hook test の評価タイミングが post_push に固定されている",
+      "test_name": "test_session_171f_pre_hook_timing"
+    },
+    {
+      "id": "AC-171F-PRE-04",
+      "description": "false-positive 条件が定義されている",
+      "test_name": "test_session_171f_pre_false_positive"
+    },
+    {
+      "id": "AC-171F-PRE-05",
+      "description": "docs-only である",
+      "test_name": "test_session_171f_pre_scope"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ]
+}
