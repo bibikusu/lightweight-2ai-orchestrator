@@ -1,0 +1,55 @@
+session_id: "session-170a"
+goal: "session-170 を session-174-pre canonical に整合させる"
+scope:
+  - "queue_payload 必須キーの明示"
+  - "queue_route enum の明示"
+  - "allowed_changes_detail / forbidden_changes の補正"
+out_of_scope:
+  - "実装コード変更"
+  - "既存 session-170/171/172 の直接編集"
+  - "session-173-pre / 174-pre の編集"
+acceptance:
+  - id: "AC-170A-01"
+    requirement: "queue_payload の必須キー session_id / project_id / execution_mode / priority_rank_value / scheduled_at が明示されている"
+    test_name: "test_session_170a_defines_queue_payload_required_keys"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "session-170a.json の scope または constraints に queue_payload 5キーが含まれる"
+  - id: "AC-170A-02"
+    requirement: "queue_route が enum[ready,blocked_human,retry_waiting,failed] として明示されている"
+    test_name: "test_session_170a_defines_queue_route_enum"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "session-170a.json に queue_route enum 4値が含まれる"
+  - id: "AC-170A-03"
+    requirement: "allowed_changes_detail が list[str] で定義されている"
+    test_name: "test_session_170a_has_allowed_changes_detail"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "allowed_changes_detail が配列であり、各要素が path: 許可内容 形式である"
+  - id: "AC-170A-04"
+    requirement: "forbidden_changes が既存 session と実装コードを保護している"
+    test_name: "test_session_170a_forbidden_changes_protect_existing_and_code"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "forbidden_changes に orchestration/**/*.py と tests/**/*.py が含まれる"
+      - "forbidden_changes に session-173-pre / session-174-pre が含まれる"
+completion_checks:
+  - "正常系: queue_payload / queue_route / guardrail が補正されている"
+  - "異常系: 実装コード変更があれば fail"
+  - "状態整合性: Decision Engine output から Queue payload への接続が一意"
+  - "副作用なし: 既存 canonical ファイルを変更しない"
+change_guardrails:
+  allowed_changes:
+    - "docs/sessions/session-170a.json"
+    - "docs/acceptance/session-170a.yaml"
+    - "docs/reports/session-170a_specification_review.md"
+  forbidden_changes:
+    - "orchestration/**/*.py"
+    - "tests/**/*.py"
+    - "docs/sessions/session-173-pre.json"
+    - "docs/sessions/session-174-pre.json"

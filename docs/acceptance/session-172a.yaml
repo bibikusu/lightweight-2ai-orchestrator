@@ -1,0 +1,56 @@
+session_id: "session-172a"
+goal: "session-172 Review / Feedback Engine 仕様の guardrail drift を補正する"
+scope:
+  - "allowed_changes_detail の追加"
+  - "forbidden_changes の追加"
+  - "Review / Feedback Engine 境界の明示"
+out_of_scope:
+  - "Review / Feedback Engine 実装"
+  - "既存 session-172 の直接編集"
+  - "session-173-pre / 174-pre の編集"
+acceptance:
+  - id: "AC-172A-01"
+    requirement: "allowed_changes_detail が list[str] で定義されている"
+    test_name: "test_session_172a_has_allowed_changes_detail"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "allowed_changes_detail が配列であり、各要素が path: 許可内容 形式である"
+  - id: "AC-172A-02"
+    requirement: "forbidden_changes が既存 session と実装コードを保護している"
+    test_name: "test_session_172a_forbidden_changes_protect_existing_and_code"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "forbidden_changes に orchestration/**/*.py と tests/**/*.py が含まれる"
+      - "forbidden_changes に session-172 / 173-pre / 174-pre が含まれる"
+  - id: "AC-172A-03"
+    requirement: "Review / Feedback Engine の責務が Decision Engine / selector / run_session と分離されている"
+    test_name: "test_session_172a_keeps_review_engine_boundary"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "constraints に Decision Engine の判断責務を Review / Feedback Engine に持たせない旨がある"
+  - id: "AC-172A-04"
+    requirement: "record_result / get_results / append-only semantics を変更しない方針が明記されている"
+    test_name: "test_session_172a_preserves_review_semantics"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "scope または constraints に既存 Review / Feedback 仕様を維持する旨がある"
+completion_checks:
+  - "正常系: Review / Feedback Engine の guardrail が補正されている"
+  - "異常系: Review / Feedback Engine 仕様内容を変更していたら fail"
+  - "状態整合性: Review / Feedback Engine が結果記録のみに限定されている"
+  - "副作用なし: 実装コードを変更しない"
+change_guardrails:
+  allowed_changes:
+    - "docs/sessions/session-172a.json"
+    - "docs/acceptance/session-172a.yaml"
+    - "docs/reports/session-172a_specification_review.md"
+  forbidden_changes:
+    - "orchestration/**/*.py"
+    - "tests/**/*.py"
+    - "docs/sessions/session-172.json"
+    - "docs/sessions/session-173-pre.json"
+    - "docs/sessions/session-174-pre.json"

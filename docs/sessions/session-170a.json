@@ -1,0 +1,103 @@
+{
+  "session_id": "session-170a",
+  "phase_id": "M-C",
+  "title": "session-170 Decision → Queue 接続仕様の canonical drift 補正",
+  "goal": "session-170 を session-174-pre の Decision Engine 完成仕様に整合させ、queue_payload / queue_route / allowed_changes / forbidden_changes を docs-only で補正する",
+  "scope": [
+    "session-170 の Decision → Queue 接続責務を session-174-pre canonical に整合させる",
+    "queue_payload の必須キーを session_id / project_id / execution_mode / priority_rank_value / scheduled_at として明示する",
+    "queue_route を enum[ready,blocked_human,retry_waiting,failed] として明示する",
+    "allowed_changes / forbidden_changes の欠落を補正する",
+    "scope 内の meta 記述を排除する方針を明示する"
+  ],
+  "out_of_scope": [
+    "Queue Engine 内部実装",
+    "Decision Engine 実装",
+    "selector 実装",
+    "Lock Manager 実装",
+    "Review / Feedback Engine 実装",
+    "run_session.py の変更",
+    "scheduler / dashboard 実装",
+    "実装コード変更",
+    "tests 追加・変更"
+  ],
+  "constraints": [
+    "docs-only とする",
+    "session-173-pre / session-174-pre を変更しない",
+    "Decision Engine の判断責務を session-170 に移さない",
+    "Queue Engine の内部 routing 実装を session-170 に含めない",
+    "queue_payload は session-174-pre canonical に従う",
+    "queue_route は enum[ready,blocked_human,retry_waiting,failed] のみ許可する"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/session-170a.json: session-170 drift 補正用の新規 session 定義を作成",
+    "docs/acceptance/session-170a.yaml: session-170a 用 acceptance を作成",
+    "docs/reports/session-170a_specification_review.md: session-170a の検収レポートを作成"
+  ],
+  "forbidden_changes": [
+    "docs/sessions/session-170.json",
+    "docs/acceptance/session-170.yaml",
+    "docs/sessions/session-171.json",
+    "docs/acceptance/session-171.yaml",
+    "docs/sessions/session-172.json",
+    "docs/acceptance/session-172.yaml",
+    "docs/sessions/session-173-pre.json",
+    "docs/acceptance/session-173-pre.yaml",
+    "docs/sessions/session-174-pre.json",
+    "docs/acceptance/session-174-pre.yaml",
+    "orchestration/**/*.py",
+    "tests/**/*.py",
+    "docs/config/queue_policy.yaml"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-170A-01",
+      "type": "document_rule",
+      "condition": "session-170a が session-170 の drift 補正目的のみを扱う"
+    },
+    {
+      "id": "CC-170A-02",
+      "type": "state_transition_consistent",
+      "condition": "Decision Engine output から Queue payload への接続契約が一意に説明されている"
+    },
+    {
+      "id": "CC-170A-03",
+      "type": "non_regression",
+      "condition": "session-170/171/172 と 173-pre/174-pre の既存ファイルを変更しない"
+    },
+    {
+      "id": "CC-170A-04",
+      "type": "side_effect_free",
+      "condition": "docs-only 以外のファイル変更が存在しない"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-170A-01",
+      "description": "queue_payload の必須キー session_id / project_id / execution_mode / priority_rank_value / scheduled_at が明示されている",
+      "test_name": "test_session_170a_defines_queue_payload_required_keys"
+    },
+    {
+      "id": "AC-170A-02",
+      "description": "queue_route が enum[ready,blocked_human,retry_waiting,failed] として明示されている",
+      "test_name": "test_session_170a_defines_queue_route_enum"
+    },
+    {
+      "id": "AC-170A-03",
+      "description": "allowed_changes_detail が list[str] で定義されている",
+      "test_name": "test_session_170a_has_allowed_changes_detail"
+    },
+    {
+      "id": "AC-170A-04",
+      "description": "forbidden_changes が既存 session と実装コードを保護している",
+      "test_name": "test_session_170a_forbidden_changes_protect_existing_and_code"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ],
+  "acceptance_ref": "docs/acceptance/session-170a.yaml"
+}

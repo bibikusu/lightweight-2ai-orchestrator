@@ -1,0 +1,101 @@
+{
+  "session_id": "session-171a",
+  "phase_id": "M-C",
+  "title": "session-171 Lock Manager 仕様の guardrail drift 補正",
+  "goal": "session-171 の Lock Manager 仕様は維持したまま、allowed_changes / forbidden_changes の欠落を docs-only で補正する",
+  "scope": [
+    "session-171 の Lock Manager 責務を維持する",
+    "allowed_changes / forbidden_changes の欠落を補正する",
+    "acquire_lock / release_lock / lock_semantics は変更しない",
+    "session-174-pre の Layer Boundary と整合することを明示する"
+  ],
+  "out_of_scope": [
+    "Lock Manager 実装",
+    "Queue Engine 実装",
+    "Decision Engine 実装",
+    "selector 実装",
+    "Review / Feedback Engine 実装",
+    "run_session.py の変更",
+    "thread safety",
+    "分散ロック",
+    "timeout 機構",
+    "tests 追加・変更"
+  ],
+  "constraints": [
+    "docs-only とする",
+    "session-171 の Lock Manager 仕様内容を直接変更しない",
+    "session-173-pre / session-174-pre を変更しない",
+    "Lock Manager は queue layer の排他制御補助として扱う",
+    "Decision Engine の判断責務を Lock Manager に持たせない"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/session-171a.json: session-171 drift 補正用の新規 session 定義を作成",
+    "docs/acceptance/session-171a.yaml: session-171a 用 acceptance を作成",
+    "docs/reports/session-171a_specification_review.md: session-171a の検収レポートを作成"
+  ],
+  "forbidden_changes": [
+    "docs/sessions/session-171.json",
+    "docs/acceptance/session-171.yaml",
+    "docs/sessions/session-170.json",
+    "docs/acceptance/session-170.yaml",
+    "docs/sessions/session-172.json",
+    "docs/acceptance/session-172.yaml",
+    "docs/sessions/session-173-pre.json",
+    "docs/acceptance/session-173-pre.yaml",
+    "docs/sessions/session-174-pre.json",
+    "docs/acceptance/session-174-pre.yaml",
+    "orchestration/**/*.py",
+    "tests/**/*.py"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-171A-01",
+      "type": "document_rule",
+      "condition": "session-171a が Lock Manager の guardrail 補正目的のみを扱う"
+    },
+    {
+      "id": "CC-171A-02",
+      "type": "state_transition_consistent",
+      "condition": "Lock Manager が Queue 接続前提の排他制御補助として説明されている"
+    },
+    {
+      "id": "CC-171A-03",
+      "type": "non_regression",
+      "condition": "session-171 の既存 Lock Manager 仕様を変更しない"
+    },
+    {
+      "id": "CC-171A-04",
+      "type": "side_effect_free",
+      "condition": "docs-only 以外のファイル変更が存在しない"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-171A-01",
+      "description": "allowed_changes_detail が list[str] で定義されている",
+      "test_name": "test_session_171a_has_allowed_changes_detail"
+    },
+    {
+      "id": "AC-171A-02",
+      "description": "forbidden_changes が既存 session と実装コードを保護している",
+      "test_name": "test_session_171a_forbidden_changes_protect_existing_and_code"
+    },
+    {
+      "id": "AC-171A-03",
+      "description": "Lock Manager の責務が Decision Engine / selector / run_session と分離されている",
+      "test_name": "test_session_171a_keeps_lock_manager_boundary"
+    },
+    {
+      "id": "AC-171A-04",
+      "description": "acquire_lock / release_lock / lock_semantics を変更しない方針が明記されている",
+      "test_name": "test_session_171a_preserves_lock_semantics"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ],
+  "acceptance_ref": "docs/acceptance/session-171a.yaml"
+}

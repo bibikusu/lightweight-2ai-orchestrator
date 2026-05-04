@@ -1,0 +1,101 @@
+{
+  "session_id": "session-172a",
+  "phase_id": "M-C",
+  "title": "session-172 Review / Feedback Engine 仕様の guardrail drift 補正",
+  "goal": "session-172 の Review / Feedback Engine 仕様は維持したまま、allowed_changes 欠落と canonical 保護不足を docs-only で補正する",
+  "scope": [
+    "session-172 の Review / Feedback Engine 責務を維持する",
+    "allowed_changes / forbidden_changes の欠落を補正する",
+    "record_result / get_results / append-only semantics は変更しない",
+    "session-174-pre の Layer Boundary と整合することを明示する"
+  ],
+  "out_of_scope": [
+    "Review / Feedback Engine 実装",
+    "Queue Engine 実装",
+    "Lock Manager 実装",
+    "Decision Engine 実装",
+    "selector 実装",
+    "run_session.py の変更",
+    "分析ロジック",
+    "学習ロジック",
+    "永続化",
+    "tests 追加・変更"
+  ],
+  "constraints": [
+    "docs-only とする",
+    "session-172 の Review / Feedback Engine 仕様内容を直接変更しない",
+    "session-173-pre / session-174-pre を変更しない",
+    "Review / Feedback Engine は結果記録のみに限定する",
+    "Decision Engine の判断責務を Review / Feedback Engine に持たせない"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/session-172a.json: session-172 drift 補正用の新規 session 定義を作成",
+    "docs/acceptance/session-172a.yaml: session-172a 用 acceptance を作成",
+    "docs/reports/session-172a_specification_review.md: session-172a の検収レポートを作成"
+  ],
+  "forbidden_changes": [
+    "docs/sessions/session-172.json",
+    "docs/acceptance/session-172.yaml",
+    "docs/sessions/session-170.json",
+    "docs/acceptance/session-170.yaml",
+    "docs/sessions/session-171.json",
+    "docs/acceptance/session-171.yaml",
+    "docs/sessions/session-173-pre.json",
+    "docs/acceptance/session-173-pre.yaml",
+    "docs/sessions/session-174-pre.json",
+    "docs/acceptance/session-174-pre.yaml",
+    "orchestration/**/*.py",
+    "tests/**/*.py"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-172A-01",
+      "type": "document_rule",
+      "condition": "session-172a が Review / Feedback Engine の guardrail 補正目的のみを扱う"
+    },
+    {
+      "id": "CC-172A-02",
+      "type": "state_transition_consistent",
+      "condition": "Review / Feedback Engine が実行結果記録のみに限定されている"
+    },
+    {
+      "id": "CC-172A-03",
+      "type": "non_regression",
+      "condition": "session-172 の既存 Review / Feedback 仕様を変更しない"
+    },
+    {
+      "id": "CC-172A-04",
+      "type": "side_effect_free",
+      "condition": "docs-only 以外のファイル変更が存在しない"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-172A-01",
+      "description": "allowed_changes_detail が list[str] で定義されている",
+      "test_name": "test_session_172a_has_allowed_changes_detail"
+    },
+    {
+      "id": "AC-172A-02",
+      "description": "forbidden_changes が既存 session と実装コードを保護している",
+      "test_name": "test_session_172a_forbidden_changes_protect_existing_and_code"
+    },
+    {
+      "id": "AC-172A-03",
+      "description": "Review / Feedback Engine の責務が Decision Engine / selector / run_session と分離されている",
+      "test_name": "test_session_172a_keeps_review_engine_boundary"
+    },
+    {
+      "id": "AC-172A-04",
+      "description": "record_result / get_results / append-only semantics を変更しない方針が明記されている",
+      "test_name": "test_session_172a_preserves_review_semantics"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ],
+  "acceptance_ref": "docs/acceptance/session-172a.yaml"
+}
