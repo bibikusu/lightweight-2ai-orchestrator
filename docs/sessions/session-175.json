@@ -1,0 +1,162 @@
+{
+  "session_id": "session-175",
+  "phase_id": "phase7",
+  "title": "pytest import path 修正と 4-gate pytest 標準コマンド明文化",
+  "goal": "pyproject.toml に pythonpath = [\".\"] を追加し、docs/global_rules.md に 4-gate pytest 標準コマンドを明文化する",
+  "scope": [
+    "pyproject.toml の [tool.pytest.ini_options] に pythonpath = [\".\"] を追加する",
+    "docs/global_rules.md に pytest 標準コマンド .venv/bin/python -m pytest tests/ を明記する",
+    ".venv/bin/pytest 単独依存を非推奨または禁止として明記する",
+    ".venv/bin/pytest tests/ と .venv/bin/python -m pytest tests/ の両方で collect error が発生しないことを確認する"
+  ],
+  "out_of_scope": [
+    "orchestration 配下の変更",
+    "tests 配下の変更",
+    "scripts 配下の変更",
+    "run_session.py の変更",
+    "queue / selector / auto_runner の変更",
+    "テスト追加・削除・書き換え",
+    "過去 session の遡及検証",
+    "pytest 以外の設定変更"
+  ],
+  "constraints": [
+    "1 session 1 purpose を守る",
+    "変更ファイルは pyproject.toml と docs/global_rules.md と session JSON/YAML の最大 4 ファイルに限定する",
+    "pyproject.toml の変更は [tool.pytest.ini_options] の pythonpath = [\".\"] 追加に限定する",
+    "testpaths の変更は原則行わない。ただし実測上必要な場合は commander 承認を得る",
+    "docs/global_rules.md の変更は 4-gate pytest 標準コマンドの明文化に限定する",
+    "orchestration / tests / scripts 配下は変更しない",
+    "ClaudeCode は commander 明示指示外の先行調査・先行実行を行わない"
+  ],
+  "acceptance_ref": "docs/acceptance/session-175.yaml",
+  "allowed_changes": [
+    "pyproject.toml",
+    "docs/global_rules.md",
+    "docs/sessions/session-175.json",
+    "docs/acceptance/session-175.yaml"
+  ],
+  "allowed_changes_detail": [
+    "pyproject.toml: [tool.pytest.ini_options] に pythonpath = [\".\"] を追加するのみ",
+    "docs/global_rules.md: 4-gate pytest 標準コマンド .venv/bin/python -m pytest tests/ の明文化のみ",
+    "docs/sessions/session-175.json: session-175 実装定義の新規作成のみ",
+    "docs/acceptance/session-175.yaml: session-175 acceptance 定義の新規作成のみ"
+  ],
+  "forbidden_changes": [
+    "docs/master_instruction.md",
+    "orchestration/run_session.py",
+    "orchestration/auto_runner.py",
+    "orchestration/queue/engine.py",
+    "orchestration/selector/core.py",
+    "orchestration/selector/loader.py",
+    "orchestration/selector/writer.py",
+    "orchestration/selector/select_next.py",
+    "tests/test_auto_runner.py",
+    "tests/test_selector.py",
+    "scripts/batch_run.py",
+    "scripts/morning_digest.py",
+    "scripts/queue_status.py",
+    "scripts/lint_session_json.py",
+    "docs/config/project_registry.json",
+    "docs/config/queue_policy.yaml",
+    "docs/config/scheduler_plans.yaml",
+    ".claude/settings.json",
+    ".claude/hooks/**",
+    "DL/**"
+  ],
+  "deliverables": [
+    {
+      "path": "pyproject.toml",
+      "type": "config",
+      "purpose": "pytest import path 修正"
+    },
+    {
+      "path": "docs/global_rules.md",
+      "type": "document",
+      "purpose": "4-gate pytest 標準コマンドの正本化"
+    },
+    {
+      "path": "docs/sessions/session-175.json",
+      "type": "json",
+      "purpose": "session-175 実装 session 正本"
+    },
+    {
+      "path": "docs/acceptance/session-175.yaml",
+      "type": "yaml",
+      "purpose": "session-175 acceptance 正本"
+    }
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-175-01",
+      "type": "artifact",
+      "condition": "pyproject.toml の [tool.pytest.ini_options] に pythonpath = [\".\"] が存在する"
+    },
+    {
+      "id": "CC-175-02",
+      "type": "document_rule",
+      "condition": "docs/global_rules.md に .venv/bin/python -m pytest tests/ が 4-gate pytest 標準コマンドとして明記されている"
+    },
+    {
+      "id": "CC-175-03",
+      "type": "non_regression",
+      "condition": ".venv/bin/python -m pytest tests/ が pass する"
+    },
+    {
+      "id": "CC-175-04",
+      "type": "non_regression",
+      "condition": ".venv/bin/pytest tests/ が ModuleNotFoundError: orchestration を出さずに collect できる"
+    },
+    {
+      "id": "CC-175-05",
+      "type": "side_effect_free",
+      "condition": "orchestration / tests / scripts 配下に差分がない"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-175-01",
+      "description": "pyproject.toml に pythonpath = [\".\"] が追加されている",
+      "test_name": "test_session_175_pyproject_pythonpath_added"
+    },
+    {
+      "id": "AC-175-02",
+      "description": "docs/global_rules.md に 4-gate pytest 標準コマンドが明記されている",
+      "test_name": "test_session_175_global_rules_pytest_command_documented"
+    },
+    {
+      "id": "AC-175-03",
+      "description": ".venv/bin/python -m pytest tests/ が pass する",
+      "test_name": "test_session_175_pytest_module_command_passes"
+    },
+    {
+      "id": "AC-175-04",
+      "description": ".venv/bin/pytest tests/ が orchestration import error を出さない",
+      "test_name": "test_session_175_pytest_entrypoint_collects"
+    },
+    {
+      "id": "AC-175-05",
+      "description": "変更範囲が pyproject.toml / docs/global_rules.md / session-175 JSON/YAML のみに限定されている",
+      "test_name": "test_session_175_scope_guard"
+    }
+  ],
+  "review_points": [
+    "仕様一致(AC達成)",
+    "変更範囲遵守",
+    "副作用なし(既存破壊なし)",
+    "検証十分性"
+  ],
+  "failure_type_candidates": [
+    "spec_missing",
+    "scope_violation",
+    "regression",
+    "test_failure"
+  ],
+  "depends_on": [
+    "session-175-pre"
+  ],
+  "next": [
+    "session-171e-pre"
+  ],
+  "automation_level": "L1",
+  "project": "lightweight_2ai_orchestrator"
+}

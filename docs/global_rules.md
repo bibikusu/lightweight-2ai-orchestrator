@@ -1047,3 +1047,23 @@ completed_stages は初回パイプラインの完了記録のみを保持し、
 | `completed` | no | 終端値であり実行 stage ではないため | final state | skip 対象外 |
 
 **AC-02 補正文言（本節の要約）:** `loading` / `validating` は常時実行とする。retry ループ 2 回目の `patch_apply` は従来 `completed_stages` の単純な記録では表現できないため、初回パイプラインの skip 判定とは切り離して扱う。
+
+## 4-gate pytest 標準コマンド（session-175 確立）
+
+4-gate における pytest 実行の標準コマンドは以下とする。
+
+```bash
+.venv/bin/python -m pytest tests/
+```
+
+### 運用規律
+
+- 4-gate の pytest 実行では `.venv/bin/python -m pytest tests/` を使用する。
+- `python3 -m pytest tests/` は system Python が混入する可能性があるため使用しない。
+- `.venv/bin/pytest tests/` 単独依存は非推奨とする。
+- session-175 以後、`pyproject.toml` の `pythonpath = ["."]` により `.venv/bin/pytest tests/` でも collect error が発生しないことを検証対象に含める。
+
+### 背景
+
+chat 53 で `.venv/bin/pytest tests/` 実行時に `ModuleNotFoundError: orchestration` が発生した。
+真因は `pyproject.toml [tool.pytest.ini_options]` に `pythonpath = ["."]` が未設定だったこと、およびルート `conftest.py` 不在により repository root が import path に入らなかったことである。

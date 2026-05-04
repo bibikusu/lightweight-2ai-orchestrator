@@ -1,0 +1,106 @@
+session_id: "session-175"
+goal: "pyproject.toml に pythonpath = [\".\"] を追加し、docs/global_rules.md に 4-gate pytest 標準コマンドを明文化する"
+
+scope:
+  - "pyproject.toml の [tool.pytest.ini_options] に pythonpath = [\".\"] を追加する"
+  - "docs/global_rules.md に .venv/bin/python -m pytest tests/ を 4-gate pytest 標準コマンドとして明記する"
+  - ".venv/bin/pytest tests/ と .venv/bin/python -m pytest tests/ の両方を検証する"
+
+out_of_scope:
+  - "orchestration 配下の変更"
+  - "tests 配下の変更"
+  - "scripts 配下の変更"
+  - "run_session.py の変更"
+  - "pytest テストの追加・削除・書き換え"
+  - "過去 session の遡及検証"
+
+acceptance:
+  - id: "AC-175-01"
+    requirement: "pyproject.toml に pythonpath = [\".\"] が追加されている"
+    test_name: "test_session_175_pyproject_pythonpath_added"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "grep -A 10 \"\\[tool.pytest.ini_options\\]\" pyproject.toml で pythonpath = [\".\"] が確認できること"
+
+  - id: "AC-175-02"
+    requirement: "docs/global_rules.md に 4-gate pytest 標準コマンドが明記されている"
+    test_name: "test_session_175_global_rules_pytest_command_documented"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "docs/global_rules.md に .venv/bin/python -m pytest tests/ が含まれること"
+      - ".venv/bin/pytest 単独依存を禁止または非推奨とする記述が含まれること"
+
+  - id: "AC-175-03"
+    requirement: ".venv/bin/python -m pytest tests/ が pass する"
+    test_name: "test_session_175_pytest_module_command_passes"
+    type: "automated"
+    manual_check: false
+    verification:
+      - ".venv/bin/python -m pytest tests/ が exit 0 で終了すること"
+
+  - id: "AC-175-04"
+    requirement: ".venv/bin/pytest tests/ が orchestration import error を出さない"
+    test_name: "test_session_175_pytest_entrypoint_collects"
+    type: "automated"
+    manual_check: false
+    verification:
+      - ".venv/bin/pytest tests/ が ModuleNotFoundError: orchestration を出さないこと"
+      - "collect error が発生しないこと"
+
+  - id: "AC-175-05"
+    requirement: "変更範囲が pyproject.toml / docs/global_rules.md / session-175 JSON/YAML のみに限定されている"
+    test_name: "test_session_175_scope_guard"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "git diff --name-only HEAD で allowed_changes 以外が含まれないこと"
+      - "orchestration / tests / scripts 配下に差分がないこと"
+
+completion_checks:
+  - "CC-175-01: pyproject.toml の [tool.pytest.ini_options] に pythonpath = [\".\"] が存在する"
+  - "CC-175-02: docs/global_rules.md に .venv/bin/python -m pytest tests/ が 4-gate pytest 標準コマンドとして明記されている"
+  - "CC-175-03: .venv/bin/python -m pytest tests/ が pass する"
+  - "CC-175-04: .venv/bin/pytest tests/ が ModuleNotFoundError: orchestration を出さずに collect できる"
+  - "CC-175-05: orchestration / tests / scripts 配下に差分がない"
+
+change_guardrails:
+  allowed_changes:
+    - "pyproject.toml"
+    - "docs/global_rules.md"
+    - "docs/sessions/session-175.json"
+    - "docs/acceptance/session-175.yaml"
+  forbidden_changes:
+    - "docs/master_instruction.md"
+    - "orchestration/run_session.py"
+    - "orchestration/auto_runner.py"
+    - "orchestration/queue/engine.py"
+    - "orchestration/selector/core.py"
+    - "orchestration/selector/loader.py"
+    - "orchestration/selector/writer.py"
+    - "orchestration/selector/select_next.py"
+    - "tests/test_auto_runner.py"
+    - "tests/test_selector.py"
+    - "scripts/batch_run.py"
+    - "scripts/morning_digest.py"
+    - "scripts/queue_status.py"
+    - "scripts/lint_session_json.py"
+    - "docs/config/project_registry.json"
+    - "docs/config/queue_policy.yaml"
+    - "docs/config/scheduler_plans.yaml"
+    - ".claude/settings.json"
+    - ".claude/hooks/**"
+    - "DL/**"
+
+verification_commands:
+  - "python3 -m json.tool docs/sessions/session-175.json >/dev/null"
+  - "python3 -c \"import yaml; yaml.safe_load(open('docs/acceptance/session-175.yaml').read()); print('yaml ok')\""
+  - "grep -A 10 \"\\[tool.pytest.ini_options\\]\" pyproject.toml"
+  - "grep -n \"\\.venv/bin/python -m pytest tests/\" docs/global_rules.md"
+  - ".venv/bin/python -m pytest tests/"
+  - ".venv/bin/pytest tests/"
+  - "git diff --name-only HEAD"
+  - "git status --short"
+
+final_acceptance_note: "session-175 は pytest import path 修正と 4-gate pytest 標準コマンド明文化のみを扱う。auto_runner の次実装は session-171e 系列で扱う。"
