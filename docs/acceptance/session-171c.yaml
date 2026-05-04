@@ -1,0 +1,88 @@
+session_id: "session-171c"
+goal: "selector から queue を経由して run_session.py を起動する auto_runner の責務境界・入出力・停止条件を docs-only で正本化する"
+
+scope:
+  - "docs/sessions/session-171c.json を新規作成する"
+  - "docs/acceptance/session-171c.yaml を新規作成する"
+  - "auto_runner の責務境界、入出力、停止条件、副作用なし条件を定義する"
+
+out_of_scope:
+  - "orchestration/auto_runner.py の実装"
+  - "orchestration/run_session.py の変更"
+  - "orchestration/queue/engine.py の変更"
+  - "orchestration/selector 配下の変更"
+  - "scheduler / dashboard / hooks / MCP の変更"
+
+acceptance:
+  - id: "AC-171C-01"
+    requirement: "session-171c の JSON と YAML が作成され、docs-only の変更範囲に収まっている"
+    test_name: "test_session_171c_docs_only_files"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "git diff --name-only HEAD が docs/sessions/session-171c.json と docs/acceptance/session-171c.yaml のみであること"
+      - "orchestration/ 配下、docs/config/ 配下、.claude/ 配下に差分がないこと"
+
+  - id: "AC-171C-02"
+    requirement: "auto_runner の入力と出力が全フィールド type 付きで定義されている"
+    test_name: "test_session_171c_auto_runner_io_schema_typed"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "input_schema に max_iterations:int / dry_run:bool / selector_command:list[str] / queue_config_path:str が存在すること"
+      - "output_schema に iterations:list[object] / stopped_reason:enum が存在すること"
+
+  - id: "AC-171C-03"
+    requirement: "max_iterations と blocked_human / failed 停止条件が acceptance に含まれている"
+    test_name: "test_session_171c_stop_conditions_defined"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "constraints に max_iterations による無限ループ防止が定義されていること"
+      - "constraints に queue_state が blocked_human または failed の場合に次ループへ進まない条件が定義されていること"
+
+  - id: "AC-171C-04"
+    requirement: "run_session.py / queue / selector の内部 import 禁止と subprocess 境界維持が明記されている"
+    test_name: "test_session_171c_subprocess_boundary_preserved"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "constraints に subprocess 境界のみで接続することが明記されていること"
+      - "out_of_scope または forbidden_changes に run_session.py / queue / selector の変更禁止が含まれていること"
+
+completion_checks:
+  - "CC-171C-01: docs/sessions/session-171c.json と docs/acceptance/session-171c.yaml のみを作成する"
+  - "CC-171C-02: auto_runner の input_schema と output_schema が型付きで定義されている"
+  - "CC-171C-03: queue_state が blocked_human または failed の場合に次 iteration へ進まない停止条件が定義されている"
+  - "CC-171C-04: docs-only のため orchestration 配下と config 配下を変更しない"
+  - "CC-171C-05: 既存 session / acceptance / queue / selector / run_session の仕様を変更しない"
+
+change_guardrails:
+  allowed_changes:
+    - "docs/sessions/session-171c.json"
+    - "docs/acceptance/session-171c.yaml"
+  forbidden_changes:
+    - "orchestration/run_session.py"
+    - "orchestration/auto_runner.py"
+    - "orchestration/queue/engine.py"
+    - "orchestration/selector/core.py"
+    - "orchestration/selector/loader.py"
+    - "orchestration/selector/writer.py"
+    - "orchestration/selector/select_next.py"
+    - "scripts/batch_run.py"
+    - "scripts/morning_digest.py"
+    - "scripts/queue_status.py"
+    - "docs/config/project_registry.json"
+    - "docs/config/queue_policy.yaml"
+    - "docs/config/scheduler_plans.yaml"
+    - ".claude/settings.json"
+    - ".claude/hooks/**"
+    - "DL/**"
+
+verification_commands:
+  - "python -m json.tool docs/sessions/session-171c.json >/dev/null"
+  - "python -c \"import yaml; yaml.safe_load(open('docs/acceptance/session-171c.yaml').read()); print('yaml ok')\""
+  - "git diff --name-only HEAD"
+  - "git status --short"
+
+final_acceptance_note: "session-171c は docs-only 起票であり、auto_runner 実装は後続 session-171d で扱う。"

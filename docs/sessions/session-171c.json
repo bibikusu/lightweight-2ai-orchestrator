@@ -1,0 +1,194 @@
+{
+  "session_id": "session-171c",
+  "phase_id": "phase7",
+  "title": "auto_runner 仕様の正本化",
+  "goal": "selector から queue を経由して run_session.py を起動する auto_runner の責務境界・入出力・停止条件を docs-only で正本化する",
+  "scope": [
+    "auto_runner の責務を docs/sessions/session-171c.json に定義する",
+    "selector subprocess 呼び出しから selected_session_id を受け取る契約を定義する",
+    "queue enqueue と queue 実行への接続契約を定義する",
+    "max_iterations による無限ループ防止を必須要件として定義する",
+    "dry_run 時の副作用なし挙動を定義する"
+  ],
+  "out_of_scope": [
+    "orchestration/auto_runner.py の実装",
+    "orchestration/run_session.py の変更",
+    "orchestration/queue/engine.py の責務変更",
+    "orchestration/selector 配下の変更",
+    "scheduler / LaunchAgent / cron の変更",
+    "dashboard / UI の変更",
+    "GitHub push の自動化",
+    "human_gate UI の実装",
+    "plan 単位実行の実装"
+  ],
+  "constraints": [
+    "docs-only session とする",
+    "1 session 1 purpose を守る",
+    "run_session.py とは subprocess 境界のみで接続する",
+    "auto_runner は selector / queue / run_session の内部関数を直接 import しない",
+    "max_iterations は int 型で 1 以上とする",
+    "dry_run=true の場合は Git 変更と実 session 実行を行わない",
+    "failure_type が scope_violation / regression / spec_missing の場合は次ループへ進まず停止候補とする",
+    "queue_state が blocked_human / failed の場合は次ループへ進まない",
+    "ClaudeCode は commander 明示指示外の先行調査・先行実行を行わない"
+  ],
+  "acceptance_ref": "docs/acceptance/session-171c.yaml",
+  "allowed_changes": [
+    "docs/sessions/session-171c.json",
+    "docs/acceptance/session-171c.yaml"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/session-171c.json: auto_runner 仕様の session 定義のみ新規作成",
+    "docs/acceptance/session-171c.yaml: auto_runner 仕様の acceptance 定義のみ新規作成"
+  ],
+  "forbidden_changes": [
+    "orchestration/run_session.py",
+    "orchestration/auto_runner.py",
+    "orchestration/queue/engine.py",
+    "orchestration/selector/core.py",
+    "orchestration/selector/loader.py",
+    "orchestration/selector/writer.py",
+    "orchestration/selector/select_next.py",
+    "scripts/batch_run.py",
+    "scripts/morning_digest.py",
+    "scripts/queue_status.py",
+    "docs/config/project_registry.json",
+    "docs/config/queue_policy.yaml",
+    "docs/config/scheduler_plans.yaml",
+    ".claude/settings.json",
+    ".claude/hooks/**",
+    "DL/**"
+  ],
+  "deliverables": [
+    {
+      "path": "docs/sessions/session-171c.json",
+      "type": "json",
+      "purpose": "auto_runner 仕様の session 正本"
+    },
+    {
+      "path": "docs/acceptance/session-171c.yaml",
+      "type": "yaml",
+      "purpose": "auto_runner 仕様の acceptance 正本"
+    }
+  ],
+  "input_schema": {
+    "type": "object",
+    "schema": {
+      "max_iterations": {
+        "type": "int",
+        "required": true,
+        "minimum": 1
+      },
+      "dry_run": {
+        "type": "bool",
+        "required": true
+      },
+      "selector_command": {
+        "type": "list[str]",
+        "required": true
+      },
+      "queue_config_path": {
+        "type": "str",
+        "required": true
+      }
+    }
+  },
+  "output_schema": {
+    "type": "object",
+    "schema": {
+      "iterations": {
+        "type": "list[object]",
+        "schema": {
+          "iteration_index": {
+            "type": "int",
+            "required": true
+          },
+          "selected_session_id": {
+            "type": "str",
+            "required": true
+          },
+          "queue_state": {
+            "type": "enum[pending,ready,running,retry_waiting,blocked_human,completed,failed]",
+            "required": true
+          },
+          "failure_type": {
+            "type": "enum[spec_missing,scope_violation,regression,type_mismatch,build_error,import_error,test_failure,unknown]",
+            "required": false
+          }
+        }
+      },
+      "stopped_reason": {
+        "type": "enum[max_iterations_reached,no_candidate,blocked_human,failed,dry_run_completed]",
+        "required": true
+      }
+    }
+  },
+  "completion_criteria": [
+    {
+      "id": "CC-171C-01",
+      "type": "document_rule",
+      "condition": "docs/sessions/session-171c.json と docs/acceptance/session-171c.yaml のみを作成する"
+    },
+    {
+      "id": "CC-171C-02",
+      "type": "artifact",
+      "condition": "auto_runner の input_schema と output_schema が型付きで定義されている"
+    },
+    {
+      "id": "CC-171C-03",
+      "type": "state_transition_consistent",
+      "condition": "queue_state が blocked_human または failed の場合に次 iteration へ進まない停止条件が定義されている"
+    },
+    {
+      "id": "CC-171C-04",
+      "type": "side_effect_free",
+      "condition": "docs-only のため orchestration 配下と config 配下を変更しない"
+    },
+    {
+      "id": "CC-171C-05",
+      "type": "non_regression",
+      "condition": "既存 session / acceptance / queue / selector / run_session の仕様を変更しない"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-171C-01",
+      "description": "session-171c の JSON と YAML が作成され、docs-only の変更範囲に収まっている",
+      "test_name": "test_session_171c_docs_only_files"
+    },
+    {
+      "id": "AC-171C-02",
+      "description": "auto_runner の入力と出力が全フィールド type 付きで定義されている",
+      "test_name": "test_session_171c_auto_runner_io_schema_typed"
+    },
+    {
+      "id": "AC-171C-03",
+      "description": "max_iterations と blocked_human / failed 停止条件が acceptance に含まれている",
+      "test_name": "test_session_171c_stop_conditions_defined"
+    },
+    {
+      "id": "AC-171C-04",
+      "description": "run_session.py / queue / selector の内部 import 禁止と subprocess 境界維持が明記されている",
+      "test_name": "test_session_171c_subprocess_boundary_preserved"
+    }
+  ],
+  "review_points": [
+    "仕様一致(AC達成)",
+    "変更範囲遵守",
+    "副作用なし(既存破壊なし)",
+    "検証十分性"
+  ],
+  "failure_type_candidates": [
+    "spec_missing",
+    "scope_violation",
+    "regression"
+  ],
+  "depends_on": [
+    "session-171b"
+  ],
+  "next": [
+    "session-171d"
+  ],
+  "automation_level": "L1",
+  "project": "lightweight_2ai_orchestrator"
+}
