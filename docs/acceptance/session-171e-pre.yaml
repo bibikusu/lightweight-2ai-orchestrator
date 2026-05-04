@@ -1,0 +1,79 @@
+session_id: "session-171e-pre"
+goal: "auto_runner が run_session.py を subprocess 境界で呼び出すための実装前契約を docs-only で固定する"
+scope:
+  - "auto_runner から run_session.py への subprocess 呼び出し契約を定義する"
+  - "呼び出し引数、戻り値、失敗時分類、成果物保存先を定義する"
+  - "次実装 session の allowed_changes と forbidden_changes を固定する"
+out_of_scope:
+  - "orchestration/ 配下の実装変更"
+  - "tests/ 配下の変更"
+  - "scripts/ 配下の変更"
+  - "auto_runner の実装"
+  - "run_session.py の実装変更"
+  - "selector の仕様変更"
+  - "queue engine の仕様変更"
+  - "dashboard / UI の追加"
+  - "push 実行"
+acceptance:
+  - id: "AC-171E-PRE-01"
+    requirement: "session JSON が構文的に valid であり必須キーを含む"
+    test_name: "test_session_171e_pre_json_valid"
+    type: "automated"
+    manual_check: false
+    verification:
+      - ".venv/bin/python -m json.tool docs/sessions/session-171e-pre.json が exit 0"
+      - "session_id / phase_id / title / goal / scope / out_of_scope / constraints / acceptance_criteria が存在する"
+  - id: "AC-171E-PRE-02"
+    requirement: "acceptance YAML が構文的に valid であり session_id が session-171e-pre である"
+    test_name: "test_session_171e_pre_acceptance_yaml_valid"
+    type: "automated"
+    manual_check: false
+    verification:
+      - ".venv/bin/python - <<'PY' で yaml.safe_load が成功する"
+      - "トップレベル session_id が session-171e-pre と一致する"
+  - id: "AC-171E-PRE-03"
+    requirement: "allowed_changes_detail が list[str] で、各要素が ファイルパス: 許可内容 の形式である"
+    test_name: "test_session_171e_pre_allowed_changes_detail_format"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "allowed_changes_detail が list である"
+      - "全要素が str である"
+      - "全要素に ': ' が含まれる"
+  - id: "AC-171E-PRE-04"
+    requirement: "contract.boundary が subprocess_only であり、run_session 内部関数 import 禁止が明示されている"
+    test_name: "test_session_171e_pre_subprocess_boundary_contract"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "contract.schema.boundary.value が subprocess_only"
+      - "contract.schema.import_policy.value に import 禁止が明示されている"
+  - id: "AC-171E-PRE-05"
+    requirement: "変更ファイルが docs/sessions/session-171e-pre.json と docs/acceptance/session-171e-pre.yaml のみに限定される"
+    test_name: "test_session_171e_pre_scope_only"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "git diff --name-only HEAD が許可 2 ファイルのみ"
+completion_checks:
+  - "CC-171E-PRE-01: session JSON が auto_runner to run_session subprocess contract を docs-only で定義している"
+  - "CC-171E-PRE-02: docs/sessions/session-171e-pre.json と docs/acceptance/session-171e-pre.yaml の 2 ファイルのみが変更対象である"
+  - "CC-171E-PRE-03: 実装ファイル、テストファイル、設定ファイル、正本 global_rules/master_instruction を変更しない"
+  - "CC-171E-PRE-04: 次 session は docs-only 起票結果を前提に auto_runner 実装へ進める状態である"
+  - "CC-171E-PRE-05: push、stash、cherry-pick、merge、rebase を実行していない"
+change_guardrails:
+  allowed_changes:
+    - "docs/sessions/session-171e-pre.json"
+    - "docs/acceptance/session-171e-pre.yaml"
+  forbidden_changes:
+    - "orchestration/"
+    - "tests/"
+    - "scripts/"
+    - ".claude/"
+    - "DL/"
+    - "docs/global_rules.md"
+    - "docs/master_instruction.md"
+    - "docs/config/"
+    - "pyproject.toml"
+    - "requirements.txt"
+    - "requirements-dev.txt"
