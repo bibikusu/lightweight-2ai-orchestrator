@@ -1,0 +1,105 @@
+session_id: "session-175-pre"
+goal: "pyproject.toml の pytest import path 問題と 4-gate pytest 標準コマンドを docs-only で正本化し、後続 session-175 実装の変更範囲と検収条件を固定する"
+
+scope:
+  - "docs/sessions/session-175-pre.json を新規作成する"
+  - "docs/acceptance/session-175-pre.yaml を新規作成する"
+  - "pytest 設定修正と 4-gate 標準コマンド正本化の仕様を定義する"
+
+out_of_scope:
+  - "pyproject.toml の実変更"
+  - "docs/global_rules.md の実変更"
+  - "orchestration 配下の変更"
+  - "tests 配下の変更"
+  - "scripts 配下の変更"
+  - "過去 session の遡及検証"
+
+acceptance:
+  - id: "AC-175P-01"
+    requirement: "session-175-pre の JSON と YAML が docs-only scope 内で作成されている"
+    test_name: "test_session_175_pre_docs_only_files"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "git diff --name-only HEAD が docs/sessions/session-175-pre.json と docs/acceptance/session-175-pre.yaml のみであること"
+      - "pyproject.toml / docs/global_rules.md / orchestration / tests に差分がないこと"
+
+  - id: "AC-175P-02"
+    requirement: "pythonpath = [\".\"] 未設定が pytest import path 問題の真因として明記されている"
+    test_name: "test_session_175_pre_pythonpath_root_cause_defined"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "docs/sessions/session-175-pre.json に pythonpath = [\".\"] 未設定が真因として明記されていること"
+      - "testpaths を import path の根本原因として扱わない制約が明記されていること"
+
+  - id: "AC-175P-03"
+    requirement: "後続 session-175 の変更対象が pyproject.toml と docs/global_rules.md のみに限定されている"
+    test_name: "test_session_175_pre_implementation_scope_limited"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "implementation_session.allowed_changes_detail に pyproject.toml と docs/global_rules.md のみが含まれること"
+      - "implementation_session.forbidden_changes に orchestration/** / tests/** / scripts/** が含まれること"
+
+  - id: "AC-175P-04"
+    requirement: "後続 session-175 の acceptance に .venv/bin/pytest tests/ 単独実行と .venv/bin/python -m pytest tests/ の両方の検証が含まれている"
+    test_name: "test_session_175_pre_pytest_acceptance_commands_defined"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "後続 session-175 で .venv/bin/pytest tests/ 単独実行が collect error にならないことを検収対象に含めること"
+      - "後続 session-175 で .venv/bin/python -m pytest tests/ が pass することを検収対象に含めること"
+
+completion_checks:
+  - "CC-175P-01: docs/sessions/session-175-pre.json と docs/acceptance/session-175-pre.yaml のみを作成する"
+  - "CC-175P-02: testpaths を import path の根本原因として扱わず、pythonpath = [\".\"] 未設定を真因として明記する"
+  - "CC-175P-03: 後続 session-175 の allowed_changes_detail が pyproject.toml と docs/global_rules.md のみに限定されている"
+  - "CC-175P-04: 後続 session-175 の検収条件に .venv/bin/python -m pytest tests/ の pass が含まれている"
+  - "CC-175P-05: docs-only のため pyproject.toml / docs/global_rules.md / orchestration / tests を変更しない"
+
+change_guardrails:
+  allowed_changes:
+    - "docs/sessions/session-175-pre.json"
+    - "docs/acceptance/session-175-pre.yaml"
+  forbidden_changes:
+    - "pyproject.toml"
+    - "docs/global_rules.md"
+    - "docs/master_instruction.md"
+    - "orchestration/run_session.py"
+    - "orchestration/auto_runner.py"
+    - "orchestration/queue/engine.py"
+    - "orchestration/selector/core.py"
+    - "orchestration/selector/loader.py"
+    - "orchestration/selector/writer.py"
+    - "orchestration/selector/select_next.py"
+    - "tests/test_auto_runner.py"
+    - "tests/test_selector.py"
+    - "scripts/batch_run.py"
+    - "scripts/morning_digest.py"
+    - "scripts/queue_status.py"
+    - "scripts/lint_session_json.py"
+    - "docs/config/project_registry.json"
+    - "docs/config/queue_policy.yaml"
+    - "docs/config/scheduler_plans.yaml"
+    - ".claude/settings.json"
+    - ".claude/hooks/**"
+    - "DL/**"
+
+future_session_175_contract:
+  allowed_changes_detail:
+    - "pyproject.toml: [tool.pytest.ini_options] の pythonpath = [\".\"] 追加、および必要最小限の testpaths 見直しのみ変更"
+    - "docs/global_rules.md: 4-gate pytest 標準コマンドの明文化、および .venv/bin/pytest 単独依存の禁止または非推奨化のみ変更"
+  required_acceptance:
+    - ".venv/bin/pytest tests/ 単独実行で collect error が発生しないこと"
+    - ".venv/bin/python -m pytest tests/ が pass すること"
+    - "orchestration / tests / scripts 配下に差分がないこと"
+    - "4-gate 標準 pytest コマンドが docs/global_rules.md に明記されていること"
+
+verification_commands:
+  - "python3 -m json.tool docs/sessions/session-175-pre.json >/dev/null"
+  - "python3 -c \"import yaml; yaml.safe_load(open('docs/acceptance/session-175-pre.yaml').read()); print('yaml ok')\""
+  - "git diff --name-only HEAD"
+  - "git status --short"
+
+final_acceptance_note: "session-175-pre は docs-only 起票であり、pyproject.toml と docs/global_rules.md の実変更は後続 session-175 で扱う。"

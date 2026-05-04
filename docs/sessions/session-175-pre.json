@@ -1,0 +1,183 @@
+{
+  "session_id": "session-175-pre",
+  "phase_id": "phase7",
+  "title": "pytest 設定修正と 4-gate 標準コマンド正本化の仕様固定",
+  "goal": "pyproject.toml の pytest import path 問題と 4-gate pytest 標準コマンドを docs-only で正本化し、後続 session-175 実装の変更範囲と検収条件を固定する",
+  "scope": [
+    "pyproject.toml の [tool.pytest.ini_options] に pythonpath = [\".\"] を追加する方針を定義する",
+    "testpaths = [\"backend/tests\"] が現行 tests/ 実態と乖離しているため、後続 session-175 で見直し対象とする方針を定義する",
+    "docs/global_rules.md に 4-gate pytest 標準コマンドを .venv/bin/python -m pytest tests/ として明文化する方針を定義する",
+    ".venv/bin/pytest 単独依存を禁止または非推奨化する方針を定義する",
+    "PYTEST-CONFIG-001 と GATE-CMD-STD-001 を後続 session-175 で消化することを定義する"
+  ],
+  "out_of_scope": [
+    "pyproject.toml の実変更",
+    "docs/global_rules.md の実変更",
+    "orchestration 配下の変更",
+    "tests 配下の変更",
+    "scripts 配下の変更",
+    "run_session.py の変更",
+    "queue / selector / auto_runner の変更",
+    "過去 session の遡及検証",
+    "pytest テストの追加・削除・書き換え"
+  ],
+  "constraints": [
+    "docs-only session とする",
+    "1 session 1 purpose を守る",
+    "testpaths は import path の根本原因として扱わない",
+    "真因は pythonpath = [\".\"] 未設定および conftest.py 不在による project root の import path 未解決として扱う",
+    "後続 session-175 の変更対象は pyproject.toml と docs/global_rules.md のみに限定する",
+    "後続 session-175 では .venv/bin/pytest tests/ 単独で tests/ が collect できることを検収対象に含める",
+    "後続 session-175 では .venv/bin/python -m pytest tests/ で 99 passed 相当が再現することを検収対象に含める",
+    "ClaudeCode は commander 明示指示外の先行調査・先行実行を行わない"
+  ],
+  "acceptance_ref": "docs/acceptance/session-175-pre.yaml",
+  "allowed_changes": [
+    "docs/sessions/session-175-pre.json",
+    "docs/acceptance/session-175-pre.yaml"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/session-175-pre.json: pytest 設定修正と 4-gate 標準コマンド正本化の session 定義のみ新規作成",
+    "docs/acceptance/session-175-pre.yaml: pytest 設定修正と 4-gate 標準コマンド正本化の acceptance 定義のみ新規作成"
+  ],
+  "forbidden_changes": [
+    "pyproject.toml",
+    "docs/global_rules.md",
+    "docs/master_instruction.md",
+    "orchestration/run_session.py",
+    "orchestration/auto_runner.py",
+    "orchestration/queue/engine.py",
+    "orchestration/selector/core.py",
+    "orchestration/selector/loader.py",
+    "orchestration/selector/writer.py",
+    "orchestration/selector/select_next.py",
+    "tests/test_auto_runner.py",
+    "tests/test_selector.py",
+    "scripts/batch_run.py",
+    "scripts/morning_digest.py",
+    "scripts/queue_status.py",
+    "scripts/lint_session_json.py",
+    "docs/config/project_registry.json",
+    "docs/config/queue_policy.yaml",
+    "docs/config/scheduler_plans.yaml",
+    ".claude/settings.json",
+    ".claude/hooks/**",
+    "DL/**"
+  ],
+  "deliverables": [
+    {
+      "path": "docs/sessions/session-175-pre.json",
+      "type": "json",
+      "purpose": "pytest 設定修正と 4-gate 標準コマンド正本化の docs-only session 正本"
+    },
+    {
+      "path": "docs/acceptance/session-175-pre.yaml",
+      "type": "yaml",
+      "purpose": "pytest 設定修正と 4-gate 標準コマンド正本化の acceptance 正本"
+    }
+  ],
+  "backlog_items": [
+    {
+      "id": "PYTEST-CONFIG-001",
+      "type": "str",
+      "description": "pyproject.toml の [tool.pytest.ini_options] に pythonpath = [\".\"] を追加し、pytest import path 問題を解消する"
+    },
+    {
+      "id": "GATE-CMD-STD-001",
+      "type": "str",
+      "description": "4-gate pytest 標準コマンドを .venv/bin/python -m pytest tests/ に統一し、.venv/bin/pytest 単独依存を禁止または非推奨化する"
+    }
+  ],
+  "implementation_session": {
+    "session_id": {
+      "type": "str",
+      "value": "session-175"
+    },
+    "allowed_changes_detail": {
+      "type": "list[str]",
+      "value": [
+        "pyproject.toml: [tool.pytest.ini_options] の pythonpath = [\".\"] 追加、および必要最小限の testpaths 見直しのみ変更",
+        "docs/global_rules.md: 4-gate pytest 標準コマンドの明文化、および .venv/bin/pytest 単独依存の禁止または非推奨化のみ変更"
+      ]
+    },
+    "forbidden_changes": {
+      "type": "list[str]",
+      "value": [
+        "orchestration/**",
+        "tests/**",
+        "scripts/**",
+        "docs/config/**",
+        ".claude/**",
+        "DL/**"
+      ]
+    }
+  },
+  "completion_criteria": [
+    {
+      "id": "CC-175P-01",
+      "type": "document_rule",
+      "condition": "docs/sessions/session-175-pre.json と docs/acceptance/session-175-pre.yaml のみを作成する"
+    },
+    {
+      "id": "CC-175P-02",
+      "type": "document_rule",
+      "condition": "testpaths を import path の根本原因として扱わず、pythonpath = [\".\"] 未設定を真因として明記する"
+    },
+    {
+      "id": "CC-175P-03",
+      "type": "artifact",
+      "condition": "後続 session-175 の allowed_changes_detail が pyproject.toml と docs/global_rules.md のみに限定されている"
+    },
+    {
+      "id": "CC-175P-04",
+      "type": "non_regression",
+      "condition": "後続 session-175 の検収条件に .venv/bin/python -m pytest tests/ の pass が含まれている"
+    },
+    {
+      "id": "CC-175P-05",
+      "type": "side_effect_free",
+      "condition": "docs-only のため pyproject.toml / docs/global_rules.md / orchestration / tests を変更しない"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-175P-01",
+      "description": "session-175-pre の JSON と YAML が docs-only scope 内で作成されている",
+      "test_name": "test_session_175_pre_docs_only_files"
+    },
+    {
+      "id": "AC-175P-02",
+      "description": "pythonpath = [\".\"] 未設定が pytest import path 問題の真因として明記されている",
+      "test_name": "test_session_175_pre_pythonpath_root_cause_defined"
+    },
+    {
+      "id": "AC-175P-03",
+      "description": "後続 session-175 の変更対象が pyproject.toml と docs/global_rules.md のみに限定されている",
+      "test_name": "test_session_175_pre_implementation_scope_limited"
+    },
+    {
+      "id": "AC-175P-04",
+      "description": "後続 session-175 の acceptance に .venv/bin/pytest tests/ 単独実行と .venv/bin/python -m pytest tests/ の両方の検証が含まれている",
+      "test_name": "test_session_175_pre_pytest_acceptance_commands_defined"
+    }
+  ],
+  "review_points": [
+    "仕様一致(AC達成)",
+    "変更範囲遵守",
+    "副作用なし(既存破壊なし)",
+    "検証十分性"
+  ],
+  "failure_type_candidates": [
+    "spec_missing",
+    "scope_violation",
+    "regression"
+  ],
+  "depends_on": [
+    "session-171d"
+  ],
+  "next": [
+    "session-175"
+  ],
+  "automation_level": "L1",
+  "project": "lightweight_2ai_orchestrator"
+}
