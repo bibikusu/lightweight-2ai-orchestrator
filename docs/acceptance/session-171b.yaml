@@ -1,0 +1,84 @@
+session_id: "session-171b"
+goal: "同一 session_id の二重実行を run_session レベルで防止する"
+
+scope:
+  - "orchestration/run_session.py に acquire_lock / release_lock を最小統合する"
+  - "tests/test_run_session_lock.py を新規作成し、二重実行防止・正常解放・異常解放を検証する"
+
+out_of_scope:
+  - "Lock Manager 仕様変更"
+  - "selector / queue / scheduler / execution_mode / fast_path の変更"
+  - "guardrail test 本体の変更"
+  - "roadmap.yaml への phase 追加"
+  - "新規 phase_id 起票"
+
+acceptance:
+  - id: "AC-171B-01"
+    requirement: "run_session.py が同一 session_id の二重実行を acquire_lock により防止する"
+    test_name: "test_run_session_exits_when_lock_cannot_be_acquired"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "tests/test_run_session_lock.py に該当 test_name が存在する"
+      - "acquire_lock が False を返す条件で run_session が stderr に lock acquisition failed メッセージを出力後 return 2 する"
+
+  - id: "AC-171B-02"
+    requirement: "run_session.py は正常終了時に release_lock(args.session_id) を呼ぶ"
+    test_name: "test_run_session_releases_lock_on_success"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "tests/test_run_session_lock.py に該当 test_name が存在する"
+      - "正常終了経路で release_lock(args.session_id) が呼ばれる"
+
+  - id: "AC-171B-03"
+    requirement: "run_session.py は例外終了時にも release_lock(args.session_id) を呼ぶ"
+    test_name: "test_run_session_releases_lock_on_exception"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "tests/test_run_session_lock.py に該当 test_name が存在する"
+      - "例外終了経路で release_lock(args.session_id) が呼ばれる"
+
+completion_checks:
+  - "CC-171B-01: tests/test_run_session_lock.py が存在し、正常系・異常系・二重実行系を検証している"
+  - "CC-171B-02: 同一 session_id の二重実行が lock acquisition failure として即時終了する"
+  - "CC-171B-03: 正常終了時・例外終了時の両方で release_lock(args.session_id) が実行される"
+
+change_guardrails:
+  allowed_changes:
+    - "orchestration/run_session.py"
+    - "tests/test_run_session_lock.py"
+  allowed_changes_detail:
+    - "orchestration/run_session.py: import 群（ファイル先頭）に from orchestration.lock import acquire_lock, release_lock を 1 行追加"
+    - "orchestration/run_session.py: line 5145 直前（fast_path 早期 return 直後、try: 直前）に acquire_lock(args.session_id) チェックを追加。False 時は stderr に lock acquisition failed メッセージを出力後 return 2"
+    - "orchestration/run_session.py: line 5791 直後（except Exception の return 1 直後、関数末尾）に finally 節を追加し release_lock(args.session_id) を呼ぶ"
+    - "orchestration/run_session.py: 上記以外の構造変更を行わない（差分原則 8〜10 行）"
+    - "tests/test_run_session_lock.py: 新規作成。test_run_session_exits_when_lock_cannot_be_acquired / test_run_session_releases_lock_on_success / test_run_session_releases_lock_on_exception の 3 件を実装"
+  forbidden_changes:
+    - "docs/roadmap.yaml"
+    - "orchestration/selector/**"
+    - "orchestration/decision/**"
+    - "orchestration/queue/**"
+    - "orchestration/scheduler/**"
+    - "orchestration/lock/manager.py"
+    - "orchestration/lock/__init__.py"
+    - "tests/hooks/**"
+    - "tests/queue/**"
+    - "tests/scheduler/**"
+    - "tests/lock/**"
+    - "scripts/**"
+    - "backend/**"
+    - "DL/**"
+    - ".github/**"
+
+verification_commands:
+  - "PYTHONPATH=. .venv/bin/pytest tests/test_run_session_lock.py -q"
+  - "PYTHONPATH=. .venv/bin/pytest tests/test_run_session_selector.py tests/test_run_session_lock.py -q"
+  - ".venv/bin/ruff check orchestration tests scripts"
+  - ".venv/bin/python -m mypy --explicit-package-bases orchestration scripts --ignore-missing-imports"
+  - "python3 -m compileall -q -f orchestration backend scripts"
+
+final_acceptance_note:
+  - "未 commit 状態では guardrail test が origin/main 差分を検出して FAIL する場合がある"
+  - "最終承認は commit + push 後、origin/main 前進後の pytest PASS をもって判定する"

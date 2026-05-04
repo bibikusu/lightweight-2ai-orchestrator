@@ -1,0 +1,116 @@
+{
+  "session_id": "session-171b",
+  "phase_id": "phase7",
+  "title": "Lock Manager を run_session に最小統合する",
+  "goal": "同一 session_id の二重実行を run_session レベルで防止する",
+  "scope": [
+    "orchestration/run_session.py に acquire_lock を最小統合する",
+    "orchestration/run_session.py に release_lock を finally で最小統合する",
+    "同一 session_id の二重実行時に即時終了する",
+    "正常終了時と異常終了時の両方で lock 解放を保証する",
+    "tests/test_run_session_lock.py を新規作成し、二重実行防止・正常解放・異常解放を検証する"
+  ],
+  "out_of_scope": [
+    "Lock Manager 仕様変更",
+    "orchestration/lock/manager.py の変更",
+    "orchestration/lock/__init__.py の変更",
+    "分散ロック対応",
+    "thread safety 対応",
+    "timeout 対応",
+    "selector の変更",
+    "queue の変更",
+    "scheduler の変更",
+    "execution_mode の変更",
+    "fast_path 挙動変更",
+    "guardrail test の構造変更",
+    "roadmap.yaml への phase 追加",
+    "新規 phase_id 起票",
+    "docs 追補",
+    "scripts 変更",
+    "backend 変更"
+  ],
+  "constraints": [
+    "既存 guardrail test 本体を変更しない",
+    "run_session.py の構造変更を行わない",
+    "import 追加は Lock Manager 用 1 行のみとする",
+    "run_session.py の差分は原則 8〜10 行以内とする",
+    "既存 fast_path / full_stack / selector / execution_mode の挙動を変更しない",
+    "未 commit 状態の pytest で guardrail 4 件が origin/main 差分を検出して FAIL する場合があるため、commit + push 後に再 pytest を実行して最終判定する",
+    "push 後の origin/main 前進後に guardrail test が PASS することを最終承認条件とする"
+  ],
+  "acceptance_ref": "docs/acceptance/session-171b.yaml",
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "tests/test_run_session_lock.py"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/run_session.py: import 群（ファイル先頭）に from orchestration.lock import acquire_lock, release_lock を 1 行追加",
+    "orchestration/run_session.py: line 5145 直前（fast_path 早期 return 直後、try: 直前）に acquire_lock(args.session_id) チェックを追加。False 時は stderr に lock acquisition failed メッセージを出力後 return 2",
+    "orchestration/run_session.py: line 5791 直後（except Exception の return 1 直後、関数末尾）に finally 節を追加し release_lock(args.session_id) を呼ぶ",
+    "orchestration/run_session.py: 上記以外の構造変更を行わない（差分原則 8〜10 行）",
+    "tests/test_run_session_lock.py: 新規作成。test_run_session_exits_when_lock_cannot_be_acquired / test_run_session_releases_lock_on_success / test_run_session_releases_lock_on_exception の 3 件を実装"
+  ],
+  "forbidden_changes": [
+    "docs/roadmap.yaml",
+    "orchestration/selector/**",
+    "orchestration/decision/**",
+    "orchestration/queue/**",
+    "orchestration/scheduler/**",
+    "orchestration/lock/manager.py",
+    "orchestration/lock/__init__.py",
+    "tests/hooks/**",
+    "tests/queue/**",
+    "tests/scheduler/**",
+    "tests/lock/**",
+    "scripts/**",
+    "backend/**",
+    "DL/**",
+    ".github/**"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-171B-01",
+      "type": "artifact",
+      "condition": "tests/test_run_session_lock.py が存在し、run_session lock 統合の正常系・異常系・二重実行系を検証している"
+    },
+    {
+      "id": "CC-171B-02",
+      "type": "state_transition_consistent",
+      "condition": "同一 session_id の実行中に二重実行を開始した場合、2 回目の run_session は lock acquisition failure として即時終了する"
+    },
+    {
+      "id": "CC-171B-03",
+      "type": "side_effect_free",
+      "condition": "正常終了時・例外終了時の両方で release_lock(args.session_id) が必ず実行され、既存 selector / queue / scheduler / execution_mode の挙動を変更しない"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-171B-01",
+      "description": "run_session.py が同一 session_id の二重実行を acquire_lock により防止する",
+      "test_name": "test_run_session_exits_when_lock_cannot_be_acquired"
+    },
+    {
+      "id": "AC-171B-02",
+      "description": "run_session.py は正常終了時に release_lock(args.session_id) を呼ぶ",
+      "test_name": "test_run_session_releases_lock_on_success"
+    },
+    {
+      "id": "AC-171B-03",
+      "description": "run_session.py は例外終了時にも release_lock(args.session_id) を呼ぶ",
+      "test_name": "test_run_session_releases_lock_on_exception"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ],
+  "failure_type": [
+    "test_failure",
+    "scope_violation",
+    "regression"
+  ],
+  "next": []
+}
