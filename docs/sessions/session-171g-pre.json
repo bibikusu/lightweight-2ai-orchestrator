@@ -1,0 +1,198 @@
+{
+  "session_id": "session-171g-pre",
+  "phase_id": "phase-171",
+  "title": "hook_eval_helper を pre-push / CI / Claude Code hook 評価フローへ統合する仕様を docs-only で正本化する",
+  "goal": "session-171f で導入された hook_eval_helper の使用方針を、pre-push hook / CI / Claude Code hook 評価の3経路に対して仕様正本化し、session-171h 実装に引き渡せる形で docs-only に確定する。",
+  "scope": [
+    "hook_eval_helper の責務境界の正本化",
+    "pre-push hook での hook_eval_helper 使用方針の正本化",
+    "CI での hook_eval_helper 使用方針の正本化",
+    "Claude Code hook 評価での hook_eval_helper 使用方針の正本化",
+    "false_positive 判定結果の扱いの正本化",
+    "HEAD / origin/main / changed_files の入力契約の正本化",
+    "helper が判断すること・判断しないことの境界の正本化",
+    "異常時は自動修正せず停止して commander 報告するルールの正本化",
+    "session-171h 実装へ引き渡す範囲の正本化"
+  ],
+  "out_of_scope": [
+    "hook_eval_helper 自体の実装コード変更",
+    "pre-push hook 実体ファイルの変更",
+    "CI workflow ファイル (.github/) の変更",
+    "Claude Code hook 設定 (.claude/) の変更",
+    "orchestration/ 配下の Python 実装変更",
+    "scripts/ 配下の Python 実装変更",
+    "tests/ 配下の Python 実装変更",
+    "run_session.py の変更",
+    "docs/master_instruction.md の変更",
+    "docs/global_rules.md の変更",
+    "docs/config/ 配下の変更",
+    "DL/ 配下の変更",
+    "session-171f の実装変更",
+    "session-171h の実装着手"
+  ],
+  "constraints": [
+    "1セッション1目的を厳守すること",
+    "本セッションは docs-only であり実装コードを変更しないこと",
+    "変更ファイルは docs/sessions/session-171g-pre.json と docs/acceptance/session-171g-pre.yaml の2件のみとすること",
+    "session JSON 14 必須キー (basic 8 + governance 6) をすべて含めること",
+    "allowed_changes_detail は list[str] 形式で記述すること",
+    "completion_criteria.type は document_rule / artifact / non_regression / state_transition_consistent / side_effect_free のみ使用すること",
+    "completion_criteria の5類型をすべて使用すること",
+    "review_points は固定4軸 (仕様一致 / 変更範囲遵守 / 副作用なし / 検証十分性) を使用すること",
+    "acceptance_criteria は各要素に id / text / test_name を必須とし、AC と test_name は 1対1 とすること",
+    "acceptance_ref は repository 相対パスとすること",
+    "本セッション内で git push を実行しないこと",
+    "曖昧語を使用しないこと"
+  ],
+  "acceptance_ref": "docs/acceptance/session-171g-pre.yaml",
+  "allowed_changes": [
+    "docs/sessions/session-171g-pre.json",
+    "docs/acceptance/session-171g-pre.yaml"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/session-171g-pre.json: hook_eval_helper 統合仕様 session 定義のみ作成",
+    "docs/acceptance/session-171g-pre.yaml: session-171g-pre の acceptance 定義のみ作成"
+  ],
+  "forbidden_changes": [
+    "run_session.py の変更",
+    "orchestration/ 配下の Python 実装の変更",
+    "scripts/ 配下の Python 実装の変更",
+    "tests/ 配下の Python 実装の変更",
+    ".claude/ 配下の変更",
+    ".github/ 配下の変更",
+    "docs/config/ 配下の変更",
+    "docs/master_instruction.md の変更",
+    "docs/global_rules.md の変更",
+    "DL/ 配下の変更",
+    "実装コードの変更",
+    "hook 実体ファイルの変更",
+    "CI workflow の変更",
+    "本セッション内での git push の実行",
+    "session-171f の実装変更"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-171g-pre-01",
+      "type": "document_rule",
+      "condition": "docs/sessions/session-171g-pre.json が session JSON 14 必須キー (session_id, phase_id, title, goal, scope, out_of_scope, constraints, acceptance_ref, allowed_changes, allowed_changes_detail, forbidden_changes, completion_criteria, acceptance_criteria, review_points) をすべて含むこと。"
+    },
+    {
+      "id": "CC-171g-pre-02",
+      "type": "artifact",
+      "condition": "docs/sessions/session-171g-pre.json と docs/acceptance/session-171g-pre.yaml の2ファイルが repository に保存されていること。"
+    },
+    {
+      "id": "CC-171g-pre-03",
+      "type": "non_regression",
+      "condition": "本セッションの変更によって既存 hook / CI / scripts / orchestration の挙動に副作用が発生しないこと (docs-only スコープ厳守による担保)。"
+    },
+    {
+      "id": "CC-171g-pre-04",
+      "type": "state_transition_consistent",
+      "condition": "session-171f (helper 導入) → session-171g-pre (統合仕様正本化) → session-171h (実装統合) の引き渡し順序が仕様書内で一貫的に記述されており、session-171h が参照すべき範囲が明確化されていること。"
+    },
+    {
+      "id": "CC-171g-pre-05",
+      "type": "side_effect_free",
+      "condition": "変更対象が docs/sessions/session-171g-pre.json と docs/acceptance/session-171g-pre.yaml の2件に限定されており、他のファイルが変更されていないこと。"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-171g-pre-01",
+      "text": "hook_eval_helper の責務境界 (helper が担う範囲と担わない範囲) が session JSON または acceptance YAML 内で明示的に文書化されている。",
+      "test_name": "test_session_171g_pre_responsibility_boundary_documented",
+      "completion_criteria_refs": ["CC-171g-pre-01"]
+    },
+    {
+      "id": "AC-171g-pre-02",
+      "text": "pre-push hook での hook_eval_helper 使用方針 (起動条件・入出力・失敗時挙動) が文書化されている。",
+      "test_name": "test_session_171g_pre_pre_push_policy_documented",
+      "completion_criteria_refs": ["CC-171g-pre-01"]
+    },
+    {
+      "id": "AC-171g-pre-03",
+      "text": "CI での hook_eval_helper 使用方針 (起動条件・入出力・失敗時挙動) が文書化されている。",
+      "test_name": "test_session_171g_pre_ci_policy_documented",
+      "completion_criteria_refs": ["CC-171g-pre-01"]
+    },
+    {
+      "id": "AC-171g-pre-04",
+      "text": "Claude Code hook 評価での hook_eval_helper 使用方針 (起動条件・入出力・失敗時挙動) が文書化されている。",
+      "test_name": "test_session_171g_pre_claude_code_hook_policy_documented",
+      "completion_criteria_refs": ["CC-171g-pre-01"]
+    },
+    {
+      "id": "AC-171g-pre-05",
+      "text": "hook_eval_helper の false_positive 判定結果に対する扱い (検出時の停止・commander 報告ルール) が文書化されている。",
+      "test_name": "test_session_171g_pre_false_positive_handling_documented",
+      "completion_criteria_refs": ["CC-171g-pre-01"]
+    },
+    {
+      "id": "AC-171g-pre-06",
+      "text": "hook_eval_helper の入力契約 (HEAD / origin/main / changed_files の取得元・型・必須性) が文書化されている。",
+      "test_name": "test_session_171g_pre_input_contract_documented",
+      "completion_criteria_refs": ["CC-171g-pre-01"]
+    },
+    {
+      "id": "AC-171g-pre-07",
+      "text": "hook_eval_helper が判断すること (false_positive 判定等) と判断しないこと (commit 内容の妥当性判断、自動修正等) の境界が文書化されている。",
+      "test_name": "test_session_171g_pre_decision_boundary_documented",
+      "completion_criteria_refs": ["CC-171g-pre-01"]
+    },
+    {
+      "id": "AC-171g-pre-08",
+      "text": "hook_eval_helper の異常時挙動 (自動修正せず停止し commander 報告) が文書化されている。",
+      "test_name": "test_session_171g_pre_abnormal_handling_documented",
+      "completion_criteria_refs": ["CC-171g-pre-01"]
+    },
+    {
+      "id": "AC-171g-pre-09",
+      "text": "session-171h 実装へ引き渡す範囲 (実装スコープと非実装スコープ) が文書化されている。",
+      "test_name": "test_session_171g_pre_handoff_scope_documented",
+      "completion_criteria_refs": ["CC-171g-pre-04"]
+    },
+    {
+      "id": "AC-171g-pre-10",
+      "text": "session JSON 14 必須キー (basic 8 + governance 6) がすべて存在する。",
+      "test_name": "test_session_171g_pre_14_required_keys_present",
+      "completion_criteria_refs": ["CC-171g-pre-01"]
+    },
+    {
+      "id": "AC-171g-pre-11",
+      "text": "review_points が固定4軸 (仕様一致 / 変更範囲遵守 / 副作用なし / 検証十分性) を含み、4番目が「検証十分性」である。",
+      "test_name": "test_session_171g_pre_review_points_fixed_four_axes",
+      "completion_criteria_refs": ["CC-171g-pre-01"]
+    },
+    {
+      "id": "AC-171g-pre-12",
+      "text": "completion_criteria が 5類型 (document_rule / artifact / non_regression / state_transition_consistent / side_effect_free) をすべて含む。",
+      "test_name": "test_session_171g_pre_completion_criteria_five_types",
+      "completion_criteria_refs": ["CC-171g-pre-01"]
+    },
+    {
+      "id": "AC-171g-pre-13",
+      "text": "allowed_changes が docs/sessions/session-171g-pre.json と docs/acceptance/session-171g-pre.yaml の2件のみであり、実装コードを含まない。",
+      "test_name": "test_session_171g_pre_allowed_changes_docs_only",
+      "completion_criteria_refs": ["CC-171g-pre-02", "CC-171g-pre-03", "CC-171g-pre-05"]
+    },
+    {
+      "id": "AC-171g-pre-14",
+      "text": "forbidden_changes が run_session.py / orchestration / scripts / tests / .claude / .github / docs/config / docs/master_instruction.md / docs/global_rules.md / DL / hook 実体 / CI workflow / git push / session-171f 実装変更 を網羅している。",
+      "test_name": "test_session_171g_pre_forbidden_changes_comprehensive",
+      "completion_criteria_refs": ["CC-171g-pre-03", "CC-171g-pre-05"]
+    },
+    {
+      "id": "AC-171g-pre-15",
+      "text": "acceptance_ref が docs/acceptance/session-171g-pre.yaml と一致し、リポジトリ相対パスである。",
+      "test_name": "test_session_171g_pre_acceptance_ref_relative_path",
+      "completion_criteria_refs": ["CC-171g-pre-02"]
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ]
+}

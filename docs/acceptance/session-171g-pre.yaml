@@ -1,0 +1,111 @@
+session_id: session-171g-pre
+phase_id: phase-171
+title: hook_eval_helper を pre-push / CI / Claude Code hook 評価フローへ統合する仕様を docs-only で正本化する
+acceptance:
+  - id: AC-171g-pre-01
+    description: hook_eval_helper の責務境界 (helper が担う範囲と担わない範囲) が session JSON または acceptance YAML 内で明示的に文書化されている。
+    test_name: test_session_171g_pre_responsibility_boundary_documented
+    priority: highest
+    completion_criteria_refs:
+      - CC-171g-pre-01
+
+  - id: AC-171g-pre-02
+    description: pre-push hook での hook_eval_helper 使用方針 (起動条件・入出力・失敗時挙動) が文書化されている。
+    test_name: test_session_171g_pre_pre_push_policy_documented
+    priority: highest
+    completion_criteria_refs:
+      - CC-171g-pre-01
+
+  - id: AC-171g-pre-03
+    description: CI での hook_eval_helper 使用方針 (起動条件・入出力・失敗時挙動) が文書化されている。
+    test_name: test_session_171g_pre_ci_policy_documented
+    priority: highest
+    completion_criteria_refs:
+      - CC-171g-pre-01
+
+  - id: AC-171g-pre-04
+    description: Claude Code hook 評価での hook_eval_helper 使用方針 (起動条件・入出力・失敗時挙動) が文書化されている。
+    test_name: test_session_171g_pre_claude_code_hook_policy_documented
+    priority: highest
+    completion_criteria_refs:
+      - CC-171g-pre-01
+
+  - id: AC-171g-pre-05
+    description: hook_eval_helper の false_positive 判定結果に対する扱い (検出時の停止・commander 報告ルール) が文書化されている。
+    test_name: test_session_171g_pre_false_positive_handling_documented
+    priority: highest
+    completion_criteria_refs:
+      - CC-171g-pre-01
+
+  - id: AC-171g-pre-06
+    description: hook_eval_helper の入力契約 (HEAD / origin/main / changed_files の取得元・型・必須性) が文書化されている。
+    test_name: test_session_171g_pre_input_contract_documented
+    priority: highest
+    completion_criteria_refs:
+      - CC-171g-pre-01
+
+  - id: AC-171g-pre-07
+    description: hook_eval_helper が判断すること (false_positive 判定等) と判断しないこと (commit 内容の妥当性判断、自動修正等) の境界が文書化されている。
+    test_name: test_session_171g_pre_decision_boundary_documented
+    priority: highest
+    completion_criteria_refs:
+      - CC-171g-pre-01
+
+  - id: AC-171g-pre-08
+    description: hook_eval_helper の異常時挙動 (自動修正せず停止し commander 報告) が文書化されている。
+    test_name: test_session_171g_pre_abnormal_handling_documented
+    priority: highest
+    completion_criteria_refs:
+      - CC-171g-pre-01
+
+  - id: AC-171g-pre-09
+    description: session-171h 実装へ引き渡す範囲 (実装スコープと非実装スコープ) が文書化されている。
+    test_name: test_session_171g_pre_handoff_scope_documented
+    priority: highest
+    completion_criteria_refs:
+      - CC-171g-pre-04
+
+  - id: AC-171g-pre-10
+    description: session JSON 14 必須キー (basic 8 + governance 6) がすべて存在する。
+    test_name: test_session_171g_pre_14_required_keys_present
+    priority: high
+    completion_criteria_refs:
+      - CC-171g-pre-01
+
+  - id: AC-171g-pre-11
+    description: review_points が固定4軸 (仕様一致 / 変更範囲遵守 / 副作用なし / 検証十分性) を含み、4番目が「検証十分性」である。
+    test_name: test_session_171g_pre_review_points_fixed_four_axes
+    priority: high
+    completion_criteria_refs:
+      - CC-171g-pre-01
+
+  - id: AC-171g-pre-12
+    description: completion_criteria が 5類型 (document_rule / artifact / non_regression / state_transition_consistent / side_effect_free) をすべて含む。
+    test_name: test_session_171g_pre_completion_criteria_five_types
+    priority: high
+    completion_criteria_refs:
+      - CC-171g-pre-01
+
+  - id: AC-171g-pre-13
+    description: allowed_changes が docs/sessions/session-171g-pre.json と docs/acceptance/session-171g-pre.yaml の2件のみであり、実装コードを含まない。
+    test_name: test_session_171g_pre_allowed_changes_docs_only
+    priority: highest
+    completion_criteria_refs:
+      - CC-171g-pre-02
+      - CC-171g-pre-03
+      - CC-171g-pre-05
+
+  - id: AC-171g-pre-14
+    description: forbidden_changes が run_session.py / orchestration / scripts / tests / .claude / .github / docs/config / docs/master_instruction.md / docs/global_rules.md / DL / hook 実体 / CI workflow / git push / session-171f 実装変更 を網羅している。
+    test_name: test_session_171g_pre_forbidden_changes_comprehensive
+    priority: high
+    completion_criteria_refs:
+      - CC-171g-pre-03
+      - CC-171g-pre-05
+
+  - id: AC-171g-pre-15
+    description: acceptance_ref が docs/acceptance/session-171g-pre.yaml と一致し、リポジトリ相対パスである。
+    test_name: test_session_171g_pre_acceptance_ref_relative_path
+    priority: medium
+    completion_criteria_refs:
+      - CC-171g-pre-02
