@@ -1,0 +1,30 @@
+name: hook-eval-helper
+
+"on":
+  push:
+  pull_request:
+
+jobs:
+  hook-eval-helper-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: hook_eval_helper CLI smoke test
+        run: |
+          PYTHONPATH=. python scripts/hook_eval_helper.py
+
+      - name: Integration tests
+        run: |
+          PYTHONPATH=. pytest tests/test_hook_eval_helper_integration.py -v
