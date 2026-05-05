@@ -1,0 +1,183 @@
+{
+  "session_id": "session-172-pre",
+  "phase_id": "P7",
+  "title": "hook / CI / run_session 結果の可視化ダッシュボード契約を定義する",
+  "type": "docs-only",
+  "goal": "hook_eval_helper、GitHub Actions CI、run_session の結果を一覧表示する read-only dashboard の I/O 契約と表示項目を正本化する",
+  "scope": [
+    "hook / CI / run_session 結果の可視化対象を定義する",
+    "dashboard に表示する最小フィールドを定義する",
+    "状態色・警告表示・human_gate 表示ルールを定義する",
+    "read-only dashboard としての制約を定義する",
+    "後続 session-172 実装への handoff を定義する"
+  ],
+  "out_of_scope": [
+    "dashboard 実装",
+    "HTML / CSS / JavaScript の作成",
+    "backend API 実装",
+    "GitHub Actions workflow 変更",
+    "run_session.py 変更",
+    "queue engine 変更",
+    "hook_eval_helper 変更",
+    "自動復旧処理",
+    "自動 push / 自動 merge"
+  ],
+  "constraints": [
+    "dashboard は read-only とする",
+    "dashboard から commit / push / retry / merge を実行してはならない",
+    "表示対象は既存 artifacts / logs / CI 結果 / queue state の読み取りに限定する",
+    "判定ロジックを dashboard 側に再実装してはならない",
+    "failure_type enum を変更してはならない",
+    "docs-only セッションであり実装変更を含まない",
+    "1セッション1目的",
+    "曖昧語を使用しない",
+    "session 定義の後付け変更を行わない"
+  ],
+  "acceptance_ref": "docs/acceptance/session-172-pre.yaml",
+  "allowed_changes": [
+    "docs/sessions/session-172-pre.json",
+    "docs/acceptance/session-172-pre.yaml"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/session-172-pre.json: session-172-pre の docs-only 定義を新規作成する",
+    "docs/acceptance/session-172-pre.yaml: session-172-pre の acceptance 定義を新規作成する"
+  ],
+  "forbidden_changes": [
+    "orchestration/**",
+    "scripts/**",
+    "tests/**",
+    ".github/**",
+    ".claude/**",
+    "dashboard/**",
+    "docs/config/**",
+    "docs/master_instruction.md",
+    "docs/global_rules.md",
+    "既存 session 定義の変更",
+    "既存 acceptance 定義の変更",
+    "hook_eval_helper 判定ロジックの変更",
+    "run_session 制御ロジックの変更",
+    "queue engine 実装変更",
+    "scope 外ファイル変更"
+  ],
+  "dashboard_contract": {
+    "type": "object",
+    "schema": {
+      "source_inputs": {
+        "type": "object",
+        "schema": {
+          "hook_eval_helper_result": "object",
+          "ci_result": "object",
+          "run_session_result": "object",
+          "queue_state": "object"
+        }
+      },
+      "display_fields": {
+        "type": "list[str]"
+      },
+      "read_only": {
+        "type": "bool"
+      }
+    }
+  },
+  "display_fields": [
+    "session_id",
+    "commit_hash",
+    "hook_status",
+    "ci_status",
+    "run_session_status",
+    "failure_type",
+    "human_gate_required",
+    "changed_files_count",
+    "last_checked_at",
+    "detail_link"
+  ],
+  "status_values": {
+    "type": "object",
+    "schema": {
+      "hook_status": "enum[pass,fail,unknown]",
+      "ci_status": "enum[success,failure,pending,unknown]",
+      "run_session_status": "enum[success,failure,stopped,unknown]",
+      "human_gate_required": "bool"
+    }
+  },
+  "visual_rules": {
+    "type": "object",
+    "schema": {
+      "success": "green",
+      "failure": "red",
+      "pending": "yellow",
+      "unknown": "gray",
+      "human_gate_required": "red_badge"
+    }
+  },
+  "completion_criteria": [
+    {
+      "id": "CC-172PRE-01",
+      "type": "document_rule",
+      "condition": "dashboard の入力ソースが定義されている"
+    },
+    {
+      "id": "CC-172PRE-02",
+      "type": "document_rule",
+      "condition": "dashboard の表示フィールドが定義されている"
+    },
+    {
+      "id": "CC-172PRE-03",
+      "type": "state_transition_consistent",
+      "condition": "hook / CI / run_session の状態値が矛盾なく定義されている"
+    },
+    {
+      "id": "CC-172PRE-04",
+      "type": "side_effect_free",
+      "condition": "read-only 制約が明示されている"
+    },
+    {
+      "id": "CC-172PRE-05",
+      "type": "non_regression",
+      "condition": "既存 hook / CI / run_session / queue の責務を変更しない"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-172PRE-01",
+      "text": "dashboard の入力ソースが定義されている",
+      "test_name": "test_dashboard_input_sources_defined"
+    },
+    {
+      "id": "AC-172PRE-02",
+      "text": "dashboard の表示フィールドが定義されている",
+      "test_name": "test_dashboard_display_fields_defined"
+    },
+    {
+      "id": "AC-172PRE-03",
+      "text": "status enum が定義されている",
+      "test_name": "test_dashboard_status_values_defined"
+    },
+    {
+      "id": "AC-172PRE-04",
+      "text": "human_gate 表示ルールが定義されている",
+      "test_name": "test_human_gate_visual_rule_defined"
+    },
+    {
+      "id": "AC-172PRE-05",
+      "text": "dashboard が read-only であることが明示されている",
+      "test_name": "test_dashboard_read_only_constraint"
+    },
+    {
+      "id": "AC-172PRE-06",
+      "text": "dashboard 側で判定ロジックを再実装しない制約がある",
+      "test_name": "test_dashboard_does_not_reimplement_logic"
+    },
+    {
+      "id": "AC-172PRE-07",
+      "text": "docs-only であり実装変更を含まない",
+      "test_name": "test_docs_only_scope"
+    }
+  ],
+  "review_points": [
+    "仕様一致 (AC達成)",
+    "変更範囲遵守 (allowed_changes 2 件限定)",
+    "副作用なし (既存破壊なし)",
+    "検証十分性 (テスト・証跡・再現性により受入判断に足る根拠があること)"
+  ]
+}
