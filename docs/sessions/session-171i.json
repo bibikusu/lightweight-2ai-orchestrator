@@ -1,0 +1,143 @@
+{
+  "session_id": "session-171i",
+  "phase_id": "P7",
+  "type": "implementation",
+  "title": "CI結果をrun_sessionへ連携し、自動停止制御を実装する",
+  "goal": "session-171i-pre で定義した CI結果連携契約を run_session.py に最小実装として反映し、CI failure 時に failure_type=test_failure で停止する自動停止制御を成立させる",
+  "scope": [
+    "run_session.py に CI結果入力 (ci_status / ci_failed_jobs) を追加する",
+    "preflight 完了直後 / メイン処理開始前に ci_check ステージを挿入する",
+    "ci_status=failure の場合、failure_type=test_failure で exit 1 する",
+    "error_latest.json に stage=ci_check と ci_failed_jobs を記録する",
+    "tests/test_run_session_ci_integration.py を新規追加する"
+  ],
+  "out_of_scope": [
+    "GitHub Actions workflow の修正",
+    "CI API 実接続実装",
+    "queue engine の変更",
+    "selector の変更",
+    "hook_eval_helper の変更",
+    "dashboard の作成",
+    "失敗時の自動復旧処理",
+    "human_gate の自動承認",
+    "failure_type enum 定義の変更"
+  ],
+  "constraints": [
+    "1セッション1目的",
+    "最小差分で実装する",
+    "CI結果は外部入力として扱う（内部判定禁止）",
+    "helper / hook の判定ロジックを再利用・再実装しない",
+    "既存 run_session フローを破壊しない",
+    "既存 failure_type enum 定義を変更しない",
+    "ci_status 未指定時は success として既存挙動を維持する",
+    "実装位置は preflight 直後・メイン処理開始前に固定する",
+    "曖昧語を使用しない",
+    "session 定義の後付け変更を行わない",
+    "tests/test_run_session_ci_integration.py 以外の tests/** を変更しない"
+  ],
+  "acceptance_ref": "docs/acceptance/session-171i.yaml",
+  "allowed_changes": [
+    "orchestration/run_session.py",
+    "tests/test_run_session_ci_integration.py"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/run_session.py: ci_status / ci_failed_jobs の入力受付と ci_check 停止制御のみ追加",
+    "orchestration/run_session.py: error_latest.json への stage=ci_check 出力のみ追加",
+    "tests/test_run_session_ci_integration.py: CI結果連携の新規テストのみ追加"
+  ],
+  "forbidden_changes": [
+    "scripts/**",
+    "orchestration/selector/**",
+    "orchestration/queue/**",
+    "tests/test_hook_eval_helper_integration.py",
+    "tests/test_run_session_selector.py",
+    "tests/test_session_141.py",
+    "tests/test_session_142.py",
+    "tests/test_session_137.py",
+    "tests/test_scheduler.py",
+    "docs/**",
+    ".github/**",
+    ".claude/**",
+    "dashboard/**",
+    "docs/config/**",
+    "docs/sessions/session-171i-pre.json",
+    "docs/acceptance/session-171i-pre.yaml",
+    "failure_type enum 定義の変更",
+    "helper 判定ロジックの再実装",
+    "CI 結果判定ロジックの hook 側再実装",
+    "session 定義の後付け変更",
+    "tests/test_run_session_ci_integration.py 以外の tests/** 変更",
+    "scope 外ファイル変更",
+    "push 実行"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-171I-01",
+      "type": "正常系",
+      "condition": "ci_status=success の場合、run_session は通常処理を継続する"
+    },
+    {
+      "id": "CC-171I-02",
+      "type": "異常系",
+      "condition": "ci_status=failure の場合、run_session は exit 1 で停止する"
+    },
+    {
+      "id": "CC-171I-03",
+      "type": "状態整合性",
+      "condition": "ci_status=failure の場合、error_latest.json に stage=ci_check / error_type=test_failure / ci_failed_jobs が記録される"
+    },
+    {
+      "id": "CC-171I-04",
+      "type": "副作用なし",
+      "condition": "既存 run_session 挙動を破壊せず、既存テストが全 PASS する"
+    },
+    {
+      "id": "CC-171I-05",
+      "type": "状態整合性",
+      "condition": "ci_status 未指定時は success として既存挙動と同一になる"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-171I-01",
+      "text": "ci_status 未指定時は success として既存処理が継続する",
+      "test_name": "test_ci_status_defaults_to_success"
+    },
+    {
+      "id": "AC-171I-02",
+      "text": "ci_status=success の場合、run_session は通常処理へ進む",
+      "test_name": "test_ci_status_success_continues"
+    },
+    {
+      "id": "AC-171I-03",
+      "text": "ci_status=failure の場合、run_session は exit 1 で停止する",
+      "test_name": "test_ci_status_failure_exits_one"
+    },
+    {
+      "id": "AC-171I-04",
+      "text": "ci_status=failure の場合、failure_type は test_failure として扱われる",
+      "test_name": "test_ci_failure_maps_to_test_failure"
+    },
+    {
+      "id": "AC-171I-05",
+      "text": "ci_status=failure の場合、error_latest.json に stage=ci_check が記録される",
+      "test_name": "test_ci_failure_writes_ci_check_error_log"
+    },
+    {
+      "id": "AC-171I-06",
+      "text": "ci_failed_jobs が error_latest.json に記録される",
+      "test_name": "test_ci_failed_jobs_written_to_error_log"
+    },
+    {
+      "id": "AC-171I-07",
+      "text": "変更範囲は orchestration/run_session.py と tests/test_run_session_ci_integration.py の 2 件に限定される",
+      "test_name": "test_session_171i_scope_limited"
+    }
+  ],
+  "review_points": [
+    "仕様一致 (AC達成)",
+    "変更範囲遵守 (allowed_changes 2 件限定)",
+    "副作用なし (既存破壊なし)",
+    "検証十分性 (テスト・証跡・再現性により受入判断に足る根拠があること)"
+  ]
+}

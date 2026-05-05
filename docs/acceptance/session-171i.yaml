@@ -1,0 +1,117 @@
+session_id: session-171i
+goal: CI結果連携契約を run_session.py に最小実装として反映し、CI failure 時に test_failure で自動停止する制御を実装する
+
+scope:
+  - run_session.py に CI結果入力 (ci_status / ci_failed_jobs) を追加する
+  - preflight 完了直後 / メイン処理開始前に ci_check ステージを挿入する
+  - ci_status=failure の場合、failure_type=test_failure で exit 1 する
+  - error_latest.json に stage=ci_check と ci_failed_jobs を記録する
+  - tests/test_run_session_ci_integration.py を新規追加する
+
+out_of_scope:
+  - GitHub Actions workflow の修正
+  - CI API 実接続実装
+  - queue engine の変更
+  - selector の変更
+  - hook_eval_helper の変更
+  - dashboard の作成
+  - failure_type enum 定義の変更
+
+acceptance:
+  - id: AC-171I-01
+    requirement: ci_status 未指定時は success として既存処理が継続する
+    test_name: test_ci_status_defaults_to_success
+    type: automated
+    manual_check: false
+    verification:
+      - run_session を ci_status 未指定で実行した場合、ci_check ステージで停止せず後続処理へ進む
+      - 既存テストが全 PASS する
+
+  - id: AC-171I-02
+    requirement: ci_status=success の場合、run_session は通常処理へ進む
+    test_name: test_ci_status_success_continues
+    type: automated
+    manual_check: false
+    verification:
+      - ci_status=success を入力した run_session が ci_check ステージを通過する
+      - exit code が 0 でない停止が発生しない
+
+  - id: AC-171I-03
+    requirement: ci_status=failure の場合、run_session は exit 1 で停止する
+    test_name: test_ci_status_failure_exits_one
+    type: automated
+    manual_check: false
+    verification:
+      - ci_status=failure を入力した run_session が exit code 1 で終了する
+      - メイン処理が実行されない
+
+  - id: AC-171I-04
+    requirement: ci_status=failure の場合、failure_type は test_failure として扱われる
+    test_name: test_ci_failure_maps_to_test_failure
+    type: automated
+    manual_check: false
+    verification:
+      - error_latest.json の error_type が "test_failure" になっている
+      - failure_type enum 定義は変更されていない
+
+  - id: AC-171I-05
+    requirement: ci_status=failure の場合、error_latest.json に stage=ci_check が記録される
+    test_name: test_ci_failure_writes_ci_check_error_log
+    type: automated
+    manual_check: false
+    verification:
+      - error_latest.json の stage フィールドが "ci_check" である
+      - error_latest.json の message に "CI failed" 相当の文字列が含まれる
+
+  - id: AC-171I-06
+    requirement: ci_failed_jobs が error_latest.json に記録される
+    test_name: test_ci_failed_jobs_written_to_error_log
+    type: automated
+    manual_check: false
+    verification:
+      - error_latest.json に ci_failed_jobs フィールドが存在する
+      - 入力で渡した ci_failed_jobs と一致する
+
+  - id: AC-171I-07
+    requirement: 変更範囲は orchestration/run_session.py と tests/test_run_session_ci_integration.py の 2 件に限定される
+    test_name: test_session_171i_scope_limited
+    type: automated
+    manual_check: false
+    verification:
+      - git diff --name-only がこの 2 ファイルのみを返す
+      - forbidden_changes に列挙されたパスに変更がない
+
+completion_checks:
+  - CC-171I-01: ci_status=success の場合、run_session は通常処理を継続する
+  - CC-171I-02: ci_status=failure の場合、run_session は exit 1 で停止する
+  - CC-171I-03: error_latest.json に stage=ci_check / error_type=test_failure / ci_failed_jobs が記録される
+  - CC-171I-04: 既存 run_session 挙動を破壊せず、既存テストが全 PASS する
+  - CC-171I-05: ci_status 未指定時は success として既存挙動と同一になる
+
+change_guardrails:
+  allowed_changes:
+    - orchestration/run_session.py
+    - tests/test_run_session_ci_integration.py
+  forbidden_changes:
+    - scripts/**
+    - orchestration/selector/**
+    - orchestration/queue/**
+    - tests/test_hook_eval_helper_integration.py
+    - tests/test_run_session_selector.py
+    - tests/test_session_141.py
+    - tests/test_session_142.py
+    - tests/test_session_137.py
+    - tests/test_scheduler.py
+    - docs/**
+    - .github/**
+    - .claude/**
+    - dashboard/**
+    - docs/config/**
+    - docs/sessions/session-171i-pre.json
+    - docs/acceptance/session-171i-pre.yaml
+    - failure_type enum 定義の変更
+    - helper 判定ロジックの再実装
+    - CI 結果判定ロジックの hook 側再実装
+    - session 定義の後付け変更
+    - tests/test_run_session_ci_integration.py 以外の tests/** 変更
+    - scope 外ファイル変更
