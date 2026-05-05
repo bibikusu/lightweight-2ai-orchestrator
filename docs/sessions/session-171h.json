@@ -1,0 +1,130 @@
+{
+  "session_id": "session-171h",
+  "phase_id": "P7",
+  "title": "hook_eval_helper integration for pre-push and CI hooks",
+  "goal": "scripts/hook_eval_helper.py の既存判定ロジックを変更せず、pre-push / CI / Claude hook から呼び出せる統合入口を追加する",
+  "scope": [
+    "pre-push 用の tracked hook wrapper を追加する",
+    "CI workflow から hook_eval_helper を呼び出す最小連携を追加する",
+    "Claude hook 用の最小 wrapper を追加する",
+    "hook_eval_helper 本体を変更せずに統合テストを追加する"
+  ],
+  "out_of_scope": [
+    "scripts/hook_eval_helper.py 本体ロジックの変更",
+    "scripts/lint_session_json.py の副作用修正",
+    "selector / queue / run_session.py の変更",
+    "session-171g-pre / session-171h-pre の変更",
+    "git push の自動実行",
+    "hook bypass または --no-verify の導入"
+  ],
+  "constraints": [
+    "session-171g-pre commit adc3945 の handoff constraint を前提にする",
+    "session-171h-pre commit bd374a3 の拘束に従う",
+    "scripts/hook_eval_helper.py は参照のみで変更しない",
+    "false_positive 判定は hook_eval_helper の出力を信頼し、wrapper 側で再実装しない",
+    "HEAD == origin/main の場合 false_positive は false として扱う",
+    "HEAD != origin/main かつ changed files が current session allowed_changes 内の場合のみ false_positive 候補として扱う",
+    "ClaudeCode は git push を実行しない",
+    "4-gate 失敗時は同一原因の自動 retry を行わず停止する"
+  ],
+  "acceptance_ref": "docs/acceptance/session-171h.yaml",
+  "allowed_changes": [
+    "scripts/git-hooks/pre-push",
+    ".github/workflows/hook-eval-helper.yml",
+    ".claude/hooks/post_push.sh",
+    "tests/test_hook_eval_helper_integration.py"
+  ],
+  "allowed_changes_detail": [
+    "scripts/git-hooks/pre-push: scripts/hook_eval_helper.py を subprocess で呼び出す tracked pre-push wrapper の追加のみ許可",
+    ".github/workflows/hook-eval-helper.yml: hook_eval_helper CLI smoke と統合確認を行う CI workflow の追加のみ許可",
+    ".claude/hooks/post_push.sh: hook_eval_helper を呼び出し結果を表示する Claude hook wrapper の追加のみ許可",
+    "tests/test_hook_eval_helper_integration.py: wrapper が hook_eval_helper.py 本体を変更せず呼び出すことを検証する統合テストの追加のみ許可"
+  ],
+  "forbidden_changes": [
+    "scripts/hook_eval_helper.py",
+    "scripts/lint_session_json.py",
+    "orchestration/**",
+    "docs/config/**",
+    "docs/master_instruction.md",
+    "docs/global_rules.md",
+    "docs/sessions/session-171g-pre.json",
+    "docs/acceptance/session-171g-pre.yaml",
+    "docs/sessions/session-171h-pre.json",
+    "docs/acceptance/session-171h-pre.yaml",
+    "docs/sessions/session-171h.json",
+    "docs/acceptance/session-171h.yaml",
+    ".claude/settings.json",
+    "DL/**",
+    "artifacts/**"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-171H-01",
+      "type": "artifact",
+      "condition": "allowed_changes に列挙された hook wrapper / CI workflow / integration test が作成されている"
+    },
+    {
+      "id": "CC-171H-02",
+      "type": "non_regression",
+      "condition": "scripts/hook_eval_helper.py の git diff が存在しない"
+    },
+    {
+      "id": "CC-171H-03",
+      "type": "state_transition_consistent",
+      "condition": "hook wrapper は helper の判定結果を再分類せず、helper 出力をそのまま利用する"
+    },
+    {
+      "id": "CC-171H-04",
+      "type": "side_effect_free",
+      "condition": "DL/** と artifacts/** に tracked diff が存在しない"
+    },
+    {
+      "id": "CC-171H-05",
+      "type": "non_regression",
+      "condition": "ruff / pytest / mypy / compileall の 4-gate がすべて pass する"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-171H-01",
+      "description": "pre-push wrapper が scripts/hook_eval_helper.py を subprocess 経由で呼び出す",
+      "test_name": "test_pre_push_wrapper_invokes_hook_eval_helper"
+    },
+    {
+      "id": "AC-171H-02",
+      "description": "CI workflow that hook_eval_helper CLI smoke test を実行する定義を持つ",
+      "test_name": "test_ci_workflow_runs_hook_eval_helper_cli"
+    },
+    {
+      "id": "AC-171H-03",
+      "description": "Claude hook wrapper が hook_eval_helper を呼び出し、結果を標準出力へ出す",
+      "test_name": "test_claude_post_push_wrapper_invokes_helper"
+    },
+    {
+      "id": "AC-171H-04",
+      "description": "scripts/hook_eval_helper.py 本体に変更がない",
+      "test_name": "test_hook_eval_helper_file_unchanged"
+    },
+    {
+      "id": "AC-171H-05",
+      "description": "allowed_changes 外のファイルに tracked diff が存在しない",
+      "test_name": "test_changed_files_within_allowed_changes"
+    },
+    {
+      "id": "AC-171H-06",
+      "description": "4-gate がすべて pass し、helper CLI smoke test が exit 0 で完了する",
+      "test_name": "test_four_gate_and_helper_cli_smoke_pass"
+    },
+    {
+      "id": "AC-171H-07",
+      "description": "hook wrapper は scripts/hook_eval_helper.py の出力をそのまま利用し、false_positive 判定ロジックを再実装しない",
+      "test_name": "test_hook_wrapper_does_not_reimplement_false_positive_logic"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ]
+}

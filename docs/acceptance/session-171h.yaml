@@ -1,0 +1,113 @@
+session_id: session-171h
+goal: "scripts/hook_eval_helper.py の既存判定ロジックを変更せず、pre-push / CI / Claude hook から呼び出せる統合入口を追加する"
+
+scope:
+  - "pre-push 用の tracked hook wrapper を追加する"
+  - "CI workflow から hook_eval_helper を呼び出す最小連携を追加する"
+  - "Claude hook 用の最小 wrapper を追加する"
+  - "hook_eval_helper 本体を変更せずに統合テストを追加する"
+
+out_of_scope:
+  - "scripts/hook_eval_helper.py 本体ロジックの変更"
+  - "scripts/lint_session_json.py の副作用修正"
+  - "selector / queue / run_session.py の変更"
+  - "session-171g-pre / session-171h-pre の変更"
+  - "git push の自動実行"
+  - "hook bypass または --no-verify の導入"
+
+acceptance:
+  - id: "AC-171H-01"
+    requirement: "pre-push wrapper が scripts/hook_eval_helper.py を subprocess 経由で呼び出す"
+    test_name: "test_pre_push_wrapper_invokes_hook_eval_helper"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "scripts/git-hooks/pre-push が存在する"
+      - "wrapper 内で scripts/hook_eval_helper.py が呼び出される"
+
+  - id: "AC-171H-02"
+    requirement: "CI workflow が hook_eval_helper CLI smoke test を実行する定義を持つ"
+    test_name: "test_ci_workflow_runs_hook_eval_helper_cli"
+    type: "automated"
+    manual_check: false
+    verification:
+      - ".github/workflows/hook-eval-helper.yml が存在する"
+      - "workflow 内で scripts/hook_eval_helper.py が実行される"
+
+  - id: "AC-171H-03"
+    requirement: "Claude hook wrapper が hook_eval_helper を呼び出し、結果を標準出力へ出す"
+    test_name: "test_claude_post_push_wrapper_invokes_helper"
+    type: "automated"
+    manual_check: false
+    verification:
+      - ".claude/hooks/post_push.sh が存在する"
+      - "post_push.sh が scripts/hook_eval_helper.py を呼び出す"
+
+  - id: "AC-171H-04"
+    requirement: "scripts/hook_eval_helper.py 本体に変更がない"
+    test_name: "test_hook_eval_helper_file_unchanged"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "git diff -- scripts/hook_eval_helper.py が空である"
+
+  - id: "AC-171H-05"
+    requirement: "allowed_changes 外のファイルに tracked diff が存在しない"
+    test_name: "test_changed_files_within_allowed_changes"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "git diff --name-only が allowed_changes の範囲内である"
+      - "DL/** と artifacts/** に tracked diff が存在しない"
+
+  - id: "AC-171H-06"
+    requirement: "4-gate がすべて pass し、helper CLI smoke test が exit 0 で完了する"
+    test_name: "test_four_gate_and_helper_cli_smoke_pass"
+    type: "automated"
+    manual_check: false
+    verification:
+      - ".venv/bin/ruff check orchestration tests scripts が pass する"
+      - "PYTHONPATH=. .venv/bin/python -m pytest tests/ が pass する"
+      - ".venv/bin/python -m mypy --explicit-package-bases orchestration scripts --ignore-missing-imports が pass する"
+      - "python3 -m compileall -q -f orchestration backend scripts が pass する"
+      - ".venv/bin/python scripts/hook_eval_helper.py が exit 0 で完了する"
+
+  - id: "AC-171H-07"
+    requirement: "hook wrapper は scripts/hook_eval_helper.py の出力をそのまま利用し、false_positive 判定ロジックを再実装しない"
+    test_name: "test_hook_wrapper_does_not_reimplement_false_positive_logic"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "wrapper 内に HEAD と origin/main の比較ロジックが存在しない"
+      - "wrapper 内に changed files の allowed_changes 比較ロジックが存在しない"
+      - "wrapper は scripts/hook_eval_helper.py を subprocess で呼び出し、出力をそのまま使用する"
+
+completion_checks:
+  - "CC-171H-01: allowed_changes に列挙された hook wrapper / CI workflow / integration test が作成されている"
+  - "CC-171H-02: scripts/hook_eval_helper.py の git diff が存在しない"
+  - "CC-171H-03: hook wrapper は helper の判定結果を再分類せず、helper 出力をそのまま利用する"
+  - "CC-171H-04: DL/** と artifacts/** に tracked diff が存在しない"
+  - "CC-171H-05: ruff / pytest / mypy / compileall の 4-gate がすべて pass する"
+
+change_guardrails:
+  allowed_changes:
+    - "scripts/git-hooks/pre-push"
+    - ".github/workflows/hook-eval-helper.yml"
+    - ".claude/hooks/post_push.sh"
+    - "tests/test_hook_eval_helper_integration.py"
+  forbidden_changes:
+    - "scripts/hook_eval_helper.py"
+    - "scripts/lint_session_json.py"
+    - "orchestration/**"
+    - "docs/config/**"
+    - "docs/master_instruction.md"
+    - "docs/global_rules.md"
+    - "docs/sessions/session-171g-pre.json"
+    - "docs/acceptance/session-171g-pre.yaml"
+    - "docs/sessions/session-171h-pre.json"
+    - "docs/acceptance/session-171h-pre.yaml"
+    - "docs/sessions/session-171h.json"
+    - "docs/acceptance/session-171h.yaml"
+    - ".claude/settings.json"
+    - "DL/**"
+    - "artifacts/**"
