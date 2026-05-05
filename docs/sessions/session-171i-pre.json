@@ -1,0 +1,165 @@
+{
+  "session_id": "session-171i-pre",
+  "phase_id": "P7",
+  "title": "CI結果をrun_sessionへ連携し、自動停止制御の契約を定義する",
+  "type": "docs-only",
+  "goal": "GitHub Actions（CI）の結果を run_session / queue 制御に接続し、CI失敗時に自動停止できる契約（I/O・状態遷移）を正本化する",
+  "scope": [
+    "CI結果（success/failure）の取得契約定義",
+    "run_session への入力インターフェース定義",
+    "queue / session 状態遷移への反映仕様定義",
+    "failure_type へのマッピング定義",
+    "human_gate への遷移条件定義"
+  ],
+  "out_of_scope": [
+    "run_session.py の実装変更",
+    "queue engine 実装変更",
+    "GitHub Actions workflow の修正",
+    "CI API 実接続実装",
+    "dashboard UI 変更"
+  ],
+  "constraints": [
+    "docs-only セッションであり実装変更を含まない",
+    "1セッション1目的",
+    "scope と out_of_scope に重複を作らない",
+    "allowed_changes と forbidden_changes に衝突を作らない",
+    "曖昧語を使用しない",
+    "session 定義の後付け変更を行わない",
+    "既存の failure_type enum 定義を変更しない",
+    "helper / hook / CI 側の判定ロジックを変更しない",
+    "後続 session-171i 実装はこの契約定義を遵守する"
+  ],
+  "acceptance_ref": "docs/acceptance/session-171i-pre.yaml",
+  "allowed_changes": [
+    "docs/sessions/session-171i-pre.json",
+    "docs/acceptance/session-171i-pre.yaml"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/session-171i-pre.json: 新規作成のみ",
+    "docs/acceptance/session-171i-pre.yaml: 新規作成のみ"
+  ],
+  "forbidden_changes": [
+    "scripts/**",
+    "orchestration/**",
+    "tests/**",
+    ".github/workflows/**",
+    ".claude/**",
+    "docs/config/**",
+    "docs/master_instruction.md",
+    "docs/global_rules.md",
+    "既存 session の変更",
+    "helper 判定ロジックの変更",
+    "CI workflow の変更",
+    "run_session の仕様外変更",
+    "scope 外ファイル変更"
+  ],
+  "inputs": {
+    "ci_result": {
+      "type": "object",
+      "schema": {
+        "status": "enum[success,failure]",
+        "failed_jobs": "list[str]",
+        "timestamp": "str",
+        "commit_hash": "str"
+      }
+    }
+  },
+  "outputs": {
+    "run_session_input_extension": {
+      "type": "object",
+      "schema": {
+        "ci_status": "enum[success,failure]",
+        "ci_failed_jobs": "list[str]"
+      }
+    }
+  },
+  "state_transition": {
+    "type": "object",
+    "schema": {
+      "on_ci_success": "continue",
+      "on_ci_failure": "stop_or_human_gate"
+    }
+  },
+  "failure_mapping": {
+    "type": "object",
+    "schema": {
+      "ci_failure": "test_failure"
+    }
+  },
+  "human_gate_conditions": {
+    "type": "object",
+    "schema": {
+      "ci_failure_requires_review": "bool"
+    }
+  },
+  "completion_criteria": [
+    {
+      "id": "CC-171I-01",
+      "type": "document_rule",
+      "condition": "CI結果入力スキーマが明示されている"
+    },
+    {
+      "id": "CC-171I-02",
+      "type": "document_rule",
+      "condition": "run_session への入力拡張が定義されている"
+    },
+    {
+      "id": "CC-171I-03",
+      "type": "state_transition_consistent",
+      "condition": "CI結果に応じた状態遷移が一意に定義されている"
+    },
+    {
+      "id": "CC-171I-04",
+      "type": "non_regression",
+      "condition": "既存 failure_type と矛盾しない"
+    },
+    {
+      "id": "CC-171I-05",
+      "type": "side_effect_free",
+      "condition": "実装変更を伴わない"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-171I-01",
+      "text": "CI結果入力スキーマが明示されている",
+      "test_name": "test_ci_result_schema_defined"
+    },
+    {
+      "id": "AC-171I-02",
+      "text": "run_session への入力拡張が定義されている",
+      "test_name": "test_run_session_input_extension_defined"
+    },
+    {
+      "id": "AC-171I-03",
+      "text": "CI success 時の状態遷移が定義されている",
+      "test_name": "test_ci_success_transition"
+    },
+    {
+      "id": "AC-171I-04",
+      "text": "CI failure 時の状態遷移が定義されている",
+      "test_name": "test_ci_failure_transition"
+    },
+    {
+      "id": "AC-171I-05",
+      "text": "failure_type へのマッピングが明示されている",
+      "test_name": "test_failure_mapping_defined"
+    },
+    {
+      "id": "AC-171I-06",
+      "text": "human_gate 条件が定義されている",
+      "test_name": "test_human_gate_condition_defined"
+    },
+    {
+      "id": "AC-171I-07",
+      "text": "docs-only であり実装変更を含まない",
+      "test_name": "test_docs_only_scope"
+    }
+  ],
+  "review_points": [
+    "仕様一致 (AC達成)",
+    "変更範囲遵守 (allowed_changes 2 件限定)",
+    "副作用なし (既存破壊なし)",
+    "検証十分性 (テスト・証跡・再現性により受入判断に足る根拠があること)"
+  ]
+}

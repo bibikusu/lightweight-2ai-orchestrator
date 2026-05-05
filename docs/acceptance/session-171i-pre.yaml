@@ -1,0 +1,101 @@
+session_id: session-171i-pre
+goal: CI結果を run_session に連携し、自動停止制御の契約を docs-only で正本化する
+
+scope:
+  - CI結果（success/failure）の取得契約定義
+  - run_session への入力インターフェース定義
+  - queue / session 状態遷移への反映仕様定義
+  - failure_type へのマッピング定義
+  - human_gate への遷移条件定義
+
+out_of_scope:
+  - run_session.py の実装変更
+  - queue engine 実装変更
+  - GitHub Actions workflow の修正
+  - CI API 実接続実装
+  - dashboard UI 変更
+
+acceptance:
+  - id: AC-171I-01
+    requirement: CI結果入力スキーマが明示されている
+    test_name: test_ci_result_schema_defined
+    type: manual
+    manual_check: true
+    verification:
+      - inputs.ci_result.schema に status / failed_jobs / timestamp / commit_hash が定義されている
+      - status は enum[success,failure] である
+
+  - id: AC-171I-02
+    requirement: run_session への入力拡張が定義されている
+    test_name: test_run_session_input_extension_defined
+    type: manual
+    manual_check: true
+    verification:
+      - outputs.run_session_input_extension.schema に ci_status / ci_failed_jobs が定義されている
+
+  - id: AC-171I-03
+    requirement: CI success 時の状態遷移が定義されている
+    test_name: test_ci_success_transition
+    type: manual
+    manual_check: true
+    verification:
+      - state_transition.schema.on_ci_success が "continue" である
+
+  - id: AC-171I-04
+    requirement: CI failure 時の状態遷移が定義されている
+    test_name: test_ci_failure_transition
+    type: manual
+    manual_check: true
+    verification:
+      - state_transition.schema.on_ci_failure が "stop_or_human_gate" である
+
+  - id: AC-171I-05
+    requirement: failure_type へのマッピングが明示されている
+    test_name: test_failure_mapping_defined
+    type: manual
+    manual_check: true
+    verification:
+      - failure_mapping.schema.ci_failure が "test_failure" である
+
+  - id: AC-171I-06
+    requirement: human_gate 条件が定義されている
+    test_name: test_human_gate_condition_defined
+    type: manual
+    manual_check: true
+    verification:
+      - human_gate_conditions.schema.ci_failure_requires_review が bool 型として定義されている
+
+  - id: AC-171I-07
+    requirement: docs-only であり実装変更を含まない
+    test_name: test_docs_only_scope
+    type: manual
+    manual_check: true
+    verification:
+      - allowed_changes が docs/sessions/session-171i-pre.json と docs/acceptance/session-171i-pre.yaml の 2 件のみ
+      - forbidden_changes に scripts / orchestration / tests / .github / .claude が含まれる
+
+completion_checks:
+  - CC-171I-01: CI結果入力スキーマが明示されている
+  - CC-171I-02: run_session への入力拡張が定義されている
+  - CC-171I-03: CI結果に応じた状態遷移が一意に定義されている
+  - CC-171I-04: 既存 failure_type と矛盾しない
+  - CC-171I-05: 実装変更を伴わない
+
+change_guardrails:
+  allowed_changes:
+    - docs/sessions/session-171i-pre.json
+    - docs/acceptance/session-171i-pre.yaml
+  forbidden_changes:
+    - scripts/**
+    - orchestration/**
+    - tests/**
+    - .github/workflows/**
+    - .claude/**
+    - docs/config/**
+    - docs/master_instruction.md
+    - docs/global_rules.md
+    - 既存 session の変更
+    - helper 判定ロジックの変更
+    - CI workflow の変更
+    - run_session の仕様外変更
+    - scope 外ファイル変更
