@@ -1,0 +1,74 @@
+session_id: "session-171f"
+goal: "session-171f-pre 仕様に基づき、HEAD != origin/main かつ changed_files が current session allowed_changes 内の場合のみ false_positive と判定する helper を実装する"
+acceptance:
+  - id: "AC-171F-01"
+    requirement: "helper module がインポート可能で 4 関数を export する"
+    test_name: "test_hook_eval_helper_exports"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "scripts.hook_eval_helper から is_false_positive / get_changed_files / is_head_synced / evaluate がインポート可能"
+  - id: "AC-171F-02"
+    requirement: "head_synced=True なら is_false_positive は False を返す"
+    test_name: "test_is_false_positive_returns_false_when_head_synced"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "is_false_positive([...], [...], head_synced=True) == False"
+  - id: "AC-171F-03"
+    requirement: "head_synced=False かつ changed_files が allowed_changes に全て含まれる場合は True を返す"
+    test_name: "test_is_false_positive_true_when_within_allowed_changes"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "is_false_positive(subset_of_allowed, allowed, head_synced=False) == True"
+  - id: "AC-171F-04"
+    requirement: "head_synced=False かつ changed_files の一部が allowed_changes 外なら False を返す"
+    test_name: "test_is_false_positive_false_when_scope_violation"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "is_false_positive(includes_outside, allowed, head_synced=False) == False"
+      - "is_false_positive([], allowed, head_synced=False) == False"
+  - id: "AC-171F-05"
+    requirement: "evaluate() の戻り値が is_false_positive / changed_files / reason の 3 キーを持つ dict である"
+    test_name: "test_evaluate_returns_expected_schema"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "set(result.keys()) == {is_false_positive, changed_files, reason}"
+      - "scope violation 時は reason に 'scope violation' を含む"
+      - "head_synced 時は reason == 'head_synced'"
+  - id: "AC-171F-06"
+    requirement: "scripts/hook_eval_helper.py が tests/hooks/ や orchestration/ を import していない"
+    test_name: "test_hook_eval_helper_isolation"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "ソース内に from orchestration / import orchestration / from tests.hooks が存在しない"
+completion_checks:
+  - "CC-171F-01: scripts/hook_eval_helper.py が 4 関数を提供"
+  - "CC-171F-02: is_false_positive が session-171f-pre 仕様に従う"
+  - "CC-171F-03: 既存 110 件テスト全て PASS"
+  - "CC-171F-04: 171g 系列で CI 統合可能な基盤"
+  - "CC-171F-05: tests/hooks / orchestration / 正本 docs 不変"
+change_guardrails:
+  allowed_changes:
+    - "scripts/hook_eval_helper.py"
+    - "tests/test_hook_eval_helper.py"
+    - "docs/sessions/session-171f.json"
+    - "docs/acceptance/session-171f.yaml"
+  forbidden_changes:
+    - "orchestration/"
+    - "tests/hooks/"
+    - "tests/test_auto_runner.py"
+    - ".claude/"
+    - "DL/"
+    - "docs/global_rules.md"
+    - "docs/master_instruction.md"
+    - "docs/config/"
+    - "docs/sessions/session-171f-pre.json"
+    - "docs/acceptance/session-171f-pre.yaml"
+    - "pyproject.toml"
+    - "requirements.txt"
+    - "requirements-dev.txt"

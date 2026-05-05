@@ -1,0 +1,119 @@
+{
+  "session_id": "session-171f",
+  "phase_id": "M-B",
+  "title": "implement hook false-positive evaluation helper",
+  "goal": "session-171f-pre 仕様に基づき、HEAD != origin/main かつ changed_files が current session allowed_changes 内の場合のみ false_positive と判定する helper を実装する",
+  "scope": [
+    "scripts/hook_eval_helper.py に false-positive 判定 helper を実装する",
+    "tests/test_hook_eval_helper.py に振る舞いベースのユニットテストを追加する",
+    "docs/sessions/session-171f.json と docs/acceptance/session-171f.yaml で本 session を正本化する"
+  ],
+  "out_of_scope": [
+    "tests/hooks/ の変更",
+    "orchestration/ の変更",
+    "run_session.py / auto_runner.py の変更",
+    "pre-push hook / CI 連携 (session-171g 系列で扱う)",
+    "docs/global_rules.md / docs/master_instruction.md の変更"
+  ],
+  "constraints": [
+    "session-171f-pre 仕様に厳密に準拠する",
+    "is_false_positive は (changed_files, allowed_changes, head_synced) の 3 引数 pure 関数として実装する",
+    "scripts/ は scripts/hook_eval_helper.py のみ追加する",
+    "ClaudeCode は selfcheck script 改変禁止 (CC-BOUNDARY-001 規律)"
+  ],
+  "acceptance_ref": "docs/acceptance/session-171f.yaml",
+  "allowed_changes": [
+    "scripts/hook_eval_helper.py",
+    "tests/test_hook_eval_helper.py",
+    "docs/sessions/session-171f.json",
+    "docs/acceptance/session-171f.yaml"
+  ],
+  "allowed_changes_detail": [
+    "scripts/hook_eval_helper.py: false-positive 判定 helper の新規実装",
+    "tests/test_hook_eval_helper.py: helper の振る舞いを検証するユニットテスト 6 件",
+    "docs/sessions/session-171f.json: 本 session の定義",
+    "docs/acceptance/session-171f.yaml: 本 session の acceptance 定義"
+  ],
+  "forbidden_changes": [
+    "orchestration/",
+    "tests/hooks/",
+    "tests/test_auto_runner.py",
+    ".claude/",
+    "DL/",
+    "docs/global_rules.md",
+    "docs/master_instruction.md",
+    "docs/config/",
+    "docs/sessions/session-171f-pre.json",
+    "docs/acceptance/session-171f-pre.yaml",
+    "pyproject.toml",
+    "requirements.txt",
+    "requirements-dev.txt"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-171F-01",
+      "type": "artifact",
+      "condition": "scripts/hook_eval_helper.py が is_false_positive / get_changed_files / is_head_synced / evaluate を提供する"
+    },
+    {
+      "id": "CC-171F-02",
+      "type": "document_rule",
+      "condition": "is_false_positive(changed_files, allowed_changes, head_synced) が session-171f-pre 仕様に従って分岐する"
+    },
+    {
+      "id": "CC-171F-03",
+      "type": "non_regression",
+      "condition": "既存テスト (chat 54 末 110 件) すべて PASS する"
+    },
+    {
+      "id": "CC-171F-04",
+      "type": "state_transition_consistent",
+      "condition": "171g 系列で CI 統合に進める基盤が整っている"
+    },
+    {
+      "id": "CC-171F-05",
+      "type": "side_effect_free",
+      "condition": "tests/hooks/ / orchestration/ / 正本 docs に変更がない"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-171F-01",
+      "description": "helper module がインポート可能で 4 関数を export する",
+      "test_name": "test_hook_eval_helper_exports"
+    },
+    {
+      "id": "AC-171F-02",
+      "description": "head_synced=True なら is_false_positive は False を返す",
+      "test_name": "test_is_false_positive_returns_false_when_head_synced"
+    },
+    {
+      "id": "AC-171F-03",
+      "description": "head_synced=False かつ changed_files が allowed_changes に全て含まれる場合は True を返す",
+      "test_name": "test_is_false_positive_true_when_within_allowed_changes"
+    },
+    {
+      "id": "AC-171F-04",
+      "description": "head_synced=False かつ changed_files の一部が allowed_changes 外なら False を返す",
+      "test_name": "test_is_false_positive_false_when_scope_violation"
+    },
+    {
+      "id": "AC-171F-05",
+      "description": "evaluate() の戻り値が is_false_positive / changed_files / reason の 3 キーを持つ dict である",
+      "test_name": "test_evaluate_returns_expected_schema"
+    },
+    {
+      "id": "AC-171F-06",
+      "description": "scripts/hook_eval_helper.py が tests/hooks/ や orchestration/ を import していない",
+      "test_name": "test_hook_eval_helper_isolation"
+    }
+  ],
+  "review_points": [
+    "仕様一致(AC達成)",
+    "変更範囲遵守",
+    "副作用なし(既存破壊なし)",
+    "検証十分性"
+  ],
+  "failure_type_candidates": ["spec_mismatch", "scope_violation", "regression"],
+  "next": ["session-171g-pre"]
+}
