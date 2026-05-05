@@ -1,0 +1,129 @@
+{
+  "session_id": "session-171h-pre",
+  "phase_id": "phase-171",
+  "title": "hook_eval_helper 統合実装セッションの拘束条件正本化",
+  "goal": "session-171h 実装における allowed_changes / forbidden_changes / completion_criteria / acceptance_criteria / review_points を docs-only で正本化し、hook_eval_helper.py の非改変保証と pre-push / CI / Claude Code hook 評価フロー統合の実装範囲を固定する",
+  "scope": [
+    "session-171h 実装セッションの allowed_changes を定義する",
+    "session-171h 実装セッションの forbidden_changes を定義する",
+    "completion_criteria を5件で定義する",
+    "acceptance_criteria と test_name を1対1で定義する",
+    "review_points を4軸で定義する (4軸目=検証十分性)",
+    "scripts/hook_eval_helper.py 本体ロジック変更禁止を個別パスで明文化する",
+    "session-171g-pre (adc3945) の統合仕様を前提条件として constraints に明記する"
+  ],
+  "out_of_scope": [
+    "実装コード変更",
+    "scripts/hook_eval_helper.py の変更",
+    ".claude 配下の変更",
+    ".github 配下の変更",
+    "tests 配下の変更",
+    "orchestration 配下の変更",
+    "docs/config 配下の変更",
+    "docs/master_instruction.md / docs/global_rules.md の変更",
+    "CI / pre-push / Claude Code hook の実装",
+    "scripts/lint_session_json.py の修正 (BACKLOG-LINT-SIDE-EFFECT-001 は別 session で扱う)",
+    "git push"
+  ],
+  "constraints": [
+    "1 session 1 purpose を守る",
+    "docs-only commit のみとする",
+    "session-171g-pre (commit adc3945) の hook_eval_helper 統合仕様を前提とする",
+    "scripts/hook_eval_helper.py は参照対象であり変更対象ではない",
+    "AC と test_name は1対1対応とする",
+    "review_points は4軸固定で 4軸目は検証十分性とする (global_rules.md 正本準拠)",
+    "completion_criteria.type は document_rule / artifact / non_regression / state_transition_consistent / side_effect_free のいずれかとする",
+    "lint_session_json.py 実行後に artifacts/session-159c/json_lint_report.json に差分が発生した場合は git restore で rollback する (BACKLOG-LINT-SIDE-EFFECT-001 既知事項)",
+    "本 session で session-171h 実装には進まない (上位先行パターン: 171h-pre docs-only commit → 171h 実装は別 session)"
+  ],
+  "acceptance_ref": "docs/acceptance/session-171h-pre.yaml",
+  "allowed_changes": [
+    "docs/sessions/session-171h-pre.json",
+    "docs/acceptance/session-171h-pre.yaml"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/session-171h-pre.json: session-171h-pre の新規作成のみ (14 必須キー完全版)",
+    "docs/acceptance/session-171h-pre.yaml: session-171h-pre の acceptance 新規作成のみ (AC 6件 + completion_checks + change_guardrails)"
+  ],
+  "forbidden_changes": [
+    "orchestration/**",
+    "scripts/**",
+    "scripts/hook_eval_helper.py",
+    "scripts/lint_session_json.py",
+    "tests/**",
+    ".claude/**",
+    ".github/**",
+    "docs/config/**",
+    "docs/master_instruction.md",
+    "docs/global_rules.md",
+    "docs/sessions/session-171g-pre.json",
+    "docs/acceptance/session-171g-pre.yaml",
+    "DL/**",
+    "artifacts/**"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-171H-PRE-01",
+      "type": "document_rule",
+      "condition": "session-171h-pre.json に allowed_changes が存在し、docs/sessions/session-171h-pre.json と docs/acceptance/session-171h-pre.yaml の2件のみを許可している"
+    },
+    {
+      "id": "CC-171H-PRE-02",
+      "type": "document_rule",
+      "condition": "session-171h-pre.json に forbidden_changes が存在し、orchestration / scripts / scripts/hook_eval_helper.py / tests / .claude / .github / docs/config / DL を禁止している"
+    },
+    {
+      "id": "CC-171H-PRE-03",
+      "type": "artifact",
+      "condition": "docs/sessions/session-171h-pre.json と docs/acceptance/session-171h-pre.yaml が新規作成されている"
+    },
+    {
+      "id": "CC-171H-PRE-04",
+      "type": "state_transition_consistent",
+      "condition": "session-171g-pre (adc3945) → session-171h-pre → session-171h 実装の順序が constraints と acceptance_criteria で矛盾していない"
+    },
+    {
+      "id": "CC-171H-PRE-05",
+      "type": "side_effect_free",
+      "condition": "docs-only 2ファイル以外に変更が発生していない (artifacts/ 配下含む副作用なし)"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-171H-PRE-01",
+      "description": "allowed_changes が docs-only 2ファイル (docs/sessions/session-171h-pre.json と docs/acceptance/session-171h-pre.yaml) に限定されている",
+      "test_name": "test_allowed_changes_docs_only"
+    },
+    {
+      "id": "AC-171H-PRE-02",
+      "description": "forbidden_changes に orchestration/** / scripts/** / tests/** / .claude/** / .github/** / docs/config/** / DL/** が含まれている",
+      "test_name": "test_forbidden_changes_block_implementation_paths"
+    },
+    {
+      "id": "AC-171H-PRE-03",
+      "description": "scripts/hook_eval_helper.py の変更禁止が個別パスで forbidden_changes に明文化されている",
+      "test_name": "test_hook_eval_helper_path_forbidden"
+    },
+    {
+      "id": "AC-171H-PRE-04",
+      "description": "acceptance_criteria の各項目に test_name が存在し、AC と test_name が1対1対応かつ重複なしである",
+      "test_name": "test_acceptance_criteria_test_name_one_to_one"
+    },
+    {
+      "id": "AC-171H-PRE-05",
+      "description": "review_points が4軸で定義され、内容が 仕様一致 / 変更範囲遵守 / 副作用なし / 検証十分性 である",
+      "test_name": "test_review_points_four_axes"
+    },
+    {
+      "id": "AC-171H-PRE-06",
+      "description": "session-171g-pre (adc3945) を前提とする旨と hook_eval_helper.py が参照対象である旨が constraints に明記されている",
+      "test_name": "test_session_171g_pre_handoff_constraint"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ]
+}

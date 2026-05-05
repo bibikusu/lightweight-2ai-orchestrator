@@ -1,0 +1,114 @@
+session_id: "session-171h-pre"
+goal: "session-171h 実装における allowed_changes / forbidden_changes / completion_criteria / acceptance_criteria / review_points を docs-only で正本化し、hook_eval_helper.py の非改変保証と pre-push / CI / Claude Code hook 評価フロー統合の実装範囲を固定する"
+scope:
+  - "session-171h 実装セッションの allowed_changes を定義する"
+  - "session-171h 実装セッションの forbidden_changes を定義する"
+  - "completion_criteria を5件で定義する"
+  - "acceptance_criteria と test_name を1対1で定義する"
+  - "review_points を4軸で定義する (4軸目=検証十分性)"
+  - "scripts/hook_eval_helper.py 本体ロジック変更禁止を個別パスで明文化する"
+  - "session-171g-pre (adc3945) の統合仕様を前提条件として constraints に明記する"
+out_of_scope:
+  - "実装コード変更"
+  - "scripts/hook_eval_helper.py の変更"
+  - ".claude 配下の変更"
+  - ".github 配下の変更"
+  - "tests 配下の変更"
+  - "orchestration 配下の変更"
+  - "docs/config 配下の変更"
+  - "docs/master_instruction.md / docs/global_rules.md の変更"
+  - "CI / pre-push / Claude Code hook の実装"
+  - "scripts/lint_session_json.py の修正"
+  - "git push"
+
+acceptance:
+  - id: "AC-171H-PRE-01"
+    requirement: "allowed_changes が docs-only 2ファイル (docs/sessions/session-171h-pre.json と docs/acceptance/session-171h-pre.yaml) に限定されている"
+    test_name: "test_allowed_changes_docs_only"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "docs/sessions/session-171h-pre.json の allowed_changes が2件のみである"
+      - "allowed_changes が docs/sessions/session-171h-pre.json と docs/acceptance/session-171h-pre.yaml のみである"
+
+  - id: "AC-171H-PRE-02"
+    requirement: "forbidden_changes に orchestration/** / scripts/** / tests/** / .claude/** / .github/** / docs/config/** / DL/** が含まれている"
+    test_name: "test_forbidden_changes_block_implementation_paths"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "forbidden_changes に orchestration/** が含まれている"
+      - "forbidden_changes に scripts/** が含まれている"
+      - "forbidden_changes に tests/** が含まれている"
+      - "forbidden_changes に .claude/** が含まれている"
+      - "forbidden_changes に .github/** が含まれている"
+      - "forbidden_changes に docs/config/** が含まれている"
+      - "forbidden_changes に DL/** が含まれている"
+
+  - id: "AC-171H-PRE-03"
+    requirement: "scripts/hook_eval_helper.py の変更禁止が個別パスで forbidden_changes に明文化されている"
+    test_name: "test_hook_eval_helper_path_forbidden"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "forbidden_changes に scripts/hook_eval_helper.py が個別エントリとして含まれている"
+
+  - id: "AC-171H-PRE-04"
+    requirement: "acceptance_criteria の各項目に test_name が存在し、AC と test_name が1対1対応かつ重複なしである"
+    test_name: "test_acceptance_criteria_test_name_one_to_one"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "acceptance_criteria の全項目に test_name が存在する"
+      - "test_name が重複していない"
+      - "AC ID と test_name の対応が JSON / YAML 間で一致している"
+
+  - id: "AC-171H-PRE-05"
+    requirement: "review_points が4軸で定義され、内容が 仕様一致 / 変更範囲遵守 / 副作用なし / 検証十分性 である"
+    test_name: "test_review_points_four_axes"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "review_points が4件である"
+      - "review_points[0] に 仕様一致 が含まれる"
+      - "review_points[1] に 変更範囲遵守 が含まれる"
+      - "review_points[2] に 副作用なし が含まれる"
+      - "review_points[3] に 検証十分性 が含まれる"
+
+  - id: "AC-171H-PRE-06"
+    requirement: "session-171g-pre (adc3945) を前提とする旨と hook_eval_helper.py が参照対象である旨が constraints に明記されている"
+    test_name: "test_session_171g_pre_handoff_constraint"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "constraints に session-171g-pre (commit adc3945) の統合仕様を前提とする旨が含まれている"
+      - "constraints に scripts/hook_eval_helper.py は参照対象であり変更対象ではない旨が含まれている"
+
+completion_checks:
+  - "allowed_changes が docs-only 2ファイルに限定されている"
+  - "forbidden_changes が実装・hook・CI・test 関連パスを禁止している"
+  - "scripts/hook_eval_helper.py の変更禁止が個別パスで明記されている"
+  - "review_points が4軸であり、4軸目が検証十分性である"
+  - "completion_criteria が5件で type が正本 enum に準拠している"
+  - "AC と test_name が1対1対応している"
+  - "docs-only 2ファイル以外に変更がない (artifacts/ 副作用含む)"
+
+change_guardrails:
+  allowed_changes:
+    - "docs/sessions/session-171h-pre.json"
+    - "docs/acceptance/session-171h-pre.yaml"
+  forbidden_changes:
+    - "orchestration/**"
+    - "scripts/**"
+    - "scripts/hook_eval_helper.py"
+    - "scripts/lint_session_json.py"
+    - "tests/**"
+    - ".claude/**"
+    - ".github/**"
+    - "docs/config/**"
+    - "docs/master_instruction.md"
+    - "docs/global_rules.md"
+    - "docs/sessions/session-171g-pre.json"
+    - "docs/acceptance/session-171g-pre.yaml"
+    - "DL/**"
+    - "artifacts/**"
