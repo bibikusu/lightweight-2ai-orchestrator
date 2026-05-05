@@ -4993,6 +4993,18 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Resume a previously started session from its last checkpoint. Requires --session-id.",
     )
+    # session-171i: CI結果連携入力
+    parser.add_argument(
+        "--ci-status",
+        choices=["success", "failure"],
+        default="success",
+        help="CI結果入力 (success/failure)。デフォルト: success。",
+    )
+    parser.add_argument(
+        "--ci-failed-jobs",
+        default="",
+        help="CI failure 時の失敗ジョブ名（カンマ区切り）。",
+    )
     args = parser.parse_args()
     if args.resume and not args.session_id:
         parser.error("--resume requires --session-id")
@@ -5145,6 +5157,31 @@ def _run_single_session_impl(args: argparse.Namespace) -> int:
 
     try:
         enforce_run_session_duplicate_definition_preflight(Path(__file__).resolve())
+
+        # ci_check: preflight 完了直後・メイン処理開始前（session-171i）
+        if getattr(args, "ci_status", "success") == "failure":
+            _ci_failed_jobs: List[str] = [
+                j.strip()
+                for j in getattr(args, "ci_failed_jobs", "").split(",")
+                if j.strip()
+            ]
+            _ci_ts = _utc_timestamp_compact()
+            _ci_payload: Dict[str, Any] = {
+                "stage": "ci_check",
+                "error_type": "test_failure",
+                "message": "CI failed",
+                "ci_failed_jobs": _ci_failed_jobs,
+                "session_id": args.session_id or "",
+                "branch": _git_branch_safe(),
+                "timestamp_utc": _ci_ts,
+            }
+            save_json(session_dir / "logs" / "error_latest.json", _ci_payload)
+            save_json(session_dir / "logs" / "error.json", _ci_payload)
+            print(
+                f"[ci_check] CI failure detected. jobs={_ci_failed_jobs}",
+                file=sys.stderr,
+            )
+            sys.exit(1)
 
         # M03-C: resume 分岐
         if args.resume:
