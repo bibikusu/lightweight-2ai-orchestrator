@@ -1,0 +1,210 @@
+session_id: "session-179-pre"
+
+goal: >-
+  session-178-pre で docs/acceptance/session-178-pre.yaml に定義した
+  VCER (verification command existence rule) と RB (responsibility boundaries:
+  Step0 / hook / post-push) を global_rules.md に昇格させるための
+  昇格先テキスト・挿入位置・前提条件を docs-only で正本化する。
+  global_rules.md の実変更は別 session (session-179) で実施する。
+
+review_points:
+  - "仕様一致（AC達成）"
+  - "変更範囲遵守"
+  - "副作用なし（既存破壊なし）"
+  - "検証十分性"
+
+# ============================================================
+# preconditions: session-179 実装 session の実行前提条件
+# ============================================================
+preconditions:
+  - id: "PRE-001"
+    level: "MUST"
+    condition: >-
+      docs/acceptance/session-178-pre.yaml が main ブランチに
+      push・マージ済みであること。session-178-pre が未完了の場合、
+      session-179 を実行してはならない。
+  - id: "PRE-002"
+    level: "MUST"
+    condition: >-
+      global_rules.md の末尾セクションが
+      "## セッション起票ガバナンス（session-176-pre 確立）" であること。
+      構造が変更されている場合は insertion_point を再確認して
+      commander に報告しなければならない。
+  - id: "PRE-003"
+    level: "MUST"
+    condition: >-
+      session-179 実行前に Step0 check（scripts/step0_check.sh）を実行し、
+      HEAD == origin/main であることを確認しなければならない。
+  - id: "PRE-004"
+    level: "SHOULD"
+    condition: >-
+      既存テスト（.venv/bin/python -m pytest tests/）が全件 pass
+      していることを確認することが望ましい。
+
+# ============================================================
+# promotion_spec: global_rules.md への昇格仕様
+# ============================================================
+promotion_spec:
+
+  insertion_point:
+    after_section: "## セッション起票ガバナンス（session-176-pre 確立）"
+    position: "末尾（### 項目E: ClaudeCode 禁止 git 操作 ブロックの後）"
+    note: >-
+      global_rules.md の行1071〜1119（session-179-pre 起票時点）に存在する
+      "## セッション起票ガバナンス" セクションの末尾に追記する。
+      既存セクションは変更しない。
+
+  new_section_heading: "## 検証コマンド存在ルールと責務境界（session-178-pre 正本化 / session-179 昇格）"
+
+  text_to_add: |
+    ## 検証コマンド存在ルールと責務境界（session-178-pre 正本化 / session-179 昇格）
+
+    ### VCER: 検証コマンド存在ルール
+
+    session JSON / acceptance YAML に記載される verification command が
+    実行時に到達可能であることを保証する。
+    session-177 で発生した「存在しない test path を確認コマンドに含めた事故」を
+    再発させないための運用契約である。
+
+    - **VCER-001** (MUST): `acceptance_criteria[].test_name` で参照される test 関数は、session 完了時点で repo 内に実在しなければならない。本 session で新規作成する場合は `allowed_changes_detail` に対応する test ファイルパスを明記しなければならない。
+    - **VCER-002** (MUST): acceptance YAML の `verification:` ブロックに記載される shell コマンドが参照する file path・script path・test path は、コマンド実行時点で実在しなければならない。実在が保証できない path を含むコマンドを `verification:` に記載してはならない。
+    - **VCER-003** (MUST): 参謀 (Claude Web) が ClaudeCode 投入文を生成する際、検収コマンド中に含める test path が「本 session で新規追加される path」と「既存 path」のどちらに該当するかを明示しなければならない。
+    - **VCER-004** (SHOULD): verification command 中で参照する path は、新規追加 path の場合「本 session で作成」と注記し、既存 path の場合「既存」と注記することが望ましい。
+
+    **違反時の対応:**
+
+    - 参謀検収段階で全 verification command の path 実在を `grep` / `ls` で確認する。
+    - 違反検出時は ClaudeCode 投入を保留し、参謀が path リストを修正する。
+    - 違反が push 後に判明した場合は `BACKLOG-VCER-VIOLATION` として起票する。
+
+    ---
+
+    ### RB: 責務境界（Step0 / hook / post-push）
+
+    3層の検証は役割が異なる。責務を固定し、MUST 重複させない。
+
+    | 層 | タイミング | ツール | 主な責務 |
+    |---|---|---|---|
+    | **RB-001** Step0 check | session 開始前 | `scripts/step0_check.sh` | HEAD / origin/main / working tree / stash の前提確認 |
+    | **RB-002** hook verification | session 実行中（tool call 単位） | `.claude/hooks/**`（別 session で実装予定） | Write/Edit/Bash の forbidden_changes 違反をリアルタイム検知 |
+    | **RB-003** post-push verification | `git push` 成功後 | commander / 参謀 手動実行 | push 後の repo 整合性・既存テスト regression の確認 |
+
+    **各層の failure_action（共通原則）:**
+
+    - 異常検出時は **MUST 即停止** し、commander に報告する。
+    - 自動回復・自動 revert は禁止する。
+    - 原因が push 操作にあるか session 内の実装にあるかを切り分けてから対処する。
+
+    **重複排除ルール:**
+
+    - 同一チェックを複数層で実施する場合は最も適した層に集約し、他層は当該チェックを省略する。
+    - RB-001 は「実行前の状態確認」に特化し、test 実行・push 後確認は担当しない。
+    - RB-002 は「tool call 単位の妥当性」に特化し、session 全体の整合性確認は担当しない。
+    - RB-003 は「push 後の整合性」に特化し、session 開始前確認・tool call 単位の検証は担当しない。
+
+# ============================================================
+# session_179_scope: 後続の実装 session (session-179) のスコープ定義
+# ============================================================
+session_179_scope:
+  purpose: >-
+    本 promotion_spec に基づき global_rules.md に VCER/RB セクションを
+    追記する実装 session のスコープを先行定義する。
+  allowed_changes:
+    - "docs/global_rules.md: 末尾への新セクション追記のみ（既存行の変更禁止）"
+    - "docs/sessions/session-179.json: session 定義のみ追加"
+    - "docs/acceptance/session-179.yaml: acceptance 定義のみ追加"
+  forbidden_changes:
+    - "global_rules.md の既存セクション（追記のみ許可、既存行の変更・削除禁止）"
+    - "master_instruction.md"
+    - "docs/acceptance/session-178-pre.yaml"
+    - "docs/acceptance/session-179-pre.yaml（本ファイル）"
+    - "orchestration/**"
+    - "scripts/**"
+    - "tests/**"
+    - ".claude/**"
+  completion_definition: >-
+    global_rules.md に promotion_spec.text_to_add の内容が正確に追記され、
+    既存テストが regression していない状態を session-179 の完了とする。
+
+# ============================================================
+# acceptance: 本 session が満たすべき検収条件
+# ============================================================
+acceptance:
+  - id: "AC-179PRE-01"
+    requirement: "session-179-pre.json が正しい構造を持ち phase_id=P7 / failure_type=spec_missing / review_points 4軸を持つ"
+    test_name: "test_session_179pre_json_structure_manual"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "python3 -c でJSON load し session_id == 'session-179-pre' を確認する"
+      - "phase_id == 'P7' を確認する"
+      - "failure_type == 'spec_missing' を確認する"
+      - "review_points が ['仕様一致（AC達成）','変更範囲遵守','副作用なし（既存破壊なし）','検証十分性'] と完全一致することを確認する"
+
+  - id: "AC-179PRE-02"
+    requirement: "session-179-pre.yaml の promotion_spec.insertion_point.after_section が global_rules.md の実在するセクション名を参照している"
+    test_name: "test_session_179pre_insertion_point_valid_manual"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "grep '## セッション起票ガバナンス' docs/global_rules.md の出力が1件以上であることを確認する"
+      - "insertion_point.after_section の値と grep 結果が一致することを確認する"
+
+  - id: "AC-179PRE-03"
+    requirement: "promotion_spec.text_to_add に VCER-001..004 と RB-001..003 が含まれ session-178-pre.yaml の contracts ブロックと整合している"
+    test_name: "test_session_179pre_promotion_text_complete_manual"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "grep 'VCER-001' docs/acceptance/session-179-pre.yaml が1件以上であることを確認する"
+      - "grep 'VCER-002' docs/acceptance/session-179-pre.yaml が1件以上であることを確認する"
+      - "grep 'VCER-003' docs/acceptance/session-179-pre.yaml が1件以上であることを確認する"
+      - "grep 'VCER-004' docs/acceptance/session-179-pre.yaml が1件以上であることを確認する"
+      - "grep 'RB-001' docs/acceptance/session-179-pre.yaml が1件以上であることを確認する"
+      - "grep 'RB-002' docs/acceptance/session-179-pre.yaml が1件以上であることを確認する"
+      - "grep 'RB-003' docs/acceptance/session-179-pre.yaml が1件以上であることを確認する"
+
+  - id: "AC-179PRE-04"
+    requirement: "docs-only scope を逸脱せず変更ファイルが session-179-pre.json と session-179-pre.yaml の2件のみである"
+    test_name: "test_session_179pre_docs_only_scope_manual"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "git status --short を実行する"
+      - "新規追加が docs/sessions/session-179-pre.json と docs/acceptance/session-179-pre.yaml の2件のみであることを確認する"
+      - "DL/ 以外の untracked / staged / modified ファイルが含まれていないことを確認する"
+
+  - id: "AC-179PRE-05"
+    requirement: "session-179-pre.yaml の promotion_spec.text_to_add 内に RFC2119 キーワード MUST が最低3箇所、SHOULD が最低1箇所出現する"
+    test_name: "test_session_179pre_rfc2119_keywords_manual"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "grep -c 'MUST' docs/acceptance/session-179-pre.yaml が 3 以上であることを確認する"
+      - "grep -c 'SHOULD' docs/acceptance/session-179-pre.yaml が 1 以上であることを確認する"
+
+manual_acceptance:
+  - id: "MAC-179PRE-01"
+    requirement: "変更範囲が session json + acceptance yaml の2件以内に収まり forbidden_changes に該当するファイルが含まれていない"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "git diff --name-only HEAD~1 HEAD を実行する"
+      - "出力が docs/sessions/session-179-pre.json と docs/acceptance/session-179-pre.yaml の2行のみであることを目視確認する"
+
+  - id: "MAC-179PRE-02"
+    requirement: "promotion_spec.text_to_add が global_rules.md に追加された場合に session-178-pre.yaml の contracts と重複なく統合されることを参謀が確認する"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "commander が promotion_spec.text_to_add の全文と session-178-pre.yaml の contracts セクションを並べて目視レビューする"
+      - "VCER 4件 / RB 3件の内容が整合し、情報の欠落・矛盾がないことを確認する"
+
+completion_checks:
+  - "CC-179PRE-01: docs/sessions/session-179-pre.json が追加されている"
+  - "CC-179PRE-02: docs/acceptance/session-179-pre.yaml が追加されている"
+  - "CC-179PRE-03: promotion_spec.insertion_point が global_rules.md の実在セクションを参照している"
+  - "CC-179PRE-04: promotion_spec.text_to_add に VCER-001..004 と RB-001..003 が含まれている"
+  - "CC-179PRE-05: preconditions（昇格前提条件）が定義されている"
+  - "CC-179PRE-06: allowed_changes_detail に含まれないファイルを変更していない"
+  - "CC-179PRE-07: 既存テストが regression していない"

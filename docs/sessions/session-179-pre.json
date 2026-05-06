@@ -1,0 +1,138 @@
+{
+  "session_id": "session-179-pre",
+  "phase_id": "P7",
+  "title": "VCER/RB global_rules.md 昇格前提の正本化（docs-only）",
+  "goal": "session-178-pre で docs/acceptance/session-178-pre.yaml に定義した VCER（verification command existence rule）と RB（responsibility boundaries: Step0 / hook / post-push）を global_rules.md に昇格させるための昇格先テキスト・挿入位置・前提条件を docs-only で正本化する。global_rules.md の実変更は別 session（session-179）で実施する。",
+  "scope": [
+    "docs/sessions/session-179-pre.json を新規追加する",
+    "docs/acceptance/session-179-pre.yaml を新規追加する",
+    "session-179-pre.yaml に promotion_spec（昇格先テキスト全文・挿入位置・前提条件）を定義する",
+    "session-179-pre.yaml に session-179 実装セッションのスコープ・allowed_changes を定義する"
+  ],
+  "out_of_scope": [
+    "global_rules.md の実変更（別 session session-179 で実施）",
+    "master_instruction.md の変更",
+    "docs/acceptance/session-178-pre.yaml の変更",
+    "orchestration/** の変更",
+    "scripts/** の変更",
+    "tests/** の変更",
+    ".claude/** の変更",
+    "docs/config/** の変更",
+    "DL/** の変更"
+  ],
+  "constraints": [
+    "docs-only session とする",
+    "変更ファイルは2件のみ（session json + acceptance yaml）",
+    "既存実装ファイルを一切変更しない",
+    "promotion_spec の差分テキストは session-178-pre.yaml の contracts ブロックと完全整合していなければならない",
+    "挿入位置は global_rules.md 内の実在するセクション名を基準に明示する",
+    "RFC2119 の MUST / SHOULD / MAY を採用する",
+    "VCER は VCER-001..004 の4件を昇格対象とする",
+    "RB は RB-001..003 の3件を昇格対象とする",
+    "1 session 1 purpose を守る",
+    "review_points は4軸固定とする",
+    "固定 commit hash を spec 内にハードコードしない",
+    "stash が8件封印されていることを投入文に明記済みとする（変更禁止）"
+  ],
+  "acceptance_ref": "docs/acceptance/session-179-pre.yaml",
+  "allowed_changes_detail": [
+    "docs/sessions/session-179-pre.json: session 定義のみ追加（本投入文の正本をそのまま配置）",
+    "docs/acceptance/session-179-pre.yaml: promotion_spec + preconditions + acceptance 定義のみ追加（本投入文の正本をそのまま配置）"
+  ],
+  "forbidden_changes": [
+    "global_rules.md",
+    "master_instruction.md",
+    "docs/acceptance/session-178-pre.yaml",
+    "scripts/**",
+    "tests/**",
+    "orchestration/**",
+    "docs/config/**",
+    ".claude/**",
+    "DL/**",
+    "既存 docs/sessions/*.json（session-179-pre.json 除く）",
+    "既存 docs/acceptance/*.yaml（session-179-pre.yaml 除く）"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-179PRE-01",
+      "type": "artifact",
+      "condition": "docs/sessions/session-179-pre.json が追加されている"
+    },
+    {
+      "id": "CC-179PRE-02",
+      "type": "artifact",
+      "condition": "docs/acceptance/session-179-pre.yaml が追加されている"
+    },
+    {
+      "id": "CC-179PRE-03",
+      "type": "document_rule",
+      "condition": "session-179-pre.yaml の promotion_spec.insertion_point が global_rules.md の実在するセクション名を参照している"
+    },
+    {
+      "id": "CC-179PRE-04",
+      "type": "document_rule",
+      "condition": "session-179-pre.yaml の promotion_spec.text_to_add に VCER-001..004 と RB-001..003 が含まれ、session-178-pre.yaml の contracts ブロックと整合している"
+    },
+    {
+      "id": "CC-179PRE-05",
+      "type": "document_rule",
+      "condition": "session-179-pre.yaml に preconditions（昇格前提条件）が定義されている"
+    },
+    {
+      "id": "CC-179PRE-06",
+      "type": "side_effect_free",
+      "condition": "allowed_changes_detail に含まれない（session json + acceptance yaml 以外の）ファイルを変更しない"
+    },
+    {
+      "id": "CC-179PRE-07",
+      "type": "non_regression",
+      "condition": "既存テスト（tests/ 配下）が regression なく通過する"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-179PRE-01",
+      "description": "session-179-pre.json が正しい構造を持ち、phase_id=P7 / failure_type=spec_missing / review_points 4軸を持つ",
+      "test_name": "test_session_179pre_json_structure_manual"
+    },
+    {
+      "id": "AC-179PRE-02",
+      "description": "session-179-pre.yaml の promotion_spec.insertion_point が global_rules.md の実在するセクション名（## セッション起票ガバナンス）を参照している",
+      "test_name": "test_session_179pre_insertion_point_valid_manual"
+    },
+    {
+      "id": "AC-179PRE-03",
+      "description": "session-179-pre.yaml の promotion_spec.text_to_add に VCER-001..004 と RB-001..003 が含まれ、session-178-pre.yaml の contracts ブロックと整合している",
+      "test_name": "test_session_179pre_promotion_text_complete_manual"
+    },
+    {
+      "id": "AC-179PRE-04",
+      "description": "docs-only scope を逸脱せず、変更ファイルが session-179-pre.json と session-179-pre.yaml の2件のみである",
+      "test_name": "test_session_179pre_docs_only_scope_manual"
+    },
+    {
+      "id": "AC-179PRE-05",
+      "description": "session-179-pre.yaml の promotion_spec または contracts ブロック内に RFC2119 キーワード MUST が最低3箇所、SHOULD が最低1箇所出現する",
+      "test_name": "test_session_179pre_rfc2119_keywords_manual"
+    }
+  ],
+  "manual_acceptance_criteria": [
+    {
+      "id": "MAC-179PRE-01",
+      "description": "変更範囲が session json + acceptance yaml の2件以内に収まり、forbidden_changes に該当するファイルが含まれていない",
+      "verification_method": "git diff --name-only HEAD~1 HEAD を commander が目視確認し、2行のみであることを確認する"
+    },
+    {
+      "id": "MAC-179PRE-02",
+      "description": "promotion_spec.text_to_add が global_rules.md に追加された場合に session-178-pre.yaml の contracts と重複なく統合されることを参謀が確認する",
+      "verification_method": "commander が promotion_spec.text_to_add と session-178-pre.yaml の contracts を並べて目視レビューし、内容の整合と重複がないことを確認する"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ],
+  "failure_type": "spec_missing"
+}
