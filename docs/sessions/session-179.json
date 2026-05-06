@@ -1,0 +1,83 @@
+{
+  "session_id": "session-179",
+  "phase_id": "P7",
+  "title": "Promote VCER-001..004 and RB-001..003 contracts from session-178-pre to docs/global_rules.md",
+  "goal": "session-178-pre.yaml に一時正本化された VCER-001..004 と RB-001..003 を、session-179-pre.yaml の promotion_spec に従って docs/global_rules.md 末尾に新規セクションとして追記し恒久正本化する。canonical source は session-179-pre.yaml の promotion_spec.text_to_add であり、純粋 VERBATIM コピーのみを実施する。global_rules.md の既存行は一切変更しない。",
+  "scope": [
+    "docs/global_rules.md の末尾に新規セクション「## 検証コマンド存在ルールと責務境界（session-178-pre 正本化 / session-179 昇格）」を追記する",
+    "新セクション内に VCER-001..004 を列挙する",
+    "新セクション内に RB-001..003 を列挙する",
+    "違反時の対応と責任主体を明文化する",
+    "docs/sessions/session-179.json と docs/acceptance/session-179.yaml を新規追加する"
+  ],
+  "out_of_scope": [
+    "docs/global_rules.md の既存行の編集",
+    "docs/master_instruction.md の変更",
+    "docs/acceptance/session-178-pre.yaml の編集",
+    "docs/acceptance/session-179-pre.yaml の編集",
+    "scripts/** の変更",
+    "tests/** の変更",
+    "orchestration/** の変更",
+    "run_session.py の変更",
+    ".claude/** の変更",
+    "VCER-005 の追加 (session-179a-pre で独立起票予定 / 本セッション scope 外)",
+    "VCER 自動チェックスクリプトの実装",
+    "CLAUDE.md (project root) の作成",
+    "hook 実装"
+  ],
+  "constraints": [
+    "1セッション1目的",
+    "docs-only / 3 ファイルのみ変更",
+    "実装コード変更禁止",
+    "VERBATIM OVERWRITE: session-179-pre.yaml の promotion_spec.text_to_add を一字一句変えず global_rules.md 末尾に追記する (純粋 VERBATIM コピー)",
+    "global_rules.md の既存行は1行たりとも変更してはならない (deletions = 0)",
+    "新セクションは末尾追記のみ (既存セクション間への挿入禁止)",
+    "MUST/SHOULD は RFC2119 解釈に従う",
+    "session-178-pre.yaml の contracts と新セクションの VCER-001..004 + RB-001..003 文言が等価であること",
+    "VCER-005 は本セッションでは追加しない (session-179-pre.yaml に未定義であり scope 拡大に該当)",
+    "git amend / push --force 禁止"
+  ],
+  "acceptance_ref": "docs/acceptance/session-179.yaml",
+  "allowed_changes_detail": [
+    "docs/sessions/session-179.json: 本セッション定義を新規作成する",
+    "docs/acceptance/session-179.yaml: 本セッションの acceptance 定義を新規作成する",
+    "docs/global_rules.md: 末尾に新規セクションを追記する。既存行は1行たりとも変更してはならない"
+  ],
+  "forbidden_changes": [
+    "docs/global_rules.md の既存行の編集",
+    "docs/master_instruction.md の変更",
+    "docs/acceptance/session-178-pre.yaml の編集",
+    "docs/acceptance/session-179-pre.yaml の編集",
+    "scripts/** の変更",
+    "tests/** の変更",
+    "orchestration/** の変更",
+    "run_session.py の変更",
+    ".claude/** の変更",
+    "git amend / git push --force / git reset --hard / git rebase"
+  ],
+  "completion_criteria": [
+    {"id": "CC-179-01", "type": "artifact", "condition": "docs/sessions/session-179.json が新規作成されている"},
+    {"id": "CC-179-02", "type": "artifact", "condition": "docs/acceptance/session-179.yaml が新規作成されている"},
+    {"id": "CC-179-03", "type": "document_rule", "condition": "docs/global_rules.md 末尾に「## 検証コマンド存在ルールと責務境界（session-178-pre 正本化 / session-179 昇格）」セクションが追記されている"},
+    {"id": "CC-179-04", "type": "document_rule", "condition": "新セクションに VCER-001, VCER-002, VCER-003, VCER-004 の4件が列挙されている"},
+    {"id": "CC-179-05", "type": "document_rule", "condition": "新セクションに RB-001, RB-002, RB-003 の3件が列挙されている"},
+    {"id": "CC-179-06", "type": "side_effect_free", "condition": "git diff origin/main HEAD -- docs/global_rules.md で deletions = 0 であること"},
+    {"id": "CC-179-07", "type": "side_effect_free", "condition": "session-178-pre.yaml / session-179-pre.yaml が変更されていない"},
+    {"id": "CC-179-08", "type": "non_regression", "condition": "新セクションに VCER-005 が含まれない (canonical source に未定義のため)"}
+  ],
+  "acceptance_criteria": [
+    {"id": "AC-179-01", "text": "docs/sessions/session-179.json が 14キー全揃で存在する", "test_name": "test_session_179_json_has_14_keys"},
+    {"id": "AC-179-02", "text": "docs/acceptance/session-179.yaml が存在し session_id == session-179 である", "test_name": "test_session_179_yaml_session_id_matches"},
+    {"id": "AC-179-03", "text": "docs/global_rules.md に新セクションヘッダが存在する", "test_name": "test_global_rules_has_vcer_rb_section_header"},
+    {"id": "AC-179-04", "text": "新セクションに VCER-001..004 と RB-001..003 が列挙されている", "test_name": "test_global_rules_has_vcer_004_rb_003_ids"},
+    {"id": "AC-179-05", "text": "git diff origin/main HEAD -- docs/global_rules.md で deletions = 0 (既存行不変)", "test_name": "test_global_rules_promotion_zero_deletion"},
+    {"id": "AC-179-06", "text": "git diff origin/main HEAD --name-only は3ファイル限定", "test_name": "test_session_179_changed_files_within_3_files"}
+  ],
+  "review_points": [
+    "仕様一致(AC達成)",
+    "変更範囲遵守",
+    "副作用なし(既存破壊なし)",
+    "検証十分性"
+  ],
+  "failure_type": "spec_missing"
+}

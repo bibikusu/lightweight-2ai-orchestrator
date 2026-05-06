@@ -1116,3 +1116,47 @@ git stash list
 - `git stash` 系全般
 - `git reset --hard`
 - `git branch -D` / `git branch -d`
+## 検証コマンド存在ルールと責務境界（session-178-pre 正本化 / session-179 昇格）
+
+### VCER: 検証コマンド存在ルール
+
+session JSON / acceptance YAML に記載される verification command が
+実行時に到達可能であることを保証する。
+session-177 で発生した「存在しない test path を確認コマンドに含めた事故」を
+再発させないための運用契約である。
+
+- **VCER-001** (MUST): `acceptance_criteria[].test_name` で参照される test 関数は、session 完了時点で repo 内に実在しなければならない。本 session で新規作成する場合は `allowed_changes_detail` に対応する test ファイルパスを明記しなければならない。
+- **VCER-002** (MUST): acceptance YAML の `verification:` ブロックに記載される shell コマンドが参照する file path・script path・test path は、コマンド実行時点で実在しなければならない。実在が保証できない path を含むコマンドを `verification:` に記載してはならない。
+- **VCER-003** (MUST): 参謀 (Claude Web) が ClaudeCode 投入文を生成する際、検収コマンド中に含める test path が「本 session で新規追加される path」と「既存 path」のどちらに該当するかを明示しなければならない。
+- **VCER-004** (SHOULD): verification command 中で参照する path は、新規追加 path の場合「本 session で作成」と注記し、既存 path の場合「既存」と注記することが望ましい。
+
+**違反時の対応:**
+
+- 参謀検収段階で全 verification command の path 実在を `grep` / `ls` で確認する。
+- 違反検出時は ClaudeCode 投入を保留し、参謀が path リストを修正する。
+- 違反が push 後に判明した場合は `BACKLOG-VCER-VIOLATION` として起票する。
+
+---
+
+### RB: 責務境界（Step0 / hook / post-push）
+
+3層の検証は役割が異なる。責務を固定し、MUST 重複させない。
+
+| 層 | タイミング | ツール | 主な責務 |
+|---|---|---|---|
+| **RB-001** Step0 check | session 開始前 | `scripts/step0_check.sh` | HEAD / origin/main / working tree / stash の前提確認 |
+| **RB-002** hook verification | session 実行中（tool call 単位） | `.claude/hooks/**`（別 session で実装予定） | Write/Edit/Bash の forbidden_changes 違反をリアルタイム検知 |
+| **RB-003** post-push verification | `git push` 成功後 | commander / 参謀 手動実行 | push 後の repo 整合性・既存テスト regression の確認 |
+
+**各層の failure_action（共通原則）:**
+
+- 異常検出時は **MUST 即停止** し、commander に報告する。
+- 自動回復・自動 revert は禁止する。
+- 原因が push 操作にあるか session 内の実装にあるかを切り分けてから対処する。
+
+**重複排除ルール:**
+
+- 同一チェックを複数層で実施する場合は最も適した層に集約し、他層は当該チェックを省略する。
+- RB-001 は「実行前の状態確認」に特化し、test 実行・push 後確認は担当しない。
+- RB-002 は「tool call 単位の妥当性」に特化し、session 全体の整合性確認は担当しない。
+- RB-003 は「push 後の整合性」に特化し、session 開始前確認・tool call 単位の検証は担当しない。

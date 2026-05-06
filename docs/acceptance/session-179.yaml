@@ -1,0 +1,126 @@
+session_id: "session-179"
+
+goal: >-
+  session-178-pre.yaml に一時正本化された VCER-001..004 と RB-001..003 を
+  session-179-pre.yaml の promotion_spec に従って docs/global_rules.md 末尾に
+  新規セクションとして追記し恒久正本化する。canonical source は
+  session-179-pre.yaml の promotion_spec.text_to_add であり、純粋 VERBATIM
+  コピーのみを実施する。global_rules.md の既存行は一切変更しない。
+
+scope:
+  - "docs/global_rules.md の末尾に新規セクションを追記する"
+  - "新セクション内に VCER-001..004 を列挙する"
+  - "新セクション内に RB-001..003 を列挙する"
+  - "違反時の対応と責任主体を明文化する"
+  - "docs/sessions/session-179.json と docs/acceptance/session-179.yaml を新規追加する"
+
+out_of_scope:
+  - "docs/global_rules.md の既存行の編集"
+  - "docs/master_instruction.md の変更"
+  - "docs/acceptance/session-178-pre.yaml の編集"
+  - "docs/acceptance/session-179-pre.yaml の編集"
+  - "scripts/** の変更"
+  - "tests/** の変更"
+  - "orchestration/** の変更"
+  - "run_session.py の変更"
+  - ".claude/** の変更"
+  - "VCER-005 の追加 (session-179a-pre で独立起票予定 / 本セッション scope 外)"
+  - "VCER 自動チェックスクリプトの実装"
+  - "CLAUDE.md (project root) の作成"
+  - "hook 実装"
+
+review_points:
+  - "仕様一致（AC達成）"
+  - "変更範囲遵守"
+  - "副作用なし（既存破壊なし）"
+  - "検証十分性"
+
+# canonical_source: docs/acceptance/session-179-pre.yaml の promotion_spec.text_to_add
+# を純粋 VERBATIM コピーで global_rules.md 末尾に追記すること。
+# ClaudeCode はテキストを再構成・再翻訳・整形・追加・削除いずれも禁止。
+# session-178-pre.yaml の contracts (VCER-001..004 + RB-001..003) と等価であること。
+# VCER-005 は canonical source に未定義のため本セッションでは扱わない
+# (session-179a-pre で独立起票予定)。
+
+acceptance:
+  - id: "AC-179-01"
+    requirement: "docs/sessions/session-179.json が 14キー全揃で存在する"
+    test_name: "test_session_179_json_has_14_keys"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "session-179.json をパースし 14キー (session_id/phase_id/title/goal/scope/out_of_scope/constraints/acceptance_ref/allowed_changes_detail/forbidden_changes/completion_criteria/acceptance_criteria/review_points/failure_type) の存在を確認する"
+
+  - id: "AC-179-02"
+    requirement: "docs/acceptance/session-179.yaml が存在し session_id == session-179 である"
+    test_name: "test_session_179_yaml_session_id_matches"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "session-179.yaml をパースし トップレベル session_id が 'session-179' であることを確認する"
+
+  - id: "AC-179-03"
+    requirement: "docs/global_rules.md に新セクションヘッダが存在する"
+    test_name: "test_global_rules_has_vcer_rb_section_header"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "grep -nF '## 検証コマンド存在ルールと責務境界（session-178-pre 正本化 / session-179 昇格）' docs/global_rules.md でヒット件数 1 以上を確認する"
+
+  - id: "AC-179-04"
+    requirement: "新セクションに VCER-001..004 と RB-001..003 が列挙されている"
+    test_name: "test_global_rules_has_vcer_004_rb_003_ids"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "grep -c で VCER-001 / VCER-002 / VCER-003 / VCER-004 / RB-001 / RB-002 / RB-003 がそれぞれ 1 以上ヒットすることを確認する"
+
+  - id: "AC-179-05"
+    requirement: "git diff origin/main HEAD -- docs/global_rules.md で deletions = 0"
+    test_name: "test_global_rules_promotion_zero_deletion"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "git diff origin/main HEAD -- docs/global_rules.md | grep -c '^-[^-]' で 0 を確認する"
+
+  - id: "AC-179-06"
+    requirement: "git diff origin/main HEAD --name-only は3ファイル限定"
+    test_name: "test_session_179_changed_files_within_3_files"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "git diff origin/main HEAD --name-only の出力が docs/sessions/session-179.json / docs/acceptance/session-179.yaml / docs/global_rules.md の3行のみであることを確認する"
+
+manual_acceptance:
+  - id: "MAC-179-01"
+    description: "新セクションが「## セッション起票ガバナンス（session-176-pre 確立）」直後に追記されていること"
+    verification_method: "commander が docs/global_rules.md を目視レビューする"
+
+  - id: "MAC-179-02"
+    description: "session-178-pre.yaml の contracts と新セクションの VCER-001..004 + RB-001..003 文言が等価であること"
+    verification_method: "commander が両ブロックを並べて目視レビューする"
+
+  - id: "MAC-179-03"
+    description: "新セクションに VCER-005 が含まれていないこと (canonical source に未定義のため scope 外)"
+    verification_method: "commander が docs/global_rules.md の新セクションを目視確認し VCER-005 文字列が存在しないことを確認する"
+
+completion_checks:
+  - "docs/sessions/session-179.json が新規作成されている"
+  - "docs/acceptance/session-179.yaml が新規作成されている"
+  - "docs/global_rules.md 末尾に新セクションが追記されている"
+  - "deletions = 0 (既存行不変)"
+  - "変更ファイルが 3 件のみ"
+  - "新セクションに VCER-005 が含まれない"
+
+change_guardrails:
+  allowed_changes:
+    - "docs/sessions/session-179.json (新規)"
+    - "docs/acceptance/session-179.yaml (新規)"
+    - "docs/global_rules.md (末尾追記のみ)"
+  forbidden_changes:
+    - "docs/global_rules.md の既存行の編集"
+    - "docs/master_instruction.md"
+    - "docs/acceptance/session-178-pre.yaml"
+    - "docs/acceptance/session-179-pre.yaml"
+    - "scripts/** / tests/** / orchestration/** / .claude/**"
+    - "git amend / push --force / reset --hard / rebase"
