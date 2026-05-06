@@ -1,0 +1,126 @@
+{
+  "session_id": "session-177",
+  "phase_id": "P7",
+  "type": "implementation",
+  "title": "scripts/step0_check.sh を追加し Session 開始前の状態確認を自動化する",
+  "goal": "global_rules.md 項目A (Step0 標準) を実行可能スクリプトとして実装する。git status / HEAD / origin/main / stash list を一括確認し、期待 hash 不一致時のみ非0終了する scripts/step0_check.sh を新規追加し、テストで動作を検証する",
+  "scope": [
+    "scripts/step0_check.sh を新規作成し Step0 状態確認を実装する",
+    "tests/scripts/test_step0_check_script.py を新規作成し正常系・異常系の4テストを実装する",
+    "docs/sessions/session-177.json を起票する",
+    "docs/acceptance/session-177.yaml を起票する"
+  ],
+  "out_of_scope": [
+    "orchestration の変更",
+    "既存 scripts/new_session.sh の変更",
+    "既存 tests/scripts/__init__.py の変更",
+    "既存 tests/scripts/test_new_session_script.py の変更",
+    "docs/config/** の変更",
+    ".claude/** の変更",
+    "backend API 実装",
+    "git push / stash / amend / rebase / cherry-pick / reset --hard / branch -D 実行",
+    "session-178 以降の未来機能"
+  ],
+  "constraints": [
+    "scripts/step0_check.sh は bash strict mode (set -euo pipefail) を使用する",
+    "scripts/step0_check.sh は macOS 標準環境 (bash 3.2+) で動作すること",
+    "40桁の固定 commit hash をスクリプト・テストにハードコードしない",
+    "STEP0_UNTRACKED_ALLOWLIST 環境変数で allowlist を上書き可能にする",
+    "引数なし実行は exit 0 (報告のみ)",
+    "期待 hash が指定されてミスマッチの場合のみ exit 非0",
+    "テストは repo 本体 git 状態に依存した固定 hash を使わない",
+    "ruff --fix 禁止",
+    "1セッション1目的",
+    "曖昧語を使用しない"
+  ],
+  "acceptance_ref": "docs/acceptance/session-177.yaml",
+  "allowed_changes": [
+    "scripts/step0_check.sh",
+    "tests/scripts/test_step0_check_script.py",
+    "docs/sessions/session-177.json",
+    "docs/acceptance/session-177.yaml"
+  ],
+  "allowed_changes_detail": [
+    "scripts/step0_check.sh: Step0 状態確認の自動化スクリプトのみ新規作成",
+    "tests/scripts/test_step0_check_script.py: scripts/step0_check.sh の正常系・異常系検証のみ新規作成",
+    "docs/sessions/session-177.json: session-177 定義のみ追加",
+    "docs/acceptance/session-177.yaml: session-177 acceptance のみ追加"
+  ],
+  "forbidden_changes": [
+    "orchestration/**",
+    "scripts/new_session.sh",
+    "tests/scripts/__init__.py",
+    "tests/scripts/test_new_session_script.py",
+    "docs/config/**",
+    ".claude/**",
+    "DL/**",
+    "既存 docs/sessions/*.json (session-177.json 除く)",
+    "既存 docs/acceptance/*.yaml (session-177.yaml 除く)",
+    "git push 実行",
+    "git stash 系操作",
+    "git amend / rebase / cherry-pick / reset --hard / branch -D 実行",
+    "ruff --fix 実行",
+    "scope 外ファイル変更"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-177-01",
+      "type": "artifact",
+      "condition": "scripts/step0_check.sh が作成され実行権限が付与されている"
+    },
+    {
+      "id": "CC-177-02",
+      "type": "artifact",
+      "condition": "tests/scripts/test_step0_check_script.py が作成されている"
+    },
+    {
+      "id": "CC-177-03",
+      "type": "artifact",
+      "condition": "引数なし実行で exit 0、不正 hash 指定で exit 非0 が確認できる"
+    },
+    {
+      "id": "CC-177-04",
+      "type": "artifact",
+      "condition": "STEP0_UNTRACKED_ALLOWLIST env var override が exit 0 で動作する"
+    },
+    {
+      "id": "CC-177-05",
+      "type": "non_regression",
+      "condition": "40桁固定 hash がスクリプト・テストにハードコードされていない"
+    },
+    {
+      "id": "CC-177-06",
+      "type": "non_regression",
+      "condition": "既存テスト (tests/ 配下) が regression しない"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-177-01",
+      "description": "step0_check.sh が引数なしで exit 0 を返す",
+      "test_name": "test_step0_check_exits_0_no_args"
+    },
+    {
+      "id": "AC-177-02",
+      "description": "step0_check.sh が不正 hash 指定で exit 非0 を返す",
+      "test_name": "test_step0_check_exits_nonzero_bad_hash"
+    },
+    {
+      "id": "AC-177-03",
+      "description": "step0_check.sh に40桁固定 hash がハードコードされていない",
+      "test_name": "test_step0_check_no_hardcoded_hashes"
+    },
+    {
+      "id": "AC-177-04",
+      "description": "STEP0_UNTRACKED_ALLOWLIST env var override で exit 0 を返す",
+      "test_name": "test_step0_check_allowlist_env_override"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ],
+  "failure_type": "spec_missing"
+}

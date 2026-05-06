@@ -1,0 +1,82 @@
+session_id: session-177
+goal: Step0 状態確認を自動化する scripts/step0_check.sh を新規追加し、テストで動作を検証する
+
+scope:
+  - scripts/step0_check.sh を新規作成し Step0 状態確認を実装する
+  - tests/scripts/test_step0_check_script.py を新規作成し4テストを実装する
+  - docs/sessions/session-177.json を起票する
+  - docs/acceptance/session-177.yaml を起票する
+
+out_of_scope:
+  - orchestration の変更
+  - 既存 scripts/new_session.sh の変更
+  - 既存 tests/scripts/__init__.py / test_new_session_script.py の変更
+  - docs/config/** の変更
+  - backend API 実装
+  - git push / stash 系操作
+
+review_points:
+  - 仕様一致（AC達成）
+  - 変更範囲遵守
+  - 副作用なし（既存破壊なし）
+  - 検証十分性
+
+acceptance:
+  - id: AC-177-01
+    requirement: step0_check.sh が引数なしで exit 0 を返す
+    test_name: test_step0_check_exits_0_no_args
+    type: automated
+    manual_check: false
+    verification:
+      - ./scripts/step0_check.sh を引数なしで実行する
+      - exit code が 0 である
+
+  - id: AC-177-02
+    requirement: step0_check.sh が不正 hash 指定で exit 非0 を返す
+    test_name: test_step0_check_exits_nonzero_bad_hash
+    type: automated
+    manual_check: false
+    verification:
+      - ./scripts/step0_check.sh に存在しない hash を渡して実行する
+      - exit code が 非0 である
+
+  - id: AC-177-03
+    requirement: step0_check.sh に40桁固定 hash がハードコードされていない
+    test_name: test_step0_check_no_hardcoded_hashes
+    type: automated
+    manual_check: false
+    verification:
+      - scripts/step0_check.sh を grep -E '[0-9a-f]{40}' で検査する
+      - マッチなし (固定 hash なし) を確認する
+
+  - id: AC-177-04
+    requirement: STEP0_UNTRACKED_ALLOWLIST env var override で exit 0 を返す
+    test_name: test_step0_check_allowlist_env_override
+    type: automated
+    manual_check: false
+    verification:
+      - STEP0_UNTRACKED_ALLOWLIST にパターンを設定して実行する
+      - exit code が 0 である
+      - DEFAULT_ALLOWED_UNTRACKED / ALLOWED_UNTRACKED 配列が定義されている
+
+completion_checks:
+  - CC-177-01: scripts/step0_check.sh が作成され実行権限が付与されている
+  - CC-177-02: tests/scripts/test_step0_check_script.py が作成されている
+  - CC-177-03: AC-177-01〜04 が全 PASS する
+  - CC-177-04: 40桁固定 hash がハードコードされていない
+  - CC-177-05: 既存テストが regression しない
+
+change_guardrails:
+  allowed_changes:
+    - scripts/step0_check.sh
+    - tests/scripts/test_step0_check_script.py
+    - docs/sessions/session-177.json
+    - docs/acceptance/session-177.yaml
+  forbidden_changes:
+    - orchestration/**
+    - scripts/new_session.sh
+    - tests/scripts/__init__.py
+    - tests/scripts/test_new_session_script.py
+    - docs/config/**
+    - .claude/**
+    - DL/**
