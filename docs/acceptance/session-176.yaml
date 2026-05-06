@@ -1,0 +1,85 @@
+session_id: session-176
+goal: session_id 衝突・必須14キー欠落・acceptance_ref 不整合・誤上書きを fail-fast で防ぐ scripts/new_session.sh を追加する
+
+scope:
+  - scripts/new_session.sh を新規作成し scaffold 生成と事前検査を実装する
+  - tests/scripts/__init__.py を新規作成する
+  - tests/scripts/test_new_session_script.py を新規作成し4テストを実装する
+  - docs/sessions/session-176.json を起票する
+  - docs/acceptance/session-176.yaml を起票する
+
+out_of_scope:
+  - orchestration の変更
+  - 既存 scripts / tests / docs/sessions / docs/acceptance の変更
+  - backend API 実装
+  - phase canonicalization 実装
+  - git push / stash / amend 系操作
+
+acceptance:
+  - id: AC-176-01
+    requirement: new_session.sh が未使用 session_id で JSON と YAML を生成する
+    test_name: test_new_session_script_creates_json_and_yaml
+    type: automated
+    manual_check: false
+    verification:
+      - 一時ディレクトリで未使用 session_id を渡して実行する
+      - docs/sessions/<session_id>.json が生成される
+      - docs/acceptance/<session_id>.yaml が生成される
+      - exit code が 0 である
+
+  - id: AC-176-02
+    requirement: new_session.sh が既存 session_id で非0終了しファイルを変更しない
+    test_name: test_new_session_script_rejects_existing_session_id
+    type: automated
+    manual_check: false
+    verification:
+      - 既存 JSON が存在する session_id を渡して実行する
+      - exit code が 非0 である
+      - 既存 JSON が変更されていない
+      - YAML が新規作成されていない
+
+  - id: AC-176-03
+    requirement: 生成 JSON に必須14キーが全て含まれている
+    test_name: test_new_session_script_outputs_required_session_keys
+    type: automated
+    manual_check: false
+    verification:
+      - 生成 JSON を json.loads する
+      - session_id / phase_id / title / goal / scope / out_of_scope / constraints / acceptance_ref の8キーが存在する
+      - allowed_changes_detail / forbidden_changes / completion_criteria / acceptance_criteria / review_points / failure_type の6キーが存在する
+
+  - id: AC-176-04
+    requirement: JSON の acceptance_ref と YAML 実体パスが一致している
+    test_name: test_new_session_script_acceptance_ref_matches_yaml_path
+    type: automated
+    manual_check: false
+    verification:
+      - JSON の acceptance_ref が "docs/acceptance/<session_id>.yaml" と一致する
+      - 同パスに YAML ファイルが実際に存在する
+
+completion_checks:
+  - CC-176-01: scripts/new_session.sh が作成され実行権限が付与されている
+  - CC-176-02: tests/scripts/__init__.py と tests/scripts/test_new_session_script.py が作成されている
+  - CC-176-03: AC-176-01〜04 が全 PASS する
+  - CC-176-04: 既存テストが regression しない
+  - CC-176-05: forbidden_changes に列挙されたパスに変更がない
+
+change_guardrails:
+  allowed_changes:
+    - scripts/new_session.sh
+    - tests/scripts/__init__.py
+    - tests/scripts/test_new_session_script.py
+    - docs/sessions/session-176.json
+    - docs/acceptance/session-176.yaml
+  forbidden_changes:
+    - orchestration/run_session.py
+    - orchestration/selector/**
+    - orchestration/queue/**
+    - orchestration/lock/**
+    - docs/config/**
+    - .claude/**
+    - DL/**
+    - 既存 docs/sessions/*.json (session-176.json 除く)
+    - 既存 docs/acceptance/*.yaml (session-176.yaml 除く)
+    - 既存 tests/**/*.py (本 session で新規追加するファイル除く)
+    - 既存 scripts/** (new_session.sh 除く)

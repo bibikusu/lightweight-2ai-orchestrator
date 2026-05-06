@@ -1,0 +1,157 @@
+{
+  "session_id": "session-176",
+  "phase_id": "P7",
+  "type": "implementation",
+  "title": "scripts/new_session.sh を追加し session 起票時の衝突・欠落・誤上書きを fail-fast で防ぐ",
+  "goal": "session_id 衝突・必須14キー欠落・acceptance_ref 不整合・JSON/YAML 生成漏れ・既存ファイル誤上書きを fail-fast で防ぐ scripts/new_session.sh を新規追加し、テストで動作を検証する",
+  "scope": [
+    "scripts/new_session.sh を新規作成し、session JSON と acceptance YAML のスキャフォールド生成と事前検査を実装する",
+    "tests/scripts/__init__.py を新規作成する",
+    "tests/scripts/test_new_session_script.py を新規作成し、正常系・異常系の4テストを実装する",
+    "docs/sessions/session-176.json を起票する",
+    "docs/acceptance/session-176.yaml を起票する"
+  ],
+  "out_of_scope": [
+    "orchestration/run_session.py の変更",
+    "orchestration/selector/** の変更",
+    "orchestration/queue/** の変更",
+    "orchestration/lock/** の変更",
+    "docs/config/** の変更",
+    "既存 scripts/** の変更",
+    "既存 tests/**/*.py の変更",
+    "backend API 実装",
+    "phase canonicalization 実装",
+    "selector md5 baseline 更新",
+    "dependency graph 解決",
+    "session-172 系ファイルの変更",
+    "git push / amend / rebase / cherry-pick / reset --hard / branch -D",
+    "git stash 系操作",
+    "session-177 以降の未来機能"
+  ],
+  "constraints": [
+    "scripts/new_session.sh は bash strict mode (set -euo pipefail) を使用する",
+    "scripts/new_session.sh は macOS 標準環境 (bash 3.2+) で動作すること",
+    "jq / yq などの未保証外部依存は使わない (heredoc で実装する)",
+    "既存ファイルを絶対に上書きしない",
+    "生成途中で失敗した場合、片方ファイルだけ残さない (trap で cleanup)",
+    "テストは repo 本体の docs/sessions / docs/acceptance を汚さない (tmp_path で隔離)",
+    "ruff --fix 禁止",
+    "selfcheck script/assert/key の改変禁止",
+    "1セッション1目的",
+    "曖昧語を使用しない",
+    "session 定義の後付け変更を行わない"
+  ],
+  "acceptance_ref": "docs/acceptance/session-176.yaml",
+  "allowed_changes": [
+    "scripts/new_session.sh",
+    "tests/scripts/__init__.py",
+    "tests/scripts/test_new_session_script.py",
+    "docs/sessions/session-176.json",
+    "docs/acceptance/session-176.yaml"
+  ],
+  "allowed_changes_detail": [
+    "scripts/new_session.sh: 新規 session JSON/YAML scaffold 生成と事前検査のみ追加",
+    "tests/scripts/__init__.py: 新規パッケージ初期化のみ (空ファイル可)",
+    "tests/scripts/test_new_session_script.py: scripts/new_session.sh の正常系・異常系検証のみ追加",
+    "docs/sessions/session-176.json: session-176 定義のみ追加",
+    "docs/acceptance/session-176.yaml: session-176 acceptance のみ追加"
+  ],
+  "forbidden_changes": [
+    "orchestration/run_session.py",
+    "orchestration/selector/**",
+    "orchestration/queue/**",
+    "orchestration/lock/**",
+    "docs/config/**",
+    ".claude/**",
+    "DL/**",
+    "既存 docs/sessions/*.json (session-176.json 除く)",
+    "既存 docs/acceptance/*.yaml (session-176.yaml 除く)",
+    "既存 tests/**/*.py (本 session で新規追加するファイル除く)",
+    "既存 scripts/** (new_session.sh 除く)",
+    "git push 実行",
+    "git stash 系操作",
+    "git amend / rebase / cherry-pick / reset --hard / branch -D 実行",
+    "ruff --fix 実行",
+    "scope 外ファイル変更"
+  ],
+  "failure_type_enum": [
+    "build_error",
+    "import_error",
+    "type_mismatch",
+    "test_failure",
+    "scope_violation",
+    "regression",
+    "spec_missing"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-176-01",
+      "type": "artifact",
+      "condition": "scripts/new_session.sh が作成され実行権限が付与されている"
+    },
+    {
+      "id": "CC-176-02",
+      "type": "artifact",
+      "condition": "tests/scripts/__init__.py と tests/scripts/test_new_session_script.py が作成されている"
+    },
+    {
+      "id": "CC-176-03",
+      "type": "artifact",
+      "condition": "test_new_session_script_creates_json_and_yaml が PASS する"
+    },
+    {
+      "id": "CC-176-04",
+      "type": "artifact",
+      "condition": "test_new_session_script_rejects_existing_session_id が PASS する"
+    },
+    {
+      "id": "CC-176-05",
+      "type": "artifact",
+      "condition": "test_new_session_script_outputs_required_session_keys が PASS する"
+    },
+    {
+      "id": "CC-176-06",
+      "type": "artifact",
+      "condition": "test_new_session_script_acceptance_ref_matches_yaml_path が PASS する"
+    },
+    {
+      "id": "CC-176-07",
+      "type": "non_regression",
+      "condition": "既存テスト (tests/ 配下) が regression しない"
+    },
+    {
+      "id": "CC-176-08",
+      "type": "non_regression",
+      "condition": "orchestration / docs/config / .claude / DL / 既存 session・acceptance ファイルに変更がない"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-176-01",
+      "description": "new_session.sh が未使用 session_id で JSON と YAML を生成する",
+      "test_name": "test_new_session_script_creates_json_and_yaml"
+    },
+    {
+      "id": "AC-176-02",
+      "description": "new_session.sh が既存 session_id で非0終了しファイルを変更しない",
+      "test_name": "test_new_session_script_rejects_existing_session_id"
+    },
+    {
+      "id": "AC-176-03",
+      "description": "生成 JSON に必須14キーが全て含まれている",
+      "test_name": "test_new_session_script_outputs_required_session_keys"
+    },
+    {
+      "id": "AC-176-04",
+      "description": "JSON の acceptance_ref と YAML 実体パスが一致している",
+      "test_name": "test_new_session_script_acceptance_ref_matches_yaml_path"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ],
+  "failure_type": "spec_missing"
+}
