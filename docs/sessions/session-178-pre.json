@@ -1,0 +1,150 @@
+{
+  "session_id": "session-178-pre",
+  "phase_id": "P7",
+  "title": "Step0 / hook / post-push verification contract と verification command registry の docs-only 正本化",
+  "goal": "session-177 実装中に発生した『存在しない tests/test_session_guardrails.py を verification command に含めた事故』を再発防止するため、Step0 / hook / post-push verification の責務境界 (RB) と verification command existence rule (VCER) を docs/acceptance/session-178-pre.yaml の本文に埋め込んで docs-only で正本化する。global_rules.md への昇格は別 session で行う。",
+  "scope": [
+    "Step0 verification contract を docs/acceptance/session-178-pre.yaml の contracts: ブロックに定義する",
+    "post-push verification contract を同 yaml の contracts: ブロックに定義する",
+    "hook verification contract を同 yaml の contracts: ブロックに定義する",
+    "verification command existence rule (VCER-001..004) を同 yaml に明文化する",
+    "Step0 / hook / post-push の責務境界 (RB-001..003) を同 yaml に明文化する",
+    "session-178-pre.json と session-178-pre.yaml を新規追加する"
+  ],
+  "out_of_scope": [
+    "global_rules.md への規則昇格 (別 session で実施)",
+    "master_instruction.md の変更",
+    "scripts/step0_check.sh の変更",
+    "tests/scripts/test_step0_check_script.py の変更",
+    "tests/test_session_guardrails.py の新規作成 (別 session で必要に応じて作成)",
+    "hook 実装 (.claude/** の変更)",
+    "verification command 自動生成スクリプトの実装",
+    "orchestration/** の変更",
+    "run_session.py の変更",
+    "queue engine 実装",
+    "Dashboard UI 実装",
+    "docs/config/** の変更",
+    "DL/** の変更"
+  ],
+  "constraints": [
+    "docs-only session とする",
+    "変更ファイルは2件のみ (session json + acceptance yaml)",
+    "既存実装ファイルを一切変更しない",
+    "yaml 本体に contracts: ブロックを必ず含める (global_rules.md が forbidden のため)",
+    "RFC2119 の MUST / SHOULD / MAY を採用する",
+    "VCER は最低4件 (VCER-001..004) 定義する",
+    "RB は最低3件 (RB-001..003) 定義する",
+    "1 session 1 purpose を守る",
+    "review_points は4軸固定とする",
+    "固定 commit hash を spec 内にハードコードしない",
+    "Template C 通過前に完了扱いしない"
+  ],
+  "acceptance_ref": "docs/acceptance/session-178-pre.yaml",
+  "allowed_changes_detail": [
+    "docs/sessions/session-178-pre.json: session 定義のみ追加 (本投入文の正本をそのまま配置)",
+    "docs/acceptance/session-178-pre.yaml: acceptance + contracts ブロック (VCER + RB) のみ追加 (本投入文の正本をそのまま配置)"
+  ],
+  "forbidden_changes": [
+    "global_rules.md",
+    "master_instruction.md",
+    "scripts/step0_check.sh",
+    "scripts/new_session.sh",
+    "tests/scripts/test_step0_check_script.py",
+    "tests/scripts/test_new_session_script.py",
+    "tests/scripts/__init__.py",
+    "orchestration/**",
+    "docs/config/**",
+    ".claude/**",
+    "DL/**",
+    "既存 docs/sessions/*.json (session-178-pre.json 除く)",
+    "既存 docs/acceptance/*.yaml (session-178-pre.yaml 除く)",
+    "run_session.py",
+    "queue engine 実装",
+    "hook 実装",
+    "verification command 自動生成",
+    "spec 内固定 hash ハードコード"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-178PRE-01",
+      "type": "artifact",
+      "condition": "docs/sessions/session-178-pre.json が追加されている"
+    },
+    {
+      "id": "CC-178PRE-02",
+      "type": "artifact",
+      "condition": "docs/acceptance/session-178-pre.yaml が追加されている"
+    },
+    {
+      "id": "CC-178PRE-03",
+      "type": "document_rule",
+      "condition": "session-178-pre.yaml に contracts.verification_command_existence_rule が定義され VCER-001..004 を含む"
+    },
+    {
+      "id": "CC-178PRE-04",
+      "type": "document_rule",
+      "condition": "session-178-pre.yaml に contracts.responsibility_boundaries が定義され RB-001..003 (Step0 / hook / post-push) を含む"
+    },
+    {
+      "id": "CC-178PRE-05",
+      "type": "document_rule",
+      "condition": "session-178-pre.yaml の contracts ブロック内に RFC2119 キーワード MUST が最低3箇所、SHOULD が最低1箇所出現する"
+    },
+    {
+      "id": "CC-178PRE-06",
+      "type": "side_effect_free",
+      "condition": "allowed_changes_detail に含まれない (session json + acceptance yaml 以外の) ファイルを変更しない"
+    },
+    {
+      "id": "CC-178PRE-07",
+      "type": "non_regression",
+      "condition": "既存テスト (tests/ 配下) が regression なく通過する"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-178PRE-01",
+      "description": "session-178-pre.json が14キー構造を満たし、phase_id=P7 / failure_type=spec_missing / review_points 4軸を持つ",
+      "test_name": "test_session_178pre_json_structure_manual"
+    },
+    {
+      "id": "AC-178PRE-02",
+      "description": "session-178-pre.yaml に contracts.verification_command_existence_rule が定義され VCER-001..004 を含む",
+      "test_name": "test_session_178pre_vcer_defined_manual"
+    },
+    {
+      "id": "AC-178PRE-03",
+      "description": "session-178-pre.yaml に contracts.responsibility_boundaries が定義され RB-001 (Step0) / RB-002 (hook) / RB-003 (post-push) を含む",
+      "test_name": "test_session_178pre_rb_defined_manual"
+    },
+    {
+      "id": "AC-178PRE-04",
+      "description": "docs-only scope を逸脱せず、変更ファイルが session-178-pre.json と session-178-pre.yaml の2件のみである",
+      "test_name": "test_session_178pre_docs_only_scope_manual"
+    },
+    {
+      "id": "AC-178PRE-05",
+      "description": "session-178-pre.yaml の contracts ブロック内に RFC2119 キーワード MUST が最低3箇所、SHOULD が最低1箇所出現する",
+      "test_name": "test_session_178pre_rfc2119_keywords_manual"
+    }
+  ],
+  "manual_acceptance_criteria": [
+    {
+      "id": "MAC-178PRE-01",
+      "description": "変更範囲が session json + acceptance yaml の2件以内に収まり、forbidden_changes に該当するファイルが含まれていない",
+      "verification_method": "git diff --name-only HEAD~1 HEAD を commander が目視確認し、2行のみであることを確認する"
+    },
+    {
+      "id": "MAC-178PRE-02",
+      "description": "yaml 本文の contracts ブロックが VCER-001..004 と RB-001..003 を網羅しており、運用契約として読める",
+      "verification_method": "commander が docs/acceptance/session-178-pre.yaml の contracts: セクションを目視レビューする"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ],
+  "failure_type": "spec_missing"
+}

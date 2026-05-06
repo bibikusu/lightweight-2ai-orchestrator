@@ -1,0 +1,274 @@
+session_id: "session-178-pre"
+
+goal: >-
+  session-177 で発生した『存在しない tests/test_session_guardrails.py を
+  verification command に含めた事故』を再発防止するため、Step0 / hook /
+  post-push verification の責務境界 (RB) と verification command existence
+  rule (VCER) を docs-only で本 yaml 本文に正本化する。global_rules.md への
+  昇格は別 session で行う。
+
+scope:
+  - "Step0 verification contract を contracts: ブロックに定義する"
+  - "post-push verification contract を contracts: ブロックに定義する"
+  - "hook verification contract を contracts: ブロックに定義する"
+  - "verification command existence rule (VCER-001..004) を明文化する"
+  - "責務境界 (RB-001..003) を明文化する"
+  - "session-178-pre 一式 (json + yaml) を新規追加する"
+
+out_of_scope:
+  - "global_rules.md への規則昇格"
+  - "master_instruction.md の変更"
+  - "scripts/step0_check.sh の変更"
+  - "tests/scripts/ 配下の変更"
+  - "tests/test_session_guardrails.py の新規作成"
+  - "hook 実装"
+  - "orchestration/** の変更"
+  - "run_session.py の変更"
+  - "Dashboard 実装"
+  - ".claude/** の変更"
+  - "docs/config/** の変更"
+  - "DL/** の変更"
+
+review_points:
+  - "仕様一致（AC達成）"
+  - "変更範囲遵守"
+  - "副作用なし（既存破壊なし）"
+  - "検証十分性"
+
+# ============================================================
+# contracts: 本 docs-only session で正本化する運用契約。
+# 本 yaml が一時正本となる。後続 session で global_rules.md へ昇格予定。
+# RFC2119 の MUST / SHOULD / MAY を採用する。
+# ============================================================
+contracts:
+
+  # ------------------------------------------------------------
+  # VCER: Verification Command Existence Rule
+  # ------------------------------------------------------------
+  verification_command_existence_rule:
+    purpose: >-
+      session JSON / acceptance YAML に記載される verification command が
+      実行時に必ず到達可能であることを保証し、session-177 で発生した
+      『存在しない test path を確認コマンドに含めた事故』を再発させない。
+
+    rules:
+      - id: "VCER-001"
+        level: "MUST"
+        text: >-
+          session JSON の acceptance_criteria[].test_name で参照される
+          test 関数は、本 session 完了時点で repo 内に実在しなければならない。
+          test が本 session で新規作成される場合は allowed_changes_detail
+          に対応する test ファイル path を明記しなければならない。
+
+      - id: "VCER-002"
+        level: "MUST"
+        text: >-
+          acceptance YAML の verification: ブロックに記載される shell
+          コマンドが参照する file path・script path・test path は、
+          コマンド実行時点で実在しなければならない。実在が保証できない
+          path を含むコマンドを verification: に記載してはならない。
+
+      - id: "VCER-003"
+        level: "MUST"
+        text: >-
+          参謀 (Claude Web) が ClaudeCode 投入文を生成する際、検収コマンド
+          中に含める test path は、本 session で新規追加される path と
+          既存 path のどちらに該当するかを明示しなければならない。
+
+      - id: "VCER-004"
+        level: "SHOULD"
+        text: >-
+          verification command 中で参照する path は、新規追加 path で
+          ある場合『本 session で作成』と注記し、既存 path である場合
+          『既存』と注記することが望ましい。
+
+    enforcement:
+      - "参謀検収段階で全 verification command の path 実在を grep / ls で確認する"
+      - "違反検出時は ClaudeCode 投入を保留し、参謀が path リストを修正する"
+      - "違反が push 後に判明した場合は BACKLOG-VCER-VIOLATION として起票する"
+
+  # ------------------------------------------------------------
+  # RB: Responsibility Boundaries (Step0 / hook / post-push)
+  # ------------------------------------------------------------
+  responsibility_boundaries:
+    purpose: >-
+      Step0 check / hook / post-push verification の3層は重複ではなく
+      役割が異なる。本 contract で責務境界を固定する。
+
+    boundaries:
+      - id: "RB-001"
+        layer: "Step0 check"
+        when: "session 開始前 (chat 開始時 / ClaudeCode 投入直前)"
+        tool: "scripts/step0_check.sh (session-177 で実装済)"
+        responsibility: >-
+          repo の現状態 (HEAD / origin/main / working tree / stash) が
+          session 開始の前提条件と一致しているかを確認する。
+        scope:
+          - "HEAD == origin/main の確認"
+          - "期待 HEAD との一致確認 (引数指定時)"
+          - "working tree の許容外変更検知 (allowlist 方式)"
+          - "stash の存在報告"
+        non_scope:
+          - "session 中の個別 tool call の妥当性検証"
+          - "push 後の整合性検証"
+          - "test の実行"
+        failure_action: >-
+          drift / mismatch 検出時は MUST 即停止し、commander に報告する。
+          自動回復を試みてはならない。
+
+      - id: "RB-002"
+        layer: "hook verification"
+        when: "session 実行中、ClaudeCode の各 tool call の PreToolUse / PostToolUse タイミング"
+        tool: ".claude/hooks/** (本 session 範囲外、別 session で実装予定)"
+        responsibility: >-
+          個別の tool call (Write / Edit / Bash 等) が当該 session の
+          allowed_changes_detail / forbidden_changes に違反していないかを
+          リアルタイムで検証する。
+        scope:
+          - "Write / Edit 対象 path が forbidden_changes に該当しないかの判定"
+          - "Bash コマンドが git push / git stash 等の禁止操作でないかの判定"
+          - "scope 外 path への書込検知"
+        non_scope:
+          - "session 開始前の状態確認 (RB-001 の責務)"
+          - "push 後の整合性検証 (RB-003 の責務)"
+          - "test の合否判定"
+        failure_action: >-
+          違反検出時は当該 tool call を MUST ブロックし、ClaudeCode に
+          停止報告させる。
+
+      - id: "RB-003"
+        layer: "post-push verification"
+        when: "git push origin main 成功後"
+        tool: "commander または 参謀が手動実行する verification command 群"
+        responsibility: >-
+          push が正常に origin/main に反映されたこと、および push 後の
+          repo 状態が session の期待と一致していることを確認する。
+        scope:
+          - "HEAD == origin/main の同期確認"
+          - "working tree が allowlist 内に収まっていること"
+          - "stash が push 操作で破壊されていないこと"
+          - "session で追加された artifact の動作再確認 (例: scripts/step0_check.sh の self-test)"
+          - "既存テスト群が regression していないこと"
+        non_scope:
+          - "session 開始前の状態確認 (RB-001 の責務)"
+          - "session 中の個別 tool call の妥当性検証 (RB-002 の責務)"
+          - "新機能の追加実装"
+        failure_action: >-
+          整合性違反検出時は MUST 即報告し、原因が push 操作にあるか
+          session 内の実装にあるかを切り分ける。自動 revert は行わない。
+
+    overlap_policy: >-
+      3層の責務は MUST 重複させない。同じチェックを複数層で実施する場合は
+      最も適した層に集約し、他層は当該チェックを省略する。
+
+  # ------------------------------------------------------------
+  # 補足: 本 contracts の昇格パス
+  # ------------------------------------------------------------
+  promotion_path:
+    current_canonical_location: "docs/acceptance/session-178-pre.yaml (本 file)"
+    target_canonical_location: "docs/global_rules.md"
+    promotion_session: "未割当 (session-180 系で起票予定)"
+    promotion_blocker: "本 session が main に push されること"
+
+# ============================================================
+# acceptance: 本 session が満たすべき検収条件
+# ============================================================
+acceptance:
+  - id: "AC-178PRE-01"
+    requirement: "session-178-pre.json が14キー構造を満たし phase_id=P7 / failure_type=spec_missing / review_points 4軸を持つ"
+    test_name: "test_session_178pre_json_structure_manual"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "python3 -c でJSON load し required keys 14件全揃を確認する"
+      - "phase_id == 'P7' を確認する"
+      - "failure_type == 'spec_missing' を確認する"
+      - "review_points が ['仕様一致（AC達成）','変更範囲遵守','副作用なし（既存破壊なし）','検証十分性'] と完全一致することを確認する"
+
+  - id: "AC-178PRE-02"
+    requirement: "session-178-pre.yaml に contracts.verification_command_existence_rule が定義され VCER-001..004 を含む"
+    test_name: "test_session_178pre_vcer_defined_manual"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "yq または python3 yaml load で contracts.verification_command_existence_rule.rules を取得する"
+      - "VCER-001 / VCER-002 / VCER-003 / VCER-004 の id が全て存在することを確認する"
+      - "VCER-001..003 の level が MUST であることを確認する"
+
+  - id: "AC-178PRE-03"
+    requirement: "session-178-pre.yaml に contracts.responsibility_boundaries が定義され RB-001 (Step0) / RB-002 (hook) / RB-003 (post-push) を含む"
+    test_name: "test_session_178pre_rb_defined_manual"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "contracts.responsibility_boundaries.boundaries を取得する"
+      - "RB-001 の layer が 'Step0 check' であることを確認する"
+      - "RB-002 の layer が 'hook verification' であることを確認する"
+      - "RB-003 の layer が 'post-push verification' であることを確認する"
+      - "各 boundary に when / tool / responsibility / scope / non_scope / failure_action が存在することを確認する"
+
+  - id: "AC-178PRE-04"
+    requirement: "docs-only scope を逸脱せず、変更ファイルが session-178-pre.json と session-178-pre.yaml の2件のみである"
+    test_name: "test_session_178pre_docs_only_scope_manual"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "git status --short を実行する"
+      - "新規追加が docs/sessions/session-178-pre.json と docs/acceptance/session-178-pre.yaml の2件のみであることを確認する"
+      - "DL/ 以外の untracked / staged / modified ファイルが含まれていないことを確認する"
+
+  - id: "AC-178PRE-05"
+    requirement: "session-178-pre.yaml の contracts ブロック内に RFC2119 キーワード MUST が最低3箇所、SHOULD が最低1箇所出現する"
+    test_name: "test_session_178pre_rfc2119_keywords_manual"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "grep -c 'MUST' docs/acceptance/session-178-pre.yaml が 3 以上であることを確認する"
+      - "grep -c 'SHOULD' docs/acceptance/session-178-pre.yaml が 1 以上であることを確認する"
+
+manual_acceptance:
+  - id: "MAC-178PRE-01"
+    requirement: "変更範囲が session json + acceptance yaml の2件以内に収まり、forbidden_changes に該当するファイルが含まれていない"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "git diff --name-only HEAD~1 HEAD を実行する"
+      - "出力が docs/sessions/session-178-pre.json と docs/acceptance/session-178-pre.yaml の2行のみであることを目視確認する"
+
+  - id: "MAC-178PRE-02"
+    requirement: "yaml 本文の contracts ブロックが VCER-001..004 と RB-001..003 を網羅しており、運用契約として読める"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "commander が docs/acceptance/session-178-pre.yaml の contracts: セクションを目視レビューする"
+      - "VCER 4件 / RB 3件の責務記述が運用判断に十分であることを確認する"
+
+completion_checks:
+  - "CC-178PRE-01: docs/sessions/session-178-pre.json が追加されている"
+  - "CC-178PRE-02: docs/acceptance/session-178-pre.yaml が追加されている"
+  - "CC-178PRE-03: contracts.verification_command_existence_rule に VCER-001..004 が定義されている"
+  - "CC-178PRE-04: contracts.responsibility_boundaries に RB-001..003 が定義されている"
+  - "CC-178PRE-05: contracts ブロック内に RFC2119 MUST が3箇所以上、SHOULD が1箇所以上"
+  - "CC-178PRE-06: allowed_changes_detail に含まれないファイルを変更していない"
+  - "CC-178PRE-07: 既存テストが regression していない"
+
+change_guardrails:
+  allowed_changes:
+    - "docs/sessions/session-178-pre.json"
+    - "docs/acceptance/session-178-pre.yaml"
+  forbidden_changes:
+    - "global_rules.md"
+    - "master_instruction.md"
+    - "scripts/step0_check.sh"
+    - "scripts/new_session.sh"
+    - "tests/scripts/test_step0_check_script.py"
+    - "tests/scripts/test_new_session_script.py"
+    - "tests/scripts/__init__.py"
+    - "orchestration/**"
+    - "docs/config/**"
+    - ".claude/**"
+    - "DL/**"
+    - "既存 docs/sessions/*.json (session-178-pre.json 除く)"
+    - "既存 docs/acceptance/*.yaml (session-178-pre.yaml 除く)"
+    - "run_session.py"
+    - "spec 内固定 hash ハードコード"
