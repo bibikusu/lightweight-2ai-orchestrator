@@ -1067,3 +1067,52 @@ completed_stages は初回パイプラインの完了記録のみを保持し、
 
 chat 53 で `.venv/bin/pytest tests/` 実行時に `ModuleNotFoundError: orchestration` が発生した。
 真因は `pyproject.toml [tool.pytest.ini_options]` に `pythonpath = ["."]` が未設定だったこと、およびルート `conftest.py` 不在により repository root が import path に入らなかったことである。
+
+## セッション起票ガバナンス（session-176-pre 確立）
+
+### 項目A: Step0 標準
+
+chat 開始時・セッション起票前に必ず以下4コマンドを実行し、期待値と実測の一致を確認してから作業を開始する。
+
+```bash
+git status --short
+git rev-parse HEAD
+git rev-parse origin/main
+git stash list
+```
+
+- `git status --short` の出力が `?? DL/` 以外の untracked / modified を含む場合は停止して commander に報告する。
+- HEAD と origin/main が一致しない場合は停止して commander に報告する。
+- `git stash list` に封印 stash が存在する場合は投入文に明記する。
+
+### 項目B: session_id 採番ルール
+
+- 新規 session_id 採番前に `docs/sessions/` と `docs/acceptance/` の両方を grep し、未使用であることを確認する。
+- 形式は `session-XXX` または `session-XXXY`（Y は a-z の suffix）とする。
+- `-pre` 接尾辞は docs-only 起票専用とする。
+- 同一番号で目的が異なる session を作成してはならない。
+
+### 項目C: session_id 衝突防止ルール
+
+- `session-XXX-pre` と `session-XXX` が異なる目的を持つ命名を新規に作成してはならない。
+- 既存の `session-172-pre`（Dashboard 旧）と `session-172`（Review/Feedback Engine）は legacy 例外として保持する。
+- 新規衝突が検出された場合は起票拒否とし、commander 判定を仰ぐ。
+
+### 項目D: stash governance
+
+- `git stash` 系操作（push / pop / apply / drop / clear）は commander 手動のみ実行する。
+- ClaudeCode / Cursor / オーケストレーターは `git stash` 系を実行禁止とする。
+- 投入文には封印 stash の存在を必ず明示する。
+- stash pop 事故が発生した場合は即時 commander が `git stash push -m` で再封印する。
+
+### 項目E: ClaudeCode 禁止 git 操作
+
+以下は投入文に明示的な許可がない限り ClaudeCode が実行禁止とする。
+
+- `git push`（commander 手動のみ）
+- `git commit --amend`（commander 明示許可なし禁止）
+- `git rebase`
+- `git cherry-pick`
+- `git stash` 系全般
+- `git reset --hard`
+- `git branch -D` / `git branch -d`
