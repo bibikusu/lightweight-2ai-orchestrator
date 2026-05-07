@@ -1,119 +1,282 @@
 session_id: session-172d-pre
-goal: session-172 衝突解決後、read-only dashboard 実装仕様を session-172d として正本化する
+phase_id: P7
+title: "Project Command Center v0 仕様正本化（docs-only / read-only aggregation layer）"
+session_type: docs_only_specification
+related_spec: docs/specs/project_command_center_v0_spec.md
 
-scope:
-  - session-172d の session JSON を起票する
-  - session-172d の acceptance YAML を起票する
-  - session-172-pre の dashboard 契約を session-172d に handoff する
-  - session-172d の allowed_changes / forbidden_changes を定義する
-  - session-172d の completion_criteria / acceptance_criteria を定義する
+acceptance_criteria:
+  - id: AC-172D-PRE-01
+    description: "session-172d-pre.json が存在し JSON parse 可能"
+    test_name: test_session_172d_pre_json_exists_and_parseable
+    type: auto
+    method: json_parse
+    target: docs/sessions/session-172d-pre.json
+    completion_criteria_refs: [CC-172D-PRE-01]
 
-out_of_scope:
-  - dashboard 実装
-  - backend API 実装
-  - session-172 の編集
-  - session-172-pre の編集
-  - orchestration の変更
-  - tests の変更
-  - scripts の変更
-  - framework / build system 導入
-  - session-173 以降の未来機能
+  - id: AC-172D-PRE-02
+    description: "acceptance YAML が存在し safe_load 可能"
+    test_name: test_acceptance_172d_pre_yaml_exists_and_parseable
+    type: auto
+    method: yaml_safe_load
+    target: docs/acceptance/session-172d-pre.yaml
+    completion_criteria_refs: [CC-172D-PRE-02]
 
-acceptance:
-  - id: AC-172DPRE-01
-    requirement: session-172d-pre.json が作成されている
-    test_name: test_session_172d_pre_json_exists
-    type: automated
-    manual_check: false
-    verification:
-      - docs/sessions/session-172d-pre.json が存在する
+  - id: AC-172D-PRE-03
+    description: "spec markdown が存在する"
+    test_name: test_spec_pcc_v0_md_exists
+    type: auto
+    method: file_exists
+    target: docs/specs/project_command_center_v0_spec.md
+    completion_criteria_refs: [CC-172D-PRE-03]
 
-  - id: AC-172DPRE-02
-    requirement: session-172d-pre.yaml が作成されている
-    test_name: test_session_172d_pre_yaml_exists
-    type: automated
-    manual_check: false
-    verification:
-      - docs/acceptance/session-172d-pre.yaml が存在する
+  - id: AC-172D-PRE-04
+    description: "session JSON が必須14キー全てを含む"
+    test_name: test_session_172d_pre_has_14_keys
+    type: auto
+    method: required_keys_check
+    target: docs/sessions/session-172d-pre.json
+    required_keys:
+      - session_id
+      - phase_id
+      - title
+      - goal
+      - scope
+      - out_of_scope
+      - constraints
+      - acceptance_ref
+      - allowed_changes
+      - allowed_changes_detail
+      - forbidden_changes
+      - completion_criteria
+      - acceptance_criteria
+      - review_points
+    completion_criteria_refs: [CC-172D-PRE-04]
 
-  - id: AC-172DPRE-03
-    requirement: review_points 4軸が正本どおりである
-    test_name: test_session_172d_pre_review_points_canonical
-    type: automated
-    manual_check: false
-    verification:
-      - review_points[0] == "仕様一致（AC達成）"
-      - review_points[1] == "変更範囲遵守"
-      - review_points[2] == "副作用なし（既存破壊なし）"
-      - review_points[3] == "検証十分性（テスト・証跡・再現性により、受入判断に足る根拠があること）"
+  - id: AC-172D-PRE-05
+    description: "allowed_changes_detail が『path: 内容』形式の list[str]"
+    test_name: test_session_172d_pre_allowed_changes_detail_path_colon_format
+    type: auto
+    method: regex_each_element_match
+    target: docs/sessions/session-172d-pre.json
+    json_path: $.allowed_changes_detail
+    pattern: '^[^:\s]+:\s+.+$'
+    completion_criteria_refs: [CC-172D-PRE-05]
 
-  - id: AC-172DPRE-04
-    requirement: allowed_changes が 2件に限定されている
-    test_name: test_session_172d_pre_allowed_changes_count
-    type: automated
-    manual_check: false
-    verification:
-      - len(allowed_changes) == 2
-      - docs/sessions/session-172d-pre.json が含まれる
-      - docs/acceptance/session-172d-pre.yaml が含まれる
+  - id: AC-172D-PRE-06
+    description: "completion_criteria.type が全て canonical enum のいずれか"
+    test_name: test_session_172d_pre_completion_criteria_type_in_enum
+    type: auto
+    method: enum_membership_check
+    target: docs/sessions/session-172d-pre.json
+    json_path: "$.completion_criteria[*].type"
+    allowed_values:
+      - document_rule
+      - artifact
+      - non_regression
+      - state_transition_consistent
+      - side_effect_free
+    completion_criteria_refs: [CC-172D-PRE-06]
 
-  - id: AC-172DPRE-05
-    requirement: forbidden_changes に session-172 / session-172-pre の 4ファイルが含まれている
-    test_name: test_session_172d_pre_forbidden_includes_legacy_sessions
-    type: automated
-    manual_check: false
-    verification:
-      - forbidden_changes に "docs/sessions/session-172.json" が含まれる
-      - forbidden_changes に "docs/acceptance/session-172.yaml" が含まれる
-      - forbidden_changes に "docs/sessions/session-172-pre.json" が含まれる
-      - forbidden_changes に "docs/acceptance/session-172-pre.yaml" が含まれる
+  - id: AC-172D-PRE-07
+    description: "review_points が固定4軸を順序通り文字一致で含む"
+    test_name: test_session_172d_pre_review_points_fixed_four_axes
+    type: auto
+    method: list_equals_in_order
+    target: docs/sessions/session-172d-pre.json
+    json_path: $.review_points
+    expected:
+      - "仕様一致（AC達成）"
+      - "変更範囲遵守"
+      - "副作用なし（既存破壊なし）"
+      - "検証十分性"
+    completion_criteria_refs: [CC-172D-PRE-07]
 
-  - id: AC-172DPRE-06
-    requirement: session-172 / session-172-pre が変更されていない
-    test_name: test_session_172_and_172pre_unchanged
-    type: automated
-    manual_check: false
-    verification:
-      - git diff --name-only に docs/sessions/session-172.json が含まれない
-      - git diff --name-only に docs/acceptance/session-172.yaml が含まれない
-      - git diff --name-only に docs/sessions/session-172-pre.json が含まれない
-      - git diff --name-only に docs/acceptance/session-172-pre.yaml が含まれない
+  - id: AC-172D-PRE-08
+    description: "spec にカード11項目が全て記載されている"
+    test_name: test_spec_pcc_v0_card_items_present
+    type: auto
+    method: substring_all_present
+    target: docs/specs/project_command_center_v0_spec.md
+    required_substrings:
+      - "project_id"
+      - "repo_path"
+      - "branch"
+      - "HEAD"
+      - "git status"
+      - "最新 session"
+      - "4-gate"
+      - "failure_type"
+      - "human gate"
+      - "artifacts"
+      - "手動更新"
+    completion_criteria_refs: [CC-172D-PRE-08]
 
-  - id: AC-172DPRE-07
-    requirement: 変更範囲が allowed 2件に限定されている
-    test_name: test_session_172d_pre_scope_limited
-    type: automated
-    manual_check: false
-    verification:
-      - git status --short が docs/sessions/session-172d-pre.json / docs/acceptance/session-172d-pre.yaml のみを返す
-      - forbidden_changes に列挙されたパスに変更がない
+  - id: AC-172D-PRE-09
+    description: "spec に『やらないこと』4項目が記載されている"
+    test_name: test_spec_pcc_v0_out_of_scope_items_present
+    type: auto
+    method: substring_all_present
+    target: docs/specs/project_command_center_v0_spec.md
+    required_substrings:
+      - "ClaudeCode を置き換えない"
+      - "SDK自作オーケストレーター"
+      - "stash@{0}"
+      - "queue / scheduler"
+    completion_criteria_refs: [CC-172D-PRE-09]
 
-completion_checks:
-  - CC-172DPRE-01: session-172d の session JSON が定義されている
-  - CC-172DPRE-02: session-172d の acceptance YAML が定義されている
-  - CC-172DPRE-03: session-172-pre の dashboard 契約が session-172d に handoff されている
-  - CC-172DPRE-04: session-172 / session-172-pre が変更されていない
-  - CC-172DPRE-05: orchestration / scripts / tests / .github / .claude / backend に変更がない
+  - id: AC-172D-PRE-10
+    description: "spec に source of truth 6種と DB/daemon/watcher 禁止が記載されている"
+    test_name: test_spec_pcc_v0_source_of_truth_declared
+    type: auto
+    method: substring_all_present
+    target: docs/specs/project_command_center_v0_spec.md
+    required_substrings:
+      - "git rev-parse"
+      - "git status"
+      - "docs/sessions"
+      - "docs/acceptance"
+      - "artifacts/reports"
+      - "queue_state.json"
+      - "DB禁止"
+      - "daemon禁止"
+      - "background watcher禁止"
+    completion_criteria_refs: [CC-172D-PRE-10]
 
-change_guardrails:
-  allowed_changes:
-    - docs/sessions/session-172d-pre.json
-    - docs/acceptance/session-172d-pre.yaml
-  forbidden_changes:
-    - orchestration/**
-    - scripts/**
-    - tests/**
-    - .github/**
-    - .claude/**
-    - dashboard/**
-    - backend/**
-    - docs/config/**
-    - docs/master_instruction.md
-    - docs/global_rules.md
-    - docs/sessions/session-172.json
-    - docs/acceptance/session-172.yaml
-    - docs/sessions/session-172-pre.json
-    - docs/acceptance/session-172-pre.yaml
-    - 既存 session 定義の変更
-    - 既存 acceptance 定義の変更
-    - push 実行
+  - id: AC-172D-PRE-11
+    description: "spec にカードは project_registry.json 由来で初期表示最大10件と記載されている"
+    test_name: test_spec_pcc_v0_registry_driven_cards
+    type: auto
+    method: substring_all_present
+    target: docs/specs/project_command_center_v0_spec.md
+    required_substrings:
+      - "project_registry.json"
+      - "初期表示は最大10件"
+    completion_criteria_refs: [CC-172D-PRE-11]
+
+  - id: AC-172D-PRE-12
+    description: "spec 冒頭に read-only aggregation layer 宣言がある"
+    test_name: test_spec_pcc_v0_read_only_layer_declaration
+    type: auto
+    method: substring_all_present
+    target: docs/specs/project_command_center_v0_spec.md
+    required_substrings:
+      - "read-only aggregation layer"
+      - "状態可視化UI"
+      - "実行制御システムではない"
+    completion_criteria_refs: [CC-172D-PRE-12]
+
+  - id: AC-172D-PRE-13
+    description: "spec に『ClaudeWeb / ClaudeCode 投入方針』表が存在する"
+    test_name: test_spec_pcc_v0_investment_policy_table_present
+    type: auto
+    method: substring_all_present
+    target: docs/specs/project_command_center_v0_spec.md
+    required_substrings:
+      - "投入方針"
+      - "ClaudeWeb"
+      - "ClaudeCode"
+      - "GPT"
+      - "Human"
+    completion_criteria_refs: [CC-172D-PRE-13]
+
+  - id: AC-172D-PRE-14
+    description: "constraints に依存順序『179系 close → 役割再定義 pivot → 172d 実装』が明示"
+    test_name: test_session_172d_pre_order_dependency_declared
+    type: auto
+    method: constraints_substring_all_present
+    target: docs/sessions/session-172d-pre.json
+    json_path: $.constraints
+    required_substrings:
+      - "179系"
+      - "役割再定義"
+      - "172d"
+    completion_criteria_refs: [CC-172D-PRE-14]
+
+  - id: AC-172D-PRE-15
+    description: "allowed_changes_detail と forbidden_changes が排他（self-conflict なし）"
+    test_name: test_session_172d_pre_allowed_forbidden_exclusive
+    type: auto
+    method: glob_exclusivity_check
+    target: docs/sessions/session-172d-pre.json
+    rule: "allowed_changes_detail の各エントリのファイルパス（コロン手前）が forbidden_changes のいずれの glob にも完全一致しないこと（『は本 session の allowed なので例外』の文言を含むエントリは exception_keywords として除外可）"
+    exception_keywords: ["は本 session の allowed なので例外"]
+    completion_criteria_refs: [CC-172D-PRE-15]
+
+  - id: AC-172D-PRE-16
+    description: "git diff が allowed_changes 3ファイルのみ。.py / .sh / tests/** / 既存 docs/sessions/* / 既存 docs/acceptance/* / docs/config/** に差分なし"
+    test_name: test_session_172d_pre_diff_scope_docs_only
+    type: auto
+    method: git_diff_path_check
+    base_ref: origin/main
+    expected_diff_paths_exact:
+      - docs/sessions/session-172d-pre.json
+      - docs/acceptance/session-172d-pre.yaml
+      - docs/specs/project_command_center_v0_spec.md
+    forbidden_diff_globs:
+      - "*.py"
+      - "*.sh"
+      - "tests/**"
+      - "selector/**"
+      - "orchestration/**"
+      - "hooks/**"
+      - ".claude/**"
+      - "run_session.py"
+      - "docs/master_instruction.md"
+      - "docs/global_rules.md"
+      - "docs/config/**"
+    completion_criteria_refs: [CC-172D-PRE-16]
+
+  - id: AC-172D-PRE-17
+    description: "保護対象4ファイルの md5 baseline が変化していない"
+    test_name: test_session_172d_pre_protected_md5_unchanged
+    type: auto
+    method: md5_baseline_check
+    targets:
+      - file: orchestration/run_session.py
+        expected_md5: 4de6affffb9297cdf02b3136e8f55172
+      - file: orchestration/selector/core.py
+        expected_md5: 9b19e2cbe3487d3090096c5343c88611
+      - file: orchestration/selector/loader.py
+        expected_md5: 959db533bf086f83765d8f6f16fbbe7b
+      - file: orchestration/selector/writer.py
+        expected_md5: aaf7e28e0e9c52d12d30c8d3349cf982
+    completion_criteria_refs: [CC-172D-PRE-17]
+
+manual_acceptance_criteria: []
+
+review_points:
+  - "仕様一致（AC達成）"
+  - "変更範囲遵守"
+  - "副作用なし（既存破壊なし）"
+  - "検証十分性"
+
+forbidden_diff_paths:
+  - orchestration/run_session.py
+  - orchestration/selector/**
+  - orchestration/**
+  - tests/**
+  - .claude/**
+  - hooks/**
+  - preflight_session.sh
+  - docs/master_instruction.md
+  - docs/global_rules.md
+  - docs/config/**
+
+protected_baselines:
+  - file: orchestration/run_session.py
+    md5: 4de6affffb9297cdf02b3136e8f55172
+  - file: orchestration/selector/core.py
+    md5: 9b19e2cbe3487d3090096c5343c88611
+  - file: orchestration/selector/loader.py
+    md5: 959db533bf086f83765d8f6f16fbbe7b
+  - file: orchestration/selector/writer.py
+    md5: aaf7e28e0e9c52d12d30c8d3349cf982
+
+notes:
+  - "docs-only セッション。実装コードおよび既存テストは1件も変更しない。"
+  - "Project Command Center v0 は read-only aggregation layer。実行責務（ClaudeCode / run_session.py / queue engine）と判断責務（GPT / Human）には踏み込まない。"
+  - "依存順序: 179系（VCER/RB 昇格）close → 役割再定義 pivot（180-pre / 180 / 181-pre / 181）→ 本 session の後続実装 session-172d（無印）。"
+  - "stash@{0}（WIP: scheduler/batch/queue, chat51）は封印継続。本 session で参照・解放しない。"
+  - "受入は4-gate 後 GPT 司令塔の検収判定をもって完了。"
+  - "spec 文書（docs/specs/project_command_center_v0_spec.md）は本 session-172d-pre と同一 commit に含める。別コミットで分割しない。"
+  - "completion_criteria.type の enum と review_points の固定4軸は global_rules.md 正本に文字一致で従うこと。文字違い（半角全角・記号差）は document_rule 違反として扱う。"

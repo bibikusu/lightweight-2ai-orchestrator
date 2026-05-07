@@ -1,160 +1,122 @@
 {
   "session_id": "session-172d-pre",
   "phase_id": "P7",
-  "type": "docs-only",
-  "title": "read-only dashboard 実装仕様を session-172d として正本化する（session-172 衝突解決後）",
-  "goal": "session-172 が Review/Feedback Engine 正本として保護されたため、read-only dashboard 実装仕様を session-172d として再起票し、session-172-pre の dashboard 契約を継承した handoff 条件を正本化する",
+  "title": "Project Command Center v0 仕様正本化（docs-only / read-only aggregation layer）",
+  "goal": "ClaudeCode 多窓運用を前提に、10プロジェクトの状態のみを集約する read-only aggregation layer 『Project Command Center v0』の仕様を docs-only で正本化する。本 UI は『状態可視化UI』であり、ClaudeCode/run_session.py/queue engine の実行責務には一切踏み込まない。本セッションでは実装コードを1行も変更せず、後続の session-172d（無印）で実装する。",
   "scope": [
-    "session-172d の session JSON を起票する",
-    "session-172d の acceptance YAML を起票する",
-    "session-172-pre の dashboard 契約（display_fields / status_values / visual_rules / dashboard_contract）を session-172d に handoff する",
-    "session-172d の allowed_changes / forbidden_changes を定義する",
-    "session-172d の completion_criteria / acceptance_criteria を定義する"
+    "docs/sessions/session-172d-pre.json の新規起票（本ファイル）",
+    "docs/acceptance/session-172d-pre.yaml の新規起票",
+    "docs/specs/project_command_center_v0_spec.md の新規作成（仕様正本文書）",
+    "10プロジェクトカード表示項目11項目の仕様固定",
+    "『やらないこと』4項目の明文化",
+    "source of truth の物理的固定（git command / docs/ / artifacts/reports/ / queue_state.json read-only）",
+    "responsibility boundary の明文化（read-only aggregation layer 宣言）",
+    "ClaudeWeb / ClaudeCode / GPT / Human の作業責任分担",
+    "後続実装 session への依存順序明示"
   ],
   "out_of_scope": [
-    "dashboard 実装（HTML / CSS / JavaScript の作成）",
-    "backend API 実装",
-    "session-172 の編集",
-    "session-172-pre の編集",
-    "orchestration の変更",
-    "tests の変更",
-    "scripts の変更",
-    "GitHub Actions workflow 変更",
-    "run_session.py 変更",
-    "queue engine 変更",
-    "hook_eval_helper 変更",
-    "自動復旧処理",
-    "自動 push / 自動 merge",
-    "framework / build system 導入",
-    "session-173 以降の未来機能"
+    "実装コードの変更（全 .py / .sh）",
+    "ClaudeCode の置換または代替",
+    "SDK 自作オーケストレーターの設計・実装・PoC",
+    "stash@{0}（WIP: scheduler/batch/queue, chat51）の解放・参照・実体化",
+    "queue / scheduler の機能拡張または先行肥大化",
+    "Web 実装フレームワーク選定の確定（候補列挙までに留める）",
+    "DB / daemon / background watcher / WebSocket / SSE / push 通知の導入",
+    "認証・権限・ログイン機構の設計",
+    "本 session 内での実 UI 実装着手",
+    "既存 docs（master_instruction.md / global_rules.md / 他 sessions / 他 acceptance）の編集"
   ],
   "constraints": [
-    "docs-only セッションであり実装変更を含まない",
-    "session-172 は Review/Feedback Engine 正本として保護し編集しない",
-    "session-172-pre は dashboard 契約のレガシーとして保持し編集しない",
-    "session-172d は read-only dashboard 実装の正本 session_id として使用する",
-    "dashboard は read-only の監視UIであり操作UIではない",
-    "dashboard から commit / push / retry / merge / run / run_session を実行してはならない",
-    "判定ロジックを dashboard 側に再実装してはならない",
-    "素の HTML / CSS / JavaScript のみで構築する",
-    "backend API を作成しない",
-    "JS内ハードコードサンプルデータのみを表示する",
-    "framework / build system を導入しない",
-    "1セッション1目的",
-    "曖昧語を使用しない",
-    "session 定義の後付け変更を行わない"
+    "docs-only セッション。実装コードおよび既存テストは1件も変更しない",
+    "14キー必須項目を全充足する（session_id / phase_id / title / goal / scope / out_of_scope / constraints / acceptance_ref / allowed_changes / allowed_changes_detail / forbidden_changes / completion_criteria / acceptance_criteria / review_points）",
+    "review_points は global_rules.md 正本の固定4軸を全角パーレン込みで文字一致記載する",
+    "completion_criteria.type は global_rules.md 付録の enum（document_rule / artifact / non_regression / state_transition_consistent / side_effect_free）のみ使用",
+    "allowed_changes_detail は『ファイルパス: 許可内容』の list[str] 形式（global_rules.md 付録規約）",
+    "依存順序: 179系（VCER/RB 昇格）は close 済（HEAD `1eac766`）。次は 役割再定義 pivot（180-pre / 180 / 181-pre / 181）→ 本 session の後続実装 session-172d。本順序を逸脱した実装着手は禁止",
+    "orchestration/run_session.py の md5 baseline 4de6affffb9297cdf02b3136e8f55172 を変更しない（session-171i 反映済み）",
+    "orchestration/selector/{core,loader,writer}.py の md5 baselines を変更しない",
+    "stash@{0} を触らない（封印継続）",
+    "新規仕様文書は docs/specs/ 配下のみ。コード配置パスを汚染しない",
+    "Project Command Center v0 は read-only aggregation layer であり実行制御を行わない旨を spec 文書冒頭に明記する",
+    "v0 の source of truth は git rev-parse / git status --short / docs/sessions/ / docs/acceptance/ / artifacts/reports/ / queue_state.json（read-only）の6種に限定。DB / daemon / background watcher は禁止",
+    "10プロジェクトカードは hardcode せず project_registry.json を source of truth とし、初期表示は最大10件と記載する",
+    "acceptance_ref のパスは docs/acceptance/session-172d-pre.yaml（docs/docs/... 二重化禁止）",
+    "allowed_changes / out_of_scope / forbidden_changes は相互排他（session-171b 教訓）"
   ],
   "acceptance_ref": "docs/acceptance/session-172d-pre.yaml",
   "allowed_changes": [
-    "docs/sessions/session-172d-pre.json",
-    "docs/acceptance/session-172d-pre.yaml"
+    "docs/sessions/session-172d-pre.json の新規作成",
+    "docs/acceptance/session-172d-pre.yaml の新規作成",
+    "docs/specs/project_command_center_v0_spec.md の新規作成"
   ],
   "allowed_changes_detail": [
-    "docs/sessions/session-172d-pre.json: session-172d-pre の docs-only 定義を新規作成する",
-    "docs/acceptance/session-172d-pre.yaml: session-172d-pre の acceptance 定義を新規作成する"
+    "docs/sessions/session-172d-pre.json: 本セッション定義の新規作成のみ。既存定義の変更は不可",
+    "docs/acceptance/session-172d-pre.yaml: 本セッション受入定義の新規作成のみ。既存定義の変更は不可",
+    "docs/specs/project_command_center_v0_spec.md: Project Command Center v0 仕様正本文書の新規作成のみ。read-only aggregation layer 宣言・カード11項目仕様・やらないこと4項目・source of truth 6種固定・responsibility boundary・投入方針セクションを含む"
   ],
   "forbidden_changes": [
+    "run_session.py",
+    "selector/core.py",
+    "selector/loader.py",
+    "selector/writer.py",
+    "selector/__init__.py",
     "orchestration/**",
-    "scripts/**",
     "tests/**",
-    ".github/**",
     ".claude/**",
-    "dashboard/**",
-    "backend/**",
-    "docs/config/**",
+    "hooks/**",
+    "preflight_session.sh",
     "docs/master_instruction.md",
     "docs/global_rules.md",
-    "docs/sessions/session-172.json",
-    "docs/acceptance/session-172.yaml",
-    "docs/sessions/session-172-pre.json",
-    "docs/acceptance/session-172-pre.yaml",
-    "既存 session 定義の変更",
-    "既存 acceptance 定義の変更",
-    "hook_eval_helper 判定ロジックの変更",
-    "run_session 制御ロジックの変更",
-    "queue engine 実装変更",
-    "scope 外ファイル変更",
-    "push 実行"
+    "docs/config/queue_policy.yaml",
+    "docs/config/project_registry.json",
+    "docs/sessions/session-*.json（session-172d-pre.json は本 session の allowed なので例外）",
+    "docs/acceptance/session-*.yaml（session-172d-pre.yaml は本 session の allowed なので例外）",
+    "stash@{0}",
+    "全 .py / .sh ファイル（例外なし）",
+    "既存 .yaml / .json ファイル（allowed_changes の3ファイルを除く）"
   ],
-  "failure_type_enum": [
-    "build_error",
-    "import_error",
-    "type_mismatch",
-    "test_failure",
-    "scope_violation",
-    "regression",
-    "spec_missing"
-  ],
-  "dashboard_contract_ref": "docs/sessions/session-172-pre.json",
-  "handoff_note": "session-172-pre に定義された display_fields / status_values / visual_rules / dashboard_contract をそのまま session-172d が継承する",
   "completion_criteria": [
-    {
-      "id": "CC-172DPRE-01",
-      "type": "document_rule",
-      "condition": "session-172d の session JSON が定義されている"
-    },
-    {
-      "id": "CC-172DPRE-02",
-      "type": "document_rule",
-      "condition": "session-172d の acceptance YAML が定義されている"
-    },
-    {
-      "id": "CC-172DPRE-03",
-      "type": "document_rule",
-      "condition": "session-172-pre の dashboard 契約が session-172d に handoff されている"
-    },
-    {
-      "id": "CC-172DPRE-04",
-      "type": "side_effect_free",
-      "condition": "session-172 / session-172-pre が変更されていない"
-    },
-    {
-      "id": "CC-172DPRE-05",
-      "type": "non_regression",
-      "condition": "orchestration / scripts / tests / .github / .claude / backend に変更がない"
-    }
+    {"id": "CC-172D-PRE-01", "type": "artifact", "condition": "docs/sessions/session-172d-pre.json が存在し JSON parse 可能"},
+    {"id": "CC-172D-PRE-02", "type": "artifact", "condition": "docs/acceptance/session-172d-pre.yaml が存在し PyYAML safe_load で parse 可能"},
+    {"id": "CC-172D-PRE-03", "type": "artifact", "condition": "docs/specs/project_command_center_v0_spec.md が存在する"},
+    {"id": "CC-172D-PRE-04", "type": "document_rule", "condition": "session-172d-pre.json が必須14キー（session_id / phase_id / title / goal / scope / out_of_scope / constraints / acceptance_ref / allowed_changes / allowed_changes_detail / forbidden_changes / completion_criteria / acceptance_criteria / review_points）を全て含む"},
+    {"id": "CC-172D-PRE-05", "type": "document_rule", "condition": "allowed_changes_detail が list[str] かつ各要素が『ファイルパス: 許可内容』形式である"},
+    {"id": "CC-172D-PRE-06", "type": "document_rule", "condition": "completion_criteria.type の全ての値が enum（document_rule / artifact / non_regression / state_transition_consistent / side_effect_free）のいずれかである"},
+    {"id": "CC-172D-PRE-07", "type": "document_rule", "condition": "review_points が固定4軸『仕様一致（AC達成）/ 変更範囲遵守 / 副作用なし（既存破壊なし）/ 検証十分性』を順序通り全角パーレン込みで含む"},
+    {"id": "CC-172D-PRE-08", "type": "document_rule", "condition": "spec 文書にカード11項目（project_id / repo_path / branch / HEAD / git status / 最新 session / 4-gate / failure_type / human gate / artifacts / 手動更新）が記載されている"},
+    {"id": "CC-172D-PRE-09", "type": "document_rule", "condition": "spec 文書に『やらないこと』4項目（ClaudeCode を置き換えない / SDK自作オーケストレーター / stash@{0} / queue / scheduler）が記載されている"},
+    {"id": "CC-172D-PRE-10", "type": "document_rule", "condition": "spec 文書に source of truth 6種（git rev-parse / git status / docs/sessions / docs/acceptance / artifacts/reports / queue_state.json）と DB禁止 / daemon禁止 / background watcher禁止 が明記されている"},
+    {"id": "CC-172D-PRE-11", "type": "document_rule", "condition": "spec 文書にカード件数が project_registry.json 由来であり初期表示最大10件と明記されている"},
+    {"id": "CC-172D-PRE-12", "type": "document_rule", "condition": "spec 文書冒頭に read-only aggregation layer / 状態可視化UI / 実行制御システムではない 宣言が記載されている"},
+    {"id": "CC-172D-PRE-13", "type": "document_rule", "condition": "spec 文書に『ClaudeWeb / ClaudeCode 投入方針』セクションが存在し、各作業の責任主体が表形式で明示されている"},
+    {"id": "CC-172D-PRE-14", "type": "document_rule", "condition": "constraints に依存順序『179系 close → 役割再定義 pivot → 172d 実装』が明示されている"},
+    {"id": "CC-172D-PRE-15", "type": "document_rule", "condition": "allowed_changes_detail の3パスが forbidden_changes のいずれの glob にもマッチしない（self-conflict なし）"},
+    {"id": "CC-172D-PRE-16", "type": "side_effect_free", "condition": "本 session の git diff が allowed_changes 3ファイルのみで、.py / .sh / tests/** / 既存 docs/sessions/* / 既存 docs/acceptance/* / docs/config/** に差分が存在しない"},
+    {"id": "CC-172D-PRE-17", "type": "non_regression", "condition": "orchestration/run_session.py / orchestration/selector/core.py / orchestration/selector/loader.py / orchestration/selector/writer.py の md5 baseline が変化していない"}
   ],
   "acceptance_criteria": [
-    {
-      "id": "AC-172DPRE-01",
-      "description": "session-172d-pre.json が作成されている",
-      "test_name": "test_session_172d_pre_json_exists"
-    },
-    {
-      "id": "AC-172DPRE-02",
-      "description": "session-172d-pre.yaml が作成されている",
-      "test_name": "test_session_172d_pre_yaml_exists"
-    },
-    {
-      "id": "AC-172DPRE-03",
-      "description": "review_points 4軸が正本どおりである",
-      "test_name": "test_session_172d_pre_review_points_canonical"
-    },
-    {
-      "id": "AC-172DPRE-04",
-      "description": "allowed_changes が 2件に限定されている",
-      "test_name": "test_session_172d_pre_allowed_changes_count"
-    },
-    {
-      "id": "AC-172DPRE-05",
-      "description": "forbidden_changes に session-172 / session-172-pre の 4ファイルが含まれている",
-      "test_name": "test_session_172d_pre_forbidden_includes_legacy_sessions"
-    },
-    {
-      "id": "AC-172DPRE-06",
-      "description": "session-172 / session-172-pre が変更されていない",
-      "test_name": "test_session_172_and_172pre_unchanged"
-    },
-    {
-      "id": "AC-172DPRE-07",
-      "description": "変更範囲が allowed 2件に限定されている",
-      "test_name": "test_session_172d_pre_scope_limited"
-    }
+    {"id": "AC-172D-PRE-01", "description": "session-172d-pre.json が存在し JSON parse 可能", "test_name": "test_session_172d_pre_json_exists_and_parseable"},
+    {"id": "AC-172D-PRE-02", "description": "acceptance YAML が存在し safe_load 可能", "test_name": "test_acceptance_172d_pre_yaml_exists_and_parseable"},
+    {"id": "AC-172D-PRE-03", "description": "spec markdown が存在する", "test_name": "test_spec_pcc_v0_md_exists"},
+    {"id": "AC-172D-PRE-04", "description": "session JSON が必須14キー全てを含む", "test_name": "test_session_172d_pre_has_14_keys"},
+    {"id": "AC-172D-PRE-05", "description": "allowed_changes_detail が『path: 内容』形式の list[str]", "test_name": "test_session_172d_pre_allowed_changes_detail_path_colon_format"},
+    {"id": "AC-172D-PRE-06", "description": "completion_criteria.type が全て canonical enum のいずれか", "test_name": "test_session_172d_pre_completion_criteria_type_in_enum"},
+    {"id": "AC-172D-PRE-07", "description": "review_points が固定4軸を順序通り文字一致で含む", "test_name": "test_session_172d_pre_review_points_fixed_four_axes"},
+    {"id": "AC-172D-PRE-08", "description": "spec にカード11項目が全て記載されている", "test_name": "test_spec_pcc_v0_card_items_present"},
+    {"id": "AC-172D-PRE-09", "description": "spec に『やらないこと』4項目が記載されている", "test_name": "test_spec_pcc_v0_out_of_scope_items_present"},
+    {"id": "AC-172D-PRE-10", "description": "spec に source of truth 6種と DB/daemon/watcher 禁止が記載されている", "test_name": "test_spec_pcc_v0_source_of_truth_declared"},
+    {"id": "AC-172D-PRE-11", "description": "spec にカードは project_registry.json 由来で初期表示最大10件と記載されている", "test_name": "test_spec_pcc_v0_registry_driven_cards"},
+    {"id": "AC-172D-PRE-12", "description": "spec 冒頭に read-only aggregation layer 宣言がある", "test_name": "test_spec_pcc_v0_read_only_layer_declaration"},
+    {"id": "AC-172D-PRE-13", "description": "spec に『ClaudeWeb / ClaudeCode 投入方針』表が存在する", "test_name": "test_spec_pcc_v0_investment_policy_table_present"},
+    {"id": "AC-172D-PRE-14", "description": "constraints に依存順序が明示されている", "test_name": "test_session_172d_pre_order_dependency_declared"},
+    {"id": "AC-172D-PRE-15", "description": "allowed_changes_detail と forbidden_changes が排他", "test_name": "test_session_172d_pre_allowed_forbidden_exclusive"},
+    {"id": "AC-172D-PRE-16", "description": "git diff が allowed_changes 3ファイルのみ", "test_name": "test_session_172d_pre_diff_scope_docs_only"},
+    {"id": "AC-172D-PRE-17", "description": "保護対象4ファイル（orchestration/配下）の md5 baseline が変化していない", "test_name": "test_session_172d_pre_protected_md5_unchanged"}
   ],
   "review_points": [
     "仕様一致（AC達成）",
     "変更範囲遵守",
     "副作用なし（既存破壊なし）",
-    "検証十分性（テスト・証跡・再現性により、受入判断に足る根拠があること）"
+    "検証十分性"
   ]
 }
