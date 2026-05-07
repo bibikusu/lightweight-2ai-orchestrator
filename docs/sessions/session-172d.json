@@ -1,0 +1,105 @@
+{
+  "session_id": "session-172d",
+  "phase_id": "P7",
+  "title": "Project Command Center v0 実装 session 起票（docs-only）",
+  "goal": "session-172d-pre で正本化した PCC v0 仕様（docs/specs/project_command_center_v0_spec.md）を前提として、read-only aggregation layer 実装に向けた session 定義・acceptance 定義を作成する。本 session では実装コードを1行も変更しない。後続実装 session の allowed_changes 候補 10ファイルを followup_session_candidates に明記する。",
+  "scope": [
+    "docs/sessions/session-172d.json の新規作成（本ファイル）",
+    "docs/acceptance/session-172d.yaml の新規作成",
+    "後続実装 session の allowed_changes 候補 10ファイルの明記（followup_session_candidates フィールド）",
+    "PCC v0 の read-only 原則・実行制御禁止・DB/daemon/background watcher 禁止を constraints に明記"
+  ],
+  "out_of_scope": [
+    "backend/pcc/* の実装（後続実装 session で行う）",
+    "scripts/pcc の作成",
+    "tests/test_pcc_v0.py の作成",
+    "既存 docs（master_instruction.md / global_rules.md / project_command_center_v0_spec.md / 他 sessions / 他 acceptance）の編集",
+    "orchestration/** の変更",
+    "docs/config/** の変更",
+    "docs/projects/** の変更",
+    "ClaudeCode の置換・代替",
+    "SDK 自作オーケストレーターの設計・実装",
+    "stash@{0} の参照・解放"
+  ],
+  "constraints": [
+    "docs-only セッション。実装コードおよび既存テストは1件も変更しない",
+    "14キー必須項目を全充足する（session_id / phase_id / title / goal / scope / out_of_scope / constraints / acceptance_ref / allowed_changes / allowed_changes_detail / forbidden_changes / completion_criteria / acceptance_criteria / review_points）",
+    "PCC v0 は read-only aggregation layer であり実行制御を行わない。コード実行・プロセス起動・ファイル書き込み・git 操作は PCC 自身の責務に含まれない",
+    "DB直接接続 / daemon プロセス / background watcher / WebSocket / SSE / push 通知は禁止",
+    "queue_state.json が不在の場合は「—（未設定）」表示とし、エラーにしない（フォールバック必須）",
+    "git 未管理プロジェクトは「—（git未管理）」表示とし、git コマンドエラーを握り潰さない",
+    "A02_fina の branch=sandbox/session-11、dirty=14件の現状を隠さず表示する",
+    "後続実装 session の allowed_changes 候補 10ファイルを followup_session_candidates フィールドに全件明記する",
+    "review_points は global_rules.md 正本の固定4軸を全角パーレン込みで文字一致記載する",
+    "completion_criteria.type は global_rules.md 付録の enum（document_rule / artifact / non_regression / state_transition_consistent / side_effect_free）のみ使用",
+    "allowed_changes_detail は『ファイルパス: 許可内容』の list[str] 形式（global_rules.md 付録規約）",
+    "acceptance_ref のパスは docs/acceptance/session-172d.yaml（docs/docs/... 二重化禁止）",
+    "allowed_changes / out_of_scope / forbidden_changes は相互排他（session-171b 教訓）"
+  ],
+  "acceptance_ref": "docs/acceptance/session-172d.yaml",
+  "allowed_changes": [
+    "docs/sessions/session-172d.json の新規作成",
+    "docs/acceptance/session-172d.yaml の新規作成"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/session-172d.json: session-172d 無印の session 定義の新規作成のみ。既存定義の変更は不可",
+    "docs/acceptance/session-172d.yaml: session-172d 無印の acceptance 定義の新規作成のみ。既存定義の変更は不可"
+  ],
+  "forbidden_changes": [
+    "orchestration/**",
+    "backend/**",
+    "scripts/**",
+    "tests/**",
+    "docs/config/**",
+    "docs/projects/**",
+    "docs/specs/project_command_center_v0_spec.md",
+    "docs/master_instruction.md",
+    "docs/global_rules.md",
+    "DL/**",
+    ".playwright-mcp/**",
+    "docs/sessions/session-*.json（session-172d.json は本 session の allowed なので例外）",
+    "docs/acceptance/session-*.yaml（session-172d.yaml は本 session の allowed なので例外）",
+    "全 .git ディレクトリ"
+  ],
+  "followup_session_candidates": [
+    "backend/pcc/__init__.py",
+    "backend/pcc/pcc_v0.py",
+    "backend/pcc/static/index.html",
+    "backend/pcc/static/style.css",
+    "backend/pcc/static/app.js",
+    "backend/pcc/server.py",
+    "scripts/pcc",
+    "docs/sessions/session-172d.json",
+    "docs/acceptance/session-172d.yaml",
+    "tests/test_pcc_v0.py"
+  ],
+  "completion_criteria": [
+    {"id": "CC-172D-01", "type": "artifact", "condition": "docs/sessions/session-172d.json が存在し JSON parse 可能"},
+    {"id": "CC-172D-02", "type": "artifact", "condition": "docs/acceptance/session-172d.yaml が存在し PyYAML safe_load で parse 可能"},
+    {"id": "CC-172D-03", "type": "document_rule", "condition": "session-172d.json が必須14キー（session_id / phase_id / title / goal / scope / out_of_scope / constraints / acceptance_ref / allowed_changes / allowed_changes_detail / forbidden_changes / completion_criteria / acceptance_criteria / review_points）を全て含む"},
+    {"id": "CC-172D-04", "type": "document_rule", "condition": "session-172d.yaml の session_id が session-172d.json と一致し、AC 番号（AC-01〜AC-09）が両ファイルで整合する"},
+    {"id": "CC-172D-05", "type": "document_rule", "condition": "followup_session_candidates に後続実装 session の allowed_changes 候補 10ファイルが全件列挙されている"},
+    {"id": "CC-172D-06", "type": "document_rule", "condition": "constraints に read-only 原則・実行制御禁止・DB禁止・daemon禁止・background watcher禁止が明記されている"},
+    {"id": "CC-172D-07", "type": "document_rule", "condition": "review_points が固定4軸『仕様一致（AC達成）/ 変更範囲遵守 / 副作用なし / 検証十分性』を順序通り全角パーレン込みで含む"},
+    {"id": "CC-172D-08", "type": "document_rule", "condition": "allowed_changes_detail が list[str] かつ各要素が『ファイルパス: 許可内容』形式である"},
+    {"id": "CC-172D-09", "type": "side_effect_free", "condition": "allowed_changes が docs/sessions/session-172d.json と docs/acceptance/session-172d.yaml の2ファイルのみであり、backend / orchestration / tests / scripts に差分が存在しない"},
+    {"id": "CC-172D-10", "type": "non_regression", "condition": "orchestration/run_session.py / orchestration/selector/core.py / orchestration/selector/loader.py / orchestration/selector/writer.py の md5 が変化していない"}
+  ],
+  "acceptance_criteria": [
+    {"id": "AC-01", "description": "session-172d.json が14必須キーを全て含む", "test_name": "test_session_172d_json_required_keys"},
+    {"id": "AC-02", "description": "acceptance_ref が docs/acceptance/session-172d.yaml を指し、ファイルが存在し safe_load 可能", "test_name": "test_session_172d_acceptance_ref_matches"},
+    {"id": "AC-03", "description": "allowed_changes_detail が『path: 内容』形式の list[str]", "test_name": "test_session_172d_allowed_changes_detail_format"},
+    {"id": "AC-04", "description": "forbidden_changes に orchestration/** / backend/** / scripts/** が含まれる", "test_name": "test_session_172d_forbids_execution_controls"},
+    {"id": "AC-05", "description": "constraints に read-only / 実行制御禁止 / DB禁止 / daemon禁止 / background watcher禁止 が明記されている", "test_name": "test_session_172d_defines_read_only_constraints"},
+    {"id": "AC-06", "description": "followup_session_candidates に後続実装 session の候補 10ファイルが全件列挙されている", "test_name": "test_session_172d_defines_10_followup_files"},
+    {"id": "AC-07", "description": "review_points が固定4軸を順序通り文字一致で含む", "test_name": "test_session_172d_review_points_exact"},
+    {"id": "AC-08", "description": "session-172d.yaml の session_id / AC 番号が session-172d.json と整合する", "test_name": "test_session_172d_acceptance_yaml_matches_json"},
+    {"id": "AC-09", "description": "allowed_changes が docs 2ファイルのみ（scope が2ファイルに限定されている）", "test_name": "test_session_172d_scope_only_two_files"}
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし",
+    "検証十分性"
+  ]
+}
