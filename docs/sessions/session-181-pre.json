@@ -1,0 +1,185 @@
+{
+  "session_id": "session-181-pre",
+  "phase_id": "P7",
+  "title": "Define ClaudeCode v2 role boundary contract for session-181 (docs-only pre-staging)",
+  "goal": "session-181 本体で docs/global_rules.md に追記すべき ClaudeCode v2 role boundary contract を docs/sessions/session-181-pre.json および docs/acceptance/session-181-pre.yaml の中で正本化する起票準備 session。本sessionでは docs/global_rules.md を含む実装ファイルを一切変更せず、編集権限は session-181 本体に委譲する。",
+  "scope": [
+    "session-181 本体で global_rules.md に追記すべき4層モデル定義(View Layer / Operational Memory / Execution Layer / Governance Layer)を contract として本 session.json の scope 内に記載する",
+    "session-181 本体で global_rules.md に追記すべき Governance Layer 分離原則(runtime_state は Governance を内包しない)を contract として本 session.json 内に記載する",
+    "session-181 本体で global_rules.md に追記すべき ClaudeCode MUST NOT 8項目(approval判定 / acceptance最終判定 / review_points最終判定 / scope緩和 / forbidden_changes緩和 / session split-merge判断 / roadmap変更 / runtime_state ownership決定)を contract として本 session.json 内に列挙する",
+    "session-181 本体で global_rules.md に追記すべき OpenHands future placeholder 方針(存在のみ言及 / role boundary 確定は BACKLOG-OPENHANDS-POC-001 にて別 session 起票)を contract として本 session.json 内に記載する",
+    "session-181 本体の allowed_changes 候補として docs/global_rules.md (末尾追記のみ)を contract として本 session.json 内に明記する",
+    "session-181 本体の forbidden_changes 候補として既存資産保護(backend/pcc/pcc_v0_5.py / orchestration/lock/manager.py / orchestration/selector/ / scripts/new_session.sh / 既存 docs/sessions/*.json / docs/global_rules.md 既存セクション)を contract として本 session.json 内に明記する",
+    "session-181 本体は ClaudeCode を強化する session ではなく ClaudeCode を越境させない境界正本化 session である旨を contract として本 session.json 内に記載する"
+  ],
+  "out_of_scope": [
+    "session-181 contract に基づく実テキスト文面の確定",
+    "runtime_state schema の作成",
+    "current_state.json の新設",
+    "PCC shared memory 化",
+    "PCC memory viewer の設計",
+    "OpenHands の導入および role boundary 確定",
+    "queue 復活および chat51 stash 操作",
+    "selector / queue / run_session の実装変更",
+    "hooks / scheduler / handoff automation の実装",
+    "session-178-pre / session-172d への先行および飛び越え",
+    "docs/specs/ 配下への spec md 新規作成",
+    "PCC v0.5 / v0.08 の改修",
+    "AI organization OS 拡張議論および同構想語の使用"
+  ],
+  "constraints": [
+    "1セッション1目的を遵守する",
+    "docs-only 起票準備 session として実装ファイルを変更しない",
+    "本 session の allowed_changes は docs/sessions/session-181-pre.json と docs/acceptance/session-181-pre.yaml の2件のみとする",
+    "scripts/new_session.sh 経由で session_id collision check を実施する",
+    "phase_id は P7 を使用する",
+    "review_points[3] は完全一致で '検証十分性' とする(説明追記禁止)",
+    "session_id とファイル名(docs/sessions/session-181-pre.json)が一致する",
+    "AI organization OS という語を scope / constraints 文中で使用しない",
+    "ClaudeCode を強化する文言ではなく ClaudeCode を越境させない境界記述に限定する"
+  ],
+  "acceptance_ref": "docs/acceptance/session-181-pre.yaml",
+  "allowed_changes": [
+    "docs/sessions/session-181-pre.json",
+    "docs/acceptance/session-181-pre.yaml"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/session-181-pre.json: session-181 contract(4層モデル / Governance Layer 分離 / ClaudeCode MUST NOT 8項目 / OpenHands future placeholder / session-181 allowed_changes 候補 / session-181 forbidden_changes 候補 / 越境抑止方針)を scope および constraints 内に記載した新規 session JSON として保存する",
+    "docs/acceptance/session-181-pre.yaml: 上記 session JSON に対応する acceptance YAML として保存する"
+  ],
+  "forbidden_changes": [
+    "docs/global_rules.md を変更しない(本preでは変更対象外。編集権限は session-181 本体に委譲する)",
+    "docs/global_rules.md の既存セクション(review_points 4軸固定 / completion_criteria 型定義 / failure_type enum 等)を改変しない",
+    "backend/pcc/pcc_v0_5.py を変更しない (session-180 成果物)",
+    "orchestration/lock/manager.py を変更しない",
+    "orchestration/selector/ 配下のファイルを変更しない (selector md5 baselines 保護)",
+    "scripts/new_session.sh を変更しない (session-176 成果物)",
+    "既存 docs/sessions/session-*.json を変更しない",
+    "既存 docs/acceptance/session-*.yaml を変更しない",
+    "orchestration/run_session.py を変更しない",
+    "providers 配下を変更しない",
+    "backend 配下のその他ファイルを変更しない",
+    ".github 配下を変更しない",
+    "docs/templates 配下を変更しない",
+    "docs/roadmap.yaml を変更しない",
+    "docs/specs/ 配下に新規ファイルを作成しない",
+    "session-181 本体 / session-178-pre / session-172d 関連ファイルを作成・変更しない",
+    "stash@{0} (chat51封印 WIP) を含む全 git stash 操作を行わない",
+    "runtime_state / current_state.json / OpenHands 関連ファイルを新規作成しない"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-181P-01",
+      "type": "artifact",
+      "condition": "docs/sessions/session-181-pre.json および docs/acceptance/session-181-pre.yaml が新規作成され JSON/YAML valid である"
+    },
+    {
+      "id": "CC-181P-02",
+      "type": "document_rule",
+      "condition": "docs/sessions/session-181-pre.json の scope 配列に View Layer / Operational Memory / Execution Layer / Governance Layer の4語が含まれている"
+    },
+    {
+      "id": "CC-181P-03",
+      "type": "document_rule",
+      "condition": "docs/sessions/session-181-pre.json の scope 配列に ClaudeCode MUST NOT 8項目(approval判定 / acceptance最終判定 / review_points最終判定 / scope緩和 / forbidden_changes緩和 / session split-merge判断 / roadmap変更 / runtime_state ownership決定)が session-181 contract として列挙されている"
+    },
+    {
+      "id": "CC-181P-04",
+      "type": "document_rule",
+      "condition": "docs/sessions/session-181-pre.json の scope 配列に OpenHands future placeholder 方針(存在のみ言及 / role boundary 確定は別 session)が session-181 contract として記載されている"
+    },
+    {
+      "id": "CC-181P-05",
+      "type": "document_rule",
+      "condition": "docs/sessions/session-181-pre.json の scope 配列に session-181 本体の allowed_changes 候補として docs/global_rules.md (末尾追記のみ)が記載されている"
+    },
+    {
+      "id": "CC-181P-06",
+      "type": "document_rule",
+      "condition": "docs/sessions/session-181-pre.json の scope 配列に session-181 forbidden_changes 候補として backend/pcc/pcc_v0_5.py / orchestration/lock/manager.py / orchestration/selector/ / scripts/new_session.sh が記載されている"
+    },
+    {
+      "id": "CC-181P-07",
+      "type": "side_effect_free",
+      "condition": "docs/global_rules.md が本 session の commit 範囲で変更されていない"
+    },
+    {
+      "id": "CC-181P-08",
+      "type": "non_regression",
+      "condition": "既存 30/30 test pass 状態が維持されている"
+    },
+    {
+      "id": "CC-181P-09",
+      "type": "state_transition_consistent",
+      "condition": "本 session の changed_files が docs/sessions/session-181-pre.json と docs/acceptance/session-181-pre.yaml の2件のみに限定されている"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-181P-01",
+      "text": "docs/sessions/session-181-pre.json および docs/acceptance/session-181-pre.yaml が repository に新規保存されている。",
+      "test_name": "test_session_181_pre_artifacts_present"
+    },
+    {
+      "id": "AC-181P-02",
+      "text": "docs/sessions/session-181-pre.json の scope 配列に 'View Layer' / 'Operational Memory' / 'Execution Layer' / 'Governance Layer' の4語がすべて含まれている。",
+      "test_name": "test_session_181_pre_contract_four_layer_terms_present"
+    },
+    {
+      "id": "AC-181P-03",
+      "text": "docs/sessions/session-181-pre.json の scope 配列に approval判定 / acceptance最終判定 / review_points最終判定 / scope緩和 / forbidden_changes緩和 / session split-merge判断 / roadmap変更 / runtime_state ownership決定 の8キーワードがすべて含まれている。",
+      "test_name": "test_session_181_pre_contract_must_not_keywords_complete"
+    },
+    {
+      "id": "AC-181P-04",
+      "text": "docs/sessions/session-181-pre.json の scope 配列のいずれかの要素に 'OpenHands' および 'placeholder' の両語が含まれている。",
+      "test_name": "test_session_181_pre_contract_openhands_placeholder_mentioned"
+    },
+    {
+      "id": "AC-181P-05",
+      "text": "docs/sessions/session-181-pre.json の scope 配列のいずれかの要素に 'docs/global_rules.md' および '末尾追記' の両語が session-181 allowed_changes 候補の文脈で含まれている。",
+      "test_name": "test_session_181_pre_contract_global_rules_target_specified"
+    },
+    {
+      "id": "AC-181P-06",
+      "text": "docs/sessions/session-181-pre.json の scope 配列のいずれかの要素に backend/pcc/pcc_v0_5.py / orchestration/lock/manager.py / orchestration/selector/ / scripts/new_session.sh の4資産が session-181 forbidden_changes 候補の文脈で記載されている。",
+      "test_name": "test_session_181_pre_contract_forbidden_assets_listed"
+    },
+    {
+      "id": "AC-181P-07",
+      "text": "docs/sessions/session-181-pre.json の allowed_changes が 'docs/sessions/session-181-pre.json' と 'docs/acceptance/session-181-pre.yaml' の2要素のみの配列である。",
+      "test_name": "test_session_181_pre_allowed_changes_two_items_only"
+    },
+    {
+      "id": "AC-181P-08",
+      "text": "docs/sessions/session-181-pre.json の forbidden_changes に 'docs/global_rules.md を変更しない' を意味する記述が含まれている。",
+      "test_name": "test_session_181_pre_forbidden_includes_global_rules"
+    },
+    {
+      "id": "AC-181P-09",
+      "text": "docs/sessions/session-181-pre.json の review_points[3] が完全一致で '検証十分性' である。",
+      "test_name": "test_session_181_pre_review_points_fourth_axis_strict"
+    },
+    {
+      "id": "AC-181P-10",
+      "text": "本 session の commit における changed_files が docs/sessions/session-181-pre.json と docs/acceptance/session-181-pre.yaml の2件のみに限定されている。",
+      "test_name": "test_session_181_pre_changed_files_within_two"
+    },
+    {
+      "id": "AC-181P-11",
+      "text": "docs/sessions/session-181-pre.json の phase_id が 'P7' である。",
+      "test_name": "test_session_181_pre_phase_id_is_p7"
+    },
+    {
+      "id": "AC-181P-12",
+      "text": "docs/sessions/session-181-pre.json の title および goal / scope / constraints の全文中に 'AI organization OS' の語が含まれていない。",
+      "test_name": "test_session_181_pre_no_ai_organization_os_term"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ]
+}
