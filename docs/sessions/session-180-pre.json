@@ -1,0 +1,239 @@
+{
+  "session_id": "session-180-pre",
+  "phase_id": "P7",
+  "title": "Define PCC v1 operational decision dashboard spec (docs-only, lightweight-governance)",
+  "goal": "PCC v0 read-only dashboard を破壊せず、各 project card に operational_status / next_action / blocker_summary / human_required / suggested_readonly_commands / ai_handoff_payload の6項目を追加する仕様を docs-only で固定する。implementation は session-180 で行う。本セッションは PCC/UI レイヤとして lightweight-governance に従う。",
+  "scope": [
+    "PCC v1 で各 project card に追加する6フィールドのスキーマ定義",
+    "operational_status の enum 値固定 (READY / BLOCKED / WAITING_HUMAN / RUNNING / DONE / UNKNOWN)",
+    "operational_status と git_status の責務分離の明文化",
+    "next_action の型 (str, max_length=200) と記述ガイドの固定",
+    "blocker_summary の型 (str | null) の固定",
+    "human_required の判定ルール固定",
+    "suggested_readonly_commands を object 配列 (label / command / risk / category) として固定",
+    "command の risk を readonly に限定する設計の明文化",
+    "ai_handoff_payload を構造化 (target_ai / prompt_template_id / context_fields) として固定",
+    "observation_log_pcc_v0.json を input prerequisite として参照する宣言",
+    "session-180 (実装) への handoff 要件の明文化"
+  ],
+  "out_of_scope": [
+    "PCC v0 backend/pcc 配下の実装変更",
+    "PCC v0 static 配下の実装変更",
+    "scripts/pcc の変更",
+    "tests/test_pcc_v0.py の変更",
+    "API endpoint 追加",
+    "MCP 連携",
+    "AI API 連携",
+    "command 実行機能の実装",
+    "git add / commit / push の自動化",
+    "queue / retry / approve 操作",
+    "write 系操作",
+    "project state.json の自動生成",
+    "session-180 / 181-pre / 181 / 182-pre の同時起票",
+    "Role v2 formalization との混在",
+    "lightweight-governance の正本定義 (別session)"
+  ],
+  "constraints": [
+    "1セッション1目的を厳守する",
+    "変更ファイル数は2ファイルのみ (docs/sessions/session-180-pre.json と docs/acceptance/session-180-pre.yaml)",
+    "PCC v0 の read-only 方針を破らない",
+    "operational_status と git_status を責務分離する",
+    "ai_handoff は payload 構造で表現し prompt 文字列を spec に埋め込まない",
+    "曖昧語禁止",
+    "allowed_changes_detail は list[str] (ファイルパス: 許可内容 形式)",
+    "completion_criteria は object 配列 (id / type / condition 必須)",
+    "completion_criteria.type は document_rule / artifact / non_regression / state_transition_consistent / side_effect_free のみ",
+    "acceptance_criteria は全項目に test_name を付ける",
+    "review_points は4軸固定",
+    "ClaudeCode は git add / commit / push / stash を実行しない",
+    "PCC/UI レイヤ lightweight-governance に従い strict 系の重監査 (md5 / protected_baselines 詳細検証) は本セッションでは要求しない"
+  ],
+  "acceptance_ref": "docs/acceptance/session-180-pre.yaml",
+  "allowed_changes": [
+    "docs/sessions/session-180-pre.json",
+    "docs/acceptance/session-180-pre.yaml"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/session-180-pre.json: 本セッション仕様を 14 mandatory keys 充足で新規作成する",
+    "docs/sessions/session-180-pre.json: PCC v1 で追加する6フィールド (operational_status / next_action / blocker_summary / human_required / suggested_readonly_commands / ai_handoff_payload) のスキーマと型を含める",
+    "docs/sessions/session-180-pre.json: operational_status enum 6値 (READY / BLOCKED / WAITING_HUMAN / RUNNING / DONE / UNKNOWN) と git_status 5値 (clean / dirty / unmanaged / detached / unknown) の責務分離を明文化する",
+    "docs/sessions/session-180-pre.json: suggested_readonly_commands の object 構造 (label / command / risk=readonly固定 / category) を含める",
+    "docs/sessions/session-180-pre.json: ai_handoff_payload の object 構造 (target_ai / prompt_template_id / context_fields) を含める",
+    "docs/acceptance/session-180-pre.yaml: 本セッション受入条件を session-08 系の構造で新規作成する",
+    "docs/acceptance/session-180-pre.yaml: 6フィールド存在検証 / enum 検証 / 責務分離検証 / object構造検証の test_name を全項目に付与する",
+    "docs/sessions/session-180-pre.json: pcc_v1_schema トップレベルキーで6フィールドのスキーマと git_status との責務分離を構造化定義する"
+  ],
+  "forbidden_changes": [
+    "backend/pcc 配下の変更",
+    "scripts/pcc の変更",
+    "tests/test_pcc_v0.py の変更",
+    "orchestration/run_session.py の変更",
+    "orchestration/selector 配下の変更",
+    "docs/global_rules.md の変更",
+    "docs/master_instruction.md の変更",
+    ".claude/settings.json の変更",
+    "session-172d-impl 系 / session-179 系の変更",
+    "session-180 以降の同時作成",
+    "git stash 系操作"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-180P-01",
+      "type": "artifact",
+      "condition": "docs/sessions/session-180-pre.json が新規作成され JSON valid である"
+    },
+    {
+      "id": "CC-180P-02",
+      "type": "artifact",
+      "condition": "docs/acceptance/session-180-pre.yaml が新規作成され YAML valid である"
+    },
+    {
+      "id": "CC-180P-03",
+      "type": "document_rule",
+      "condition": "JSON が 14 mandatory keys を全て含む"
+    },
+    {
+      "id": "CC-180P-04",
+      "type": "document_rule",
+      "condition": "JSON 内に PCC v1 で追加する6フィールドのスキーマと型が明示されている"
+    },
+    {
+      "id": "CC-180P-05",
+      "type": "document_rule",
+      "condition": "operational_status の enum (READY / BLOCKED / WAITING_HUMAN / RUNNING / DONE / UNKNOWN) と git_status (clean / dirty / unmanaged / detached / unknown) が責務分離で記載されている"
+    },
+    {
+      "id": "CC-180P-06",
+      "type": "document_rule",
+      "condition": "suggested_readonly_commands が object 配列として定義され risk=readonly が固定されている"
+    },
+    {
+      "id": "CC-180P-07",
+      "type": "document_rule",
+      "condition": "ai_handoff_payload が object 構造 (target_ai / prompt_template_id / context_fields) で定義され prompt 文字列が含まれない"
+    },
+    {
+      "id": "CC-180P-08",
+      "type": "side_effect_free",
+      "condition": "backend/pcc 配下と scripts/pcc と tests/test_pcc_v0.py が untouched である"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-180P-01",
+      "text": "docs/sessions/session-180-pre.json が JSON valid として読み込める",
+      "test_name": "test_session_180_pre_json_is_valid"
+    },
+    {
+      "id": "AC-180P-02",
+      "text": "docs/acceptance/session-180-pre.yaml が YAML valid として読み込める",
+      "test_name": "test_session_180_pre_yaml_is_valid"
+    },
+    {
+      "id": "AC-180P-03",
+      "text": "JSON が 14 mandatory keys を全て含む",
+      "test_name": "test_session_180_pre_has_14_mandatory_keys"
+    },
+    {
+      "id": "AC-180P-04",
+      "text": "JSON 内に PCC v1 の6フィールドのスキーマが明示されている",
+      "test_name": "test_session_180_pre_defines_pcc_v1_six_fields"
+    },
+    {
+      "id": "AC-180P-05",
+      "text": "operational_status と git_status が責務分離で記載されている",
+      "test_name": "test_session_180_pre_separates_operational_and_git_status"
+    },
+    {
+      "id": "AC-180P-06",
+      "text": "suggested_readonly_commands が object 配列として risk=readonly 固定で定義されている",
+      "test_name": "test_session_180_pre_readonly_commands_object_array"
+    },
+    {
+      "id": "AC-180P-07",
+      "text": "ai_handoff_payload が target_ai / prompt_template_id / context_fields の object 構造で定義されている",
+      "test_name": "test_session_180_pre_ai_handoff_is_payload_struct"
+    },
+    {
+      "id": "AC-180P-08",
+      "text": "review_points が4軸固定で記載されている",
+      "test_name": "test_session_180_pre_review_points_four_axes"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ],
+  "pcc_v1_schema": {
+    "description": "PCC v1 で各 project card に追加する6フィールドのスキーマ定義",
+    "fields": {
+      "operational_status": {
+        "type": "enum",
+        "values": [
+          "READY",
+          "BLOCKED",
+          "WAITING_HUMAN",
+          "RUNNING",
+          "DONE",
+          "UNKNOWN"
+        ],
+        "note": "git_status (clean / dirty / unmanaged / detached / unknown) とは別責務。git 状態とプロジェクト運用状態を混在させない"
+      },
+      "next_action": {
+        "type": "str",
+        "max_length": 200
+      },
+      "blocker_summary": {
+        "type": "str | null"
+      },
+      "human_required": {
+        "type": "bool",
+        "rule": "blocker_summary が null でない かつ operational_status が BLOCKED / WAITING_HUMAN のとき true を推奨する"
+      },
+      "suggested_readonly_commands": {
+        "type": "list[object]",
+        "item_schema": {
+          "label": "str",
+          "command": "str",
+          "risk": "readonly",
+          "category": "str"
+        },
+        "constraint": "risk は 'readonly' に固定。write / destructive 系コマンドは含めない"
+      },
+      "ai_handoff_payload": {
+        "type": "object",
+        "schema": {
+          "target_ai": "str",
+          "prompt_template_id": "str",
+          "context_fields": "list[str]"
+        },
+        "constraint": "prompt 文字列を直接埋め込まない。prompt_template_id で参照する"
+      }
+    },
+    "git_status_separation": {
+      "git_status": {
+        "values": [
+          "clean",
+          "dirty",
+          "unmanaged",
+          "detached",
+          "unknown"
+        ],
+        "responsibility": "Git ワーキングツリー状態の記録"
+      },
+      "operational_status": {
+        "values": [
+          "READY",
+          "BLOCKED",
+          "WAITING_HUMAN",
+          "RUNNING",
+          "DONE",
+          "UNKNOWN"
+        ],
+        "responsibility": "プロジェクト運用上の進行状態の記録"
+      }
+    }
+  }
+}

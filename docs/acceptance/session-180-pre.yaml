@@ -1,0 +1,48 @@
+session_id: session-180-pre
+phase_id: P7
+title: Define PCC v1 operational decision dashboard spec (docs-only, lightweight-governance)
+acceptance:
+  - id: AC-180P-01
+    description: docs/sessions/session-180-pre.json が JSON valid として読み込める
+    test_name: test_session_180_pre_json_is_valid
+    priority: highest
+    completion_criteria_refs: [CC-180P-01, CC-180P-03]
+  - id: AC-180P-02
+    description: docs/acceptance/session-180-pre.yaml が YAML valid として読み込める
+    test_name: test_session_180_pre_yaml_is_valid
+    priority: highest
+    completion_criteria_refs: [CC-180P-02]
+  - id: AC-180P-03
+    description: JSON が 14 mandatory keys を全て含む
+    test_name: test_session_180_pre_has_14_mandatory_keys
+    priority: highest
+    completion_criteria_refs: [CC-180P-03]
+  - id: AC-180P-04
+    description: JSON 内に PCC v1 の6フィールドのスキーマが明示されている
+    test_name: test_session_180_pre_defines_pcc_v1_six_fields
+    priority: highest
+    completion_criteria_refs: [CC-180P-04]
+  - id: AC-180P-05
+    description: operational_status と git_status が責務分離で記載されている
+    test_name: test_session_180_pre_separates_operational_and_git_status
+    priority: highest
+    completion_criteria_refs: [CC-180P-05]
+  - id: AC-180P-06
+    description: suggested_readonly_commands が object 配列として risk=readonly 固定で定義されている
+    test_name: test_session_180_pre_readonly_commands_object_array
+    priority: highest
+    completion_criteria_refs: [CC-180P-06]
+  - id: AC-180P-07
+    description: ai_handoff_payload が target_ai / prompt_template_id / context_fields の object 構造で定義されている
+    test_name: test_session_180_pre_ai_handoff_is_payload_struct
+    priority: highest
+    completion_criteria_refs: [CC-180P-07]
+  - id: AC-180P-08
+    description: review_points が4軸固定で記載されている
+    test_name: test_session_180_pre_review_points_four_axes
+    priority: high
+    completion_criteria_refs: [CC-180P-03]
+manual_acceptance:
+  - id: MA-180P-01
+    description: commander が JSON / YAML を読み、PCC v1 6フィールドの設計と PCC v0 read-only 維持の両立を確認する
+    type: human_review
