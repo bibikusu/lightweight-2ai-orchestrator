@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PCC v0 — Project Command Center</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header>
+    <h1>Project Command Center <span class="version">v0</span></h1>
+    <button id="manual-refresh">更新</button>
+  </header>
+  <main id="project-grid">
+    <article class="project-card">
+      <h2 class="card-title" data-field="project_id">—</h2>
+      <div class="card-row"><span class="label">path</span><span class="value" data-field="repo_path">—</span></div>
+      <div class="card-row"><span class="label">branch</span><span class="value" data-field="branch">—</span></div>
+      <div class="card-row"><span class="label">HEAD</span><span class="value monospace" data-field="HEAD">—</span></div>
+      <div class="card-row"><span class="label">git</span><span class="value badge" data-field="git_status">—</span></div>
+      <div class="card-row"><span class="label">session</span><span class="value" data-field="latest_session">—</span></div>
+      <div class="card-row"><span class="label">4-gate</span><span class="value" data-field="four_gate">—</span></div>
+      <div class="card-row"><span class="label">failure</span><span class="value" data-field="failure_type">—</span></div>
+      <div class="card-row"><span class="label">h-gate</span><span class="value" data-field="human_gate">—</span></div>
+      <div class="card-row"><span class="label">artifacts</span><span class="value" data-field="artifacts">—</span></div>
+      <div class="card-footer"><span class="queue-summary badge badge-not-configured">—（未設定）</span></div>
+    </article>
+    <article class="project-card">
+      <h2 class="card-title" data-field="project_id">—</h2>
+      <div class="card-row"><span class="label">path</span><span class="value" data-field="repo_path">—</span></div>
+      <div class="card-row"><span class="label">branch</span><span class="value" data-field="branch">—</span></div>
+      <div class="card-row"><span class="label">HEAD</span><span class="value monospace" data-field="HEAD">—</span></div>
+      <div class="card-row"><span class="label">git</span><span class="value badge" data-field="git_status">—</span></div>
+      <div class="card-row"><span class="label">session</span><span class="value" data-field="latest_session">—</span></div>
+      <div class="card-row"><span class="label">4-gate</span><span class="value" data-field="four_gate">—</span></div>
+      <div class="card-row"><span class="label">failure</span><span class="value" data-field="failure_type">—</span></div>
+      <div class="card-row"><span class="label">h-gate</span><span class="value" data-field="human_gate">—</span></div>
+      <div class="card-row"><span class="label">artifacts</span><span class="value" data-field="artifacts">—</span></div>
+      <div class="card-footer"><span class="queue-summary badge badge-not-configured">—（未設定）</span></div>
+    </article>
+    <article class="project-card">
+      <h2 class="card-title" data-field="project_id">—</h2>
+      <div class="card-row"><span class="label">path</span><span class="value" data-field="repo_path">—</span></div>
+      <div class="card-row"><span class="label">branch</span><span class="value" data-field="branch">—</span></div>
+      <div class="card-row"><span class="label">HEAD</span><span class="value monospace" data-field="HEAD">—</span></div>
+      <div class="card-row"><span class="label">git</span><span class="value badge" data-field="git_status">—</span></div>
+      <div class="card-row"><span class="label">session</span><span class="value" data-field="latest_session">—</span></div>
+      <div class="card-row"><span class="label">4-gate</span><span class="value" data-field="four_gate">—</span></div>
+      <div class="card-row"><span class="label">failure</span><span class="value" data-field="failure_type">—</span></div>
+      <div class="card-row"><span class="label">h-gate</span><span class="value" data-field="human_gate">—</span></div>
+      <div class="card-row"><span class="label">artifacts</span><span class="value" data-field="artifacts">—</span></div>
+      <div class="card-footer"><span class="queue-summary badge badge-not-configured">—（未設定）</span></div>
+    </article>
+    <article class="project-card">
+      <h2 class="card-title" data-field="project_id">—</h2>
+      <div class="card-row"><span class="label">path</span><span class="value" data-field="repo_path">—</span></div>
+      <div class="card-row"><span class="label">branch</span><span class="value" data-field="branch">—</span></div>
+      <div class="card-row"><span class="label">HEAD</span><span class="value monospace" data-field="HEAD">—</span></div>
+      <div class="card-row"><span class="label">git</span><span class="value badge" data-field="git_status">—</span></div>
+      <div class="card-row"><span class="label">session</span><span class="value" data-field="latest_session">—</span></div>
+      <div class="card-row"><span class="label">4-gate</span><span class="value" data-field="four_gate">—</span></div>
+      <div class="card-row"><span class="label">failure</span><span class="value" data-field="failure_type">—</span></div>
+      <div class="card-row"><span class="label">h-gate</span><span class="value" data-field="human_gate">—</span></div>
+      <div class="card-row"><span class="label">artifacts</span><span class="value" data-field="artifacts">—</span></div>
+      <div class="card-footer"><span class="queue-summary badge badge-not-configured">—（未設定）</span></div>
+    </article>
+    <article class="project-card">
+      <h2 class="card-title" data-field="project_id">—</h2>
+      <div class="card-row"><span class="label">path</span><span class="value" data-field="repo_path">—</span></div>
+      <div class="card-row"><span class="label">branch</span><span class="value" data-field="branch">—</span></div>
+      <div class="card-row"><span class="label">HEAD</span><span class="value monospace" data-field="HEAD">—</span></div>
+      <div class="card-row"><span class="label">git</span><span class="value badge" data-field="git_status">—</span></div>
+      <div class="card-row"><span class="label">session</span><span class="value" data-field="latest_session">—</span></div>
+      <div class="card-row"><span class="label">4-gate</span><span class="value" data-field="four_gate">—</span></div>
+      <div class="card-row"><span class="label">failure</span><span class="value" data-field="failure_type">—</span></div>
+      <div class="card-row"><span class="label">h-gate</span><span class="value" data-field="human_gate">—</span></div>
+      <div class="card-row"><span class="label">artifacts</span><span class="value" data-field="artifacts">—</span></div>
+      <div class="card-footer"><span class="queue-summary badge badge-not-configured">—（未設定）</span></div>
+    </article>
+    <article class="project-card">
+      <h2 class="card-title" data-field="project_id">—</h2>
+      <div class="card-row"><span class="label">path</span><span class="value" data-field="repo_path">—</span></div>
+      <div class="card-row"><span class="label">branch</span><span class="value" data-field="branch">—</span></div>
+      <div class="card-row"><span class="label">HEAD</span><span class="value monospace" data-field="HEAD">—</span></div>
+      <div class="card-row"><span class="label">git</span><span class="value badge" data-field="git_status">—</span></div>
+      <div class="card-row"><span class="label">session</span><span class="value" data-field="latest_session">—</span></div>
+      <div class="card-row"><span class="label">4-gate</span><span class="value" data-field="four_gate">—</span></div>
+      <div class="card-row"><span class="label">failure</span><span class="value" data-field="failure_type">—</span></div>
+      <div class="card-row"><span class="label">h-gate</span><span class="value" data-field="human_gate">—</span></div>
+      <div class="card-row"><span class="label">artifacts</span><span class="value" data-field="artifacts">—</span></div>
+      <div class="card-footer"><span class="queue-summary badge badge-not-configured">—（未設定）</span></div>
+    </article>
+    <article class="project-card">
+      <h2 class="card-title" data-field="project_id">—</h2>
+      <div class="card-row"><span class="label">path</span><span class="value" data-field="repo_path">—</span></div>
+      <div class="card-row"><span class="label">branch</span><span class="value" data-field="branch">—</span></div>
+      <div class="card-row"><span class="label">HEAD</span><span class="value monospace" data-field="HEAD">—</span></div>
+      <div class="card-row"><span class="label">git</span><span class="value badge" data-field="git_status">—</span></div>
+      <div class="card-row"><span class="label">session</span><span class="value" data-field="latest_session">—</span></div>
+      <div class="card-row"><span class="label">4-gate</span><span class="value" data-field="four_gate">—</span></div>
+      <div class="card-row"><span class="label">failure</span><span class="value" data-field="failure_type">—</span></div>
+      <div class="card-row"><span class="label">h-gate</span><span class="value" data-field="human_gate">—</span></div>
+      <div class="card-row"><span class="label">artifacts</span><span class="value" data-field="artifacts">—</span></div>
+      <div class="card-footer"><span class="queue-summary badge badge-not-configured">—（未設定）</span></div>
+    </article>
+    <article class="project-card">
+      <h2 class="card-title" data-field="project_id">—</h2>
+      <div class="card-row"><span class="label">path</span><span class="value" data-field="repo_path">—</span></div>
+      <div class="card-row"><span class="label">branch</span><span class="value" data-field="branch">—</span></div>
+      <div class="card-row"><span class="label">HEAD</span><span class="value monospace" data-field="HEAD">—</span></div>
+      <div class="card-row"><span class="label">git</span><span class="value badge" data-field="git_status">—</span></div>
+      <div class="card-row"><span class="label">session</span><span class="value" data-field="latest_session">—</span></div>
+      <div class="card-row"><span class="label">4-gate</span><span class="value" data-field="four_gate">—</span></div>
+      <div class="card-row"><span class="label">failure</span><span class="value" data-field="failure_type">—</span></div>
+      <div class="card-row"><span class="label">h-gate</span><span class="value" data-field="human_gate">—</span></div>
+      <div class="card-row"><span class="label">artifacts</span><span class="value" data-field="artifacts">—</span></div>
+      <div class="card-footer"><span class="queue-summary badge badge-not-configured">—（未設定）</span></div>
+    </article>
+    <article class="project-card">
+      <h2 class="card-title" data-field="project_id">—</h2>
+      <div class="card-row"><span class="label">path</span><span class="value" data-field="repo_path">—</span></div>
+      <div class="card-row"><span class="label">branch</span><span class="value" data-field="branch">—</span></div>
+      <div class="card-row"><span class="label">HEAD</span><span class="value monospace" data-field="HEAD">—</span></div>
+      <div class="card-row"><span class="label">git</span><span class="value badge" data-field="git_status">—</span></div>
+      <div class="card-row"><span class="label">session</span><span class="value" data-field="latest_session">—</span></div>
+      <div class="card-row"><span class="label">4-gate</span><span class="value" data-field="four_gate">—</span></div>
+      <div class="card-row"><span class="label">failure</span><span class="value" data-field="failure_type">—</span></div>
+      <div class="card-row"><span class="label">h-gate</span><span class="value" data-field="human_gate">—</span></div>
+      <div class="card-row"><span class="label">artifacts</span><span class="value" data-field="artifacts">—</span></div>
+      <div class="card-footer"><span class="queue-summary badge badge-not-configured">—（未設定）</span></div>
+    </article>
+    <article class="project-card">
+      <h2 class="card-title" data-field="project_id">—</h2>
+      <div class="card-row"><span class="label">path</span><span class="value" data-field="repo_path">—</span></div>
+      <div class="card-row"><span class="label">branch</span><span class="value" data-field="branch">—</span></div>
+      <div class="card-row"><span class="label">HEAD</span><span class="value monospace" data-field="HEAD">—</span></div>
+      <div class="card-row"><span class="label">git</span><span class="value badge" data-field="git_status">—</span></div>
+      <div class="card-row"><span class="label">session</span><span class="value" data-field="latest_session">—</span></div>
+      <div class="card-row"><span class="label">4-gate</span><span class="value" data-field="four_gate">—</span></div>
+      <div class="card-row"><span class="label">failure</span><span class="value" data-field="failure_type">—</span></div>
+      <div class="card-row"><span class="label">h-gate</span><span class="value" data-field="human_gate">—</span></div>
+      <div class="card-row"><span class="label">artifacts</span><span class="value" data-field="artifacts">—</span></div>
+      <div class="card-footer"><span class="queue-summary badge badge-not-configured">—（未設定）</span></div>
+    </article>
+  </main>
+  <script src="/static/app.js"></script>
+</body>
+</html>

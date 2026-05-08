@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+PID_FILE="$REPO_ROOT/.pcc.pid"
+PORT="${PCC_PORT:-8765}"
+PYTHON="$REPO_ROOT/.venv/bin/python"
+LOG_FILE="/tmp/pcc_server.log"
+
+case "${1:-}" in
+  start)
+    if [[ -f "$PID_FILE" ]] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null; then
+      echo "PCC already running (pid $(cat "$PID_FILE")) at http://127.0.0.1:$PORT/"
+      exit 0
+    fi
+    cd "$REPO_ROOT"
+    PYTHONPATH="$REPO_ROOT" nohup "$PYTHON" -m backend.pcc.server "$PORT" \
+      > "$LOG_FILE" 2>&1 &
+    echo $! > "$PID_FILE"
+    echo "PCC started (pid $(cat "$PID_FILE")) at http://127.0.0.1:$PORT/"
+    ;;
+  stop)
+    if [[ ! -f "$PID_FILE" ]]; then
+      echo "PCC is not running (no pid file)"
+      exit 0
+    fi
+    PID="$(cat "$PID_FILE")"
+    if kill -0 "$PID" 2>/dev/null; then
+      kill "$PID"
+      echo "PCC stopped (pid $PID)"
+    else
+      echo "PCC process $PID not found (stale pid file)"
+    fi
+    rm -f "$PID_FILE"
+    ;;
+  status)
+    if [[ ! -f "$PID_FILE" ]]; then
+      echo "PCC is stopped"
+      exit 0
+    fi
+    PID="$(cat "$PID_FILE")"
+    if kill -0 "$PID" 2>/dev/null; then
+      echo "PCC is running (pid $PID) at http://127.0.0.1:$PORT/"
+    else
+      echo "PCC is stopped (stale pid file)"
+      rm -f "$PID_FILE"
+    fi
+    ;;
+  *)
+    echo "Usage: scripts/pcc {start|stop|status}"
+    exit 1
+    ;;
+esac

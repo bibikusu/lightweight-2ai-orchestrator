@@ -209,7 +209,7 @@
     {
       "id": "CC-172DI-13",
       "type": "non_regression",
-      "condition": "PCC v0 対象範囲の検証コマンド（PYTHONPATH=. .venv/bin/pytest tests/test_pcc_v0.py / .venv/bin/python -m compileall backend/pcc / bash -n scripts/pcc）が全て pass する"
+      "condition": "PCC v0 対象範囲の検証コマンド（PYTHONPATH=. .venv/bin/pytest tests/test_pcc_v0.py / .venv/bin/ruff check backend/pcc tests/test_pcc_v0.py / MYPYPATH=. .venv/bin/mypy backend/pcc --ignore-missing-imports --explicit-package-bases / .venv/bin/python -m compileall backend/pcc / bash -n scripts/pcc）が全て pass する"
     },
     {
       "id": "CC-172DI-14",

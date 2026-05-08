@@ -1,0 +1,162 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Helvetica Neue", Arial, "Hiragino Sans", sans-serif;
+  font-size: 13px;
+  background: #0f1117;
+  color: #c9d1d9;
+  min-height: 100vh;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: #161b22;
+  border-bottom: 1px solid #30363d;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+h1 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #e6edf3;
+}
+
+.version {
+  font-size: 11px;
+  font-weight: 400;
+  color: #8b949e;
+  margin-left: 6px;
+}
+
+#manual-refresh {
+  padding: 5px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #c9d1d9;
+  background: #21262d;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+#manual-refresh:hover {
+  background: #30363d;
+  border-color: #8b949e;
+}
+
+#project-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+  padding: 16px 20px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.project-card {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 12px;
+  overflow: hidden;
+}
+
+.card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #58a6ff;
+  margin-bottom: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-bottom: 4px;
+  min-height: 18px;
+}
+
+.label {
+  flex: 0 0 56px;
+  font-size: 11px;
+  color: #8b949e;
+  padding-top: 1px;
+}
+
+.value {
+  flex: 1;
+  font-size: 11px;
+  color: #c9d1d9;
+  word-break: break-all;
+}
+
+.monospace {
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
+}
+
+.card-footer {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid #21262d;
+}
+
+/* ── Badge 共通 ── */
+.badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* ── git_status 5値 enum ── */
+.badge-clean {
+  background: #1a3820;
+  color: #3fb950;
+  border: 1px solid #2ea043;
+}
+
+.badge-dirty {
+  background: #3a2000;
+  color: #d29922;
+  border: 1px solid #9e6a03;
+}
+
+.badge-unmanaged {
+  background: #21262d;
+  color: #8b949e;
+  border: 1px solid #30363d;
+}
+
+.badge-detached {
+  background: #2d1f3d;
+  color: #bc8cff;
+  border: 1px solid #8957e5;
+}
+
+.badge-unknown {
+  background: #21262d;
+  color: #6e7681;
+  border: 1px solid #30363d;
+}
+
+/* ── queue_summary fallback ── */
+.badge-not-configured {
+  background: #21262d;
+  color: #6e7681;
+  border: 1px solid #30363d;
+}
