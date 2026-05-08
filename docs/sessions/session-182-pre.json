@@ -1,0 +1,147 @@
+{
+  "session_id": "session-182-pre",
+  "phase_id": "P7",
+  "title": "Project Command Center v0.12 Operational Memory durability boundary canonicalization",
+  "goal": "Operational Memory durability boundary を layer + matrix + taxonomy で正本化し、PCC の read-only projection 境界を固定する",
+  "scope": [
+    "Operational Memory の durability boundary を文書で定義する",
+    "Layer 定義(PCC Layer / Operational Memory Layer / Execution Layer / Human Layer)を固定する",
+    "Responsibility Matrix を定義する",
+    "PCC の read-only projection 原則を明文化する",
+    "Operational Memory taxonomy を documented 状態として固定する",
+    "session-182 本体実装の前提仕様を定義する"
+  ],
+  "out_of_scope": [
+    "state.json 実装",
+    "PCC write-back 機能",
+    "global_rules.md の変更",
+    "queue engine 実装修正",
+    "run_session.py の変更",
+    "scheduler 実装変更",
+    "Operational Memory persistence 実装",
+    "database 導入",
+    "UI 実装変更"
+  ],
+  "constraints": [
+    "docs-only session とする",
+    "PCC は read-only projection として扱う",
+    "Operational Memory は durability boundary のみ定義し実装しない",
+    "layer と matrix の両方を MUST で含める",
+    "taxonomy documented を acceptance に含める",
+    "review_points は canonical 4軸固定とする",
+    "completion_criteria は object 配列形式 mandatory",
+    "changed_files は docs/sessions/session-182-pre.json と docs/acceptance/session-182-pre.yaml の2件のみとする"
+  ],
+  "acceptance_ref": "docs/acceptance/session-182-pre.yaml",
+  "allowed_changes_detail": [
+    "docs/sessions/session-182-pre.json: Operational Memory durability boundary contract を新規 session JSON として保存する",
+    "docs/acceptance/session-182-pre.yaml: 本 session JSON に対応する acceptance YAML として保存する"
+  ],
+  "forbidden_changes": [
+    "docs/global_rules.md",
+    "docs/global_rules_v2.md",
+    "orchestration/run_session.py",
+    "orchestration/queue/engine.py",
+    "docs/config/queue_policy.yaml",
+    "docs/projects/**",
+    "state.json",
+    "backend/pcc/static/**",
+    "backend/pcc/**/*.py"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-182PRE-01",
+      "type": "document_rule",
+      "condition": "session-182-pre.json と session-182-pre.yaml が生成されている"
+    },
+    {
+      "id": "CC-182PRE-02",
+      "type": "document_rule",
+      "condition": "Operational Memory durability boundary が layer + matrix の両方で定義されている"
+    },
+    {
+      "id": "CC-182PRE-03",
+      "type": "document_rule",
+      "condition": "PCC read-only projection 原則が明文化されている"
+    },
+    {
+      "id": "CC-182PRE-04",
+      "type": "document_rule",
+      "condition": "Operational Memory taxonomy が documented 状態として定義されている"
+    },
+    {
+      "id": "CC-182PRE-05",
+      "type": "non_regression",
+      "condition": "global_rules 系および実装コードへ変更がない"
+    },
+    {
+      "id": "CC-182PRE-06",
+      "type": "side_effect_free",
+      "condition": "state persistence や write-back を要求する仕様が混入していない"
+    },
+    {
+      "id": "CC-182PRE-07",
+      "type": "state_transition_consistent",
+      "condition": "PCC / queue / execution / human の責務境界が矛盾なく定義されている"
+    },
+    {
+      "id": "CC-182PRE-08",
+      "type": "artifact",
+      "condition": "acceptance_ref が docs/acceptance/session-182-pre.yaml を指している"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-182PRE-01",
+      "description": "session-182-pre.json と session-182-pre.yaml が canonical path に存在する",
+      "test_name": "test_session_182pre_files_exist"
+    },
+    {
+      "id": "AC-182PRE-02",
+      "description": "Operational Memory durability boundary が document scope として定義されている",
+      "test_name": "test_session_182pre_boundary_defined"
+    },
+    {
+      "id": "AC-182PRE-03",
+      "description": "Layer 定義と Responsibility Matrix の両方が存在する",
+      "test_name": "test_session_182pre_layer_and_matrix_defined"
+    },
+    {
+      "id": "AC-182PRE-04",
+      "description": "PCC が read-only projection として定義され write-back 責務を持たない",
+      "test_name": "test_session_182pre_pcc_read_only_projection"
+    },
+    {
+      "id": "AC-182PRE-05",
+      "description": "state.json 実装および persistence 実装が scope 外として明記されている",
+      "test_name": "test_session_182pre_statejson_out_of_scope"
+    },
+    {
+      "id": "AC-182PRE-06",
+      "description": "review_points が canonical 4軸と一致する",
+      "test_name": "test_session_182pre_review_points_canonical"
+    },
+    {
+      "id": "AC-182PRE-07",
+      "description": "completion_criteria が object 配列形式で定義されている",
+      "test_name": "test_session_182pre_completion_criteria_object_array"
+    },
+    {
+      "id": "AC-182PRE-08",
+      "description": "global_rules 系および orchestration 実装ファイルが forbidden_changes に含まれている",
+      "test_name": "test_session_182pre_forbidden_changes_protected"
+    },
+    {
+      "id": "AC-182PRE-09",
+      "description": "Operational Memory taxonomy が documented 状態として定義されている",
+      "test_name": "test_session_182pre_taxonomy_documented"
+    }
+  ],
+  "review_points": [
+    "仕様一致(AC達成)",
+    "変更範囲遵守",
+    "副作用なし",
+    "検証十分性"
+  ],
+  "failure_type": "spec_missing"
+}

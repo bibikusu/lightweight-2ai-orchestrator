@@ -1,0 +1,129 @@
+session_id: "session-182-pre"
+phase_id: "P7"
+title: "Project Command Center v0.12 Operational Memory durability boundary canonicalization"
+goal: "Operational Memory durability boundary を layer + matrix + taxonomy で正本化し、PCC の read-only projection 境界を固定する"
+
+scope:
+  - "Operational Memory durability boundary canonicalization"
+  - "Layer 定義(PCC Layer / Operational Memory Layer / Execution Layer / Human Layer)の固定"
+  - "Responsibility Matrix definition"
+  - "PCC read-only projection rule definition"
+  - "Operational Memory taxonomy documented canonicalization"
+  - "session-182 本体実装の前提仕様定義"
+
+out_of_scope:
+  - "state.json implementation"
+  - "PCC write-back implementation"
+  - "global_rules.md modification"
+  - "queue engine implementation changes"
+  - "run_session.py changes"
+  - "scheduler implementation changes"
+  - "Operational Memory persistence implementation"
+  - "database introduction"
+  - "UI implementation changes"
+
+acceptance:
+  - id: "AC-182PRE-01"
+    requirement: "session-182-pre.json と session-182-pre.yaml が canonical path に存在する"
+    test_name: "test_session_182pre_files_exist"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "docs/sessions/session-182-pre.json が存在する"
+      - "docs/acceptance/session-182-pre.yaml が存在する"
+
+  - id: "AC-182PRE-02"
+    requirement: "Operational Memory durability boundary が document scope として定義されている"
+    test_name: "test_session_182pre_boundary_defined"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "durability boundary が文章として定義されている"
+      - "boundary が implementation ではなく canonicalization として扱われている"
+
+  - id: "AC-182PRE-03"
+    requirement: "Layer 定義と Responsibility Matrix の両方が存在する"
+    test_name: "test_session_182pre_layer_and_matrix_defined"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "Layer 定義(PCC Layer / Operational Memory Layer / Execution Layer / Human Layer)が存在する"
+      - "Responsibility Matrix が存在する"
+
+  - id: "AC-182PRE-04"
+    requirement: "PCC が read-only projection として定義され write-back 責務を持たない"
+    test_name: "test_session_182pre_pcc_read_only_projection"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "PCC が read-only projection と明記されている"
+      - "write-back 不可が明記されている"
+
+  - id: "AC-182PRE-05"
+    requirement: "state.json 実装および persistence 実装が scope 外として定義されている"
+    test_name: "test_session_182pre_statejson_out_of_scope"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "out_of_scope に state.json implementation が含まれる"
+      - "out_of_scope に persistence implementation が含まれる"
+
+  - id: "AC-182PRE-06"
+    requirement: "review_points が canonical 4軸と一致する"
+    test_name: "test_session_182pre_review_points_canonical"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "仕様一致(AC達成)が含まれる"
+      - "変更範囲遵守が含まれる"
+      - "副作用なしが含まれる"
+      - "検証十分性が含まれる"
+
+  - id: "AC-182PRE-07"
+    requirement: "completion_criteria が object 配列形式で定義されている"
+    test_name: "test_session_182pre_completion_criteria_object_array"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "completion_criteria が配列である"
+      - "各 object が id/type/condition を持つ"
+
+  - id: "AC-182PRE-08"
+    requirement: "global_rules 系および orchestration 実装ファイルが forbidden_changes に含まれている"
+    test_name: "test_session_182pre_forbidden_changes_protected"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "global_rules.md が forbidden_changes に含まれる"
+      - "orchestration/run_session.py が forbidden_changes に含まれる"
+      - "orchestration/queue/engine.py が forbidden_changes に含まれる"
+
+  - id: "AC-182PRE-09"
+    requirement: "Operational Memory taxonomy が documented 状態として定義されている"
+    test_name: "test_session_182pre_taxonomy_documented"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "taxonomy documented が明記されている"
+      - "taxonomy が未実装概念として整理されている"
+
+completion_checks:
+  - "Layer と Responsibility Matrix の両方が定義されている"
+  - "PCC read-only projection 原則が明文化されている"
+  - "Operational Memory taxonomy が documented 状態として定義されている"
+  - "state.json 実装が out_of_scope に含まれている"
+  - "global_rules 系ファイルが forbidden_changes に含まれている"
+  - "changed_files が2件のみ(session-182-pre.json / session-182-pre.yaml)"
+
+change_guardrails:
+  allowed_changes:
+    - "docs/sessions/session-182-pre.json"
+    - "docs/acceptance/session-182-pre.yaml"
+
+  forbidden_changes:
+    - "docs/global_rules.md"
+    - "docs/global_rules_v2.md"
+    - "orchestration/run_session.py"
+    - "orchestration/queue/engine.py"
+    - "state.json"
+    - "backend/pcc/**"
