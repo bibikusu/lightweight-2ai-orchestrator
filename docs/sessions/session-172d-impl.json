@@ -1,0 +1,331 @@
+{
+  "session_id": "session-172d-impl",
+  "phase_id": "P7",
+  "title": "Implement Project Command Center v0 read-only dashboard",
+  "goal": "session-172d (878b024) で確定した PCC v0 仕様正本に基づき、10プロジェクトの状態を localhost 上で集約表示する read-only dashboard を最小実装する。実行制御・承認・retry・queue操作・DB・daemon・WebSocket は一切実装せず、ClaudeCode 多窓運用時に commander が5秒で全体状態を把握できる「認知レイヤー」を成立させる。",
+  "scope": [
+    "backend/pcc/__init__.py を新規作成し aggregate_projects を再エクスポートする",
+    "backend/pcc/pcc_v0.py を新規作成し aggregate_projects() を実装する",
+    "backend/pcc/static/index.html を新規作成し10カード grid をレンダーする",
+    "backend/pcc/static/style.css を新規作成し外部依存ゼロでスタイルを定義する",
+    "backend/pcc/static/app.js を新規作成し /api/state を fetch しカード描画する",
+    "backend/pcc/server.py を新規作成し localhost-only HTTP サーバーを起動する",
+    "scripts/pcc を新規作成し start / stop / status の3サブコマンドを提供する",
+    "tests/test_pcc_v0.py を新規作成し AC-01 から AC-18 までの自動テストを実装する",
+    "docs/sessions/session-172d-impl.json を新規作成する",
+    "docs/acceptance/session-172d-impl.yaml を新規作成する"
+  ],
+  "out_of_scope": [
+    "queue 実行制御 UI の追加",
+    "session 実行ボタン / approve ボタン / retry ボタンの追加",
+    "queue_state.json への書込処理",
+    "docs/projects/**/state.json への書込処理",
+    "docs/config/project_registry.json への書込処理",
+    "DB 導入（sqlite / postgres / 任意の永続層）",
+    "daemon 化 / background watcher",
+    "WebSocket / SSE / push 通知",
+    "認証機構の実装",
+    "Cookie / セッション保存",
+    "外部 CDN からの JS / CSS 読込",
+    "0.0.0.0 への bind",
+    "orchestration/run_session.py の改変",
+    "orchestration/queue/** の改変",
+    "orchestration/selector/** の改変",
+    "docs/global_rules.md / docs/master_instruction.md の改変",
+    "docs/config/queue_policy.yaml の改変",
+    "PCC v1 相当の write/control UI の先行実装",
+    "phase_id canonicalization (BACKLOG-PHASE-CANON-001) の同時実施",
+    "新規 state writer の追加",
+    "ブラウザ視認の自動化（automated CI 化禁止、manual_acceptance に隔離）"
+  ],
+  "constraints": [
+    "1セッション1目的を厳守する",
+    "PCC v0 は read-only aggregation layer であり実行制御を行わない",
+    "DB / daemon / background watcher / WebSocket / SSE / push 通知は禁止",
+    "queue_state.json 不在時は「—（未設定）」バッジでフォールバックする",
+    "git 未管理プロジェクトは「—（git未管理）」バッジでフォールバックする",
+    "git_status は clean / dirty / unmanaged / detached / unknown の5値固定 enum とする",
+    "git_status バッジ表示は clean='✓ clean' / dirty='⚠ dirty' / unmanaged='— git未管理' / detached='detached' / unknown='? unknown' の5状態を区別して表示する",
+    "A02_fina の dirty 状態は隠さず表示する（都合の悪い状態の可視化を優先する）",
+    "HTML / CSS / JS は外部依存ゼロとし CDN 利用を禁止する",
+    "Python サーバーは 127.0.0.1 のみに bind し 0.0.0.0 への bind を禁止する",
+    "127.0.0.1 bind / 0.0.0.0 不在 / 外部 CDN 不在 の grep 検証は commander 手動チェックとし automated AC には含めない（D3 ハイブリッド方針）",
+    "認証機構は v0 では実装しない",
+    "ブラウザキャッシュ強制無効化は不要とし手動更新ボタン（ページ再読込）で対応する",
+    "セッション保存・Cookie 利用を禁止する",
+    "smoke test（scripts/pcc start → ブラウザ視認 → stop）は automated AC には含めず manual_acceptance として隔離する（D4 方針）",
+    "session JSON 14必須キー（基本8 + ガバナンス6）を全充足する",
+    "review_points は global_rules.md 正本の固定4軸を全角パーレン込みで文字一致記載する",
+    "review_points[3] は厳密に '検証十分性' とし末尾に説明文を付さない",
+    "protected_baselines として orchestration/run_session.py / orchestration/selector/core.py / orchestration/selector/loader.py / orchestration/selector/writer.py の md5 を変更しない",
+    "protected_baselines md5 基準値: run_session.py=4de6affffb9297cdf02b3136e8f55172 / core.py=9b19e2cbe3487d3090096c5343c88611 / loader.py=959db533bf086f83765d8f6f16fbbe7b / writer.py=aaf7e28e0e9c52d12d30c8d3349cf982",
+    "session-172d-impl は session-172d (878b024) を依存先とする",
+    "allowed_changes に含まれる session-172d-impl.json と session-172d-impl.yaml は forbidden_changes の docs/sessions/session-*.json および docs/acceptance/session-*.yaml glob からの除外対象とする",
+    "completion_criteria は object 配列とし各要素に id / type / condition を持たせる",
+    "acceptance_criteria は各要素に id / text / test_name を持たせる",
+    "test_name は pytest 互換の英数字とアンダースコアのみとする",
+    "PCC v1 相当の write/control UI への進行を本セッションでは行わない",
+    "ClaudeCode は git stash 系コマンドを一切実行しない",
+    "ClaudeCode は commander 明示コマンドのみ実行し独断調査も先行禁止"
+  ],
+  "acceptance_ref": "docs/acceptance/session-172d-impl.yaml",
+  "allowed_changes": [
+    "backend/pcc/__init__.py",
+    "backend/pcc/pcc_v0.py",
+    "backend/pcc/static/index.html",
+    "backend/pcc/static/style.css",
+    "backend/pcc/static/app.js",
+    "backend/pcc/server.py",
+    "scripts/pcc",
+    "tests/test_pcc_v0.py",
+    "docs/sessions/session-172d-impl.json",
+    "docs/acceptance/session-172d-impl.yaml"
+  ],
+  "allowed_changes_detail": [
+    "backend/pcc/__init__.py: aggregate_projects を pcc_v0 から再エクスポートし backend.pcc 名前空間で利用可能にする",
+    "backend/pcc/pcc_v0.py: aggregate_projects() を実装し docs/config/project_registry.json を正本に各プロジェクトの project_id / repo_path / branch / HEAD / git_status / latest_session / four_gate / failure_type / human_gate / artifacts を辞書化し list で返す",
+    "backend/pcc/pcc_v0.py: git_status の値を clean / dirty / unmanaged / detached / unknown の5値 enum のいずれかに正規化する",
+    "backend/pcc/pcc_v0.py: git 未管理プロジェクトに対し例外を握りつぶさず git_status='unmanaged' を付与する",
+    "backend/pcc/pcc_v0.py: detached HEAD 状態は git_status='detached' を付与する",
+    "backend/pcc/pcc_v0.py: 判別不能な状態は git_status='unknown' を付与する（例外で落とさない）",
+    "backend/pcc/pcc_v0.py: queue_state.json 不在時は queue_summary='not_configured' を付与する",
+    "backend/pcc/pcc_v0.py: state.json / project_registry.json / queue_state.json への書込を一切行わない",
+    "backend/pcc/static/index.html: <main> 内に10枚のカードを CSS Grid でレンダーするマークアップを定義する",
+    "backend/pcc/static/index.html: 各カードに data-field 属性で project_id / repo_path / branch / HEAD / git_status / latest_session / four_gate / failure_type / human_gate / artifacts の10フィールドのスロットを用意する",
+    "backend/pcc/static/index.html: ページ上部に id='manual-refresh' の手動更新ボタンを1個配置する（ページ再読込トリガのみ）",
+    "backend/pcc/static/index.html: form 要素 / 実行ボタン / 承認ボタン / retry ボタン / queue 編集 UI を一切含まない",
+    "backend/pcc/static/style.css: 外部依存ゼロでカード grid と badge を視認可能にする最小スタイルを定義する",
+    "backend/pcc/static/style.css: badge-clean / badge-dirty / badge-unmanaged / badge-detached / badge-unknown / badge-not-configured の class を定義し色で状態を区別する",
+    "backend/pcc/static/app.js: GET /api/state を fetch し JSON を受領後、各カードの data-field スロットに値を書き込む単一エントリポイントを定義する",
+    "backend/pcc/static/app.js: git_status の値に応じて対応する badge class を付与しテキストを表示する（clean='✓ clean' / dirty='⚠ dirty' / unmanaged='— git未管理' / detached='detached' / unknown='? unknown'）",
+    "backend/pcc/static/app.js: queue_summary='not_configured' のとき '—（未設定）' を表示する",
+    "backend/pcc/static/app.js: 外部 CDN からの import / script 読込を行わない",
+    "backend/pcc/server.py: 127.0.0.1 のみに bind する HTTP サーバーを定義する（0.0.0.0 禁止）",
+    "backend/pcc/server.py: GET /api/state は aggregate_projects() を呼び JSON を返す",
+    "backend/pcc/server.py: GET /static/* は backend/pcc/static/ をそのまま配信する",
+    "backend/pcc/server.py: 上記2 GET 以外のメソッド・パスを実装しない（操作系 endpoint 不存在）",
+    "scripts/pcc: shebang 付き bash で start / stop / status の3サブコマンドを実装する",
+    "scripts/pcc: start は backend/pcc/server.py を background 起動し pid をファイルに記録する",
+    "scripts/pcc: stop は記録 pid を kill し pid ファイルを削除する",
+    "scripts/pcc: status は pid ファイル存在と process 生存を確認し pid と URL を表示する",
+    "scripts/pcc: chmod +x で実行可能権限を付与する",
+    "tests/test_pcc_v0.py: AC-172DI-01 から AC-172DI-18 に対応する自動テストを test_<subject>_<behavior> 形式で実装する",
+    "tests/test_pcc_v0.py: protected_baselines 4ファイルの md5 を tests 内で計算し基準値と一致を assert する",
+    "tests/test_pcc_v0.py: aggregate_projects 実行前後で state.json / project_registry.json の md5 が不変であることを assert する",
+    "tests/test_pcc_v0.py: git_status の戻り値が {clean, dirty, unmanaged, detached, unknown} の5値のいずれかであることを assert する",
+    "docs/sessions/session-172d-impl.json: 本セッション仕様を 14 必須キー充足で定義する",
+    "docs/acceptance/session-172d-impl.yaml: 本セッション受入条件を session-08 系の構造に準拠して定義し manual_acceptance セクションで smoke test を隔離する"
+  ],
+  "forbidden_changes": [
+    "orchestration/run_session.py を変更しない",
+    "orchestration/selector/core.py を変更しない",
+    "orchestration/selector/loader.py を変更しない",
+    "orchestration/selector/writer.py を変更しない",
+    "orchestration/selector/__init__.py を変更しない",
+    "orchestration/lock/** を変更しない",
+    "orchestration/queue/** を変更しない",
+    "orchestration/** を変更しない（backend/pcc/ と無関係）",
+    "docs/config/project_registry.json を変更しない（読込のみ）",
+    "docs/config/queue_policy.yaml を変更しない",
+    "docs/projects/**/state.json を変更しない（読込のみ）",
+    "docs/specs/project_command_center_v0_spec.md を変更しない",
+    "docs/master_instruction.md を変更しない",
+    "docs/global_rules.md を変更しない",
+    "docs/roadmap.yaml を変更しない",
+    "docs/sessions/session-*.json を変更しない（docs/sessions/session-172d-impl.json は本セッションの allowed_changes として例外）",
+    "docs/acceptance/session-*.yaml を変更しない（docs/acceptance/session-172d-impl.yaml は本セッションの allowed_changes として例外）",
+    "scripts/new_session.sh を変更しない",
+    "scripts/step0_check.sh を変更しない（存在する場合）",
+    "preflight_session.sh を変更しない",
+    ".claude/settings.json を変更しない",
+    "DL/** を変更しない",
+    ".playwright-mcp/** を変更しない",
+    "10プロジェクト配下の .git ディレクトリに一切触れない",
+    "backend/pcc/ / scripts/pcc / tests/test_pcc_v0.py 以外の .py / .sh ファイルを変更しない",
+    "git stash / git stash pop / git stash apply / git stash drop / git stash clear / git push --force / git reset --hard を実行しない",
+    "main ブランチへの直接 commit を行わない（commander 手動 commit/push のみ）"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-172DI-01",
+      "type": "artifact",
+      "condition": "backend/pcc/__init__.py が aggregate_projects を再エクスポートしている"
+    },
+    {
+      "id": "CC-172DI-02",
+      "type": "artifact",
+      "condition": "backend/pcc/pcc_v0.py が aggregate_projects() を export しており docs/config/project_registry.json を正本として読み込む"
+    },
+    {
+      "id": "CC-172DI-03",
+      "type": "artifact",
+      "condition": "backend/pcc/static/index.html が10プロジェクト分のカード grid をレンダーする HTML 構造を持つ"
+    },
+    {
+      "id": "CC-172DI-04",
+      "type": "artifact",
+      "condition": "backend/pcc/server.py が 127.0.0.1 のみに bind する HTTP サーバーを起動し GET /api/state と GET /static/* のみを提供する"
+    },
+    {
+      "id": "CC-172DI-05",
+      "type": "artifact",
+      "condition": "scripts/pcc が start / stop / status の3サブコマンドに対応し実行可能権限を持つ"
+    },
+    {
+      "id": "CC-172DI-06",
+      "type": "document_rule",
+      "condition": "UI の各カードに project_id / repo_path / branch / HEAD / git_status / latest_session / four_gate / failure_type / human_gate / artifacts の10 data-field が存在し、ページ上部に手動更新ボタンが1個配置されている（合計11要素）"
+    },
+    {
+      "id": "CC-172DI-07",
+      "type": "document_rule",
+      "condition": "git 未管理プロジェクトは UI 上で「—（git未管理）」バッジで明示される"
+    },
+    {
+      "id": "CC-172DI-08",
+      "type": "document_rule",
+      "condition": "queue_state.json 不在時は UI 上で「—（未設定）」バッジで明示される"
+    },
+    {
+      "id": "CC-172DI-09",
+      "type": "document_rule",
+      "condition": "実行制御 UI（実行ボタン / 承認ボタン / retry ボタン / queue 編集要素 / form 要素）が一切存在しない"
+    },
+    {
+      "id": "CC-172DI-10",
+      "type": "side_effect_free",
+      "condition": "aggregate_projects 実行前後で docs/projects/**/state.json および docs/config/project_registry.json および queue_state.json の md5 が変化しない"
+    },
+    {
+      "id": "CC-172DI-11",
+      "type": "non_regression",
+      "condition": "protected_baselines 4ファイル（run_session.py / selector core / selector loader / selector writer）の md5 が基準値から変化しない"
+    },
+    {
+      "id": "CC-172DI-12",
+      "type": "document_rule",
+      "condition": "tests/test_pcc_v0.py が AC-172DI-01 から AC-172DI-18 までの自動テストを test_name 命名規則で実装している"
+    },
+    {
+      "id": "CC-172DI-13",
+      "type": "non_regression",
+      "condition": "PCC v0 対象範囲の検証コマンド（PYTHONPATH=. .venv/bin/pytest tests/test_pcc_v0.py / .venv/bin/python -m compileall backend/pcc / bash -n scripts/pcc）が全て pass する"
+    },
+    {
+      "id": "CC-172DI-14",
+      "type": "document_rule",
+      "condition": "git_status の値が clean / dirty / unmanaged / detached / unknown の5値 enum のいずれかに正規化されている"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-172DI-01",
+      "text": "backend.pcc モジュールが import 可能で aggregate_projects がトップレベルから取得できる",
+      "test_name": "test_pcc_v0_module_importable"
+    },
+    {
+      "id": "AC-172DI-02",
+      "text": "aggregate_projects() の戻り値の長さが project_registry.json に登録されたプロジェクト数と一致する",
+      "test_name": "test_aggregate_returns_one_card_per_registered_project"
+    },
+    {
+      "id": "AC-172DI-03",
+      "text": "aggregate_projects() は docs/config/project_registry.json を正本として参照する",
+      "test_name": "test_aggregate_uses_project_registry_as_source_of_truth"
+    },
+    {
+      "id": "AC-172DI-04",
+      "text": "aggregate_projects() は各プロジェクトの docs/projects/<id>/state.json を読み込む（存在する場合）",
+      "test_name": "test_aggregate_reads_state_json_for_each_project"
+    },
+    {
+      "id": "AC-172DI-05",
+      "text": "aggregate_projects() は git 未管理プロジェクトを例外で落とさず git_status='unmanaged' を付与して返す",
+      "test_name": "test_aggregate_handles_missing_git_directory_gracefully"
+    },
+    {
+      "id": "AC-172DI-06",
+      "text": "aggregate_projects() は queue_state.json 不在時に queue_summary='not_configured' を付与して返す",
+      "test_name": "test_aggregate_handles_missing_queue_state_gracefully"
+    },
+    {
+      "id": "AC-172DI-07",
+      "text": "aggregate_projects() は state.json / project_registry.json / queue_state.json に対する書込操作を一切行わない",
+      "test_name": "test_aggregate_does_not_write_to_any_source_file"
+    },
+    {
+      "id": "AC-172DI-08",
+      "text": "backend/pcc/static/index.html は project_registry.json に登録されたプロジェクトと同数のカード要素を含む",
+      "test_name": "test_html_renders_card_per_registered_project"
+    },
+    {
+      "id": "AC-172DI-09",
+      "text": "backend/pcc/static/index.html は project_id / repo_path / branch / HEAD / git_status / latest_session / four_gate / failure_type / human_gate / artifacts の10 data-field 属性と id='manual-refresh' のボタン1個を含む",
+      "test_name": "test_html_contains_all_11_card_fields"
+    },
+    {
+      "id": "AC-172DI-10",
+      "text": "backend/pcc/static/index.html および backend/pcc/static/app.js に form 要素 / 実行系ボタン / 承認系ボタン / retry 系ボタン / queue 編集系要素が一切存在しない",
+      "test_name": "test_html_has_no_execution_control_elements"
+    },
+    {
+      "id": "AC-172DI-11",
+      "text": "scripts/pcc start サブコマンドが定義されており実行可能権限が付与されている",
+      "test_name": "test_pcc_start_command_exists_and_executable"
+    },
+    {
+      "id": "AC-172DI-12",
+      "text": "scripts/pcc stop サブコマンドが定義されており実行可能権限が付与されている",
+      "test_name": "test_pcc_stop_command_exists_and_executable"
+    },
+    {
+      "id": "AC-172DI-13",
+      "text": "scripts/pcc status サブコマンドが定義されており実行可能権限が付与されている",
+      "test_name": "test_pcc_status_command_exists_and_executable"
+    },
+    {
+      "id": "AC-172DI-14",
+      "text": "protected_baselines 4ファイル（run_session.py / selector core / loader / writer）の md5 が基準値と一致する",
+      "test_name": "test_protected_baselines_md5_unchanged"
+    },
+    {
+      "id": "AC-172DI-15",
+      "text": "aggregate_projects 実行前後で docs/projects/**/state.json の md5 が変化しない",
+      "test_name": "test_no_writes_to_state_json_during_aggregation"
+    },
+    {
+      "id": "AC-172DI-16",
+      "text": "aggregate_projects 実行前後で docs/config/project_registry.json の md5 が変化しない",
+      "test_name": "test_no_writes_to_project_registry_during_aggregation"
+    },
+    {
+      "id": "AC-172DI-17",
+      "text": "git diff --name-only origin/main で検出される変更ファイルが allowed_changes 10ファイル以内に収まる（commit/push 完了後に評価）",
+      "test_name": "test_session_172d_impl_diff_scope_only_allowed_files"
+    },
+    {
+      "id": "AC-172DI-18",
+      "text": "aggregate_projects() の git_status は clean / dirty / unmanaged / detached / unknown の5値 enum のいずれかを返す",
+      "test_name": "test_aggregate_git_status_returns_one_of_five_canonical_values"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ],
+  "git_status_enum": {
+    "values": ["clean", "dirty", "unmanaged", "detached", "unknown"],
+    "display": {
+      "clean": "✓ clean",
+      "dirty": "⚠ dirty",
+      "unmanaged": "— git未管理",
+      "detached": "detached",
+      "unknown": "? unknown"
+    }
+  },
+  "queue_summary_fallback": {
+    "not_configured_display": "—（未設定）"
+  }
+}

@@ -1,0 +1,299 @@
+session_id: "session-172d-impl"
+goal: "PCC v0 read-only dashboard を最小実装し、10プロジェクトの状態を localhost で集約表示する。"
+scope:
+  - "backend/pcc/ 配下に aggregation logic / static UI / HTTP server を新規実装する"
+  - "scripts/pcc に start / stop / status の3サブコマンドを新規実装する"
+  - "tests/test_pcc_v0.py に AC-01〜18 の自動テストを新規実装する"
+  - "docs/sessions/session-172d-impl.json と docs/acceptance/session-172d-impl.yaml を新規作成する"
+
+out_of_scope:
+  - "queue 実行制御 / 承認 UI / retry UI / queue 編集 UI"
+  - "DB / daemon / background watcher / WebSocket / SSE"
+  - "認証機構 / Cookie / セッション保存"
+  - "外部 CDN 利用 / 0.0.0.0 bind"
+  - "orchestration/** および docs/global_rules.md / docs/master_instruction.md / docs/config/queue_policy.yaml の改変"
+  - "PCC v1 相当の write/control UI"
+  - "phase_id canonicalization の同時実施"
+  - "ブラウザ視認の自動化（manual_acceptance に隔離）"
+
+acceptance:
+  - id: "AC-172DI-01"
+    requirement: "backend.pcc モジュールが import 可能で aggregate_projects がトップレベルから取得できる。"
+    test_name: "test_pcc_v0_module_importable"
+    type: "automated"
+    verification:
+      - "PYTHONPATH=. .venv/bin/python -c 'from backend.pcc import aggregate_projects' が exit 0 で完了する。"
+
+  - id: "AC-172DI-02"
+    requirement: "aggregate_projects() の戻り値の長さが project_registry.json に登録されたプロジェクト数と一致する。"
+    test_name: "test_aggregate_returns_one_card_per_registered_project"
+    type: "automated"
+    verification:
+      - "テスト内で project_registry.json を読み件数を取得し戻り値長と比較する。"
+
+  - id: "AC-172DI-03"
+    requirement: "aggregate_projects() は docs/config/project_registry.json を正本として参照する。"
+    test_name: "test_aggregate_uses_project_registry_as_source_of_truth"
+    type: "automated"
+    verification:
+      - "monkeypatch で project_registry.json のパスを切替え、戻り値の project_id 列が切替先と一致することを確認する。"
+
+  - id: "AC-172DI-04"
+    requirement: "aggregate_projects() は各プロジェクトの docs/projects/<id>/state.json を読み込む。"
+    test_name: "test_aggregate_reads_state_json_for_each_project"
+    type: "automated"
+    verification:
+      - "tmp_path に擬似 state.json を配置し戻り値に latest_session / failure_type 等の値が反映されることを確認する。"
+
+  - id: "AC-172DI-05"
+    requirement: "aggregate_projects() は git 未管理プロジェクトを例外で落とさず git_status='unmanaged' を付与する。"
+    test_name: "test_aggregate_handles_missing_git_directory_gracefully"
+    type: "automated"
+    verification:
+      - ".git を持たない tmp_path 配下の擬似 repo を入力し、戻り値の git_status が 'unmanaged' となることを確認する。"
+
+  - id: "AC-172DI-06"
+    requirement: "aggregate_projects() は queue_state.json 不在時に queue_summary='not_configured' を付与する。"
+    test_name: "test_aggregate_handles_missing_queue_state_gracefully"
+    type: "automated"
+    verification:
+      - "queue_state.json を持たない構成で戻り値の queue_summary が 'not_configured' となることを確認する。"
+
+  - id: "AC-172DI-07"
+    requirement: "aggregate_projects() は state.json / project_registry.json / queue_state.json に書込しない。"
+    test_name: "test_aggregate_does_not_write_to_any_source_file"
+    type: "automated"
+    verification:
+      - "実行前後で対象ファイルの md5 が一致することを assert する。"
+
+  - id: "AC-172DI-08"
+    requirement: "backend/pcc/static/index.html は登録プロジェクト数と同数のカード要素を含む。"
+    test_name: "test_html_renders_card_per_registered_project"
+    type: "automated"
+    verification:
+      - "html.parser で <article class='project-card'> の数を数え、project_registry.json の件数と一致することを確認する。"
+
+  - id: "AC-172DI-09"
+    requirement: "backend/pcc/static/index.html は10 data-field 属性と id='manual-refresh' のボタン1個を含む。"
+    test_name: "test_html_contains_all_11_card_fields"
+    type: "automated"
+    verification:
+      - "data-field 属性値の集合が {project_id, repo_path, branch, HEAD, git_status, latest_session, four_gate, failure_type, human_gate, artifacts} と一致し、id='manual-refresh' の button が1個存在することを確認する。"
+
+  - id: "AC-172DI-10"
+    requirement: "backend/pcc/static/index.html および app.js に実行制御要素が一切存在しない。"
+    test_name: "test_html_has_no_execution_control_elements"
+    type: "automated"
+    verification:
+      - "<form>, type='submit', onclick=execute, onclick=approve, onclick=retry の検出件数がすべて0であることを確認する。"
+
+  - id: "AC-172DI-11"
+    requirement: "scripts/pcc start が定義され実行可能権限を持つ。"
+    test_name: "test_pcc_start_command_exists_and_executable"
+    type: "automated"
+    verification:
+      - "os.access('scripts/pcc', os.X_OK) が True であり、bash -n scripts/pcc が exit 0 で完了し、grep -E 'start\\)' scripts/pcc がヒットすることを確認する。"
+
+  - id: "AC-172DI-12"
+    requirement: "scripts/pcc stop が定義され実行可能権限を持つ。"
+    test_name: "test_pcc_stop_command_exists_and_executable"
+    type: "automated"
+    verification:
+      - "grep -E 'stop\\)' scripts/pcc がヒットすることを確認する。"
+
+  - id: "AC-172DI-13"
+    requirement: "scripts/pcc status が定義され実行可能権限を持つ。"
+    test_name: "test_pcc_status_command_exists_and_executable"
+    type: "automated"
+    verification:
+      - "grep -E 'status\\)' scripts/pcc がヒットすることを確認する。"
+
+  - id: "AC-172DI-14"
+    requirement: "protected_baselines 4ファイルの md5 が基準値と一致する。"
+    test_name: "test_protected_baselines_md5_unchanged"
+    type: "automated"
+    verification:
+      - "orchestration/run_session.py md5 = 4de6affffb9297cdf02b3136e8f55172"
+      - "orchestration/selector/core.py md5 = 9b19e2cbe3487d3090096c5343c88611"
+      - "orchestration/selector/loader.py md5 = 959db533bf086f83765d8f6f16fbbe7b"
+      - "orchestration/selector/writer.py md5 = aaf7e28e0e9c52d12d30c8d3349cf982"
+
+  - id: "AC-172DI-15"
+    requirement: "aggregate_projects 実行前後で docs/projects/**/state.json の md5 が変化しない。"
+    test_name: "test_no_writes_to_state_json_during_aggregation"
+    type: "automated"
+    verification:
+      - "glob で対象 state.json を列挙し、実行前後の md5 を比較する。"
+
+  - id: "AC-172DI-16"
+    requirement: "aggregate_projects 実行前後で docs/config/project_registry.json の md5 が変化しない。"
+    test_name: "test_no_writes_to_project_registry_during_aggregation"
+    type: "automated"
+    verification:
+      - "実行前後の md5 を比較する。"
+
+  - id: "AC-172DI-17"
+    requirement: "git diff --name-only origin/main で検出される変更ファイルが allowed_changes 10ファイル以内に収まる。"
+    test_name: "test_session_172d_impl_diff_scope_only_allowed_files"
+    type: "automated"
+    verification:
+      - "subprocess で git diff --name-only origin/main を取得し、allowed_changes 集合の subset であることを確認する。"
+      - "本テストは commit/push 完了後に PASS する。pre-commit 状態では FAIL してよい。"
+
+  - id: "AC-172DI-18"
+    requirement: "aggregate_projects() の git_status は clean / dirty / unmanaged / detached / unknown の5値 enum のいずれかを返す。"
+    test_name: "test_aggregate_git_status_returns_one_of_five_canonical_values"
+    type: "automated"
+    verification:
+      - "戻り値の各カードの git_status が {clean, dirty, unmanaged, detached, unknown} の集合に含まれることを assert する。"
+      - "上記5値以外（例: '', None, 'modified', 'staged' 等）が混入した場合は FAIL とする。"
+
+manual_acceptance:
+  - id: "MAC-172DI-01"
+    requirement: "scripts/pcc start でローカルサーバーを起動し、ブラウザで http://127.0.0.1:<port>/ にアクセスして10プロジェクトのカードが描画されることを commander が目視確認する。"
+    type: "manual"
+    verification:
+      - "scripts/pcc start を実行する。"
+      - "scripts/pcc status で pid と URL を確認する。"
+      - "ブラウザで URL を開き、10カードが grid 表示されることを確認する。"
+      - "scripts/pcc stop でサーバーを停止する。"
+
+  - id: "MAC-172DI-02"
+    requirement: "A02_fina の dirty 状態が「⚠ dirty」バッジで明示的に表示されていることを commander が目視確認する。"
+    type: "manual"
+    verification:
+      - "A02_fina カードの git_status バッジが 'dirty' クラスで表示されることをブラウザで確認する。"
+      - "dirty 状態が隠蔽されていない（grayed out / hidden / collapsed されていない）ことを確認する。"
+
+  - id: "MAC-172DI-03"
+    requirement: "git 未管理プロジェクト（A07-A10 等）が「— git未管理」バッジで明示的に表示されていることを commander が目視確認する。"
+    type: "manual"
+    verification:
+      - "対象プロジェクトカードの git_status バッジが 'unmanaged' クラスで表示されることを確認する。"
+      - "queue_state.json 不在のプロジェクトに「—（未設定）」バッジが表示されることを確認する。"
+
+  - id: "MAC-172DI-04"
+    requirement: "Python サーバーが 127.0.0.1 のみに bind されており 0.0.0.0 に bind していないことを commander が手動 grep で確認する。"
+    type: "manual"
+    verification:
+      - "grep '127.0.0.1' backend/pcc/server.py が1件以上ヒットする。"
+      - "grep -c '0.0.0.0' backend/pcc/server.py が0であることを確認する。"
+      - "lsof -nP -iTCP -sTCP:LISTEN | grep <pcc-pid> で 127.0.0.1 のみに listen していることを確認する。"
+
+  - id: "MAC-172DI-05"
+    requirement: "HTML / CSS / JS が外部 CDN に依存していないことを commander が手動 grep で確認する。"
+    type: "manual"
+    verification:
+      - "grep -rcE 'cdn\\.jsdelivr|unpkg\\.com|cdnjs|googleapis' backend/pcc/static/ が0であることを確認する。"
+      - "grep -rcE 'src=\"https?://|href=\"https?://' backend/pcc/static/ が0であることを確認する（外部URL参照不在）。"
+
+  - id: "MAC-172DI-06"
+    requirement: "PCC v0 が「認知UI」として5秒で全体状態を把握できる視認性を持つことを commander が主観評価する。"
+    type: "manual"
+    verification:
+      - "10カードが一画面に収まり、状態（running / blocked / failed / completed_recently / idle）が色やバッジで一目で区別できることを commander が確認する。"
+      - "違和感がある場合は session-172d-hotfix を起票する。"
+
+completion_checks:
+  - id: "CC-172DI-01"
+    type: "artifact"
+    condition: "backend/pcc/__init__.py が aggregate_projects を再エクスポートしている。"
+  - id: "CC-172DI-02"
+    type: "artifact"
+    condition: "backend/pcc/pcc_v0.py が aggregate_projects() を実装し project_registry.json を正本に参照する。"
+  - id: "CC-172DI-03"
+    type: "artifact"
+    condition: "backend/pcc/static/index.html が10カード grid をレンダーする。"
+  - id: "CC-172DI-04"
+    type: "artifact"
+    condition: "backend/pcc/server.py が 127.0.0.1 のみに bind し GET /api/state と GET /static/* のみを提供する。"
+  - id: "CC-172DI-05"
+    type: "artifact"
+    condition: "scripts/pcc が start / stop / status の3サブコマンドに対応し実行可能。"
+  - id: "CC-172DI-06"
+    type: "document_rule"
+    condition: "UI に10 data-field と1手動更新ボタンが存在する（合計11要素）。"
+  - id: "CC-172DI-07"
+    type: "document_rule"
+    condition: "git 未管理プロジェクトに「—（git未管理）」バッジが表示される。"
+  - id: "CC-172DI-08"
+    type: "document_rule"
+    condition: "queue_state.json 不在時に「—（未設定）」バッジが表示される。"
+  - id: "CC-172DI-09"
+    type: "document_rule"
+    condition: "実行制御 UI（form / 実行・承認・retry ボタン / queue 編集要素）が一切存在しない。"
+  - id: "CC-172DI-10"
+    type: "side_effect_free"
+    condition: "aggregate_projects 実行前後で state.json / project_registry.json / queue_state.json の md5 が変化しない。"
+  - id: "CC-172DI-11"
+    type: "non_regression"
+    condition: "protected_baselines 4ファイルの md5 が基準値から変化しない。"
+  - id: "CC-172DI-12"
+    type: "document_rule"
+    condition: "tests/test_pcc_v0.py が AC-01〜18 を test_<subject>_<behavior> 形式で実装している。"
+  - id: "CC-172DI-13"
+    type: "non_regression"
+    condition: "PYTHONPATH=. .venv/bin/pytest tests/test_pcc_v0.py / .venv/bin/python -m compileall backend/pcc / bash -n scripts/pcc が全て pass する。"
+  - id: "CC-172DI-14"
+    type: "document_rule"
+    condition: "git_status の値が clean / dirty / unmanaged / detached / unknown の5値 enum のいずれかに正規化されている。"
+
+change_guardrails:
+  allowed_changes:
+    - "backend/pcc/__init__.py"
+    - "backend/pcc/pcc_v0.py"
+    - "backend/pcc/static/index.html"
+    - "backend/pcc/static/style.css"
+    - "backend/pcc/static/app.js"
+    - "backend/pcc/server.py"
+    - "scripts/pcc"
+    - "tests/test_pcc_v0.py"
+    - "docs/sessions/session-172d-impl.json"
+    - "docs/acceptance/session-172d-impl.yaml"
+  forbidden_changes:
+    - "orchestration/**"
+    - "docs/config/project_registry.json"
+    - "docs/projects/**/state.json"
+    - "docs/specs/project_command_center_v0_spec.md"
+    - "docs/master_instruction.md"
+    - "docs/global_rules.md"
+    - "docs/config/queue_policy.yaml"
+    - "docs/sessions/session-*.json (excluding session-172d-impl.json)"
+    - "docs/acceptance/session-*.yaml (excluding session-172d-impl.yaml)"
+    - "DL/**"
+    - ".playwright-mcp/**"
+    - "10プロジェクト配下の .git ディレクトリ"
+    - "backend/pcc/ / scripts/pcc / tests/test_pcc_v0.py 以外の .py / .sh ファイル"
+  protected_baselines:
+    - path: "orchestration/run_session.py"
+      md5: "4de6affffb9297cdf02b3136e8f55172"
+    - path: "orchestration/selector/core.py"
+      md5: "9b19e2cbe3487d3090096c5343c88611"
+    - path: "orchestration/selector/loader.py"
+      md5: "959db533bf086f83765d8f6f16fbbe7b"
+    - path: "orchestration/selector/writer.py"
+      md5: "aaf7e28e0e9c52d12d30c8d3349cf982"
+  exception_keywords:
+    - "docs/sessions/session-172d-impl.json は forbidden glob 'docs/sessions/session-*.json' から除外する"
+    - "docs/acceptance/session-172d-impl.yaml は forbidden glob 'docs/acceptance/session-*.yaml' から除外する"
+    - "backend/pcc/server.py / backend/pcc/pcc_v0.py / backend/pcc/__init__.py / scripts/pcc / tests/test_pcc_v0.py は forbidden glob '.py / .sh ファイル' から除外する"
+    - "AC-172DI-17 は commit/push 完了後の状態で評価する（pre-commit 状態の FAIL は許容）"
+    - "smoke test / 視認性確認 / 0.0.0.0 不在 / CDN 不在 は manual_acceptance MAC-01〜06 として automated AC から隔離する"
+
+review_points:
+  - "仕様一致（AC達成）"
+  - "変更範囲遵守"
+  - "副作用なし（既存破壊なし）"
+  - "検証十分性"
+
+git_status_enum:
+  values: ["clean", "dirty", "unmanaged", "detached", "unknown"]
+  display:
+    clean: "✓ clean"
+    dirty: "⚠ dirty"
+    unmanaged: "— git未管理"
+    detached: "detached"
+    unknown: "? unknown"
+
+queue_summary_fallback:
+  not_configured_display: "—（未設定）"
