@@ -1,0 +1,218 @@
+{
+  "session_id": "session-180",
+  "phase_id": "P7",
+  "title": "Implement PCC v0.5 read-only operational_status / next_action / blocker_summary card display via pcc_v0_5 module",
+  "goal": "PCC v0 read-only dashboard の各 project card に operational_status / next_action / blocker_summary の3フィールドを表示する。backend/pcc/pcc_v0_5.py を新規作成し derive_operational_fields() と enrich_cards() を実装する。backend/pcc/pcc_v0.py は一切変更しない。docs/projects/A01..A10/state.json は read-only data source として扱い書き込み処理は一切行わない。",
+  "scope": [
+    "backend/pcc/pcc_v0_5.py 新規作成: derive_operational_fields(state) と enrich_cards(cards, projects_dir) を実装",
+    "backend/pcc/server.py 最小変更: enrich_cards import と _handle_api_state() 内での呼び出し追加",
+    "backend/pcc/static/index.html: 各 project-card に data-v5-field で3行追加",
+    "backend/pcc/static/app.js: V5_FIELDS レンダリングと OPERATIONAL_STATUS_DISPLAY 追加",
+    "backend/pcc/static/style.css: badge-op-* スタイル追加",
+    "tests/test_pcc_v0_5.py 新規作成: AC-180-01〜10 対応"
+  ],
+  "out_of_scope": [
+    "backend/pcc/pcc_v0.py への変更 (1行も禁止)",
+    "backend/pcc/__init__.py の変更",
+    "scripts/pcc の変更",
+    "tests/test_pcc_v0.py の変更",
+    "docs/projects/A01..A10/state.json の変更",
+    "docs/DASHBOARD.md の変更",
+    ".pcc.pid の変更",
+    "command 実行機能追加",
+    "MCP / AI API 連携",
+    "queue 操作追加",
+    "human_required / suggested_readonly_commands / ai_handoff_payload の実装 (session-181 以降)",
+    "git add / commit / push / stash"
+  ],
+  "constraints": [
+    "backend/pcc/pcc_v0.py の origin/main からの diff は 0 でなければならない",
+    "docs/projects/A01..A10/state.json は read-only data source — 読み取りのみ、書き込み禁止",
+    "operational_status は enum 6値 (READY / BLOCKED / WAITING_HUMAN / RUNNING / DONE / UNKNOWN) のみ使用",
+    "operational_status と git_status は責務分離を維持する",
+    "status='active' + blockers 非空 → BLOCKED",
+    "status='active' + blockers 空 → RUNNING (READY ではない)",
+    "status='idle' → READY",
+    "status='paused' → WAITING_HUMAN",
+    "status='done' → DONE",
+    "上記以外・None・空文字・不正値・status欠損 → UNKNOWN",
+    "仕様外の値 (running / completed / failed 等) を mapping table に追加してはならない",
+    "blockers が list でない場合 → 安全側に倒し None",
+    "blocker_summary は blockers が非空なら '({len}) {blockers[0]}' 形式",
+    "forbidden import (requests / httpx / anthropic / openai / mcp / queue) を新規追加しない",
+    "write 系処理 (open(...,'w') / open(...,'a') / Path.write_text / Path.write_bytes / shutil.copy) を新規追加しない",
+    "ClaudeCode は git add / commit / push / stash を実行しない"
+  ],
+  "acceptance_ref": "docs/acceptance/session-180.yaml",
+  "inputs": [
+    "docs/sessions/session-180-pre.json (PCC v1 スキーマ仕様)",
+    "docs/projects/A01..A10/state.json (read-only data source)",
+    "backend/pcc/pcc_v0.py (変更禁止・参照のみ)",
+    "backend/pcc/server.py (最小変更対象)"
+  ],
+  "outputs": [
+    "backend/pcc/pcc_v0_5.py (新規: derive_operational_fields / enrich_cards)",
+    "backend/pcc/server.py (最小変更: enrich_cards import + 呼び出し)",
+    "backend/pcc/static/index.html (data-v5-field 追加)",
+    "backend/pcc/static/app.js (V5_FIELDS レンダリング追加)",
+    "backend/pcc/static/style.css (badge-op-* 追加)",
+    "tests/test_pcc_v0_5.py (AC-180-01〜10)",
+    "docs/sessions/session-180.json (本ファイル)",
+    "docs/acceptance/session-180.yaml"
+  ],
+  "allowed_changes": [
+    "backend/pcc/pcc_v0_5.py",
+    "backend/pcc/server.py",
+    "backend/pcc/static/index.html",
+    "backend/pcc/static/app.js",
+    "backend/pcc/static/style.css",
+    "tests/test_pcc_v0_5.py",
+    "docs/sessions/session-180.json",
+    "docs/acceptance/session-180.yaml"
+  ],
+  "allowed_changes_detail": [
+    "backend/pcc/pcc_v0_5.py: derive_operational_fields(state: Dict) -> Dict と enrich_cards(cards, projects_dir) -> None を新規実装する",
+    "backend/pcc/pcc_v0_5.py: _STATUS_MAP は {idle: READY, paused: WAITING_HUMAN, done: DONE} の3エントリのみ",
+    "backend/pcc/pcc_v0_5.py: subprocess / requests / httpx / anthropic / openai / mcp / queue を import してはならない",
+    "backend/pcc/pcc_v0_5.py: open(...,'w') 等の write 系処理を含めてはならない",
+    "backend/pcc/server.py: import 群に from backend.pcc.pcc_v0_5 import enrich_cards を追加する",
+    "backend/pcc/server.py: _handle_api_state() 内で aggregate_projects() 呼び出し直後に enrich_cards(data) を追加する",
+    "backend/pcc/server.py: 上記2行以外の既存ロジックには触れない",
+    "backend/pcc/static/index.html: 各 project-card の card-footer 直前に data-v5-field='operational_status' / 'next_action' / 'blocker_summary' の card-row を追加する",
+    "backend/pcc/static/app.js: OPERATIONAL_STATUS_DISPLAY dict と V5_FIELDS レンダリングループを追加する (既存 FIELDS / renderCards は変更しない)",
+    "backend/pcc/static/style.css: badge-op-{ready/blocked/waiting-human/running/done/unknown} スタイルを追加する",
+    "tests/test_pcc_v0_5.py: AC-180-01〜10 の受入テストを実装する",
+    "docs/sessions/session-180.json: 本セッション仕様を新規作成する",
+    "docs/acceptance/session-180.yaml: 本セッション受入条件を新規作成する"
+  ],
+  "forbidden_changes": [
+    "backend/pcc/pcc_v0.py への変更 (1行も禁止、追加 import すら禁止)",
+    "backend/pcc/__init__.py の変更",
+    "scripts/pcc の変更",
+    "tests/test_pcc_v0.py の変更",
+    "docs/projects/A01..A10/state.json の変更",
+    "orchestration/run_session.py の変更",
+    "orchestration/selector 配下の変更",
+    "docs/global_rules.md の変更",
+    "docs/master_instruction.md の変更",
+    ".claude/settings.json の変更",
+    "docs/DASHBOARD.md の変更",
+    ".pcc.pid の変更",
+    "git stash 系操作"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-180-01",
+      "type": "artifact",
+      "condition": "tests/test_pcc_v0_5.py が新規作成され pytest で全テスト pass する"
+    },
+    {
+      "id": "CC-180-02",
+      "type": "artifact",
+      "condition": "backend/pcc/pcc_v0_5.py が新規作成され derive_operational_fields() と enrich_cards() を export する"
+    },
+    {
+      "id": "CC-180-03",
+      "type": "non_regression",
+      "condition": "tests/test_pcc_v0.py の 18 テストが全て pass し PCC v0 baseline が破壊されていない"
+    },
+    {
+      "id": "CC-180-04",
+      "type": "document_rule",
+      "condition": "derive_operational_fields() が status mapping 仕様通りに動作する (active/idle/paused/done/その他)"
+    },
+    {
+      "id": "CC-180-05",
+      "type": "document_rule",
+      "condition": "enrich_cards() が各 card に operational_status / next_action / blocker_summary を付与する"
+    },
+    {
+      "id": "CC-180-06",
+      "type": "side_effect_free",
+      "condition": "backend/pcc/pcc_v0.py の origin/main からの diff が空 (0 bytes)"
+    },
+    {
+      "id": "CC-180-07",
+      "type": "side_effect_free",
+      "condition": "docs/projects/A01..A10/state.json が untouched (read-only data source)"
+    },
+    {
+      "id": "CC-180-08",
+      "type": "side_effect_free",
+      "condition": "backend/pcc/ 配下に forbidden import (requests/httpx/anthropic/openai/mcp/queue) が新規導入されていない"
+    },
+    {
+      "id": "CC-180-09",
+      "type": "side_effect_free",
+      "condition": "backend/pcc/ 配下に write 系処理が新規導入されていない"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-180-01",
+      "text": "enrich_cards() が card に operational_status / next_action / blocker_summary を付与する",
+      "test_name": "test_pcc_v0_5_card_has_three_new_fields"
+    },
+    {
+      "id": "AC-180-02",
+      "text": "operational_status は常に 6値 enum (READY/BLOCKED/WAITING_HUMAN/RUNNING/DONE/UNKNOWN) のいずれか",
+      "test_name": "test_pcc_v0_5_operational_status_valid_enum"
+    },
+    {
+      "id": "AC-180-03",
+      "text": "next_action は str または null",
+      "test_name": "test_pcc_v0_5_next_action_type"
+    },
+    {
+      "id": "AC-180-04",
+      "text": "blocker_summary は str または null",
+      "test_name": "test_pcc_v0_5_blocker_summary_type"
+    },
+    {
+      "id": "AC-180-05",
+      "text": "status=active / blockers=[] → operational_status=RUNNING",
+      "test_name": "test_pcc_v0_5_active_no_blockers_is_running"
+    },
+    {
+      "id": "AC-180-06",
+      "text": "status=active / blockers 非空 → operational_status=BLOCKED",
+      "test_name": "test_pcc_v0_5_active_with_blockers_is_blocked"
+    },
+    {
+      "id": "AC-180-07",
+      "text": "status=paused → operational_status=WAITING_HUMAN",
+      "test_name": "test_pcc_v0_5_paused_is_waiting_human"
+    },
+    {
+      "id": "AC-180-07b",
+      "text": "status=idle → operational_status=READY",
+      "test_name": "test_pcc_v0_5_idle_is_ready"
+    },
+    {
+      "id": "AC-180-07c",
+      "text": "仕様外の status (running / completed / failed 等) は全て UNKNOWN",
+      "test_name": "test_pcc_v0_5_non_spec_status_is_unknown"
+    },
+    {
+      "id": "AC-180-08",
+      "text": "backend/pcc/ 配下に forbidden import (requests/httpx/anthropic/openai/mcp/queue) が新規導入されていない",
+      "test_name": "test_pcc_v0_5_no_new_forbidden_imports"
+    },
+    {
+      "id": "AC-180-09",
+      "text": "backend/pcc/ 配下に write 系処理が新規導入されていない",
+      "test_name": "test_pcc_v0_5_no_new_write_ops"
+    },
+    {
+      "id": "AC-180-10",
+      "text": "backend/pcc/pcc_v0.py の origin/main からの diff が空 (ABSOLUTE FORBIDDEN [A] 遵守)",
+      "test_name": "test_pcc_v0_5_pcc_v0_py_unchanged_from_origin_main"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ]
+}

@@ -5,6 +5,8 @@ import sys
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
+from backend.pcc.pcc_v0_5 import enrich_cards
+
 _STATIC_DIR = Path(__file__).parent / "static"
 
 _CONTENT_TYPES: dict = {
@@ -31,6 +33,7 @@ class PCCHandler(BaseHTTPRequestHandler):
         from backend.pcc.pcc_v0 import aggregate_projects
 
         data = aggregate_projects()
+        enrich_cards(data)
         body = json.dumps(data, ensure_ascii=False).encode("utf-8")
         self.send_response(200)
         self.send_header("Content-Type", "application/json; charset=utf-8")

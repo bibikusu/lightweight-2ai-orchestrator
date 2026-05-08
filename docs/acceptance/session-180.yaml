@@ -1,0 +1,84 @@
+session_id: session-180
+phase_id: P7
+title: "Implement PCC v0.5 read-only operational_status / next_action / blocker_summary card display via pcc_v0_5 module"
+
+acceptance:
+  - id: AC-180-01
+    description: enrich_cards() が card に operational_status / next_action / blocker_summary を付与する
+    test_name: test_pcc_v0_5_card_has_three_new_fields
+    priority: highest
+    completion_criteria_refs: [CC-180-01, CC-180-05]
+
+  - id: AC-180-02
+    description: "operational_status は常に 6値 enum (READY/BLOCKED/WAITING_HUMAN/RUNNING/DONE/UNKNOWN) のいずれか"
+    test_name: test_pcc_v0_5_operational_status_valid_enum
+    priority: highest
+    completion_criteria_refs: [CC-180-04]
+
+  - id: AC-180-03
+    description: next_action は str または null
+    test_name: test_pcc_v0_5_next_action_type
+    priority: highest
+    completion_criteria_refs: [CC-180-04]
+
+  - id: AC-180-04
+    description: blocker_summary は str または null
+    test_name: test_pcc_v0_5_blocker_summary_type
+    priority: highest
+    completion_criteria_refs: [CC-180-04]
+
+  - id: AC-180-05
+    description: "status=active / blockers=[] → operational_status=RUNNING"
+    test_name: test_pcc_v0_5_active_no_blockers_is_running
+    priority: highest
+    completion_criteria_refs: [CC-180-04]
+
+  - id: AC-180-06
+    description: "status=active / blockers 非空 → operational_status=BLOCKED"
+    test_name: test_pcc_v0_5_active_with_blockers_is_blocked
+    priority: highest
+    completion_criteria_refs: [CC-180-04]
+
+  - id: AC-180-07
+    description: "status=paused → operational_status=WAITING_HUMAN"
+    test_name: test_pcc_v0_5_paused_is_waiting_human
+    priority: highest
+    completion_criteria_refs: [CC-180-04]
+
+  - id: AC-180-07b
+    description: "status=idle → operational_status=READY"
+    test_name: test_pcc_v0_5_idle_is_ready
+    priority: highest
+    completion_criteria_refs: [CC-180-04]
+
+  - id: AC-180-07c
+    description: "仕様外の status (running / completed / failed 等) は全て UNKNOWN"
+    test_name: test_pcc_v0_5_non_spec_status_is_unknown
+    priority: highest
+    completion_criteria_refs: [CC-180-04]
+
+  - id: AC-180-08
+    description: "backend/pcc/ 配下に forbidden import (requests/httpx/anthropic/openai/mcp/queue) が新規導入されていない"
+    test_name: test_pcc_v0_5_no_new_forbidden_imports
+    priority: highest
+    completion_criteria_refs: [CC-180-08]
+
+  - id: AC-180-09
+    description: "backend/pcc/ 配下に write 系処理が新規導入されていない"
+    test_name: test_pcc_v0_5_no_new_write_ops
+    priority: highest
+    completion_criteria_refs: [CC-180-09]
+
+  - id: AC-180-10
+    description: "backend/pcc/pcc_v0.py の origin/main からの diff が空 (ABSOLUTE FORBIDDEN [A] 遵守)"
+    test_name: test_pcc_v0_5_pcc_v0_py_unchanged_from_origin_main
+    priority: highest
+    completion_criteria_refs: [CC-180-06]
+
+manual_acceptance:
+  - id: MA-180-01
+    description: "PCC daemon 再起動後 (python -m backend.pcc.server 8765) に http://127.0.0.1:8765/ をブラウザで確認し、各カードに op-status / next / blocker 行が表示されている"
+    type: human_review
+  - id: MA-180-02
+    description: "既存の git_status badge / latest_session / four_gate 等の表示が壊れていない"
+    type: human_review

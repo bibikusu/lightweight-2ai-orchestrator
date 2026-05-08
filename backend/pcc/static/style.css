@@ -160,3 +160,40 @@ h1 {
   color: #6e7681;
   border: 1px solid #30363d;
 }
+
+/* ── operational_status 6値 enum ── */
+.badge-op-ready {
+  background: #1a3820;
+  color: #3fb950;
+  border: 1px solid #2ea043;
+}
+
+.badge-op-blocked {
+  background: #3a1a1a;
+  color: #f85149;
+  border: 1px solid #da3633;
+}
+
+.badge-op-waiting-human {
+  background: #3a2e00;
+  color: #e3b341;
+  border: 1px solid #9e6a03;
+}
+
+.badge-op-running {
+  background: #1a2a3d;
+  color: #58a6ff;
+  border: 1px solid #1f6feb;
+}
+
+.badge-op-done {
+  background: #21262d;
+  color: #8b949e;
+  border: 1px solid #30363d;
+}
+
+.badge-op-unknown {
+  background: #21262d;
+  color: #6e7681;
+  border: 1px solid #30363d;
+}

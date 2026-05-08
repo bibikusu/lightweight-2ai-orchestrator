@@ -6,6 +6,15 @@ var GIT_STATUS_DISPLAY = {
   'unknown':   '? unknown'
 };
 
+var OPERATIONAL_STATUS_DISPLAY = {
+  'READY':          '● READY',
+  'BLOCKED':        '✖ BLOCKED',
+  'WAITING_HUMAN':  '⏳ WAITING_HUMAN',
+  'RUNNING':        '▶ RUNNING',
+  'DONE':           '✓ DONE',
+  'UNKNOWN':        '? UNKNOWN'
+};
+
 var FIELDS = [
   'project_id', 'repo_path', 'branch', 'HEAD',
   'git_status', 'latest_session', 'four_gate',
@@ -30,6 +39,22 @@ function renderCards(projects) {
       } else {
         var val = proj[field];
         el.textContent = (val == null || val === '' || val === '—') ? '—' : val;
+      }
+    });
+
+    var V5_FIELDS = ['operational_status', 'next_action', 'blocker_summary'];
+    V5_FIELDS.forEach(function(field) {
+      var el = card.querySelector('[data-v5-field="' + field + '"]');
+      if (!el) return;
+
+      if (field === 'operational_status') {
+        var opStatus = proj[field] || 'UNKNOWN';
+        var opText = OPERATIONAL_STATUS_DISPLAY[opStatus] || opStatus;
+        el.textContent = opText;
+        el.className = 'value badge badge-op-' + opStatus.toLowerCase().replace(/_/g, '-');
+      } else {
+        var val = proj[field];
+        el.textContent = (val == null || val === '') ? '—' : val;
       }
     });
 
