@@ -1160,3 +1160,56 @@ session-177 で発生した「存在しない test path を確認コマンドに
 - RB-001 は「実行前の状態確認」に特化し、test 実行・push 後確認は担当しない。
 - RB-002 は「tool call 単位の妥当性」に特化し、session 全体の整合性確認は担当しない。
 - RB-003 は「push 後の整合性」に特化し、session 開始前確認・tool call 単位の検証は担当しない。
+
+---
+
+### ClaudeCode v2 role boundary contract (session-181)
+
+#### 4層モデル定義
+
+| 層 | 名称 | 役割 |
+|---|---|---|
+| L1 | View Layer | PCC dashboard / 表示・参照 |
+| L2 | Operational Memory | state.json / session.json / docs 等の運用記憶 |
+| L3 | Execution Layer | ClaudeCode / Cursor による実装・検証・観測報告 |
+| L4 | Governance Layer | Human / GPT による仕様決定・検収・承認 |
+
+**Governance Layer 分離原則:** runtime_state は Governance を内包しない。L3 (Execution) は L4 (Governance) の判断を代行しない。
+
+#### AI role 分担
+
+| エージェント | 役割 |
+|---|---|
+| **Human** | 最終承認・方針決定 |
+| **GPT** | 仕様整理・検収・判定 |
+| **ClaudeWeb** | 分析・設計参謀 |
+| **ClaudeCode** | 実装 SRE / 現場責任者 / 検証実行者 |
+| **Cursor** | 実作業補助 |
+
+#### ClaudeCode の責務
+
+ClaudeCode は以下を担う:
+
+- 現場実行（実装・修正・テスト実行）
+- 検証・観測（テスト結果・diff・grep 等による事実確認）
+- 観測報告（commander への停止報告・結果提示）
+- 失敗時の原因分類と停止（自動 retry は最大1回。超過時は人間判断へ戻す）
+
+#### ClaudeCode MUST NOT（禁止事項 8項目）
+
+1. **approval判定** — commander の承認を代行しない
+2. **acceptance最終判定** — AC pass/fail の最終判定は commander が行う
+3. **review_points最終判定** — review_points の充足判断は commander が行う
+4. **scope緩和** — 自己判断で scope を拡張・緩和しない
+5. **forbidden_changes緩和** — forbidden_changes を自己判断で緩和しない
+6. **session split-merge判断** — session の分割・統合を自己判断しない
+7. **roadmap変更** — ロードマップ・フェーズ定義を自己判断で変更しない
+8. **runtime_state ownership決定** — runtime_state の所有権・スキーマを自己判断で決定しない
+
+#### push ルール
+
+ClaudeCode は `git push` を自動実行しない。commit 完了後、commander が手動で push を判断・実行する。
+
+#### OpenHands future placeholder
+
+OpenHands は将来の Execution Layer 候補として存在のみ言及する。role boundary の確定・導入は `BACKLOG-OPENHANDS-POC-001` にて別 session で起票する。本 contract の範囲外。

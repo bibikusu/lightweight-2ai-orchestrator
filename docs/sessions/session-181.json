@@ -1,0 +1,135 @@
+{
+  "session_id": "session-181",
+  "phase_id": "P7",
+  "title": "Add ClaudeCode v2 role boundary contract to docs/global_rules.md",
+  "goal": "session-181-pre (61759a7) で正本化した ClaudeCode v2 role boundary contract を docs/global_rules.md 末尾へ追記する。ClaudeCode の責務（現場実行・検証・観測報告）と禁止事項（仕様最終決定・acceptance 書き換え・scope 外変更）を正本化する。",
+  "scope": [
+    "docs/global_rules.md 末尾への ClaudeCode v2 role boundary 節追記",
+    "4層モデル定義 (View Layer / Operational Memory / Execution Layer / Governance Layer) の正本化",
+    "ClaudeCode MUST NOT 8項目 (approval判定 / acceptance最終判定 / review_points最終判定 / scope緩和 / forbidden_changes緩和 / session split-merge判断 / roadmap変更 / runtime_state ownership決定) の正本化",
+    "Governance Layer 分離原則 (runtime_state は Governance を内包しない) の正本化",
+    "OpenHands future placeholder 方針 (存在のみ言及 / role boundary 確定は BACKLOG-OPENHANDS-POC-001 にて別 session) の記載",
+    "AI role 分担定義 (GPT=仕様整理・検収・判定 / ClaudeWeb=分析・設計参謀 / ClaudeCode=実装SRE・現場責任者・検証実行者 / Cursor=実作業補助 / Human=最終承認) の正本化",
+    "docs/sessions/session-181.json 新規作成",
+    "docs/acceptance/session-181.yaml 新規作成"
+  ],
+  "out_of_scope": [
+    "docs/global_rules.md 既存セクションの変更・削除",
+    "session-181-pre 関連ファイルの変更",
+    "orchestration/ 配下の変更",
+    "backend/ 配下の変更",
+    "tests/ の変更",
+    "scripts/ の変更",
+    "runtime_state schema の作成",
+    "current_state.json の新設",
+    "OpenHands の導入および role boundary 確定",
+    "queue / selector / run_session の実装変更",
+    "git push の自動実行"
+  ],
+  "constraints": [
+    "1セッション1目的を遵守する",
+    "docs/global_rules.md は末尾追記のみ許可。既存セクションへの変更は禁止",
+    "追記内容は session-181-pre (61759a7) で正本化した contract に準拠する",
+    "changed_files は allowed_changes の3件のみ",
+    "review_points[3] は完全一致で '検証十分性' とする",
+    "git push は自動実行しない。commander 手動 push 待ち",
+    "stash@{0} (chat51封印 WIP) は不変"
+  ],
+  "acceptance_ref": "docs/acceptance/session-181.yaml",
+  "allowed_changes": [
+    "docs/sessions/session-181.json",
+    "docs/acceptance/session-181.yaml",
+    "docs/global_rules.md"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/session-181.json: 本セッション仕様を新規作成する",
+    "docs/acceptance/session-181.yaml: 本セッション受入条件を新規作成する",
+    "docs/global_rules.md: ファイル末尾に ClaudeCode v2 role boundary 節を追記する。既存セクション (行1〜1162) は一切変更しない"
+  ],
+  "forbidden_changes": [
+    "docs/global_rules.md の既存セクション (行1〜1162) を変更しない",
+    "docs/sessions/session-181-pre.json を変更しない",
+    "docs/acceptance/session-181-pre.yaml を変更しない",
+    "orchestration/ 配下のファイルを変更しない",
+    "backend/ 配下のファイルを変更しない",
+    "tests/ 配下のファイルを変更しない",
+    "scripts/ 配下のファイルを変更しない",
+    "stash@{0} (chat51封印 WIP) を含む全 git stash 操作を行わない",
+    "git push を自動実行しない"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-181-01",
+      "type": "artifact",
+      "condition": "docs/sessions/session-181.json および docs/acceptance/session-181.yaml が新規作成され JSON/YAML valid である"
+    },
+    {
+      "id": "CC-181-02",
+      "type": "artifact",
+      "condition": "docs/global_rules.md 末尾に ClaudeCode v2 role boundary 節が追記されている"
+    },
+    {
+      "id": "CC-181-03",
+      "type": "document_rule",
+      "condition": "追記節に4層モデル (View Layer / Operational Memory / Execution Layer / Governance Layer) が含まれている"
+    },
+    {
+      "id": "CC-181-04",
+      "type": "document_rule",
+      "condition": "追記節に ClaudeCode MUST NOT 8項目が含まれている"
+    },
+    {
+      "id": "CC-181-05",
+      "type": "document_rule",
+      "condition": "追記節に AI role 分担定義 (GPT / ClaudeWeb / ClaudeCode / Cursor / Human) が含まれている"
+    },
+    {
+      "id": "CC-181-06",
+      "type": "side_effect_free",
+      "condition": "docs/global_rules.md の既存行 (1〜1162) が変更されていない"
+    },
+    {
+      "id": "CC-181-07",
+      "type": "side_effect_free",
+      "condition": "changed_files が docs/sessions/session-181.json / docs/acceptance/session-181.yaml / docs/global_rules.md の3件のみ"
+    },
+    {
+      "id": "CC-181-08",
+      "type": "non_regression",
+      "condition": "既存テストが pass を維持している"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-181-01",
+      "text": "docs/global_rules.md 末尾に ClaudeCode v2 role boundary 節が存在する",
+      "test_name": "test_session_181_global_rules_has_role_boundary_section"
+    },
+    {
+      "id": "AC-181-02",
+      "text": "追記節に View Layer / Operational Memory / Execution Layer / Governance Layer の4語が含まれている",
+      "test_name": "test_session_181_four_layer_model_present"
+    },
+    {
+      "id": "AC-181-03",
+      "text": "追記節に ClaudeCode MUST NOT 8項目キーワードが含まれている",
+      "test_name": "test_session_181_must_not_eight_items_present"
+    },
+    {
+      "id": "AC-181-04",
+      "text": "追記節に GPT / ClaudeWeb / ClaudeCode / Cursor / Human の role 分担が含まれている",
+      "test_name": "test_session_181_role_assignment_present"
+    },
+    {
+      "id": "AC-181-05",
+      "text": "docs/global_rules.md の既存行数 (1162) が増加のみで減少していない",
+      "test_name": "test_session_181_global_rules_existing_lines_preserved"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし（既存破壊なし）",
+    "検証十分性"
+  ]
+}

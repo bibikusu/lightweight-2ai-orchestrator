@@ -1,0 +1,39 @@
+session_id: session-181
+phase_id: P7
+title: "Add ClaudeCode v2 role boundary contract to docs/global_rules.md"
+
+acceptance:
+  - id: AC-181-01
+    description: docs/global_rules.md 末尾に ClaudeCode v2 role boundary 節が存在する
+    test_name: test_session_181_global_rules_has_role_boundary_section
+    priority: highest
+    completion_criteria_refs: [CC-181-02]
+
+  - id: AC-181-02
+    description: "追記節に View Layer / Operational Memory / Execution Layer / Governance Layer の4語が含まれている"
+    test_name: test_session_181_four_layer_model_present
+    priority: highest
+    completion_criteria_refs: [CC-181-03]
+
+  - id: AC-181-03
+    description: "追記節に ClaudeCode MUST NOT 8項目キーワードが含まれている"
+    test_name: test_session_181_must_not_eight_items_present
+    priority: highest
+    completion_criteria_refs: [CC-181-04]
+
+  - id: AC-181-04
+    description: "追記節に GPT / ClaudeWeb / ClaudeCode / Cursor / Human の role 分担が含まれている"
+    test_name: test_session_181_role_assignment_present
+    priority: highest
+    completion_criteria_refs: [CC-181-05]
+
+  - id: AC-181-05
+    description: "docs/global_rules.md の既存行 (1162) が増加のみで減少していない"
+    test_name: test_session_181_global_rules_existing_lines_preserved
+    priority: highest
+    completion_criteria_refs: [CC-181-06]
+
+manual_acceptance:
+  - id: MA-181-01
+    description: "docs/global_rules.md の追記節テキストを commander が読み、ClaudeCode v2 role boundary contract として妥当であることを確認する"
+    type: human_review
