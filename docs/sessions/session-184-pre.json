@@ -1,0 +1,133 @@
+{
+  "session_id": "session-184-pre",
+  "phase_id": "P7",
+  "title": "Template fill and handoff generation boundary canonicalization",
+  "goal": "Template fill、handoff generation、minimal context injection の責務境界を docs-only で正本化する",
+  "scope": [
+    "fill_template の入力・出力・禁止責務を session JSON と acceptance YAML 対象で定義する",
+    "GPT から ClaudeCode への handoff generation 境界を定義する",
+    "minimal context injection の allowlist / forbidden context を境界定義として固定する",
+    "後続実装 session への handoff 条件を定義する"
+  ],
+  "out_of_scope": [
+    "実装",
+    "fill_template.py 作成",
+    "run_session.py 変更",
+    "queue engine 変更",
+    "PCC backend/frontend 変更",
+    "ClaudeCode hooks 変更",
+    "allowed_changes_detail のみを正本とする",
+    "acceptance_criteria は description フィールドを正本とする",
+    "handoff 方向は GPT から ClaudeCode のみに限定する",
+    "context injection は最小 boundary 定義に限定し、実装・自動化加速を含めない"
+  ],
+  "constraints": [
+    "docs-only session とする",
+    "canonical session JSON は allowed_changes を持たず allowed_changes_detail のみを正本とする",
+    "acceptance_criteria は description フィールドを正本とする",
+    "handoff 方向は GPT から ClaudeCode のみに限定する",
+    "context injection は最小 boundary 定義に限定し、実装・自動化加速を含めない"
+  ],
+  "acceptance_ref": "docs/acceptance/session-184-pre.yaml",
+  "allowed_changes_detail": [
+    "docs/sessions/session-184-pre.json: session-184-pre の docs-only session 定義を新規作成する",
+    "docs/acceptance/session-184-pre.yaml: session-184-pre の acceptance 定義を新規作成する"
+  ],
+  "forbidden_changes": [
+    "orchestration/run_session.py",
+    "orchestration/queue/**",
+    "backend/pcc/**",
+    "scripts/**",
+    ".claude/**",
+    "docs/global_rules.md",
+    "docs/config/**",
+    "docs/projects/**",
+    "state.json"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-184PRE-01",
+      "type": "artifact",
+      "condition": "docs/sessions/session-184-pre.json と docs/acceptance/session-184-pre.yaml が作成されている"
+    },
+    {
+      "id": "CC-184PRE-02",
+      "type": "document_rule",
+      "condition": "fill_template の入力・出力・禁止責務が文書上で定義されている"
+    },
+    {
+      "id": "CC-184PRE-03",
+      "type": "document_rule",
+      "condition": "handoff generation の対象が GPT から ClaudeCode に限定されている"
+    },
+    {
+      "id": "CC-184PRE-04",
+      "type": "state_transition_consistent",
+      "condition": "minimal context injection の allowlist と forbidden context が矛盾なく定義されている"
+    },
+    {
+      "id": "CC-184PRE-05",
+      "type": "side_effect_free",
+      "condition": "allowed_changes_detail 以外のファイル変更を要求していない"
+    },
+    {
+      "id": "CC-184PRE-06",
+      "type": "non_regression",
+      "condition": "session-183-pre の autonomy tier / reversibility / approval boundary の確定事項を変更していない"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-184PRE-01",
+      "description": "session-184-pre.json が canonical 13 key 構造で作成され、allowed_changes を含まない",
+      "test_name": "test_session_184pre_json_canonical_keys"
+    },
+    {
+      "id": "AC-184PRE-02",
+      "description": "session-184-pre.yaml が session_id / goal / scope / out_of_scope / acceptance / completion_checks / change_guardrails を含む",
+      "test_name": "test_session_184pre_acceptance_yaml_required_keys"
+    },
+    {
+      "id": "AC-184PRE-03",
+      "description": "fill_template の入力が session JSON と acceptance YAML に限定されている",
+      "test_name": "test_session_184pre_fill_template_input_boundary"
+    },
+    {
+      "id": "AC-184PRE-04",
+      "description": "handoff generation の方向が GPT から ClaudeCode のみに限定されている",
+      "test_name": "test_session_184pre_handoff_direction_boundary"
+    },
+    {
+      "id": "AC-184PRE-05",
+      "description": "minimal context injection の allowlist と forbidden context が定義されている",
+      "test_name": "test_session_184pre_minimal_context_injection_boundary"
+    },
+    {
+      "id": "AC-184PRE-06",
+      "description": "out_of_scope に実装・run_session.py・queue engine・PCC・hooks・global_rules.md・state.json が含まれている",
+      "test_name": "test_session_184pre_out_of_scope_guardrails"
+    },
+    {
+      "id": "AC-184PRE-07",
+      "description": "allowed_changes_detail が list[str] かつ ファイルパス: 許可内容 の形式である",
+      "test_name": "test_session_184pre_allowed_changes_detail_format"
+    },
+    {
+      "id": "AC-184PRE-08",
+      "description": "completion_criteria が id / type / condition を持つ object 配列である",
+      "test_name": "test_session_184pre_completion_criteria_schema"
+    },
+    {
+      "id": "AC-184PRE-09",
+      "description": "failure_type が spec_missing に設定されている",
+      "test_name": "test_session_184pre_failure_type_spec_missing"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし",
+    "検証十分性"
+  ],
+  "failure_type": "spec_missing"
+}

@@ -1,0 +1,118 @@
+session_id: "session-184-pre"
+goal: "Template fill、handoff generation、minimal context injection の責務境界を docs-only で正本化する"
+
+scope:
+  - "fill_template の入力・出力・禁止責務を session JSON と acceptance YAML 対象で定義する"
+  - "GPT から ClaudeCode への handoff generation 境界を定義する"
+  - "minimal context injection の allowlist / forbidden context を境界定義として固定する"
+  - "後続実装 session への handoff 条件を定義する"
+
+out_of_scope:
+  - "実装"
+  - "fill_template.py 作成"
+  - "run_session.py 変更"
+  - "queue engine 変更"
+  - "PCC backend/frontend 変更"
+  - "ClaudeCode hooks 変更"
+  - "Cursor 経路の実装"
+  - "global_rules.md 変更"
+  - "state.json 実装"
+  - "Qwen / MCP integration"
+
+acceptance:
+  - id: "AC-184PRE-01"
+    requirement: "session-184-pre.json が canonical 13 key 構造で作成され、allowed_changes を含まない"
+    test_name: "test_session_184pre_json_canonical_keys"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "docs/sessions/session-184-pre.json に allowed_changes キーが存在しない"
+      - "canonical 13 key が存在する"
+
+  - id: "AC-184PRE-02"
+    requirement: "session-184-pre.yaml が session_id / goal / scope / out_of_scope / acceptance / completion_checks / change_guardrails を含む"
+    test_name: "test_session_184pre_acceptance_yaml_required_keys"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "docs/acceptance/session-184-pre.yaml に必須 7 key が存在する"
+
+  - id: "AC-184PRE-03"
+    requirement: "fill_template の入力が session JSON と acceptance YAML に限定されている"
+    test_name: "test_session_184pre_fill_template_input_boundary"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "scope または constraints に session JSON と acceptance YAML 対象が明記されている"
+
+  - id: "AC-184PRE-04"
+    requirement: "handoff generation の方向が GPT から ClaudeCode のみに限定されている"
+    test_name: "test_session_184pre_handoff_direction_boundary"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "constraints または scope に GPT から ClaudeCode のみと明記されている"
+
+  - id: "AC-184PRE-05"
+    requirement: "minimal context injection の allowlist と forbidden context が定義されている"
+    test_name: "test_session_184pre_minimal_context_injection_boundary"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "context injection が最小 boundary 定義に限定されている"
+
+  - id: "AC-184PRE-06"
+    requirement: "out_of_scope に実装・run_session.py・queue engine・PCC・hooks・global_rules.md・state.json が含まれている"
+    test_name: "test_session_184pre_out_of_scope_guardrails"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "out_of_scope の除外対象を確認する"
+
+  - id: "AC-184PRE-07"
+    requirement: "allowed_changes_detail が list[str] かつ ファイルパス: 許可内容 の形式である"
+    test_name: "test_session_184pre_allowed_changes_detail_format"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "allowed_changes_detail が文字列配列である"
+      - "各要素が colon 区切りである"
+
+  - id: "AC-184PRE-08"
+    requirement: "completion_criteria が id / type / condition を持つ object 配列である"
+    test_name: "test_session_184pre_completion_criteria_schema"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "completion_criteria の全要素に id / type / condition がある"
+
+  - id: "AC-184PRE-09"
+    requirement: "failure_type が spec_missing に設定されている"
+    test_name: "test_session_184pre_failure_type_spec_missing"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "session JSON の failure_type が spec_missing である"
+
+completion_checks:
+  - "CC-184PRE-01: docs/sessions/session-184-pre.json と docs/acceptance/session-184-pre.yaml が作成されている"
+  - "CC-184PRE-02: fill_template の入力・出力・禁止責務が文書上で定義されている"
+  - "CC-184PRE-03: handoff generation の対象が GPT から ClaudeCode に限定されている"
+  - "CC-184PRE-04: minimal context injection の allowlist と forbidden context が矛盾なく定義されている"
+  - "CC-184PRE-05: allowed_changes_detail 以外のファイル変更を要求していない"
+  - "CC-184PRE-06: session-183-pre の autonomy tier / reversibility / approval boundary の確定事項を変更していない"
+
+change_guardrails:
+  allowed_changes_detail:
+    - "docs/sessions/session-184-pre.json: session-184-pre の docs-only session 定義を新規作成する"
+    - "docs/acceptance/session-184-pre.yaml: session-184-pre の acceptance 定義を新規作成する"
+  forbidden_changes:
+    - "orchestration/run_session.py"
+    - "orchestration/queue/**"
+    - "backend/pcc/**"
+    - "scripts/**"
+    - ".claude/**"
+    - "docs/global_rules.md"
+    - "docs/config/**"
+    - "docs/projects/**"
+    - "state.json"
