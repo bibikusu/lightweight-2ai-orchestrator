@@ -1,0 +1,217 @@
+{
+  "session_id": "session-186-pre",
+  "phase_id": "P7",
+  "title": "compact context pack schema boundary canonicalization (docs-only)",
+  "goal": "compact context pack (CCP) の schema / allowlist / forbidden context / size budget / serialization boundary を docs-only で正本化する。docs-only 起票であり実装は本 session に含めない。",
+  "scope": [
+    "docs/specs/v2/compact_context_pack_v0.json 作成（CCP schema 正本）",
+    "docs/specs/v2/compact_context_pack_v0.yaml 作成（human review 補助）",
+    "docs/specs/v2/compact_context_pack_v0.md 作成（仕様概要）",
+    "docs/sessions/session-186-pre.json 作成",
+    "docs/acceptance/session-186-pre.yaml 作成",
+    "CCP allowlist フィールドの正本定義",
+    "forbidden context カテゴリの正本定義",
+    "size budget (max_token_budget=2048) の canonical 化",
+    "serialization boundary (JSON 正本 / YAML 補助禁止) の canonical 化",
+    "injection_point=handoff_artifact_only の canonical 化"
+  ],
+  "out_of_scope": [
+    "実装",
+    "injection engine 実装",
+    "validator 実装",
+    "token counter 実装",
+    "fill_template.py 変更",
+    "run_session.py 変更",
+    "queue engine 変更",
+    "PCC backend / frontend 変更",
+    "ClaudeCode hooks 変更",
+    "MCP integration",
+    "state persistence 実装",
+    "multi-agent context sharing",
+    "context compression algorithm",
+    "schema migration (v1 以降の議論)",
+    "global_rules.md / master_instruction.md / roadmap.yaml 変更",
+    "session-185-pre 以前の出力物変更",
+    "git stash 操作 (chat51 sealed)",
+    "phase_id canonicalization (BACKLOG-PHASE-CANON-001 で別途扱い)"
+  ],
+  "constraints": [
+    "docs-only。コード変更禁止",
+    "1セッション1目的厳守",
+    "session JSON canonical required keys 必須（session_id / phase_id / title / goal / scope / out_of_scope / constraints / acceptance_ref / allowed_changes_detail / forbidden_changes / completion_criteria / acceptance_criteria / review_points / failure_type）",
+    "allowed_changes_detail は list[str] 形式 'パス:内容' を厳守",
+    "completion_criteria は object array (id / type / condition) 必須。type は canonical enum (document_rule / artifact / non_regression / state_transition_consistent / side_effect_free) のみ使用",
+    "acceptance_criteria は AC 配列で各要素が id / description / test_name を持つ。description フィールド名固定 (text ではない)",
+    "review_points は 4軸固定で末尾要素は文字列 '検証十分性' に完全一致 (記述追記禁止)。括弧は全角 ('仕様一致（AC達成）')",
+    "ClaudeCode は本 session 実行対象外 (docs-only generation のため commander 手動保存のみ)",
+    "git stash family は commander manual のみ。ClaudeCode 委任禁止 (stash@{0} chat51 sealed)",
+    "selector md5 baselines 不変 (core=9b19e2cbe3487d3090096c5343c88611 / loader=959db533bf086f83765d8f6f16fbbe7b / writer=aaf7e28e0e9c52d12d30c8d3349cf982 / run_session=74682928491ab1c0f35df842581281b8)",
+    "CORE-001 (test_aggregate_reports_passes_validation_suite) は ignorable",
+    "base_commit = 7b8f7b595e8f3566768d9dbb6b734d2f1667cf14",
+    "phase_id は過去 session-183/184/185-pre と一貫性を保ち P7 を維持する (BACKLOG-PHASE-CANON-001 で別途整理)"
+  ],
+  "acceptance_ref": "docs/acceptance/session-186-pre.yaml",
+  "allowed_changes_detail": [
+    "docs/specs/v2/compact_context_pack_v0.json: CCP schema v0 の正本 JSON を新規作成する",
+    "docs/specs/v2/compact_context_pack_v0.yaml: CCP schema v0 の補助 YAML を新規作成する",
+    "docs/specs/v2/compact_context_pack_v0.md: CCP schema v0 の仕様概要 Markdown を新規作成する",
+    "docs/sessions/session-186-pre.json: session-186-pre の docs-only session 定義を新規作成する",
+    "docs/acceptance/session-186-pre.yaml: session-186-pre の acceptance 定義を新規作成する"
+  ],
+  "forbidden_changes": [
+    "docs/global_rules.md",
+    "docs/master_instruction.md",
+    "docs/roadmap.yaml",
+    "docs/config/queue_policy.yaml",
+    "docs/config/project_registry.json",
+    "orchestration/selector/__init__.py",
+    "orchestration/selector/core.py",
+    "orchestration/selector/loader.py",
+    "orchestration/selector/writer.py",
+    "orchestration/lock/manager.py",
+    "orchestration/run_session.py",
+    "scripts/new_session.sh",
+    "scripts/step0_check.sh",
+    "tests/**",
+    "docs/sessions/session-185-pre.json",
+    "docs/acceptance/session-185-pre.yaml",
+    "docs/sessions/session-184-pre.json",
+    "docs/acceptance/session-184-pre.yaml",
+    "docs/sessions/session-183-pre.json",
+    "docs/acceptance/session-183-pre.yaml",
+    "全ての過去 session 出力物 (sessions/ acceptance/ 配下既存ファイル)",
+    ".claude/settings.json",
+    "git stash entries (特に stash@{0} chat51 sealed)"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-186P-01",
+      "type": "artifact",
+      "condition": "docs/specs/v2/compact_context_pack_v0.json が存在する"
+    },
+    {
+      "id": "CC-186P-02",
+      "type": "artifact",
+      "condition": "docs/specs/v2/compact_context_pack_v0.yaml が存在する"
+    },
+    {
+      "id": "CC-186P-03",
+      "type": "artifact",
+      "condition": "docs/specs/v2/compact_context_pack_v0.md が存在する"
+    },
+    {
+      "id": "CC-186P-04",
+      "type": "artifact",
+      "condition": "docs/sessions/session-186-pre.json が存在する"
+    },
+    {
+      "id": "CC-186P-05",
+      "type": "artifact",
+      "condition": "docs/acceptance/session-186-pre.yaml が存在する"
+    },
+    {
+      "id": "CC-186P-06",
+      "type": "document_rule",
+      "condition": "docs/sessions/session-186-pre.json が canonical 14 keys を全て含む"
+    },
+    {
+      "id": "CC-186P-07",
+      "type": "document_rule",
+      "condition": "review_points が長さ4の配列で、index 3 が文字列 '検証十分性' に完全一致する"
+    },
+    {
+      "id": "CC-186P-08",
+      "type": "document_rule",
+      "condition": "compact_context_pack_v0.json が canonical_decisions / allowlist / forbidden_context / size_budget / serialization / validation を含む"
+    },
+    {
+      "id": "CC-186P-09",
+      "type": "document_rule",
+      "condition": "allowlist に session_id / phase_id / goal / scope / base_commit / required_prior_session / acceptance_ref / allowed_changes_detail / forbidden_changes が定義されている"
+    },
+    {
+      "id": "CC-186P-10",
+      "type": "side_effect_free",
+      "condition": "forbidden_changes 配下のファイルが本 session で変更されていない"
+    },
+    {
+      "id": "CC-186P-11",
+      "type": "document_rule",
+      "condition": "本 JSON が failure_type フィールドを持ち値が 'spec_missing'"
+    },
+    {
+      "id": "CC-186P-12",
+      "type": "non_regression",
+      "condition": "session-185-pre の handoff_artifact.v1 canonical decisions を変更していない"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-186P-01",
+      "description": "docs/sessions/session-186-pre.json が canonical session JSON 14 keys を全て含む",
+      "test_name": "test_session_186_pre_json_has_14_canonical_keys"
+    },
+    {
+      "id": "AC-186P-02",
+      "description": "docs/acceptance/session-186-pre.yaml が存在し、AC-186P-* に対応する test_name を全て含む",
+      "test_name": "test_session_186_pre_yaml_exists_with_test_names"
+    },
+    {
+      "id": "AC-186P-03",
+      "description": "review_points 配列の長さが4で、index 3 が '検証十分性'、index 0 が '仕様一致（AC達成）' に完全一致する",
+      "test_name": "test_session_186_pre_review_points_canonical"
+    },
+    {
+      "id": "AC-186P-04",
+      "description": "acceptance_criteria 各要素が id / description / test_name を含み、text フィールドを含まない",
+      "test_name": "test_session_186_pre_acceptance_criteria_uses_description_field"
+    },
+    {
+      "id": "AC-186P-05",
+      "description": "allowed_changes_detail が list[str] かつ各要素が 'パス:内容' 形式 (コロン区切り)。5 ファイル全て含む",
+      "test_name": "test_session_186_pre_allowed_changes_detail_format"
+    },
+    {
+      "id": "AC-186P-06",
+      "description": "completion_criteria が object array で各要素が id / type / condition の3キーを含み、type が canonical enum のいずれかである",
+      "test_name": "test_session_186_pre_completion_criteria_shape"
+    },
+    {
+      "id": "AC-186P-07",
+      "description": "compact_context_pack_v0.json が canonical_decisions / allowlist / forbidden_context / size_budget / serialization / validation / rationale / out_of_scope_for_v0 を含む",
+      "test_name": "test_ccp_v0_json_required_top_level_keys"
+    },
+    {
+      "id": "AC-186P-08",
+      "description": "CCP allowlist に required=true フィールドが session_id / phase_id / goal / scope / base_commit / required_prior_session / acceptance_ref / allowed_changes_detail / forbidden_changes の9フィールド存在する",
+      "test_name": "test_ccp_v0_allowlist_required_fields"
+    },
+    {
+      "id": "AC-186P-09",
+      "description": "CCP forbidden_context に full_file_contents / git_log_history / credentials_and_secrets を含む7カテゴリ以上が定義されている",
+      "test_name": "test_ccp_v0_forbidden_context_categories"
+    },
+    {
+      "id": "AC-186P-10",
+      "description": "CCP canonical_decisions に canonical_format=JSON / max_token_budget=2048 / injection_point=handoff_artifact_only が設定されている",
+      "test_name": "test_ccp_v0_canonical_decisions"
+    },
+    {
+      "id": "AC-186P-11",
+      "description": "forbidden_changes 配下に過去 session 出力物 / global_rules.md / orchestration ファイル群 / git stash が含まれている",
+      "test_name": "test_session_186_pre_forbidden_changes_protects_canonical_assets"
+    },
+    {
+      "id": "AC-186P-12",
+      "description": "本 session JSON が failure_type フィールドを持ち、その値が 'spec_missing' である",
+      "test_name": "test_session_186_pre_failure_type_is_spec_missing"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし",
+    "検証十分性"
+  ],
+  "failure_type": "spec_missing"
+}

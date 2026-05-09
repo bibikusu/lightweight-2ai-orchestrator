@@ -1,0 +1,130 @@
+schema_version: compact_context_pack.v0
+description: >-
+  GPT → ClaudeCode への minimal context injection の正本仕様。
+  handoff artifact 実行時に ClaudeCode へ注入する context を
+  最小・決定論的・検証可能な形式で定義する。
+  正本は JSON。本 YAML は human review 補助用。
+
+canonical_decisions:
+  canonical_format: JSON
+  secondary_format_allowed: false
+  deterministic_ordering: MUST
+  max_token_budget: 2048
+  machine_readable: primary
+  human_readable: auxiliary_only
+  validation_mode: strict
+  unknown_required_missing: fail
+  unknown_extra_fields: warn
+  injection_point: handoff_artifact_only
+  forbidden_injection_sources:
+    - git_log
+    - full_file_contents
+    - test_output
+    - runtime_state
+    - log_files
+    - prior_session_full_content
+    - unrelated_project_context
+
+allowlist:
+  description: 注入が許可される context フィールド一覧。このリスト以外は forbidden。
+  fields:
+    - name: session_id
+      type: string
+      required: true
+      max_chars: 64
+    - name: phase_id
+      type: string
+      required: true
+      max_chars: 16
+    - name: goal
+      type: string
+      required: true
+      max_chars: 512
+    - name: scope
+      type: list[string]
+      required: true
+      max_items: 16
+      max_chars_per_item: 256
+    - name: base_commit
+      type: string
+      required: true
+      pattern: "^[0-9a-f]{40}$"
+    - name: required_prior_session
+      type: string
+      required: true
+      max_chars: 64
+    - name: constraints
+      type: list[string]
+      required: false
+      max_items: 16
+      max_chars_per_item: 512
+    - name: acceptance_ref
+      type: string
+      required: true
+      max_chars: 256
+    - name: allowed_changes_detail
+      type: list[string]
+      required: true
+      max_items: 32
+      max_chars_per_item: 512
+      format: "パス:内容"
+    - name: forbidden_changes
+      type: list[string]
+      required: true
+      max_items: 64
+      max_chars_per_item: 256
+
+forbidden_context:
+  description: 注入が明示的に禁止される context。検出時は injection を拒否しエラーとする。
+  categories:
+    - name: full_file_contents
+      reason: token budget 超過・不要情報混入のリスク。ファイルへの参照パスのみ許可。
+    - name: git_log_history
+      reason: 過去のコミット履歴は session 実行に不要。base_commit SHA のみ許可。
+    - name: test_output_logs
+      reason: 実行時ログは session 定義に含まれない。合否結果のみ acceptance_ref で参照。
+    - name: runtime_state_snapshots
+      reason: state.json / PID / lock の瞬間値は再現性を損なう。
+    - name: prior_session_full_artifacts
+      reason: 過去 session の JSON/YAML 全文は不要。required_prior_session ID のみ参照。
+    - name: unrelated_project_context
+      reason: 他プロジェクト (EC-CUBE / WordPress / fina 等) の情報は scope 外。
+    - name: credentials_and_secrets
+      reason: セキュリティ上の理由により絶対禁止。
+
+size_budget:
+  max_total_tokens: 2048
+  max_total_chars: 8192
+  enforcement: strict
+  overflow_policy: fail_and_report
+
+serialization:
+  canonical_format: JSON
+  encoding: UTF-8
+  line_ending: LF
+  indent: 2
+  key_ordering: allowlist_field_order
+  trailing_newline: required
+
+validation:
+  mode: strict
+  unknown_required_missing: fail
+  unknown_extra_fields: warn
+  size_over_budget: fail
+  forbidden_context_detected: fail
+  type_mismatch: fail
+
+rationale:
+  - "最小 context 原則: 必要なフィールドのみを注入し、AI の hallucination / context pollution を防ぐ"
+  - "allowlist 設計: 禁止リストより許可リストが安全。未知フィールドは warn で拒否しない（互換性）"
+  - "token budget 2048: GPT-4 / Claude 3.5 で安全に処理できる最小実用サイズ"
+  - "base_commit 必須: replay 時の決定論的再現性を保証するために必要"
+  - "forbidden_injection_sources: session 実行に不要な情報源を明示的に排除"
+
+out_of_scope_for_v0:
+  - injection engine 実装
+  - validator 実装
+  - token counter 実装
+  - schema migration (v1 以降の議論)
+  - multi-agent context sharing
+  - context compression algorithm

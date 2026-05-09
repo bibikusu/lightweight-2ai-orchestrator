@@ -1,0 +1,139 @@
+session_id: session-186-pre
+phase_id: P7
+acceptance_ref_for: docs/sessions/session-186-pre.json
+base_commit: 7b8f7b595e8f3566768d9dbb6b734d2f1667cf14
+
+acceptance_criteria:
+  - id: AC-186P-01
+    description: docs/sessions/session-186-pre.json が canonical session JSON 14 keys を全て含む
+    test_name: test_session_186_pre_json_has_14_canonical_keys
+    required_keys:
+      - session_id
+      - phase_id
+      - title
+      - goal
+      - scope
+      - out_of_scope
+      - constraints
+      - acceptance_ref
+      - allowed_changes_detail
+      - forbidden_changes
+      - completion_criteria
+      - acceptance_criteria
+      - review_points
+      - failure_type
+
+  - id: AC-186P-02
+    description: docs/acceptance/session-186-pre.yaml が存在し、AC-186P-* に対応する test_name を全て含む
+    test_name: test_session_186_pre_yaml_exists_with_test_names
+
+  - id: AC-186P-03
+    description: >-
+      review_points 配列の長さが4で、index 3 が '検証十分性'、
+      index 0 が '仕様一致（AC達成）' に完全一致する
+    test_name: test_session_186_pre_review_points_canonical
+    expected_length: 4
+    expected_index_0: "仕様一致（AC達成）"
+    expected_index_1: "変更範囲遵守"
+    expected_index_2: "副作用なし"
+    expected_index_3: "検証十分性"
+
+  - id: AC-186P-04
+    description: >-
+      acceptance_criteria 各要素が id / description / test_name を含み、
+      text フィールドを含まない
+    test_name: test_session_186_pre_acceptance_criteria_uses_description_field
+    required_field_name: description
+    forbidden_field_name: text
+
+  - id: AC-186P-05
+    description: >-
+      allowed_changes_detail が list[str] かつ各要素が 'パス:内容' 形式 (コロン区切り)。
+      5 ファイル全て含む
+    test_name: test_session_186_pre_allowed_changes_detail_format
+    expected_count: 5
+
+  - id: AC-186P-06
+    description: >-
+      completion_criteria が object array で各要素が id / type / condition の3キーを含み、
+      type が canonical enum のいずれかである
+    test_name: test_session_186_pre_completion_criteria_shape
+    canonical_type_enum:
+      - document_rule
+      - artifact
+      - non_regression
+      - state_transition_consistent
+      - side_effect_free
+
+  - id: AC-186P-07
+    description: >-
+      compact_context_pack_v0.json が canonical_decisions / allowlist / forbidden_context /
+      size_budget / serialization / validation / rationale / out_of_scope_for_v0 を含む
+    test_name: test_ccp_v0_json_required_top_level_keys
+    required_keys:
+      - schema_version
+      - description
+      - canonical_decisions
+      - allowlist
+      - forbidden_context
+      - size_budget
+      - serialization
+      - validation
+      - rationale
+      - out_of_scope_for_v0
+
+  - id: AC-186P-08
+    description: >-
+      CCP allowlist に required=true フィールドが
+      session_id / phase_id / goal / scope / base_commit /
+      required_prior_session / acceptance_ref / allowed_changes_detail /
+      forbidden_changes の9フィールド存在する
+    test_name: test_ccp_v0_allowlist_required_fields
+    expected_required_fields:
+      - session_id
+      - phase_id
+      - goal
+      - scope
+      - base_commit
+      - required_prior_session
+      - acceptance_ref
+      - allowed_changes_detail
+      - forbidden_changes
+
+  - id: AC-186P-09
+    description: >-
+      CCP forbidden_context に full_file_contents / git_log_history /
+      credentials_and_secrets を含む7カテゴリ以上が定義されている
+    test_name: test_ccp_v0_forbidden_context_categories
+    min_categories: 7
+    required_categories:
+      - full_file_contents
+      - git_log_history
+      - credentials_and_secrets
+
+  - id: AC-186P-10
+    description: >-
+      CCP canonical_decisions に canonical_format=JSON /
+      max_token_budget=2048 / injection_point=handoff_artifact_only が設定されている
+    test_name: test_ccp_v0_canonical_decisions
+    expected:
+      canonical_format: JSON
+      max_token_budget: 2048
+      injection_point: handoff_artifact_only
+
+  - id: AC-186P-11
+    description: >-
+      forbidden_changes 配下に過去 session 出力物 / global_rules.md /
+      orchestration ファイル群 / git stash が含まれている
+    test_name: test_session_186_pre_forbidden_changes_protects_canonical_assets
+
+  - id: AC-186P-12
+    description: 本 session JSON が failure_type フィールドを持ち、その値が 'spec_missing' である
+    test_name: test_session_186_pre_failure_type_is_spec_missing
+    expected: spec_missing
+
+review_points:
+  - 仕様一致（AC達成）
+  - 変更範囲遵守
+  - 副作用なし
+  - 検証十分性
