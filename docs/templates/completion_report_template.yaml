@@ -1,0 +1,120 @@
+# =====================================================================
+# ClaudeCode Completion Report Template v1
+# =====================================================================
+# canonical: docs/claudecode_completion_report_v1.md
+# usage: ClaudeCode が session 完了時に artifacts/<sid>/completion_report.yaml
+#        として本テンプレを埋めて生成する
+# =====================================================================
+#
+# 重要原則:
+#   - 全フィールド必須(欠落 = schema 違反)
+#   - 空欄禁止(空文字列・null は明示が必要なフィールドのみ許容)
+#   - 空配列でも明示記載必須(省略禁止)
+#   - failure_type が not_applicable のときも明示記載必須
+#   - failure_detail は not_applicable のとき "none" を明示記載必須
+#   - artifacts_produced は最低 1 件必須(空配列禁止)
+#
+# 事故#4(AC pass 偽装)再発防止メカニズム:
+#   - gates_failed:[] 必須化 → 「fail を黙る」誘惑の構造的排除
+#   - failure_type 空欄禁止 → 「空欄で誤魔化す」誘惑の構造的排除
+#   - failure_detail 必須 → 「成功扱いで failure を消す」誘惑の構造的排除
+#   - artifacts_produced 最低1件 → 「証跡なし完了報告」の構造的排除
+# =====================================================================
+
+session_id: <REPLACE>                        # 必須・空欄禁止 / 起票JSON の session_id と完全一致
+
+status: <completed | failed | partial>       # 必須・空欄禁止 / enum
+
+gates_passed:                                 # 必須・空配列でも明示記載必須
+  - <gate_name>                               # 例: ruff, pytest, mypy, compileall
+  # 適用範囲外の gate は記載しない(failure_detail で明示すること)
+
+gates_failed: []                              # 必須・空配列でも明示記載必須
+                                              # AC pass 偽装防止: fail があっても無くても明示する
+                                              # 全 pass 時は [] を残す(削除禁止)
+
+failure_type: <REPLACE>                       # 必須・空欄禁止
+                                              # enum: not_applicable | scope_violation
+                                              #     | gate_failure | ac_partial | other
+                                              # status: completed のときも明示記載
+                                              # (status: completed → failure_type: not_applicable)
+
+failure_detail: <REPLACE>                     # 必須・空欄禁止
+                                              # failure_type: not_applicable のとき → "none" を明示
+                                              # それ以外のとき → 何が起きたか・どこで止まったか・
+                                              #                 次にどうすべきかを 1 段落以上記述
+
+artifacts_produced:                           # 必須・最低 1 件必須(空配列禁止)
+  - artifacts/<sid>/run_log.txt               # 標準・実行ログ
+  - artifacts/<sid>/diff_summary.json         # 標準・git diff 要約
+  - artifacts/<sid>/completion_report.yaml    # 標準・本ファイル自身
+  # session 固有の成果物がある場合は追加
+
+commit_sha: <REPLACE>                         # 必須 / commit 済 → SHA / 未 commit → null を明示
+
+timestamp: <REPLACE>                          # 必須・空欄禁止 / ISO8601 形式
+                                              # 例: 2026-05-09T19:30:00Z
+
+# =====================================================================
+# 記入例 1: 成功 case (全 gate pass / docs-only session)
+# =====================================================================
+# session_id: NEW-D
+# status: completed
+# gates_passed:
+#   - ruff
+#   - compileall
+# gates_failed: []
+# failure_type: not_applicable
+# failure_detail: none
+# artifacts_produced:
+#   - artifacts/NEW-D/run_log.txt
+#   - artifacts/NEW-D/diff_summary.json
+#   - artifacts/NEW-D/completion_report.yaml
+# commit_sha: 1a2b3c4d5e6f7890
+# timestamp: 2026-05-09T19:30:00Z
+#
+# =====================================================================
+# 記入例 2: 失敗 case (gate fail)
+# =====================================================================
+# session_id: example-failed-session
+# status: failed
+# gates_passed:
+#   - ruff
+# gates_failed:
+#   - pytest
+# failure_type: gate_failure
+# failure_detail: |
+#   test_xxx で AssertionError 発生。
+#   期待値と実装の差異を解析中。
+#   詳細は artifacts/example-failed-session/run_log.txt 参照。
+# artifacts_produced:
+#   - artifacts/example-failed-session/run_log.txt
+#   - artifacts/example-failed-session/diff_summary.json
+#   - artifacts/example-failed-session/completion_report.yaml
+# commit_sha: null
+# timestamp: 2026-05-09T20:00:00Z
+#
+# =====================================================================
+# 記入例 3: 部分達成 case
+# =====================================================================
+# session_id: example-partial-session
+# status: partial
+# gates_passed:
+#   - ruff
+#   - compileall
+# gates_failed: []
+# failure_type: ac_partial
+# failure_detail: |
+#   ac1 / ac2 達成。
+#   ac3 は scope 外の dependency が必要と判明したため、別 session に分離申請。
+#   本 session は ac1 / ac2 までで commit 済。
+# artifacts_produced:
+#   - artifacts/example-partial-session/run_log.txt
+#   - artifacts/example-partial-session/diff_summary.json
+#   - artifacts/example-partial-session/completion_report.yaml
+# commit_sha: 9f8e7d6c5b4a3210
+# timestamp: 2026-05-09T21:00:00Z
+#
+# =====================================================================
+# END OF TEMPLATE
+# =====================================================================
