@@ -1,0 +1,104 @@
+{
+  "session_id": "session-NEW-MEMO",
+  "phase_id": "P7-governance-pack",
+  "title": "memory role canonicalization (memory = supplemental, repo = canonical)",
+  "goal": "memory は補助記憶であり canonical = repo であることを docs-only で明文化し、memory 盲信に起因する事故（125a 型）の再発を構造的に防ぐ。本 session は docs-only であり実装・automation・schema 改変を一切含まない。",
+  "scope": [
+    "docs/governance/memory_role.md 新規作成（memory = 補助記憶 / canonical = repo / 矛盾時解決順序の3項を記述）",
+    "docs/sessions/session-NEW-MEMO.json 新規作成（本起票 JSON）",
+    "docs/acceptance/session-NEW-MEMO.yaml 新規作成（受入基準 YAML）"
+  ],
+  "out_of_scope": [
+    "memory DB / state cache / runtime memory の実装",
+    "global_rules.md / master_instruction.md の改変",
+    "既存 governance ファイルの改変",
+    "compact_reference / 運用上の context 圧縮方針の議論（future_proposal で別扱い）",
+    "memory 操作の自動化・hook 化",
+    "他 governance pack session（NEW-A2 / NEW-F+A1 / NEW-B）の議論",
+    "validator / linter / checker の新規作成",
+    "automation / hook / watcher / scheduler / daemon の新規作成"
+  ],
+  "constraints": [
+    "docs-only。コード変更禁止",
+    "1セッション1目的厳守",
+    "session JSON canonical 14 keys 必須（session_id / phase_id / title / goal / scope / out_of_scope / constraints / acceptance_ref / allowed_changes_detail / forbidden_changes / completion_criteria / acceptance_criteria / review_points / failure_type）",
+    "allowed_changes_detail は list[str] 形式 'パス:内容' を厳守",
+    "completion_criteria は object array (id / type / condition) 必須。type は canonical enum (document_rule / artifact / non_regression / state_transition_consistent / side_effect_free) のみ使用",
+    "acceptance_criteria は AC 配列で各要素が id / description / test_name を持つ。description フィールド名固定 (text ではない)",
+    "review_points は 4軸固定（仕様一致（AC達成） / 変更範囲遵守 / 副作用なし / 検証十分性）。括弧は全角 U+FF08 / U+FF09。review_points[3] への説明付加禁止",
+    "新規ファイル中心。既存ファイル改変なし",
+    "base_commit = c0d33a2fe8ffc0a4864a443000bdb14a59c3deab"
+  ],
+  "acceptance_ref": "docs/acceptance/session-NEW-MEMO.yaml",
+  "allowed_changes_detail": [
+    "docs/governance/memory_role.md: 新規作成（memory = 補助記憶 / canonical = repo / 矛盾時解決順序の3項を記述）",
+    "docs/sessions/session-NEW-MEMO.json: 新規作成（本起票 JSON）",
+    "docs/acceptance/session-NEW-MEMO.yaml: 新規作成（受入基準 YAML）"
+  ],
+  "forbidden_changes": [
+    "実装コードの新規作成禁止（.py / .sh / .js / .ts 等）",
+    "validator / linter / checker / updater の新規作成禁止",
+    "automation / hook / watcher / scheduler / daemon の新規作成禁止",
+    "generator / engine / runner / pipeline の新規作成禁止",
+    "orchestration/run_session.py 改変禁止",
+    "orchestration/selector/ 改変禁止",
+    "global_rules.md 改変禁止",
+    "master_instruction.md 改変禁止",
+    "「補助のため」「将来のため」「v2 拡張のため」を理由にした追加実装禁止",
+    "compact_reference / 運用上の context 圧縮方針 関連の議論・実装禁止（future_proposal 別管理）",
+    "read-only 調査であっても commander 明示指示外のコマンド実行禁止",
+    "git push 実行禁止（commander 手動）",
+    "git stash 系操作禁止（chat51 sealed）"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-MEMO-01",
+      "type": "artifact",
+      "condition": "docs/governance/memory_role.md が新規作成され、memory の役割定義（補助記憶）/ canonical = repo / 矛盾時の解決順序の3項を全て含む"
+    },
+    {
+      "id": "CC-MEMO-02",
+      "type": "artifact",
+      "condition": "docs/sessions/session-NEW-MEMO.json が canonical 14 keys を全て含む"
+    },
+    {
+      "id": "CC-MEMO-03",
+      "type": "artifact",
+      "condition": "docs/acceptance/session-NEW-MEMO.yaml が phase_id / acceptance_ref_for / base_commit / acceptance_criteria を含む"
+    },
+    {
+      "id": "CC-MEMO-04",
+      "type": "side_effect_free",
+      "condition": "既存ファイル（global_rules.md / master_instruction.md / orchestration/run_session.py / orchestration/selector/core.py / orchestration/selector/loader.py / orchestration/selector/writer.py）が本 session 中に変更されていないこと（baseline 値そのものとの一致は本 session の対象外）"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-MEMO-01",
+      "description": "docs/governance/memory_role.md が新規作成されており、ファイル内に「memory は補助記憶」「canonical = repo」「矛盾時は repo 現物確認を優先」の3原則が日本語で明記されている",
+      "test_name": "test_memory_role_md_contains_three_principles"
+    },
+    {
+      "id": "AC-MEMO-02",
+      "description": "docs/sessions/session-NEW-MEMO.json が canonical 14 keys を全て含み、review_points が 4軸（仕様一致（AC達成） / 変更範囲遵守 / 副作用なし / 検証十分性）と完全一致する",
+      "test_name": "test_session_new_memo_json_has_14_canonical_keys_and_review_points"
+    },
+    {
+      "id": "AC-MEMO-03",
+      "description": "docs/acceptance/session-NEW-MEMO.yaml が phase_id / acceptance_ref_for / base_commit / acceptance_criteria を含み、acceptance_criteria 各要素が id / description / test_name を持つ",
+      "test_name": "test_acceptance_yaml_structure_valid"
+    },
+    {
+      "id": "AC-MEMO-04",
+      "description": "本 session の追加対象3ファイル以外の改変が一切ないこと（既存ファイル無改変）",
+      "test_name": "test_no_existing_file_modified"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし",
+    "検証十分性"
+  ],
+  "failure_type": "scope_violation"
+}

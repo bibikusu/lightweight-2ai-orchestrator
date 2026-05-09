@@ -1,0 +1,99 @@
+phase_id: P7-governance-pack-NEW-MEMO
+acceptance_ref_for: docs/sessions/session-NEW-MEMO.json
+base_commit: c0d33a2fe8ffc0a4864a443000bdb14a59c3deab
+
+acceptance_criteria:
+  - id: AC-MEMO-01
+    description: >-
+      docs/governance/memory_role.md が新規作成されており、ファイル内に
+      「memory は補助記憶」「canonical = repo」「矛盾時は repo 現物確認を優先」
+      の3原則が日本語で明記されている
+    test_name: test_memory_role_md_contains_three_principles
+    required_phrases:
+      - "memory は補助記憶"
+      - "canonical = repo"
+      - "矛盾時は repo 現物確認を優先"
+
+  - id: AC-MEMO-02
+    description: >-
+      docs/sessions/session-NEW-MEMO.json が canonical 14 keys を全て含み、
+      review_points が 4軸（仕様一致（AC達成） / 変更範囲遵守 / 副作用なし / 検証十分性）
+      と完全一致する
+    test_name: test_session_new_memo_json_has_14_canonical_keys_and_review_points
+    required_keys:
+      - session_id
+      - phase_id
+      - title
+      - goal
+      - scope
+      - out_of_scope
+      - constraints
+      - acceptance_ref
+      - allowed_changes_detail
+      - forbidden_changes
+      - completion_criteria
+      - acceptance_criteria
+      - review_points
+      - failure_type
+    required_review_points:
+      - "仕様一致（AC達成）"
+      - "変更範囲遵守"
+      - "副作用なし"
+      - "検証十分性"
+
+  - id: AC-MEMO-03
+    description: >-
+      docs/acceptance/session-NEW-MEMO.yaml が phase_id / acceptance_ref_for /
+      base_commit / acceptance_criteria を含み、acceptance_criteria 各要素が
+      id / description / test_name を持つ
+    test_name: test_acceptance_yaml_structure_valid
+    required_top_level_keys:
+      - phase_id
+      - acceptance_ref_for
+      - base_commit
+      - acceptance_criteria
+
+  - id: AC-MEMO-04
+    description: 本 session の追加対象3ファイル以外の改変が一切ないこと（既存ファイル無改変）
+    test_name: test_no_existing_file_modified
+    expected_added_files:
+      - docs/governance/memory_role.md
+      - docs/sessions/session-NEW-MEMO.json
+      - docs/acceptance/session-NEW-MEMO.yaml
+    expected_modified_files: []
+    expected_deleted_files: []
+
+verification_commands:
+  - description: 14 canonical keys 確認
+    command: >-
+      python3 -c "import json; d=json.load(open('docs/sessions/session-NEW-MEMO.json'));
+      keys=['session_id','phase_id','title','goal','scope','out_of_scope','constraints',
+      'acceptance_ref','allowed_changes_detail','forbidden_changes','completion_criteria',
+      'acceptance_criteria','review_points','failure_type'];
+      assert all(k in d for k in keys), f'missing: {[k for k in keys if k not in d]}';
+      print('OK: 14 keys')"
+
+  - description: review_points 4軸完全一致確認
+    command: >-
+      python3 -c "import json; d=json.load(open('docs/sessions/session-NEW-MEMO.json'));
+      expected=['仕様一致（AC達成）','変更範囲遵守','副作用なし','検証十分性'];
+      assert d['review_points']==expected, f'mismatch: {d[\"review_points\"]}';
+      print('OK: review_points')"
+
+  - description: memory_role.md 3原則確認
+    command: >-
+      python3 -c "
+      text=open('docs/governance/memory_role.md').read();
+      assert 'memory は補助記憶' in text;
+      assert 'canonical = repo' in text;
+      assert '矛盾時は repo 現物確認を優先' in text;
+      print('OK: 3 principles')"
+
+  - description: 既存ファイル無改変確認（base_commit からの diff）
+    command: git diff --name-only c0d33a2fe8ffc0a4864a443000bdb14a59c3deab HEAD | sort
+
+  - description: selector baseline 対象4ファイルが本 session 中に変更されていないことの確認
+    command: >-
+      git diff --name-only c0d33a2fe8ffc0a4864a443000bdb14a59c3deab HEAD --
+      orchestration/run_session.py orchestration/selector/core.py
+      orchestration/selector/loader.py orchestration/selector/writer.py
