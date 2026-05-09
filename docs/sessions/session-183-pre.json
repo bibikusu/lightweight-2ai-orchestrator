@@ -1,0 +1,333 @@
+{
+  "session_id": "session-183-pre",
+  "phase_id": "P7",
+  "title": "Session autonomy tier and reversible automation boundary canonicalization",
+  "goal": "AI に任せてよい範囲を session 単位で判定できるように、session autonomy tier、reversibility classification、approval boundary を docs-only で正本化する",
+  "scope": [
+    "session autonomy tier の分類を定義する",
+    "reversibility classification の分類を定義する",
+    "approval boundary の判定規則を定義する",
+    "AI role boundary を GPT / ClaudeWeb / ClaudeCode / Cursor / Human の役割で整理する",
+    "automation allowlist と forbidden automation を定義する",
+    "PCC は read-only projection のまま扱う前提を維持する",
+    "後続 session で実装・global_rules.md 反映・automation tool 化するための境界を固定する"
+  ],
+  "out_of_scope": [
+    "実装コードの変更",
+    "fill_template.py の実装",
+    "Qwen integration",
+    "MCP 導入",
+    "state.json 実装",
+    "queue engine 改修",
+    "run_session.py 変更",
+    "global_rules.md 変更",
+    "PCC の実行制御化",
+    "deploy / push / destructive operation の自動化"
+  ],
+  "constraints": [
+    "docs-only session として扱う",
+    "Operational Memory durability boundary は session-182-pre の前提を継承する",
+    "PCC は read-only projection であり、実行制御・状態変更・承認代行を行わない",
+    "irreversible operation は Human approval required とする",
+    "AI は human approval を代行してはならない",
+    "automation boundary は reversibility を優先して判定する",
+    "approval fatigue を防ぐため、承認要否は tier / reversibility / operation_type の組み合わせで明示する",
+    "allowed_changes_detail のみを変更許可の正本として扱う",
+    "review_points は canonical 4軸固定とする",
+    "completion_criteria は id / type / condition を持つ object 配列とする"
+  ],
+  "acceptance_ref": "docs/acceptance/session-183-pre.yaml",
+  "allowed_changes_detail": [
+    "docs/sessions/session-183-pre.json: session autonomy tier / reversibility classification / approval boundary の docs-only session 定義を追加",
+    "docs/acceptance/session-183-pre.yaml: session-183-pre の受入条件を追加"
+  ],
+  "forbidden_changes": [
+    "docs/global_rules.md",
+    "docs/global_rules_v2.md",
+    "orchestration/run_session.py",
+    "orchestration/queue/engine.py",
+    "backend/pcc/**/*.py",
+    "backend/pcc/static/**/*",
+    "scripts/**/*",
+    ".claude/**/*",
+    "docs/config/**/*.yaml",
+    "docs/config/**/*.json",
+    "state.json",
+    "docs/projects/**/state.json"
+  ],
+  "canonical_spec": {
+    "session_autonomy_tiers": [
+      {
+        "tier": "Tier-1",
+        "name": "irreversible",
+        "definition": "push / deploy / destructive operation / external side effect / production data mutation を含む操作",
+        "automation_policy": "commander_only",
+        "approval_required": true,
+        "human_role": "Human が実行可否を明示承認する",
+        "examples": [
+          "git push",
+          "production deploy",
+          "production DB migration",
+          "destructive file deletion",
+          "external service publication"
+        ]
+      },
+      {
+        "tier": "Tier-2",
+        "name": "reversible",
+        "definition": "git diff / rollback / revert により復元可能な docs update または local code edit",
+        "automation_policy": "approval_required",
+        "approval_required": true,
+        "human_role": "Human または GPT commander が scope と acceptance を確認する",
+        "examples": [
+          "docs update",
+          "local code edit",
+          "test file addition",
+          "template fill",
+          "handoff generation"
+        ]
+      },
+      {
+        "tier": "Tier-3",
+        "name": "read_only",
+        "definition": "audit / analysis / report / grep / status check のように repository state と external state を変更しない操作",
+        "automation_policy": "full_auto_allowed",
+        "approval_required": false,
+        "human_role": "Human approval は不要。ただし発見事項の最終採用判断は Human または GPT commander が行う",
+        "examples": [
+          "git status",
+          "grep",
+          "pytest dry-run style inspection",
+          "report generation without write",
+          "PCC read-only projection"
+        ]
+      }
+    ],
+    "reversibility_classification": [
+      {
+        "class": "R0",
+        "name": "read_only",
+        "definition": "状態変更が発生しない",
+        "default_tier": "Tier-3",
+        "approval_boundary": "full_auto_allowed"
+      },
+      {
+        "class": "R1",
+        "name": "local_reversible",
+        "definition": "local file 変更であり git diff / revert により復元可能",
+        "default_tier": "Tier-2",
+        "approval_boundary": "approval_required"
+      },
+      {
+        "class": "R2",
+        "name": "remote_reversible",
+        "definition": "remote artifact / draft / issue / PR のように外部状態を変更するが取り消し可能",
+        "default_tier": "Tier-2",
+        "approval_boundary": "explicit_approval_required"
+      },
+      {
+        "class": "R3",
+        "name": "irreversible_or_high_risk",
+        "definition": "push / deploy / destructive / production mutation / customer-visible publication を含む",
+        "default_tier": "Tier-1",
+        "approval_boundary": "commander_only"
+      }
+    ],
+    "approval_boundary": [
+      {
+        "operation_type": "read_only_audit",
+        "reversibility_class": "R0",
+        "allowed_mode": "full_auto_allowed",
+        "required_approver": "none"
+      },
+      {
+        "operation_type": "docs_scaffold_or_template_fill",
+        "reversibility_class": "R1",
+        "allowed_mode": "approval_required",
+        "required_approver": "GPT commander or Human"
+      },
+      {
+        "operation_type": "local_code_edit",
+        "reversibility_class": "R1",
+        "allowed_mode": "approval_required",
+        "required_approver": "GPT commander or Human"
+      },
+      {
+        "operation_type": "remote_issue_or_pr_creation",
+        "reversibility_class": "R2",
+        "allowed_mode": "explicit_approval_required",
+        "required_approver": "Human"
+      },
+      {
+        "operation_type": "git_push_or_deploy_or_destructive_operation",
+        "reversibility_class": "R3",
+        "allowed_mode": "commander_only",
+        "required_approver": "Human"
+      }
+    ],
+    "ai_role_boundary": {
+      "GPT": {
+        "responsibility": "spec / governance / acceptance judgment / final recommendation",
+        "must_not": [
+          "実装主体になる",
+          "human irreversible approval を代行する",
+          "scope を無断拡張する"
+        ]
+      },
+      "ClaudeWeb": {
+        "responsibility": "analysis / research / draft / comparison",
+        "must_not": [
+          "最終承認する",
+          "実 repository を変更する",
+          "approval boundary を越える"
+        ]
+      },
+      "ClaudeCode": {
+        "responsibility": "implementation worker / local verification / read-only audit / scoped local edit",
+        "must_not": [
+          "session 不在で commit する",
+          "main push を自動実行する",
+          "global_rules を無断変更する"
+        ]
+      },
+      "Cursor": {
+        "responsibility": "execution environment / file edit / command verification",
+        "must_not": [
+          "仕様決定する",
+          "scope 外変更する",
+          "指示外 git operation を行う"
+        ]
+      },
+      "Human": {
+        "responsibility": "irreversible approval / priority decision / exception judgment",
+        "must_not": [
+          "未検収完了扱いする",
+          "承認疲れで rubber-stamp 化する"
+        ]
+      }
+    },
+    "automation_allowlist": [
+      "read-only audit",
+      "docs scaffold",
+      "template fill",
+      "handoff generation",
+      "session draft generation",
+      "acceptance draft generation",
+      "local validation command suggestion",
+      "PCC read-only projection"
+    ],
+    "automation_forbidden": [
+      "deploy",
+      "production state mutation",
+      "global_rules rewrite",
+      "irreversible git operation",
+      "main push",
+      "production DB mutation",
+      "state.json implementation",
+      "queue engine behavior change",
+      "run_session.py behavior change",
+      "PCC execution control"
+    ]
+  },
+  "completion_criteria": [
+    {
+      "id": "CC-183PRE-01",
+      "type": "document_rule",
+      "condition": "session-183-pre.json が session autonomy tier を Tier-1 / Tier-2 / Tier-3 として定義している"
+    },
+    {
+      "id": "CC-183PRE-02",
+      "type": "document_rule",
+      "condition": "session-183-pre.json が reversibility classification を R0 / R1 / R2 / R3 として定義している"
+    },
+    {
+      "id": "CC-183PRE-03",
+      "type": "document_rule",
+      "condition": "session-183-pre.json が approval boundary を operation_type / reversibility_class / allowed_mode / required_approver の組で定義している"
+    },
+    {
+      "id": "CC-183PRE-04",
+      "type": "document_rule",
+      "condition": "session-183-pre.json が AI role boundary を GPT / ClaudeWeb / ClaudeCode / Cursor / Human で定義している"
+    },
+    {
+      "id": "CC-183PRE-05",
+      "type": "artifact",
+      "condition": "docs/sessions/session-183-pre.json と docs/acceptance/session-183-pre.yaml の 2 ファイルのみが生成対象である"
+    },
+    {
+      "id": "CC-183PRE-06",
+      "type": "non_regression",
+      "condition": "global_rules.md / run_session.py / queue engine / PCC 実装ファイルが変更対象に含まれていない"
+    },
+    {
+      "id": "CC-183PRE-07",
+      "type": "state_transition_consistent",
+      "condition": "Tier-1 または R3 の操作が full_auto_allowed になっていない"
+    },
+    {
+      "id": "CC-183PRE-08",
+      "type": "side_effect_free",
+      "condition": "本 session は docs-only であり、実行制御・状態変更・deploy・push を含まない"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-183PRE-01",
+      "description": "session JSON が canonical 形式で存在し、session_id / phase_id / title / goal / scope / out_of_scope / constraints / acceptance_ref / allowed_changes_detail / forbidden_changes / completion_criteria / acceptance_criteria / review_points / failure_type を持つ",
+      "test_name": "test_session_183_pre_required_keys"
+    },
+    {
+      "id": "AC-183PRE-02",
+      "description": "allowed_changes_detail は list[str] であり、各要素が 'ファイルパス: 許可内容' 形式である",
+      "test_name": "test_session_183_pre_allowed_changes_detail_format"
+    },
+    {
+      "id": "AC-183PRE-03",
+      "description": "session autonomy tier が Tier-1 irreversible / Tier-2 reversible / Tier-3 read_only の 3 種で定義され、それぞれ automation_policy と approval_required を持つ",
+      "test_name": "test_session_183_pre_autonomy_tiers"
+    },
+    {
+      "id": "AC-183PRE-04",
+      "description": "reversibility classification が R0 read_only / R1 local_reversible / R2 remote_reversible / R3 irreversible_or_high_risk の 4 種で定義される",
+      "test_name": "test_session_183_pre_reversibility_classes"
+    },
+    {
+      "id": "AC-183PRE-05",
+      "description": "approval boundary が operation_type / reversibility_class / allowed_mode / required_approver を持ち、R3 は commander_only で Human 承認を要求する",
+      "test_name": "test_session_183_pre_approval_boundary"
+    },
+    {
+      "id": "AC-183PRE-06",
+      "description": "AI role boundary が GPT / ClaudeWeb / ClaudeCode / Cursor / Human を含み、各 role に responsibility と must_not が定義される",
+      "test_name": "test_session_183_pre_ai_role_boundary"
+    },
+    {
+      "id": "AC-183PRE-07",
+      "description": "automation_allowlist と automation_forbidden が定義され、deploy / state mutation / global_rules rewrite / irreversible git operation が forbidden に含まれる",
+      "test_name": "test_session_183_pre_automation_allowlist_forbidden"
+    },
+    {
+      "id": "AC-183PRE-08",
+      "description": "out_of_scope と forbidden_changes に実装・state.json・queue engine・run_session.py・global_rules.md・PCC 実行制御が含まれる",
+      "test_name": "test_session_183_pre_scope_guardrails"
+    },
+    {
+      "id": "AC-183PRE-09",
+      "description": "acceptance YAML の session_id / goal / scope / out_of_scope / acceptance / completion_checks / change_guardrails が session JSON と整合する",
+      "test_name": "test_session_183_pre_acceptance_yaml_alignment"
+    },
+    {
+      "id": "AC-183PRE-10",
+      "description": "review_points が canonical 4軸 ['仕様一致（AC達成）','変更範囲遵守','副作用なし','検証十分性'] と完全一致する",
+      "test_name": "test_session_183_pre_review_points_canonical"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし",
+    "検証十分性"
+  ],
+  "failure_type": "spec_missing"
+}

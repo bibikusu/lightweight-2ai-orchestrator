@@ -1,0 +1,152 @@
+session_id: session-183-pre
+goal: AI に任せてよい範囲を session 単位で判定できるように、session autonomy tier、reversibility classification、approval
+  boundary を docs-only で正本化する
+scope:
+- session autonomy tier の分類を定義する
+- reversibility classification の分類を定義する
+- approval boundary の判定規則を定義する
+- AI role boundary を GPT / ClaudeWeb / ClaudeCode / Cursor / Human の役割で整理する
+- automation allowlist と forbidden automation を定義する
+- PCC は read-only projection のまま扱う前提を維持する
+- 後続 session で実装・global_rules.md 反映・automation tool 化するための境界を固定する
+out_of_scope:
+- 実装コードの変更
+- fill_template.py の実装
+- Qwen integration
+- MCP 導入
+- state.json 実装
+- queue engine 改修
+- run_session.py 変更
+- global_rules.md 変更
+- PCC の実行制御化
+- deploy / push / destructive operation の自動化
+acceptance:
+- id: AC-183PRE-01
+  requirement: session JSON が canonical 形式で存在し、session_id / phase_id / title / goal
+    / scope / out_of_scope / constraints / acceptance_ref / allowed_changes_detail
+    / forbidden_changes / completion_criteria / acceptance_criteria / review_points
+    / failure_type を持つ
+  test_name: test_session_183_pre_required_keys
+  type: manual
+  manual_check: true
+  verification:
+  - docs/sessions/session-183-pre.json を確認し、session JSON が canonical 形式で存在し、session_id
+    / phase_id / title / goal / scope / out_of_scope / constraints / acceptance_ref
+    / allowed_changes_detail / forbidden_changes / completion_criteria / acceptance_criteria
+    / review_points / failure_type を持つ
+- id: AC-183PRE-02
+  requirement: 'allowed_changes_detail は list[str] であり、各要素が ''ファイルパス: 許可内容'' 形式である'
+  test_name: test_session_183_pre_allowed_changes_detail_format
+  type: manual
+  manual_check: true
+  verification:
+  - 'docs/sessions/session-183-pre.json を確認し、allowed_changes_detail は list[str] であり、各要素が
+    ''ファイルパス: 許可内容'' 形式である'
+- id: AC-183PRE-03
+  requirement: session autonomy tier が Tier-1 irreversible / Tier-2 reversible / Tier-3
+    read_only の 3 種で定義され、それぞれ automation_policy と approval_required を持つ
+  test_name: test_session_183_pre_autonomy_tiers
+  type: manual
+  manual_check: true
+  verification:
+  - docs/sessions/session-183-pre.json を確認し、session autonomy tier が Tier-1 irreversible
+    / Tier-2 reversible / Tier-3 read_only の 3 種で定義され、それぞれ automation_policy と approval_required
+    を持つ
+- id: AC-183PRE-04
+  requirement: reversibility classification が R0 read_only / R1 local_reversible /
+    R2 remote_reversible / R3 irreversible_or_high_risk の 4 種で定義される
+  test_name: test_session_183_pre_reversibility_classes
+  type: manual
+  manual_check: true
+  verification:
+  - docs/sessions/session-183-pre.json を確認し、reversibility classification が R0 read_only
+    / R1 local_reversible / R2 remote_reversible / R3 irreversible_or_high_risk の
+    4 種で定義される
+- id: AC-183PRE-05
+  requirement: approval boundary が operation_type / reversibility_class / allowed_mode
+    / required_approver を持ち、R3 は commander_only で Human 承認を要求する
+  test_name: test_session_183_pre_approval_boundary
+  type: manual
+  manual_check: true
+  verification:
+  - docs/sessions/session-183-pre.json を確認し、approval boundary が operation_type / reversibility_class
+    / allowed_mode / required_approver を持ち、R3 は commander_only で Human 承認を要求する
+- id: AC-183PRE-06
+  requirement: AI role boundary が GPT / ClaudeWeb / ClaudeCode / Cursor / Human を含み、各
+    role に responsibility と must_not が定義される
+  test_name: test_session_183_pre_ai_role_boundary
+  type: manual
+  manual_check: true
+  verification:
+  - docs/sessions/session-183-pre.json を確認し、AI role boundary が GPT / ClaudeWeb / ClaudeCode
+    / Cursor / Human を含み、各 role に responsibility と must_not が定義される
+- id: AC-183PRE-07
+  requirement: automation_allowlist と automation_forbidden が定義され、deploy / state mutation
+    / global_rules rewrite / irreversible git operation が forbidden に含まれる
+  test_name: test_session_183_pre_automation_allowlist_forbidden
+  type: manual
+  manual_check: true
+  verification:
+  - docs/sessions/session-183-pre.json を確認し、automation_allowlist と automation_forbidden
+    が定義され、deploy / state mutation / global_rules rewrite / irreversible git operation
+    が forbidden に含まれる
+- id: AC-183PRE-08
+  requirement: out_of_scope と forbidden_changes に実装・state.json・queue engine・run_session.py・global_rules.md・PCC
+    実行制御が含まれる
+  test_name: test_session_183_pre_scope_guardrails
+  type: manual
+  manual_check: true
+  verification:
+  - docs/sessions/session-183-pre.json を確認し、out_of_scope と forbidden_changes に実装・state.json・queue
+    engine・run_session.py・global_rules.md・PCC 実行制御が含まれる
+- id: AC-183PRE-09
+  requirement: acceptance YAML の session_id / goal / scope / out_of_scope / acceptance
+    / completion_checks / change_guardrails が session JSON と整合する
+  test_name: test_session_183_pre_acceptance_yaml_alignment
+  type: manual
+  manual_check: true
+  verification:
+  - docs/sessions/session-183-pre.json を確認し、acceptance YAML の session_id / goal /
+    scope / out_of_scope / acceptance / completion_checks / change_guardrails が session
+    JSON と整合する
+- id: AC-183PRE-10
+  requirement: review_points が canonical 4軸 ['仕様一致（AC達成）','変更範囲遵守','副作用なし','検証十分性']
+    と完全一致する
+  test_name: test_session_183_pre_review_points_canonical
+  type: manual
+  manual_check: true
+  verification:
+  - docs/sessions/session-183-pre.json を確認し、review_points が canonical 4軸 ['仕様一致（AC達成）','変更範囲遵守','副作用なし','検証十分性']
+    と完全一致する
+completion_checks:
+- 'CC-183PRE-01: session-183-pre.json が session autonomy tier を Tier-1 / Tier-2 /
+  Tier-3 として定義している'
+- 'CC-183PRE-02: session-183-pre.json が reversibility classification を R0 / R1 / R2
+  / R3 として定義している'
+- 'CC-183PRE-03: session-183-pre.json が approval boundary を operation_type / reversibility_class
+  / allowed_mode / required_approver の組で定義している'
+- 'CC-183PRE-04: session-183-pre.json が AI role boundary を GPT / ClaudeWeb / ClaudeCode
+  / Cursor / Human で定義している'
+- 'CC-183PRE-05: docs/sessions/session-183-pre.json と docs/acceptance/session-183-pre.yaml
+  の 2 ファイルのみが生成対象である'
+- 'CC-183PRE-06: global_rules.md / run_session.py / queue engine / PCC 実装ファイルが変更対象に含まれていない'
+- 'CC-183PRE-07: Tier-1 または R3 の操作が full_auto_allowed になっていない'
+- 'CC-183PRE-08: 本 session は docs-only であり、実行制御・状態変更・deploy・push を含まない'
+change_guardrails:
+  allowed_changes_detail:
+  - 'docs/sessions/session-183-pre.json: session autonomy tier / reversibility classification
+    / approval boundary の docs-only session 定義を追加'
+  - 'docs/acceptance/session-183-pre.yaml: session-183-pre の受入条件を追加'
+  forbidden_changes:
+  - docs/global_rules.md
+  - docs/global_rules_v2.md
+  - orchestration/run_session.py
+  - orchestration/queue/engine.py
+  - backend/pcc/**/*.py
+  - backend/pcc/static/**/*
+  - scripts/**/*
+  - .claude/**/*
+  - docs/config/**/*.yaml
+  - docs/config/**/*.json
+  - state.json
+  - docs/projects/**/state.json
