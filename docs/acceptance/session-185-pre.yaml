@@ -1,0 +1,232 @@
+session_id: session-185-pre
+phase_id: P7
+acceptance_ref_for: docs/sessions/session-185-pre.json
+base_commit: 9e2c234063e19564ead3374b286e94bc014e1793
+
+acceptance_criteria:
+  - id: AC-185P-01
+    description: >-
+      docs/sessions/session-185-pre.json が canonical session JSON 14 keys
+      (session_id / phase_id / title / goal / scope / out_of_scope / constraints /
+      acceptance_ref / allowed_changes_detail / forbidden_changes / completion_criteria /
+      acceptance_criteria / review_points / failure_type) を全て含む
+    test_name: test_session_185_pre_json_has_14_canonical_keys
+    required_keys:
+      - session_id
+      - phase_id
+      - title
+      - goal
+      - scope
+      - out_of_scope
+      - constraints
+      - acceptance_ref
+      - allowed_changes_detail
+      - forbidden_changes
+      - completion_criteria
+      - acceptance_criteria
+      - review_points
+      - failure_type
+
+  - id: AC-185P-02
+    description: >-
+      docs/acceptance/session-185-pre.yaml が存在し AC-185P-* に対応する test_name を全て含む
+    test_name: test_session_185_pre_yaml_exists_with_test_names
+
+  - id: AC-185P-03
+    description: >-
+      review_points 配列の長さが4で、末尾要素 (index 3) が文字列 '検証十分性' に完全一致する。
+      先頭要素は全角括弧で '仕様一致（AC達成）' に完全一致する。
+    test_name: test_session_185_pre_review_points_fourth_axis_is_kensho_jubunsei
+    expected_length: 4
+    expected_index_0: "仕様一致（AC達成）"
+    expected_index_1: "変更範囲遵守"
+    expected_index_2: "副作用なし"
+    expected_index_3: "検証十分性"
+
+  - id: AC-185P-04
+    description: >-
+      acceptance_criteria 各要素が id / description / test_name を含み、
+      description フィールド名であって text フィールドを使用していない
+    test_name: test_session_185_pre_acceptance_criteria_uses_description_field
+    required_field_name: description
+    forbidden_field_name: text
+
+  - id: AC-185P-05
+    description: >-
+      allowed_changes_detail が list[str] かつ各要素が 'パス:内容' 形式 (コロン区切り)
+    test_name: test_session_185_pre_allowed_changes_detail_format
+
+  - id: AC-185P-06
+    description: >-
+      completion_criteria が object array で各要素が id / type / condition の3キーを含み、
+      type が canonical enum のいずれかに一致する
+    test_name: test_session_185_pre_completion_criteria_object_array_shape
+    canonical_type_enum:
+      - document_rule
+      - artifact
+      - non_regression
+      - state_transition_consistent
+      - side_effect_free
+
+  - id: AC-185P-07
+    description: >-
+      handoff_artifact.v1 仕様が canonical 化されている
+      (canonical_format=JSON / deterministic_ordering=MUST / replayability=MUST /
+      machine_readable=primary / validation=strict / unknown_required_missing=fail /
+      optional_field_policy=minimal_for_schema_version_compat)
+    test_name: test_session_185_pre_handoff_schema_canonical_decisions
+    canonical_decisions:
+      canonical_format: JSON
+      secondary_format_allowed: false
+      deterministic_ordering: MUST
+      replayability: MUST
+      human_readable: auxiliary_only
+      machine_readable: primary
+      validation_mode: strict
+      unknown_required_missing: fail
+      unknown_extra_fields: warn
+      optional_field_policy: minimal_for_schema_version_compat
+
+  - id: AC-185P-08
+    description: >-
+      forbidden_changes 配下に過去 session 出力物 / global_rules.md / master_instruction.md /
+      selector / run_session.py / git stash が含まれている
+    test_name: test_session_185_pre_forbidden_changes_protects_canonical_assets
+
+  - id: AC-185P-09
+    description: >-
+      本 session の scope に実装系 (handoff generator / run_session.py / queue engine /
+      hooks / MCP / runtime / persistence / Cursor) が含まれない
+      (docs-only であることが scope / out_of_scope から自明)
+    test_name: test_session_185_pre_scope_is_docs_only
+
+  - id: AC-185P-10
+    description: >-
+      本 session JSON が failure_type フィールドを持ち値が 'spec_missing'
+    test_name: test_session_185_pre_failure_type_is_spec_missing
+    expected: spec_missing
+
+review_points:
+  - 仕様一致（AC達成）
+  - 変更範囲遵守
+  - 副作用なし
+  - 検証十分性
+
+# ================================================================
+# handoff_artifact.v1 canonical 仕様正本
+# ================================================================
+handoff_artifact_schema_v1:
+  schema_version: handoff_artifact.v1
+  description: >-
+    GPT (司令塔) → ClaudeCode (現場責任者) への handoff artifact の正本仕様。
+    人間が読むメモではなく、再現・検証・再投入可能な machine-readable 境界物。
+
+  canonical_decisions:
+    canonical_format: JSON
+    secondary_format_allowed: false
+    deterministic_ordering: MUST
+    replayability: MUST
+    human_readable: auxiliary_only
+    machine_readable: primary
+    validation_mode: strict
+    unknown_required_missing: fail
+    unknown_extra_fields: warn
+    optional_field_policy: minimal_for_schema_version_compat
+
+  required_fields:
+    - schema_version
+    - artifact_id
+    - session_id
+    - created_by
+    - target_agent
+    - handoff_type
+    - source_context.base_commit
+    - source_context.required_prior_session
+    - task.goal
+    - task.scope
+    - task.out_of_scope
+    - allowed_changes_detail
+    - forbidden_changes
+    - acceptance_criteria
+    - completion_criteria
+    - validation.required_checks
+    - validation.failure_type_on_invalid
+    - replay.replayable
+    - replay.requires_human_approval
+    - replay.deterministic_ordering
+
+  optional_fields:
+    - source_context.assumptions
+    - commander_note
+    - summary
+
+  field_types:
+    schema_version: string          # 必ず "handoff_artifact.v1"
+    artifact_id: string
+    session_id: string
+    created_by: "enum[GPT, ClaudeWeb]"
+    target_agent: "enum[ClaudeCode, Cursor]"
+    handoff_type: "enum[docs_only_session_generation, implementation, audit, repair]"
+    source_context.base_commit: string   # full sha
+    source_context.required_prior_session: string
+    source_context.assumptions: list[string]
+    task.goal: string
+    task.scope: list[string]
+    task.out_of_scope: list[string]
+    allowed_changes_detail: list[string]   # 'パス:内容'
+    forbidden_changes: list[string]
+    acceptance_criteria: list[object]      # id / description / test_name
+    completion_criteria: list[object]      # id / type / condition (type は canonical enum)
+    validation.required_checks: list[string]
+    validation.failure_type_on_invalid: string
+    replay.replayable: bool
+    replay.requires_human_approval: bool
+    replay.deterministic_ordering: bool
+    commander_note: string
+    summary: string
+
+  completion_criteria_canonical_type_enum:
+    - document_rule
+    - artifact
+    - non_regression
+    - state_transition_consistent
+    - side_effect_free
+
+  serialization:
+    canonical_format: JSON
+    secondary_format_allowed: false
+    encoding: UTF-8
+    line_ending: LF
+    indent: 2
+    key_ordering: deterministic_top_level_fixed_then_nested_sorted
+    trailing_newline: required
+
+  validation:
+    mode: strict
+    unknown_required_missing: fail
+    unknown_extra_fields: warn
+    type_check: enforced
+    failure_type_on_invalid: spec_missing
+
+  replay:
+    replayable: true
+    requires_human_approval: true
+    deterministic_ordering: true
+    base_commit_required: true
+
+  rationale:
+    - "JSON 正本理由: YAML は anchor / alias / multi-line の曖昧性があり、正本としての parse 容易性・schema validation 親和性が低い"
+    - "deterministic ordering MUST 理由: replay 時の差分検証 (diff 安定) を可能にする"
+    - "machine-readable primary 理由: AI agent 間 handoff は machine consumption が主用途であり、人間は補助的にレビューするのみ"
+    - "strict validation 理由: 不完全 handoff の implicit pass 防止 (session-184-pre constraints 欠落事故 learning)"
+    - "minimal optional 理由: schema bloat 防止と canonical truth の単純化"
+    - "secondary_format_allowed=false の理由: YAML 並走を許すと正本が二重化し検証が弱体化する"
+
+  out_of_scope_for_v1:
+    - handoff generator 実装
+    - validation engine 実装
+    - replay runtime
+    - MCP transport binding
+    - state persistence
+    - 自動 retry / 失敗時 escalation policy
+    - schema_version migration (v2 以降の議論)

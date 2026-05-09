@@ -1,0 +1,192 @@
+{
+  "session_id": "session-185-pre",
+  "phase_id": "P7",
+  "title": "handoff artifact schema canonicalization (docs-only)",
+  "goal": "GPT → ClaudeCode handoff artifact の schema / required fields / deterministic format / replayability / compactness / machine readability / validation boundary を canonical 化する。docs-only 起票であり実装は本 session に含めない。",
+  "scope": [
+    "docs/sessions/session-185-pre.json 作成",
+    "docs/acceptance/session-185-pre.yaml 作成",
+    "handoff artifact schema (handoff_artifact.v1) の正本定義",
+    "required field / optional field の分離",
+    "deterministic ordering ルールの canonical 化",
+    "replayability 要件の canonical 化",
+    "minimal payload contract の canonical 化",
+    "validation rules (strict / unknown required 欠落 fail) の canonical 化",
+    "serialization boundary (JSON 正本 / YAML 補助禁止) の canonical 化",
+    "human-readable vs machine-readable 優先順位 (machine-readable primary) の canonical 化"
+  ],
+  "out_of_scope": [
+    "実装",
+    "fill_template.py 作成",
+    "handoff generator 実装",
+    "run_session.py 変更",
+    "queue engine 変更",
+    "PCC backend / frontend 変更",
+    "ClaudeCode hooks 変更",
+    "transport layer 実装",
+    "MCP integration",
+    "state persistence 実装",
+    "execution runtime 実装",
+    "auto retry logic",
+    "Cursor integration",
+    "selector / loader / writer / lock manager 変更",
+    "global_rules.md / master_instruction.md / roadmap.yaml 変更",
+    "session-184-pre 以前の出力物変更",
+    "git stash 操作 (chat51 sealed)",
+    "phase_id canonicalization (BACKLOG-PHASE-CANON-001 で別途扱い)"
+  ],
+  "constraints": [
+    "docs-only。コード変更禁止",
+    "1セッション1目的厳守",
+    "session JSON canonical 14 keys 必須 (session_id / phase_id / title / goal / scope / out_of_scope / constraints / acceptance_ref / allowed_changes_detail / forbidden_changes / completion_criteria / acceptance_criteria / review_points / failure_type)",
+    "allowed_changes_detail は list[str] 形式 'パス:内容' を厳守",
+    "completion_criteria は object array (id / type / condition) 必須。type は canonical enum (document_rule / artifact / non_regression / state_transition_consistent / side_effect_free) のみ使用",
+    "acceptance_criteria は AC 配列で各要素が id / description / test_name を持つ。description フィールド名固定 (text ではない)",
+    "review_points は 4軸固定で末尾要素は文字列 '検証十分性' に完全一致 (記述追記禁止)。括弧は全角 ('仕様一致（AC達成）')",
+    "ClaudeCode は本 session 実行対象外 (docs-only generation のため commander 手動保存のみ)",
+    "git stash family は commander manual のみ。ClaudeCode 委任禁止 (stash@{0} chat51 sealed)",
+    "selector md5 baselines 不変 (core=9b19e2cbe3487d3090096c5343c88611 / loader=959db533bf086f83765d8f6f16fbbe7b / writer=aaf7e28e0e9c52d12d30c8d3349cf982 / run_session=74682928491ab1c0f35df842581281b8)",
+    "CORE-001 (test_aggregate_reports_passes_validation_suite) は ignorable",
+    "base_commit = 9e2c234063e19564ead3374b286e94bc014e1793 (== origin/main, session-184-pre 直後)",
+    "phase_id は過去 session-183/184-pre と一貫性を保ち P7 を維持する (BACKLOG-PHASE-CANON-001 で別途整理)"
+  ],
+  "acceptance_ref": "docs/acceptance/session-185-pre.yaml",
+  "allowed_changes_detail": [
+    "docs/sessions/session-185-pre.json: session-185-pre の docs-only session 定義を新規作成する",
+    "docs/acceptance/session-185-pre.yaml: 本 session の acceptance criteria 正本 + handoff_artifact.v1 canonical 仕様"
+  ],
+  "forbidden_changes": [
+    "docs/global_rules.md",
+    "docs/master_instruction.md",
+    "docs/roadmap.yaml",
+    "docs/config/queue_policy.yaml",
+    "docs/config/project_registry.json",
+    "orchestration/selector/__init__.py",
+    "orchestration/selector/core.py",
+    "orchestration/selector/loader.py",
+    "orchestration/selector/writer.py",
+    "orchestration/lock/manager.py",
+    "run_session.py",
+    "scripts/new_session.sh",
+    "scripts/step0_check.sh",
+    "tests/**",
+    "docs/sessions/session-184-pre.json",
+    "docs/acceptance/session-184-pre.yaml",
+    "docs/sessions/session-183-pre.json",
+    "docs/acceptance/session-183-pre.yaml",
+    "全ての過去 session 出力物 (sessions/ acceptance/ 配下既存ファイル)",
+    ".claude/settings.json",
+    "git stash entries (特に stash@{0} chat51 sealed)"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-185P-01",
+      "type": "artifact",
+      "condition": "docs/sessions/session-185-pre.json が存在する"
+    },
+    {
+      "id": "CC-185P-02",
+      "type": "artifact",
+      "condition": "docs/acceptance/session-185-pre.yaml が存在する"
+    },
+    {
+      "id": "CC-185P-03",
+      "type": "document_rule",
+      "condition": "docs/sessions/session-185-pre.json が canonical 14 keys を全て含む"
+    },
+    {
+      "id": "CC-185P-04",
+      "type": "document_rule",
+      "condition": "review_points が長さ4の配列で、index 3 が文字列 '検証十分性' に完全一致する"
+    },
+    {
+      "id": "CC-185P-05",
+      "type": "document_rule",
+      "condition": "acceptance_criteria 各要素が id / description / test_name を含み、text フィールドを含まない"
+    },
+    {
+      "id": "CC-185P-06",
+      "type": "document_rule",
+      "condition": "allowed_changes_detail が list[str] かつ各要素がコロン ':' を含む 'パス:内容' 形式"
+    },
+    {
+      "id": "CC-185P-07",
+      "type": "document_rule",
+      "condition": "completion_criteria が object array で各要素が id / type / condition を含み、type が canonical enum (document_rule / artifact / non_regression / state_transition_consistent / side_effect_free) のいずれか"
+    },
+    {
+      "id": "CC-185P-08",
+      "type": "document_rule",
+      "condition": "handoff_artifact.v1 仕様が format=JSON / deterministic_ordering=MUST / replayability=MUST / machine_readable=primary / validation=strict / minimal_optional として正本化されている"
+    },
+    {
+      "id": "CC-185P-09",
+      "type": "side_effect_free",
+      "condition": "forbidden_changes 配下のファイルが本 session で変更されていない"
+    },
+    {
+      "id": "CC-185P-10",
+      "type": "document_rule",
+      "condition": "本 JSON が failure_type フィールドを持ち値が 'spec_missing'"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-185P-01",
+      "description": "docs/sessions/session-185-pre.json が canonical session JSON 14 keys (session_id / phase_id / title / goal / scope / out_of_scope / constraints / acceptance_ref / allowed_changes_detail / forbidden_changes / completion_criteria / acceptance_criteria / review_points / failure_type) を全て含む",
+      "test_name": "test_session_185_pre_json_has_14_canonical_keys"
+    },
+    {
+      "id": "AC-185P-02",
+      "description": "docs/acceptance/session-185-pre.yaml が存在し、AC-185P-* に対応する test_name を全て含む",
+      "test_name": "test_session_185_pre_yaml_exists_with_test_names"
+    },
+    {
+      "id": "AC-185P-03",
+      "description": "review_points 配列の長さが4で、末尾要素 (index 3) が文字列 '検証十分性' に完全一致する (記述追記なし)。先頭要素は全角括弧で '仕様一致（AC達成）' に完全一致する",
+      "test_name": "test_session_185_pre_review_points_fourth_axis_is_kensho_jubunsei"
+    },
+    {
+      "id": "AC-185P-04",
+      "description": "acceptance_criteria 各要素が id / description / test_name を含み、description フィールド名であって text フィールドを使用していない",
+      "test_name": "test_session_185_pre_acceptance_criteria_uses_description_field"
+    },
+    {
+      "id": "AC-185P-05",
+      "description": "allowed_changes_detail が list[str] かつ各要素が 'パス:内容' 形式 (コロン区切り)",
+      "test_name": "test_session_185_pre_allowed_changes_detail_format"
+    },
+    {
+      "id": "AC-185P-06",
+      "description": "completion_criteria が object array で、各要素が id / type / condition の3キーを必ず含み、type が canonical enum (document_rule / artifact / non_regression / state_transition_consistent / side_effect_free) のいずれかである",
+      "test_name": "test_session_185_pre_completion_criteria_object_array_shape"
+    },
+    {
+      "id": "AC-185P-07",
+      "description": "handoff_artifact.v1 仕様 (canonical_format=JSON / deterministic_ordering=MUST / replayability=MUST / machine_readable=primary / validation=strict / unknown_required_missing=fail / optional_field_policy=minimal_for_schema_version_compat) が docs/acceptance/session-185-pre.yaml に正本記述されている",
+      "test_name": "test_session_185_pre_handoff_schema_canonical_decisions"
+    },
+    {
+      "id": "AC-185P-08",
+      "description": "forbidden_changes 配下に過去 session 出力物 / global_rules.md / master_instruction.md / selector / run_session.py / git stash が含まれている",
+      "test_name": "test_session_185_pre_forbidden_changes_protects_canonical_assets"
+    },
+    {
+      "id": "AC-185P-09",
+      "description": "本 session の scope に実装系 (handoff generator / run_session.py / queue engine / hooks / MCP / runtime / persistence / Cursor) が含まれない (docs-only であることが scope / out_of_scope から自明)",
+      "test_name": "test_session_185_pre_scope_is_docs_only"
+    },
+    {
+      "id": "AC-185P-10",
+      "description": "本 session JSON が failure_type フィールドを持ち、その値が 'spec_missing' である",
+      "test_name": "test_session_185_pre_failure_type_is_spec_missing"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし",
+    "検証十分性"
+  ],
+  "failure_type": "spec_missing"
+}
