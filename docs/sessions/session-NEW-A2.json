@@ -1,0 +1,143 @@
+{
+  "session_id": "session-NEW-A2",
+  "phase_id": "governance_pack_v0.1_traffic_control",
+  "title": "chat_opening_routine canonicalization (commander minimal routine)",
+  "goal": "chat 冒頭の commander 操作 routine を docs/governance/chat_opening_routine.md として canonical 化し、chat 跨ぎ復元コストおよび寝起き誤操作を削減する。固定対象は 5 コマンド / 健全判定 / STOP 4 種 / base_commit 手順 / stash sealed / appendix handoff-min の 6 項目。参謀応答テンプレ / ClaudeCode invocation rules / automation 詳細 / full compact handoff は本 session の対象外。",
+  "scope": [
+    "docs/governance/chat_opening_routine.md 新規作成（目的 / 5 コマンド / 健全判定 / STOP 4 種 / base_commit 手順 / stash sealed + 参照 / 参照 / appendix handoff-min の 8 セクション）",
+    "docs/sessions/session-NEW-A2.json 新規作成（canonical 14 キーを満たす session 起票 JSON）",
+    "docs/acceptance/session-NEW-A2.yaml 新規作成（AC を description / test_name 1:1 で列挙）"
+  ],
+  "out_of_scope": [
+    "参謀 (ClaudeWeb) 初動応答テンプレ canonical 化",
+    "ClaudeCode invocation rules (multi python3 -c 一括禁止 等)",
+    "compact reference handoff の v1-normal / full version",
+    "automation / watcher / scheduler / daemon / hook 新規実装",
+    "PCC / run_session.py / selector / .claude 改変",
+    "global_rules / master_instruction / memory_role 改変",
+    "他 session JSON / YAML 加筆",
+    "stash@{0} 操作"
+  ],
+  "constraints": [
+    "docs-only。コード変更禁止",
+    "1セッション1目的厳守",
+    "session JSON canonical 14 keys 必須（session_id / phase_id / title / goal / scope / out_of_scope / constraints / acceptance_ref / allowed_changes_detail / forbidden_changes / completion_criteria / acceptance_criteria / review_points / failure_type）",
+    "allowed_changes_detail は list[str] 形式 'パス:内容' を厳守",
+    "completion_criteria は object array (id / type / condition) 必須。type は canonical enum (document_rule / artifact / non_regression / state_transition_consistent / side_effect_free) のみ使用",
+    "acceptance_criteria は AC 配列で各要素が id / description / test_name を持つ。description フィールド名固定 (text ではない)",
+    "review_points は 4軸固定（仕様一致（AC達成） / 変更範囲遵守 / 副作用なし / 検証十分性）。括弧は全角 U+FF08 / U+FF09",
+    "HEAD == origin/main 一致前提。commander 明示コマンドのみ ClaudeCode 実行",
+    "canonical reference は抽象名で記述しハードコードを避ける",
+    "base_commit = 00e11272cc63ebadd405b57a24793da3177dff4b"
+  ],
+  "acceptance_ref": "docs/acceptance/session-NEW-A2.yaml",
+  "allowed_changes_detail": [
+    "docs/governance/chat_opening_routine.md: 目的 / 5 コマンド / 健全判定 / STOP 4 種 / base_commit 手順 / stash sealed + 参照 / 参照 / appendix handoff-min の 8 セクション",
+    "docs/sessions/session-NEW-A2.json: canonical 14 キーを満たす session 起票 JSON",
+    "docs/acceptance/session-NEW-A2.yaml: AC を description / test_name 1:1 で列挙"
+  ],
+  "forbidden_changes": [
+    "global_rules.md 加筆",
+    "master_instruction.md 加筆",
+    "docs/governance/memory_role.md 加筆",
+    "orchestration/run_session.py 加筆",
+    "orchestration/selector/*.py 加筆",
+    ".claude/settings.json 加筆",
+    "PCC 関連スクリプト加筆",
+    "新規 hook / watcher / scheduler / daemon 追加",
+    "git stash 系操作（stash@{0} 特に sealed）",
+    "他 session JSON / YAML 加筆",
+    "参謀応答テンプレ / ClaudeCode invocation rules の実装"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-A2-01",
+      "type": "artifact",
+      "condition": "docs/governance/chat_opening_routine.md が新規作成され、8 セクション（目的 / 5 コマンド / 健全判定 / STOP 4 種 / base_commit 手順 / stash sealed + 参照 / 参照 / appendix handoff-min）を含む"
+    },
+    {
+      "id": "CC-A2-02",
+      "type": "artifact",
+      "condition": "docs/sessions/session-NEW-A2.json が canonical 14 キーを過不足ゼロで満たし JSON valid"
+    },
+    {
+      "id": "CC-A2-03",
+      "type": "artifact",
+      "condition": "docs/acceptance/session-NEW-A2.yaml が valid YAML で description / test_name 1:1 対応"
+    },
+    {
+      "id": "CC-A2-04",
+      "type": "non_regression",
+      "condition": "global_rules.md / master_instruction.md / memory_role.md / run_session.py / selector/*.py が無改変"
+    },
+    {
+      "id": "CC-A2-05",
+      "type": "document_rule",
+      "condition": "review_points が canonical 4 文字列 ['仕様一致（AC達成）','変更範囲遵守','副作用なし','検証十分性'] と strict equality 一致"
+    },
+    {
+      "id": "CC-A2-06",
+      "type": "side_effect_free",
+      "condition": ".claude / PCC / automation 系無改変"
+    },
+    {
+      "id": "CC-A2-07",
+      "type": "document_rule",
+      "condition": "STOP 条件に committed-but-not-pushed が明示"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-A2-01",
+      "description": "5 本の git コマンドが順序通り記載（rev-parse HEAD / rev-parse origin/main / rev-list left-right count / status --short / stash list）",
+      "test_name": "verification_grep_5_commands"
+    },
+    {
+      "id": "AC-A2-02",
+      "description": "STOP 条件 4 種（HEAD不一致 / committed-but-not-pushed / stash汚染 / tracked変更あり）が明示",
+      "test_name": "verification_grep_stop_conditions"
+    },
+    {
+      "id": "AC-A2-03",
+      "description": "committed-but-not-pushed STOP rule（manual push 完了まで停止 / 自走 push 禁止）が明示",
+      "test_name": "verification_grep_pushed_stop"
+    },
+    {
+      "id": "AC-A2-04",
+      "description": "base_commit 確認手順（起票文 base_commit と origin/main HEAD 一致確認）が記載",
+      "test_name": "verification_grep_base_commit"
+    },
+    {
+      "id": "AC-A2-05",
+      "description": "stash@{0} sealed の 1 行 + canonical docs 参照が記載",
+      "test_name": "verification_grep_stash_sealed"
+    },
+    {
+      "id": "AC-A2-06",
+      "description": "appendix に compact handoff 最小形（v0-min）が記載",
+      "test_name": "verification_grep_handoff_min"
+    },
+    {
+      "id": "AC-A2-07",
+      "description": "session-NEW-A2.json が canonical 14 キーを過不足ゼロで満たす",
+      "test_name": "verification_json_keys_check"
+    },
+    {
+      "id": "AC-A2-08",
+      "description": "review_points が canonical 4 文字列と strict equality 一致",
+      "test_name": "verification_review_points_strict_eq"
+    },
+    {
+      "id": "AC-A2-09",
+      "description": "既存ファイル無改変（global_rules / master_instruction / memory_role / run_session / selector）",
+      "test_name": "verification_git_diff_check"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし",
+    "検証十分性"
+  ],
+  "failure_type": "spec_missing"
+}

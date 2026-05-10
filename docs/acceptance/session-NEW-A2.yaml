@@ -1,0 +1,39 @@
+session_id: session-NEW-A2
+phase_id: governance_pack_v0.1_traffic_control
+
+acceptance_criteria:
+  - id: AC-A2-01
+    description: 5 本の git コマンドが順序通り記載（rev-parse HEAD / rev-parse origin/main / rev-list left-right count / status --short / stash list）
+    test_name: verification_grep_5_commands
+
+  - id: AC-A2-02
+    description: STOP 条件 4 種（HEAD不一致 / committed-but-not-pushed / stash汚染 / tracked変更あり）が明示
+    test_name: verification_grep_stop_conditions
+
+  - id: AC-A2-03
+    description: committed-but-not-pushed STOP rule（manual push 完了まで停止 / 自走 push 禁止）が明示
+    test_name: verification_grep_pushed_stop
+
+  - id: AC-A2-04
+    description: base_commit 確認手順（起票文 base_commit と origin/main HEAD 一致確認）が記載
+    test_name: verification_grep_base_commit
+
+  - id: AC-A2-05
+    description: stash@{0} sealed の 1 行 + canonical docs 参照が記載
+    test_name: verification_grep_stash_sealed
+
+  - id: AC-A2-06
+    description: appendix に compact handoff 最小形（v0-min）が記載
+    test_name: verification_grep_handoff_min
+
+  - id: AC-A2-07
+    description: session-NEW-A2.json が canonical 14 キーを過不足ゼロで満たす
+    test_name: verification_json_keys_check
+
+  - id: AC-A2-08
+    description: review_points が canonical 4 文字列と strict equality 一致
+    test_name: verification_review_points_strict_eq
+
+  - id: AC-A2-09
+    description: 既存ファイル無改変（global_rules / master_instruction / memory_role / run_session / selector）
+    test_name: verification_git_diff_check
