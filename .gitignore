@@ -1,3 +1,4 @@
+.env
 .pycache_alt/
 lightweight_2ai_orchestrator.egg-info/
 *.code-workspace
