@@ -1,0 +1,36 @@
+session_id: session-187-pre
+title: "stress test precondition canonicalization (docs-only)"
+acceptance_criteria:
+  - id: AC-187P-01
+    description: "docs/sessions/session-187-pre.json が canonical session JSON 14 keys を全て含む"
+    test_name: test_session_187_pre_json_has_14_canonical_keys
+  - id: AC-187P-02
+    description: "docs/acceptance/session-187-pre.yaml が存在し、AC-187P-* に対応する test_name を全て含む"
+    test_name: test_session_187_pre_yaml_exists_with_test_names
+  - id: AC-187P-03
+    description: "review_points 配列の長さが4で、index 3 が '検証十分性'、index 0 が '仕様一致（AC達成）' に完全一致する"
+    test_name: test_session_187_pre_review_points_canonical
+  - id: AC-187P-04
+    description: "acceptance_criteria 各要素が id / description / test_name を含み、text フィールドを含まない"
+    test_name: test_session_187_pre_acceptance_criteria_uses_description_field
+  - id: AC-187P-05
+    description: "allowed_changes_detail が list[str] かつ各要素が 'パス:内容' 形式 (コロン区切り)。2 エントリ全て含む"
+    test_name: test_session_187_pre_allowed_changes_detail_format
+  - id: AC-187P-06
+    description: "completion_criteria が object array で各要素が id / type / condition の3キーを含み、type が canonical enum のいずれかである"
+    test_name: test_session_187_pre_completion_criteria_shape
+  - id: AC-187P-07
+    description: "本 session JSON が failure_type フィールドを持ち、その値が 'spec_missing' である"
+    test_name: test_session_187_pre_failure_type_is_spec_missing
+  - id: AC-187P-08
+    description: "forbidden_changes 配下に過去 session 出力物 / global_rules.md / orchestration ファイル群 / git stash が含まれている"
+    test_name: test_session_187_pre_forbidden_changes_protects_canonical_assets
+  - id: AC-187P-09
+    description: "constraints に Layer 1 正本方針として ready_legacy 分離・legacy 一括修正禁止・新規 session canonical review_points 必須・legacy bypass out_of_scope が明示されている"
+    test_name: test_session_187_pre_layer1_policy_canonicalized
+  - id: AC-187P-10
+    description: "constraints に Layer 2 正本方針として allowlist/.gitignore 側対処・git_guard 構造変更が本 session out_of_scope であることが明示されている"
+    test_name: test_session_187_pre_layer2_policy_canonicalized
+  - id: AC-187P-11
+    description: "out_of_scope に report.json stale 修復実装が含まれており、本 session では実装しないことが明示されている"
+    test_name: test_session_187_pre_report_stale_is_out_of_scope

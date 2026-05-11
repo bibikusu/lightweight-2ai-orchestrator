@@ -1,0 +1,203 @@
+{
+  "session_id": "session-187-pre",
+  "phase_id": "P7",
+  "title": "stress test precondition canonicalization (docs-only)",
+  "goal": "stress test 実行（2026-05-11）で発見された 2層ブロッカー（Layer 1: review_points 旧表記 / Layer 2: dirty worktree ?? ファイル）および report.json stale 汚染に対し、司令塔判定 L-3 / M-1 / O-2 に基づく stress test precondition の正本方針を固定する。Layer 1 は ready_legacy 分離方針として、Layer 2 は allowlist/.gitignore 側対処方針として、report.json stale は後続 session スコープとして確定する。docs-only 起票であり実装・コード変更は本 session に含めない。",
+  "scope": [
+    "docs/sessions/session-187-pre.json 作成（stress test precondition canonicalization session 定義）",
+    "docs/acceptance/session-187-pre.yaml 作成（acceptance 定義）",
+    "Layer 1 正本方針確定（判定L-3）: ready_legacy 分離・新規 session canonical 必須・legacy bypass out_of_scope の固定（session JSON 内 constraints に記載）",
+    "Layer 2 正本方針確定（判定M-1）: allowlist/.gitignore 側対処・git_guard 構造変更 out_of_scope の固定（session JSON 内 constraints に記載）",
+    "report.json stale 後続 session スコープ確定（判定O-2）: 本 session out_of_scope として固定（session JSON 内 out_of_scope に記載）",
+    "100セッション連続実行の前提条件リスト正本化（上記3方針を含む。session JSON constraints に記載）"
+  ],
+  "out_of_scope": [
+    "実装",
+    "run_session.py 変更（is_git_worktree_dirty / run_preflight_validation 等）",
+    "review_points 旧表記セッション JSON の一括修正",
+    ".gitignore への DL/ / docs/DASHBOARD.md / .claude/worktrees/ 等の追加（本 session では実装しない。方針は constraints Layer 2 に記載）",
+    "report.json の stale 汚染修正実装",
+    "auto_runner.py 変更",
+    "sandbox/stress-test-* ブランチの削除・保持判断",
+    "global_rules.md / master_instruction.md / roadmap.yaml 変更",
+    "queue_policy.yaml / project_registry.json 変更",
+    "session-186-pre 以前の出力物変更",
+    "git stash 操作 (stash@{0} chat51 sealed)",
+    "GPT Judge API 境界正本化（session-188-pre で別途扱い）",
+    "phase_id canonicalization（BACKLOG-PHASE-CANON-001 で別途整理）",
+    "A02_fina リポジトリ関連の修正（session-01 / session-11 ブロッカー解消）"
+  ],
+  "constraints": [
+    "docs-only。コード変更禁止",
+    "1セッション1目的厳守",
+    "session JSON canonical required keys 必須（session_id / phase_id / title / goal / scope / out_of_scope / constraints / acceptance_ref / allowed_changes_detail / forbidden_changes / completion_criteria / acceptance_criteria / review_points / failure_type）",
+    "allowed_changes_detail は list[str] 形式 'パス:内容' を厳守",
+    "completion_criteria は object array (id / type / condition) 必須。type は canonical enum (document_rule / artifact / non_regression / state_transition_consistent / side_effect_free) のみ使用",
+    "acceptance_criteria は AC 配列で各要素が id / description / test_name を持つ。description フィールド名固定 (text ではない)",
+    "review_points は 4軸固定で末尾要素は文字列 '検証十分性' に完全一致 (記述追記禁止)。括弧は全角 ('仕様一致（AC達成）')",
+    "ClaudeCode は本 session 実行対象外 (docs-only generation のため commander 手動保存のみ)",
+    "git stash family は commander manual のみ。ClaudeCode 委任禁止 (stash@{0} chat51 sealed)",
+    "selector md5 baselines 不変 (core=9b19e2cbe3487d3090096c5343c88611 / loader=959db533bf086f83765d8f6f16fbbe7b / writer=aaf7e28e0e9c52d12d30c8d3349cf982 / run_session=74682928491ab1c0f35df842581281b8)",
+    "CORE-001 (test_aggregate_reports_passes_validation_suite) は ignorable",
+    "base_commit = 8dbe682f（stress test 実行時点の HEAD）",
+    "phase_id は過去 session-183/184/185/186-pre と一貫性を保ち P7 を維持する (BACKLOG-PHASE-CANON-001 で別途整理)",
+    "【Layer 1 正本方針（判定L-3確定）】run_preflight_validation() は canonical review_points 完全一致を維持する。旧表記（'実装過不足なし' / '副作用なし（既存破壊なし）' 等）を持つ既存 99件は ready_legacy として分離し、一括修正は行わない。新規起票 session は canonical 4軸（仕様一致（AC達成）/ 変更範囲遵守 / 副作用なし / 検証十分性）への完全一致が必須。legacy session は 100セッション連続実行の stress test 対象から除外する。legacy bypass 実装（pass_through 等）は本 session out_of_scope。",
+    "【Layer 2 正本方針（判定M-1確定）】git_guard の is_git_worktree_dirty() 構造は本 session では変更しない。DL/ / docs/DASHBOARD.md / docs/handoff/ / .claude/worktrees/ / .pcc.pid 等の正常な untracked 成果物・ツール生成ファイルは .gitignore / allowlist 側で管理する方針とする。.gitignore 追加の実装は本 session out_of_scope。sealed stash（stash@{0}）は本 session の対象外。"
+  ],
+  "acceptance_ref": "docs/acceptance/session-187-pre.yaml",
+  "allowed_changes_detail": [
+    "docs/sessions/session-187-pre.json: stress test precondition canonicalization の session 定義を新規作成する",
+    "docs/acceptance/session-187-pre.yaml: session-187-pre の acceptance 定義を新規作成する"
+  ],
+  "forbidden_changes": [
+    "docs/global_rules.md",
+    "docs/master_instruction.md",
+    "docs/roadmap.yaml",
+    "docs/config/queue_policy.yaml",
+    "docs/config/project_registry.json",
+    "orchestration/selector/__init__.py",
+    "orchestration/selector/core.py",
+    "orchestration/selector/loader.py",
+    "orchestration/selector/writer.py",
+    "orchestration/lock/manager.py",
+    "orchestration/run_session.py",
+    "scripts/new_session.sh",
+    "scripts/step0_check.sh",
+    "tests/**",
+    "docs/sessions/session-186-pre.json",
+    "docs/acceptance/session-186-pre.yaml",
+    "docs/sessions/session-185-pre.json",
+    "docs/acceptance/session-185-pre.yaml",
+    "docs/sessions/session-184-pre.json",
+    "docs/acceptance/session-184-pre.yaml",
+    "docs/sessions/session-183-pre.json",
+    "docs/acceptance/session-183-pre.yaml",
+    "全ての過去 session 出力物 (sessions/ acceptance/ 配下既存ファイル)",
+    ".claude/settings.json",
+    "git stash entries (特に stash@{0} chat51 sealed)",
+    "artifacts/stress_test/stress_test_report.md",
+    "artifacts/stress_test/execution_plan.md",
+    "artifacts/stress_test/session_inventory.json"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-187P-01",
+      "type": "artifact",
+      "condition": "docs/sessions/session-187-pre.json が存在する"
+    },
+    {
+      "id": "CC-187P-02",
+      "type": "artifact",
+      "condition": "docs/acceptance/session-187-pre.yaml が存在する"
+    },
+    {
+      "id": "CC-187P-03",
+      "type": "document_rule",
+      "condition": "docs/sessions/session-187-pre.json が canonical 14 keys を全て含む"
+    },
+    {
+      "id": "CC-187P-04",
+      "type": "document_rule",
+      "condition": "review_points が長さ4の配列で、index 3 が文字列 '検証十分性' に完全一致する"
+    },
+    {
+      "id": "CC-187P-05",
+      "type": "document_rule",
+      "condition": "本 JSON が failure_type フィールドを持ち値が 'spec_missing'"
+    },
+    {
+      "id": "CC-187P-06",
+      "type": "side_effect_free",
+      "condition": "forbidden_changes 配下のファイルが本 session で変更されていない"
+    },
+    {
+      "id": "CC-187P-07",
+      "type": "non_regression",
+      "condition": "session-186-pre の出力物 (docs/specs/v2/compact_context_pack_v0.*) を変更していない"
+    },
+    {
+      "id": "CC-187P-08",
+      "type": "document_rule",
+      "condition": "allowed_changes_detail が 2 エントリのみで構成され、各エントリが 'パス:内容' 形式（コロン区切り）である"
+    },
+    {
+      "id": "CC-187P-09",
+      "type": "document_rule",
+      "condition": "constraints に Layer 1 正本方針として ready_legacy 分離・legacy 一括修正禁止・新規 session canonical 必須・legacy bypass out_of_scope が明示されている"
+    },
+    {
+      "id": "CC-187P-10",
+      "type": "document_rule",
+      "condition": "constraints に Layer 2 正本方針として allowlist/.gitignore 側対処・git_guard 構造変更 out_of_scope が明示されている"
+    },
+    {
+      "id": "CC-187P-11",
+      "type": "document_rule",
+      "condition": "out_of_scope に report.json stale 修復実装が含まれている"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-187P-01",
+      "description": "docs/sessions/session-187-pre.json が canonical session JSON 14 keys を全て含む",
+      "test_name": "test_session_187_pre_json_has_14_canonical_keys"
+    },
+    {
+      "id": "AC-187P-02",
+      "description": "docs/acceptance/session-187-pre.yaml が存在し、AC-187P-* に対応する test_name を全て含む",
+      "test_name": "test_session_187_pre_yaml_exists_with_test_names"
+    },
+    {
+      "id": "AC-187P-03",
+      "description": "review_points 配列の長さが4で、index 3 が '検証十分性'、index 0 が '仕様一致（AC達成）' に完全一致する",
+      "test_name": "test_session_187_pre_review_points_canonical"
+    },
+    {
+      "id": "AC-187P-04",
+      "description": "acceptance_criteria 各要素が id / description / test_name を含み、text フィールドを含まない",
+      "test_name": "test_session_187_pre_acceptance_criteria_uses_description_field"
+    },
+    {
+      "id": "AC-187P-05",
+      "description": "allowed_changes_detail が list[str] かつ各要素が 'パス:内容' 形式 (コロン区切り)。2 エントリ全て含む",
+      "test_name": "test_session_187_pre_allowed_changes_detail_format"
+    },
+    {
+      "id": "AC-187P-06",
+      "description": "completion_criteria が object array で各要素が id / type / condition の3キーを含み、type が canonical enum のいずれかである",
+      "test_name": "test_session_187_pre_completion_criteria_shape"
+    },
+    {
+      "id": "AC-187P-07",
+      "description": "本 session JSON が failure_type フィールドを持ち、その値が 'spec_missing' である",
+      "test_name": "test_session_187_pre_failure_type_is_spec_missing"
+    },
+    {
+      "id": "AC-187P-08",
+      "description": "forbidden_changes 配下に過去 session 出力物 / global_rules.md / orchestration ファイル群 / git stash が含まれている",
+      "test_name": "test_session_187_pre_forbidden_changes_protects_canonical_assets"
+    },
+    {
+      "id": "AC-187P-09",
+      "description": "constraints に Layer 1 正本方針として ready_legacy 分離・legacy 一括修正禁止・新規 session canonical review_points 必須・legacy bypass out_of_scope が明示されている",
+      "test_name": "test_session_187_pre_layer1_policy_canonicalized"
+    },
+    {
+      "id": "AC-187P-10",
+      "description": "constraints に Layer 2 正本方針として allowlist/.gitignore 側対処・git_guard 構造変更が本 session out_of_scope であることが明示されている",
+      "test_name": "test_session_187_pre_layer2_policy_canonicalized"
+    },
+    {
+      "id": "AC-187P-11",
+      "description": "out_of_scope に report.json stale 修復実装が含まれており、本 session では実装しないことが明示されている",
+      "test_name": "test_session_187_pre_report_stale_is_out_of_scope"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし",
+    "検証十分性"
+  ],
+  "failure_type": "spec_missing"
+}
