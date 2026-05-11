@@ -1,0 +1,182 @@
+{
+  "session_id": "session-191",
+  "phase_id": "phase-orchestrated-foundation",
+  "title": "Implement compact context pack generator",
+  "goal": "session JSON と acceptance YAML と既存 reports を入力に、後続 handoff / validator / judge が再現可能に消費できる compact_context_pack.json を deterministic に生成する context_pack モジュールを実装する。",
+  "scope": [
+    "orchestration/context_pack/ パッケージを新規追加する。",
+    "build_compact_context_pack(session_id: str, repo_root: pathlib.Path) -> dict を core.py に新規追加する。",
+    "load_session_json / load_acceptance_yaml / list_report_paths を loader.py に新規追加する。",
+    "write_compact_context_pack(pack: dict, output_dir: pathlib.Path) -> pathlib.Path を writer.py に新規追加する。",
+    "compact_context_pack.json は schema_version='compact_context_pack.v1' を持つ。",
+    "トップレベルは session-192 handoff_validator 必須9キーと整合させる (schema_version / source_session_id / session_summary / acceptance_summary / completion_summary / reports_summary / inputs / handoff_ready / warnings)。source_session_id は session_id 引数と同一文字列とする。",
+    "出力先は artifacts/<session_id>/context/compact_context_pack.json に固定する。",
+    "出力 JSON は sort_keys=False で、core.py 内の明示 key order により deterministic とする。",
+    "reports が存在しない場合でも build は成功し、warnings に reports missing for <session_id> を記録する。",
+    "compact_context_pack.json には dependency_graph / judge_result / dependencies / ready を含めない。",
+    "tests/test_context_pack.py を新規追加し、正常系・reports 欠損系・scope 越境フィールド禁止系・deterministic 検証を行う。"
+  ],
+  "out_of_scope": [
+    "orchestration/run_session.py の変更",
+    "selector/ 配下の変更",
+    "providers / backend / .github 配下の変更",
+    "LLM API call の実装",
+    "MCP integration の実装",
+    "queue engine の変更",
+    "scheduler の変更",
+    "dependency graph 情報の生成または解釈",
+    "GPT Judge 判定結果の生成または解釈",
+    "handoff validator の実装",
+    "handoff pipeline の実装",
+    "CLI entry point の実装",
+    "既存テストの変更",
+    "main 直接 commit"
+  ],
+  "constraints": [
+    "1セッション1目的",
+    "最大7ファイル以内で完結すること",
+    "allowed_changes_detail は list[str] とし、各要素は 'ファイルパス: 許可内容' 形式とすること",
+    "completion_criteria は object 配列とし、各要素は id / type / condition を持つこと",
+    "acceptance_criteria は object 配列とし、各要素は id / description / test_name を持つこと",
+    "JSON 側 acceptance_criteria には completion_criteria_refs を要求しない",
+    "YAML 側 acceptance には completion_criteria_refs を持たせること",
+    "review_points は短文4軸固定とすること",
+    "failure_type は test_failure とすること",
+    "schema_version は compact_context_pack.v1 で固定すること",
+    "出力先は artifacts/<session_id>/context/compact_context_pack.json に固定すること",
+    "ファイルパスは repository 相対パスで保持し、絶対パスを混在させないこと",
+    "reports 欠損は error ではなく warning とすること",
+    "branch は sandbox/batch-b-session-191-194-pre または sandbox/session-191 で扱い、main 直接 commit を行わないこと"
+  ],
+  "acceptance_ref": "docs/acceptance/session-191.yaml",
+  "allowed_changes_detail": [
+    "docs/sessions/session-191.json: 本 session 定義の新規作成。14 canonical keys 完備。",
+    "docs/acceptance/session-191.yaml: 本 session 受入定義の新規作成。9 AC、各要素は id/description/test_name/priority/completion_criteria_refs を持つ。",
+    "orchestration/context_pack/__init__.py: パッケージ宣言。build_compact_context_pack / write_compact_context_pack を公開 API として re-export する。",
+    "orchestration/context_pack/core.py: build_compact_context_pack(session_id: str, repo_root: pathlib.Path) -> dict を新規追加。schema_version='compact_context_pack.v1' と source_session_id (= session_id 引数) を持ち、session_summary / acceptance_summary / completion_summary / reports_summary / inputs / handoff_ready / warnings を deterministic key order で構築する。",
+    "orchestration/context_pack/loader.py: load_session_json(path: pathlib.Path) -> dict / load_acceptance_yaml(path: pathlib.Path) -> dict / list_report_paths(session_id: str, repo_root: pathlib.Path) -> list[pathlib.Path] を新規追加する。",
+    "orchestration/context_pack/writer.py: write_compact_context_pack(pack: dict, output_dir: pathlib.Path) -> pathlib.Path を新規追加。json.dumps(pack, ensure_ascii=False, indent=2, sort_keys=False) で書き出し、output_dir は mkdir(parents=True, exist_ok=True) で作成する。",
+    "tests/test_context_pack.py: test_build_normal_case / test_build_with_missing_reports / test_build_rejects_out_of_scope_fields / test_build_is_deterministic の4テストを新規追加する。"
+  ],
+  "forbidden_changes": [
+    "orchestration/run_session.py を変更しない",
+    "selector/core.py を変更しない",
+    "selector/loader.py を変更しない",
+    "selector/writer.py を変更しない",
+    "providers / backend / .github 配下を変更しない",
+    "docs/global_rules.md / docs/master_instruction.md を変更しない",
+    "compact_context_pack.json に dependency_graph 情報を含めない",
+    "compact_context_pack.json に GPT Judge 判定結果を含めない",
+    "compact_context_pack.json に dependencies を含めない",
+    "compact_context_pack.json に ready を含めない",
+    "LLM API call を実装しない",
+    "MCP integration を実装しない",
+    "queue engine / scheduler を変更しない",
+    "CLI entry point を新規追加しない",
+    "既存テストを変更しない",
+    "既存 session-pre ファイルを変更しない",
+    "main / origin/main 上で直接 commit しない",
+    "git stash 家族コマンドを実行しない"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-191-01",
+      "type": "artifact",
+      "condition": "build_compact_context_pack の戻り値 dict に schema_version='compact_context_pack.v1' と source_session_id (session_id 引数と同一文字列) が含まれている。"
+    },
+    {
+      "id": "CC-191-02",
+      "type": "artifact",
+      "condition": "session_summary に session_id / phase_id / title / goal / scope / out_of_scope / constraints / allowed_changes_detail / forbidden_changes / review_points / failure_type が含まれている。"
+    },
+    {
+      "id": "CC-191-03",
+      "type": "artifact",
+      "condition": "acceptance_summary が acceptance_count と items(list of id / description / test_name) を保持している。"
+    },
+    {
+      "id": "CC-191-04",
+      "type": "artifact",
+      "condition": "completion_summary が completion_count と items(list of id / type / condition) を保持している。"
+    },
+    {
+      "id": "CC-191-05",
+      "type": "artifact",
+      "condition": "reports が存在しない場合でも build は成功し、warnings に reports missing for <session_id> が含まれる。"
+    },
+    {
+      "id": "CC-191-06",
+      "type": "state_transition_consistent",
+      "condition": "同じ入力に対する2回の build 結果が json.dumps(ensure_ascii=False, sort_keys=False, indent=2) で完全一致する。"
+    },
+    {
+      "id": "CC-191-07",
+      "type": "artifact",
+      "condition": "write_compact_context_pack の出力 Path が artifacts/<session_id>/context/compact_context_pack.json と一致する。"
+    },
+    {
+      "id": "CC-191-08",
+      "type": "side_effect_free",
+      "condition": "出力 dict のトップレベルに dependency_graph / judge_result / dependencies / ready が含まれない。"
+    },
+    {
+      "id": "CC-191-09",
+      "type": "non_regression",
+      "condition": "ruff / pytest / mypy / compileall の4-gateが全 pass し、既存保護対象ファイルに副作用がない。"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-191-01",
+      "description": "build_compact_context_pack の戻り値 dict に schema_version='compact_context_pack.v1' と source_session_id (session_id 引数と同一文字列) が含まれている。",
+      "test_name": "test_build_normal_case"
+    },
+    {
+      "id": "AC-191-02",
+      "description": "session_summary に session_id / phase_id / title / goal / scope / out_of_scope / constraints / allowed_changes_detail / forbidden_changes / review_points / failure_type が欠落なく反映されている。",
+      "test_name": "test_build_normal_case"
+    },
+    {
+      "id": "AC-191-03",
+      "description": "acceptance_summary が acceptance_count と items(list of id / description / test_name) を保持している。",
+      "test_name": "test_build_normal_case"
+    },
+    {
+      "id": "AC-191-04",
+      "description": "completion_summary が completion_count と items(list of id / type / condition) を保持している。",
+      "test_name": "test_build_normal_case"
+    },
+    {
+      "id": "AC-191-05",
+      "description": "reports が存在しない場合でも build は成功し、warnings に reports missing for <session_id> が含まれる。",
+      "test_name": "test_build_with_missing_reports"
+    },
+    {
+      "id": "AC-191-06",
+      "description": "同じ入力に対する2回の build 結果が json.dumps(ensure_ascii=False, sort_keys=False, indent=2) で完全一致する。",
+      "test_name": "test_build_is_deterministic"
+    },
+    {
+      "id": "AC-191-07",
+      "description": "write_compact_context_pack の戻り値 Path が artifacts/<session_id>/context/compact_context_pack.json と一致する。",
+      "test_name": "test_build_normal_case"
+    },
+    {
+      "id": "AC-191-08",
+      "description": "build 結果の dict トップレベルに dependency_graph / judge_result / dependencies / ready が含まれない。",
+      "test_name": "test_build_rejects_out_of_scope_fields"
+    },
+    {
+      "id": "AC-191-09",
+      "description": "ruff / pytest / mypy / compileall の4-gateが全 pass する。",
+      "test_name": "test_build_normal_case"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし",
+    "検証十分性"
+  ],
+  "failure_type": "test_failure"
+}

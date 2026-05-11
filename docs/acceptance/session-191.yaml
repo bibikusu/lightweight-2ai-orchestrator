@@ -1,0 +1,66 @@
+session_id: session-191
+phase_id: phase-orchestrated-foundation
+title: Implement compact context pack generator
+acceptance:
+  - id: AC-191-01
+    description: "build_compact_context_pack の戻り値 dict に schema_version='compact_context_pack.v1' と source_session_id (session_id 引数と同一文字列) が含まれている。"
+    test_name: test_build_normal_case
+    priority: highest
+    completion_criteria_refs:
+      - CC-191-01
+
+  - id: AC-191-02
+    description: session_summary に session_id / phase_id / title / goal / scope / out_of_scope / constraints / allowed_changes_detail / forbidden_changes / review_points / failure_type が欠落なく反映されている。
+    test_name: test_build_normal_case
+    priority: highest
+    completion_criteria_refs:
+      - CC-191-02
+
+  - id: AC-191-03
+    description: acceptance_summary が acceptance_count と items(list of id / description / test_name) を保持している。
+    test_name: test_build_normal_case
+    priority: highest
+    completion_criteria_refs:
+      - CC-191-03
+
+  - id: AC-191-04
+    description: completion_summary が completion_count と items(list of id / type / condition) を保持している。
+    test_name: test_build_normal_case
+    priority: highest
+    completion_criteria_refs:
+      - CC-191-04
+
+  - id: AC-191-05
+    description: reports が存在しない場合でも build は成功し、warnings に reports missing for <session_id> が含まれる。
+    test_name: test_build_with_missing_reports
+    priority: high
+    completion_criteria_refs:
+      - CC-191-05
+
+  - id: AC-191-06
+    description: "同じ入力に対する2回の build 結果が json.dumps(ensure_ascii=False, sort_keys=False, indent=2) で完全一致する。"
+    test_name: test_build_is_deterministic
+    priority: highest
+    completion_criteria_refs:
+      - CC-191-06
+
+  - id: AC-191-07
+    description: write_compact_context_pack の戻り値 Path が artifacts/<session_id>/context/compact_context_pack.json と一致する。
+    test_name: test_build_normal_case
+    priority: high
+    completion_criteria_refs:
+      - CC-191-07
+
+  - id: AC-191-08
+    description: build 結果の dict トップレベルに dependency_graph / judge_result / dependencies / ready が含まれない。
+    test_name: test_build_rejects_out_of_scope_fields
+    priority: highest
+    completion_criteria_refs:
+      - CC-191-08
+
+  - id: AC-191-09
+    description: ruff / pytest / mypy / compileall の4-gateが全 pass する。
+    test_name: test_build_normal_case
+    priority: highest
+    completion_criteria_refs:
+      - CC-191-09

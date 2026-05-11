@@ -1,0 +1,78 @@
+session_id: session-193-pre
+phase_id: phase-orchestrated-foundation
+title: Canonicalize handoff pipeline integration spec (context_pack + handoff_validator)
+acceptance:
+  - id: AC-193-pre-01
+    description: "docs/sessions/session-193-pre.json と docs/acceptance/session-193-pre.yaml の両方に schema_version='handoff_pipeline.v1' を 193 implementation の戻り値型に持たせる契約が明記されている。"
+    test_name: test_session_193_pre_declares_handoff_pipeline_schema_version
+    priority: highest
+    completion_criteria_refs:
+      - CC-193-pre-01
+
+  - id: AC-193-pre-02
+    description: "build_then_validate の入力契約 (session_id: str, repo_root: pathlib.Path の 2 引数のみ) が session-193-pre.json と session-193-pre.yaml の両方に明記されている。"
+    test_name: test_session_193_pre_declares_input_contract
+    priority: highest
+    completion_criteria_refs:
+      - CC-193-pre-02
+
+  - id: AC-193-pre-03
+    description: "build_then_validate の出力契約 (戻り値型 tuple[pathlib.Path, ValidationResult]、Path は compact_context_pack.json の保存先) が session-193-pre.json と session-193-pre.yaml の両方に明記されている。"
+    test_name: test_session_193_pre_declares_output_contract
+    priority: highest
+    completion_criteria_refs:
+      - CC-193-pre-03
+
+  - id: AC-193-pre-04
+    description: |
+      build_then_validate のエラーハンドリング契約が session-193-pre.json と session-193-pre.yaml の両方に明記されている:
+      (a) context_pack 生成失敗時は validator を呼ばずに例外を re-raise する。
+      (b) validator fail 時も compact_context_pack.json の Path は戻り値の第1要素として返す (ValidationResult.passed=False のみで通知)。
+    test_name: test_session_193_pre_declares_error_handling_contract
+    priority: highest
+    completion_criteria_refs:
+      - CC-193-pre-04
+
+  - id: AC-193-pre-05
+    description: |
+      build_then_validate の副作用契約が session-193-pre.json と session-193-pre.yaml の両方に明記されている:
+      (a) 副作用は compact_context_pack.json の出力のみ。
+      (b) session JSON / acceptance YAML は read-only で扱う。
+    test_name: test_session_193_pre_declares_side_effect_contract
+    priority: highest
+    completion_criteria_refs:
+      - CC-193-pre-05
+
+  - id: AC-193-pre-06
+    description: |
+      responsibility 境界が session-193-pre.json と session-193-pre.yaml の両方に明記されている:
+      (a) 統合関数は呼び出しのみで、191 / 192 内部実装に依存しない。
+      (b) queue / scheduler / LLM / MCP / CLI を含めない。
+    test_name: test_session_193_pre_declares_responsibility_boundary
+    priority: highest
+    completion_criteria_refs:
+      - CC-193-pre-06
+
+  - id: AC-193-pre-07
+    description: |
+      module 配置契約が session-193-pre.json と session-193-pre.yaml の両方に明記されている:
+      (a) orchestration/integration/handoff_pipeline.py に固定する。
+      (b) orchestration/context_pack/ や orchestration/handoff_validator/ には含めない。
+    test_name: test_session_193_pre_declares_module_location_contract
+    priority: highest
+    completion_criteria_refs:
+      - CC-193-pre-07
+
+  - id: AC-193-pre-08
+    description: 本 session 実行で docs/sessions/session-193-pre.json と docs/acceptance/session-193-pre.yaml の 2 ファイル以外が変更されていない (orchestration / selector / tests / 他 session ファイル不変)。
+    test_name: test_session_193_pre_changed_files_within_allowed_scope
+    priority: highest
+    completion_criteria_refs:
+      - CC-193-pre-08
+
+  - id: AC-193-pre-09
+    description: ruff / pytest / mypy / compileall の 4-gate が全 pass する (具体コマンドは ClaudeCode 実行時に現行環境に合わせて確認)。
+    test_name: test_session_193_pre_four_gate_pass
+    priority: highest
+    completion_criteria_refs:
+      - CC-193-pre-09

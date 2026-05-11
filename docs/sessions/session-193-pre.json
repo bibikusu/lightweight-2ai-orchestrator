@@ -1,0 +1,229 @@
+{
+  "session_id": "session-193-pre",
+  "phase_id": "phase-orchestrated-foundation",
+  "title": "Canonicalize handoff pipeline integration spec (context_pack + handoff_validator)",
+  "goal": "session-191 (compact_context_pack) と session-192 (handoff_validator) を統合する handoff_pipeline の入出力契約・エラーハンドリング・副作用境界を docs-only で正本化し、session-193 implementation の rev4 雛形となる仕様書を確定する。",
+  "scope": [
+    "docs/sessions/session-193-pre.json を新規作成し、handoff_pipeline.v1 の入出力契約を 14 canonical keys で正本化する。",
+    "docs/acceptance/session-193-pre.yaml を新規作成し、9 AC を id/description/test_name/priority/completion_criteria_refs で正本化する。",
+    "handoff_pipeline の中心関数 build_then_validate(session_id: str, repo_root: pathlib.Path) -> tuple[pathlib.Path, ValidationResult] の契約を明文化する。",
+    "build_then_validate の入力契約を明文化する (session_id / repo_root の 2 引数のみ)。",
+    "build_then_validate の出力契約を明文化する (compact_context_pack.json の Path / ValidationResult の tuple)。",
+    "build_then_validate のエラーハンドリング契約を明文化する (context_pack 生成失敗時は validator を呼ばずに例外 re-raise、validator fail 時も Path は返す)。",
+    "build_then_validate の副作用契約を明文化する (compact_context_pack.json 出力のみが副作用、session JSON / acceptance YAML は read-only)。",
+    "responsibility 境界の明文化: 統合関数は呼び出しのみ。191 / 192 内部実装に依存しない。",
+    "module 配置の明文化: orchestration/integration/handoff_pipeline.py に独立配置 (orchestration/context_pack/ や orchestration/handoff_validator/ には含めない)。",
+    "schema_version='handoff_pipeline.v1' を 193 implementation の戻り値型に持たせる契約を明文化する。"
+  ],
+  "out_of_scope": [
+    "実装コードの追加 (193-pre は docs-only)",
+    "orchestration/integration/ ディレクトリの新規作成 (193 implementation の責務)",
+    "orchestration/integration/handoff_pipeline.py の新規作成 (193 implementation の責務)",
+    "tests/test_handoff_pipeline.py の新規作成 (193 implementation の責務)",
+    "session-191 の compact_context_pack schema 変更",
+    "session-192 の handoff_validator schema 変更",
+    "session-190 / 188 / 194 の先取り spec 化",
+    "run_session.py への接続契約",
+    "queue engine / scheduler への接続契約",
+    "LLM API call の契約",
+    "MCP integration の契約",
+    "CLI entry point の契約",
+    "main 直接 commit"
+  ],
+  "constraints": [
+    "1セッション1目的",
+    "最大2ファイル以内で完結すること (docs-only: docs/sessions/session-193-pre.json + docs/acceptance/session-193-pre.yaml)",
+    "正本ルールは master_instruction.md と global_rules.md を基準にすること",
+    "session-188-pre / 189-pre YAML template 構造完全準拠 (rev4 雛形流用方式)",
+    "allowed_changes_detail は list[str] 形式とし、各要素は 'パス: 許可内容' の形式とすること",
+    "completion_criteria は object 配列とし、各要素は id, type, condition を持つこと",
+    "acceptance_criteria の各要素は id, description, test_name を持つこと (description フィールド、text ではない)",
+    "review_points は短文4軸固定 ['仕様一致（AC達成）','変更範囲遵守','副作用なし','検証十分性']",
+    "failure_type は 'spec_missing' とする (docs-only canonicalization 規律)",
+    "schema_version 文字列定数 'handoff_pipeline.v1' を 193 implementation の戻り値型に明記する契約を含めること",
+    "実装コードを一切変更しないこと (orchestration/ 配下を一切触らない)",
+    "session-191 / 192 で確立した schema を一切変更しないこと",
+    "responsibility 境界明文化: 統合は関数合成のみ。queue / scheduler / LLM / MCP / CLI は含めない契約とする",
+    "module 配置は orchestration/integration/handoff_pipeline.py に固定する契約とする",
+    "branch は sandbox/session-193-pre を main から新規作成すること",
+    "main 直接 commit を行わないこと"
+  ],
+  "acceptance_ref": "docs/acceptance/session-193-pre.yaml",
+  "inputs": [
+    {
+      "name": "session_191_spec",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/sessions/session-191.json (main 統合済の正本)"
+    },
+    {
+      "name": "session_192_spec",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/sessions/session-192.json (main 統合済の正本)"
+    },
+    {
+      "name": "session_188_pre_template",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/sessions/session-188-pre.json (rev4 雛形正本)"
+    },
+    {
+      "name": "global_rules_reference",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/global_rules.md"
+    },
+    {
+      "name": "master_instruction_reference",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/master_instruction.md"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "handoff_pipeline_spec_json",
+      "type": "json",
+      "required": true,
+      "description": "docs/sessions/session-193-pre.json"
+    },
+    {
+      "name": "handoff_pipeline_spec_yaml",
+      "type": "yaml",
+      "required": true,
+      "description": "docs/acceptance/session-193-pre.yaml"
+    }
+  ],
+  "allowed_changes": [
+    "docs/sessions/session-193-pre.json",
+    "docs/acceptance/session-193-pre.yaml"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/session-193-pre.json: handoff_pipeline 統合契約の正本化。14 canonical keys 完備。build_then_validate 関数の入出力契約・エラーハンドリング契約・副作用契約・responsibility 境界・module 配置契約・schema_version='handoff_pipeline.v1' を明文化する。",
+    "docs/acceptance/session-193-pre.yaml: handoff_pipeline 統合契約の受入定義。9 AC、各要素は id/description/test_name/priority/completion_criteria_refs を持つ。"
+  ],
+  "forbidden_changes": [
+    "orchestration/run_session.py を変更しない (md5: 74682928491ab1c0f35df842581281b8 を維持)",
+    "orchestration/context_pack/ 配下を変更しない (session-191 確立 schema を維持)",
+    "orchestration/handoff_validator/ 配下を変更しない (session-192 確立 schema を維持)",
+    "orchestration/integration/ 配下を新規作成しない (193 implementation の責務)",
+    "selector/ 配下を変更しない (md5 baseline を維持)",
+    "providers / backend / .github 配下を変更しない",
+    "tests/ 配下を変更しない (docs-only)",
+    "docs/global_rules.md / docs/master_instruction.md を変更しない",
+    "docs/sessions/session-188-pre.json / session-189-pre.json / session-190-pre.json / session-191-pre.json / session-192-pre.json を変更しない",
+    "docs/acceptance/session-188-pre.yaml / session-189-pre.yaml / session-190-pre.yaml / session-191-pre.yaml / session-192-pre.yaml を変更しない",
+    "docs/sessions/session-191.json / session-192.json を変更しない (main 統合済の正本を維持)",
+    "docs/acceptance/session-191.yaml / session-192.yaml を変更しない (main 統合済の正本を維持)",
+    "docs/sessions/session-193.json / session-194-pre.json / session-194.json / session-190.json / session-188.json を新規作成しない (本 session の責務外)",
+    "LLM API call の契約を含めない (193 / 194 / 別 session 責務)",
+    "MCP integration の契約を含めない",
+    "queue engine / scheduler への接続契約を含めない",
+    "CLI entry point の契約を含めない",
+    "session-191 / 192 の責務領域 (build / validate のロジック内部) を再定義しない",
+    "main / origin/main 上で直接 commit しない",
+    "git stash 家族コマンド (stash / stash pop / stash apply / stash drop) を ClaudeCode 経由で実行しない"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-193-pre-01",
+      "type": "document_rule",
+      "condition": "docs/sessions/session-193-pre.json と docs/acceptance/session-193-pre.yaml の両方に schema_version='handoff_pipeline.v1' を 193 implementation の戻り値型に持たせる契約が明記されている。"
+    },
+    {
+      "id": "CC-193-pre-02",
+      "type": "document_rule",
+      "condition": "build_then_validate の入力契約 (session_id: str, repo_root: pathlib.Path の 2 引数のみ) が session-193-pre.json と session-193-pre.yaml の両方に明記されている。"
+    },
+    {
+      "id": "CC-193-pre-03",
+      "type": "document_rule",
+      "condition": "build_then_validate の出力契約 (戻り値型: tuple[pathlib.Path, ValidationResult]、Path は compact_context_pack.json の保存先) が session-193-pre.json と session-193-pre.yaml の両方に明記されている。"
+    },
+    {
+      "id": "CC-193-pre-04",
+      "type": "document_rule",
+      "condition": "build_then_validate のエラーハンドリング契約 (context_pack 生成失敗時は validator を呼ばずに例外 re-raise / validator fail 時も Path は返す) が session-193-pre.json と session-193-pre.yaml の両方に明記されている。"
+    },
+    {
+      "id": "CC-193-pre-05",
+      "type": "document_rule",
+      "condition": "build_then_validate の副作用契約 (副作用は compact_context_pack.json 出力のみ / session JSON / acceptance YAML は read-only) が session-193-pre.json と session-193-pre.yaml の両方に明記されている。"
+    },
+    {
+      "id": "CC-193-pre-06",
+      "type": "document_rule",
+      "condition": "responsibility 境界 (統合関数は呼び出しのみ。191 / 192 内部実装に依存しない / queue / scheduler / LLM / MCP / CLI を含めない) が session-193-pre.json と session-193-pre.yaml の両方に明記されている。"
+    },
+    {
+      "id": "CC-193-pre-07",
+      "type": "document_rule",
+      "condition": "module 配置契約 (orchestration/integration/handoff_pipeline.py に固定 / orchestration/context_pack/ や orchestration/handoff_validator/ には含めない) が session-193-pre.json と session-193-pre.yaml の両方に明記されている。"
+    },
+    {
+      "id": "CC-193-pre-08",
+      "type": "side_effect_free",
+      "condition": "本 session 実行で docs/sessions/session-193-pre.json と docs/acceptance/session-193-pre.yaml の 2 ファイル以外が変更されていない (orchestration / selector / tests / 他 session ファイル不変)。"
+    },
+    {
+      "id": "CC-193-pre-09",
+      "type": "non_regression",
+      "condition": "ruff / pytest / mypy / compileall の 4-gate が全 pass し、orchestration/run_session.py と selector/* の md5 が baseline と一致する。"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-193-pre-01",
+      "description": "docs/sessions/session-193-pre.json と docs/acceptance/session-193-pre.yaml の両方に schema_version='handoff_pipeline.v1' を 193 implementation の戻り値型に持たせる契約が明記されている。",
+      "test_name": "test_session_193_pre_declares_handoff_pipeline_schema_version"
+    },
+    {
+      "id": "AC-193-pre-02",
+      "description": "build_then_validate の入力契約 (session_id: str, repo_root: pathlib.Path の 2 引数のみ) が session-193-pre.json と session-193-pre.yaml の両方に明記されている。",
+      "test_name": "test_session_193_pre_declares_input_contract"
+    },
+    {
+      "id": "AC-193-pre-03",
+      "description": "build_then_validate の出力契約 (戻り値型: tuple[pathlib.Path, ValidationResult]、Path は compact_context_pack.json の保存先) が session-193-pre.json と session-193-pre.yaml の両方に明記されている。",
+      "test_name": "test_session_193_pre_declares_output_contract"
+    },
+    {
+      "id": "AC-193-pre-04",
+      "description": "build_then_validate のエラーハンドリング契約 (context_pack 生成失敗時は validator を呼ばずに例外 re-raise / validator fail 時も Path は返す) が session-193-pre.json と session-193-pre.yaml の両方に明記されている。",
+      "test_name": "test_session_193_pre_declares_error_handling_contract"
+    },
+    {
+      "id": "AC-193-pre-05",
+      "description": "build_then_validate の副作用契約 (副作用は compact_context_pack.json 出力のみ / session JSON / acceptance YAML は read-only) が session-193-pre.json と session-193-pre.yaml の両方に明記されている。",
+      "test_name": "test_session_193_pre_declares_side_effect_contract"
+    },
+    {
+      "id": "AC-193-pre-06",
+      "description": "responsibility 境界 (統合関数は呼び出しのみ / 191 / 192 内部実装に依存しない / queue / scheduler / LLM / MCP / CLI を含めない) が session-193-pre.json と session-193-pre.yaml の両方に明記されている。",
+      "test_name": "test_session_193_pre_declares_responsibility_boundary"
+    },
+    {
+      "id": "AC-193-pre-07",
+      "description": "module 配置契約 (orchestration/integration/handoff_pipeline.py に固定 / orchestration/context_pack/ や orchestration/handoff_validator/ には含めない) が session-193-pre.json と session-193-pre.yaml の両方に明記されている。",
+      "test_name": "test_session_193_pre_declares_module_location_contract"
+    },
+    {
+      "id": "AC-193-pre-08",
+      "description": "本 session 実行で docs/sessions/session-193-pre.json と docs/acceptance/session-193-pre.yaml の 2 ファイル以外が変更されていない (orchestration / selector / tests / 他 session ファイル不変)。",
+      "test_name": "test_session_193_pre_changed_files_within_allowed_scope"
+    },
+    {
+      "id": "AC-193-pre-09",
+      "description": "ruff / pytest / mypy / compileall の 4-gate が全 pass する (具体コマンドは ClaudeCode 実行時に現行環境に合わせて確認)。",
+      "test_name": "test_session_193_pre_four_gate_pass"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし",
+    "検証十分性"
+  ],
+  "failure_type": "spec_missing"
+}

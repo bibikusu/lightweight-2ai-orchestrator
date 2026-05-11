@@ -1,0 +1,85 @@
+session_id: session-194-pre
+phase_id: phase-orchestrated-foundation
+title: Canonicalize readiness pipeline integration spec (dependency_graph + gpt_judge stub)
+acceptance:
+  - id: AC-194-pre-01
+    description: "docs/sessions/session-194-pre.json と docs/acceptance/session-194-pre.yaml の両方に schema_version='readiness_pipeline.v1' を 194 implementation の ReadinessResult dataclass(frozen=True) に持たせる契約が明記されている。"
+    test_name: test_session_194_pre_declares_readiness_pipeline_schema_version
+    priority: highest
+    completion_criteria_refs:
+      - CC-194-pre-01
+
+  - id: AC-194-pre-02
+    description: "judge_and_ready の入力契約 (session_id: str, completed_set: frozenset[str], repo_root: pathlib.Path の 3 引数のみ、completed_set は immutable な frozenset) が session-194-pre.json と session-194-pre.yaml の両方に明記されている。"
+    test_name: test_session_194_pre_declares_input_contract
+    priority: highest
+    completion_criteria_refs:
+      - CC-194-pre-02
+
+  - id: AC-194-pre-03
+    description: |
+      judge_and_ready の出力契約が session-194-pre.json と session-194-pre.yaml の両方に明記されている:
+      ReadinessResult dataclass のフィールドは以下の 5 つに固定する:
+        schema_version: str
+        ready: bool
+        dependency_passed: bool
+        judge_passed: bool
+        reasons: list[str]
+    test_name: test_session_194_pre_declares_output_contract
+    priority: highest
+    completion_criteria_refs:
+      - CC-194-pre-03
+
+  - id: AC-194-pre-04
+    description: |
+      AND 条件契約が session-194-pre.json と session-194-pre.yaml の両方に明記されている:
+      (a) ready = (dependency_passed AND judge_passed)
+      (b) 片方でも False なら ready=False
+      (c) 両方 True の場合のみ ready=True
+    test_name: test_session_194_pre_declares_and_condition_contract
+    priority: highest
+    completion_criteria_refs:
+      - CC-194-pre-04
+
+  - id: AC-194-pre-05
+    description: |
+      judge_and_ready の対称エラーハンドリング契約が session-194-pre.json と session-194-pre.yaml の両方に明記されている:
+      (a) dependency_graph 構築失敗時は judge を呼ばずに例外を re-raise する。
+      (b) judge 呼出失敗時も例外を re-raise する。
+    test_name: test_session_194_pre_declares_error_handling_contract
+    priority: highest
+    completion_criteria_refs:
+      - CC-194-pre-05
+
+  - id: AC-194-pre-06
+    description: "judge_and_ready の副作用契約 (副作用なし、読み取り専用関数として動作する / session JSON / acceptance YAML / その他いかなる artifact も書き換えない) が session-194-pre.json と session-194-pre.yaml の両方に明記されている。"
+    test_name: test_session_194_pre_declares_side_effect_contract
+    priority: highest
+    completion_criteria_refs:
+      - CC-194-pre-06
+
+  - id: AC-194-pre-07
+    description: |
+      responsibility 境界・module 配置・司令塔判定 A+B 反映の 4 要素が session-194-pre.json と session-194-pre.yaml の両方に明記されている:
+      (a) responsibility 境界: 統合関数は呼び出しのみで、190 / 188 内部実装に依存しない。queue / scheduler / 実 LLM / MCP / CLI / handoff_pipeline を含めない。
+      (b) module 配置: orchestration/integration/readiness_pipeline.py に固定する。
+      (c) 司令塔判定 A 反映: 実 LLM call を契約に含めず、judge は LLMJudgeProtocol を満たす任意実装を受け取れる契約とする (188 stub interface 前提を維持)。
+      (d) 司令塔判定 B 反映: depends_on フィールドを使用せず、dependency_graph は phase_id + acceptance_ref ベースで構築される前提を維持する。
+    test_name: test_session_194_pre_declares_responsibility_module_and_judgment_alignment
+    priority: highest
+    completion_criteria_refs:
+      - CC-194-pre-07
+
+  - id: AC-194-pre-08
+    description: "本 session 実行で docs/sessions/session-194-pre.json と docs/acceptance/session-194-pre.yaml の 2 ファイル以外が変更されていない (orchestration / selector / tests / 他 session ファイル不変)。"
+    test_name: test_session_194_pre_changed_files_within_allowed_scope
+    priority: highest
+    completion_criteria_refs:
+      - CC-194-pre-08
+
+  - id: AC-194-pre-09
+    description: "ruff / pytest / mypy / compileall の 4-gate が全 pass し、orchestration/run_session.py と selector/* の md5 が baseline と一致する (具体コマンドは ClaudeCode 実行時に現行環境に合わせて確認)。"
+    test_name: test_session_194_pre_four_gate_pass
+    priority: highest
+    completion_criteria_refs:
+      - CC-194-pre-09

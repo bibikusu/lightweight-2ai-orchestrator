@@ -1,0 +1,69 @@
+session_id: session-192
+phase_id: phase-orchestrated-foundation
+title: Implement handoff validator for compact context pack
+acceptance:
+  - id: AC-192-01
+    description: ValidationResult dataclass が schema_version='handoff_validator.v1' を default 値として持ち、frozen=True で immutable である (setattr で AttributeError が発生する)。
+    test_name: test_validate_pass_case
+    priority: highest
+    completion_criteria_refs:
+      - CC-192-01
+
+  - id: AC-192-02
+    description: compact_context_pack の必須9キー (schema_version / source_session_id / session_summary / acceptance_summary / completion_summary / reports_summary / inputs / handoff_ready / warnings) のいずれかが欠落した場合、validate_handoff は passed=False を返し errors に欠落キー名を含むメッセージが入る。
+    test_name: test_validate_fails_on_missing_required_key
+    priority: highest
+    completion_criteria_refs:
+      - CC-192-02
+
+  - id: AC-192-03
+    description: |
+      AC-CC 整合性を双方向で検証する:
+      (a) acceptance YAML の AC が completion_criteria_refs で参照する CC id が session JSON の completion_criteria に存在しない場合、passed=False かつ errors に id 不整合メッセージが入る。
+      (b) session JSON の completion_criteria の CC id がどの AC からも参照されない場合、passed=False かつ errors に orphan CC を示すメッセージが入る。
+    test_name: test_validate_fails_on_ac_cc_bidirectional_mismatch
+    priority: highest
+    completion_criteria_refs:
+      - CC-192-03
+
+  - id: AC-192-04
+    description: compact_context_pack のトップレベルに {dependency_graph, judge_result, dependencies} のいずれかが含まれる場合、validate_handoff は passed=False を返し errors に scope 越境フィールド名を含むメッセージが入る。ready は越境集合に含めない (handoff_ready と紛らわしいため)。
+    test_name: test_validate_fails_on_scope_invasion
+    priority: highest
+    completion_criteria_refs:
+      - CC-192-04
+
+  - id: AC-192-05
+    description: 全 rule が pass する正常な compact_context_pack / session JSON / acceptance YAML に対し、validate_handoff は ValidationResult(passed=True, errors=[]) を返す。
+    test_name: test_validate_pass_case
+    priority: highest
+    completion_criteria_refs:
+      - CC-192-05
+
+  - id: AC-192-06
+    description: validate_handoff 実行前後で context_pack_path / session_json_path / acceptance_yaml_path の 3 ファイル内容 (bytes) が完全一致する (read-only 原則維持)。
+    test_name: test_validate_pass_case
+    priority: highest
+    completion_criteria_refs:
+      - CC-192-06
+
+  - id: AC-192-07
+    description: validate_handoff の戻り値の warnings は compact_context_pack['warnings'] と完全一致する (透過原則維持、192 は新規 warning を生成しない)。warnings の有無に関わらず errors が空であれば passed=True となる。
+    test_name: test_validate_pass_case
+    priority: highest
+    completion_criteria_refs:
+      - CC-192-07
+
+  - id: AC-192-08
+    description: 本 session 実行で orchestration/context_pack/ 配下のファイルが変更されていない (session-191 確立 schema を維持)。
+    test_name: test_validate_pass_case
+    priority: highest
+    completion_criteria_refs:
+      - CC-192-08
+
+  - id: AC-192-09
+    description: ruff / pytest / mypy / compileall の 4-gate が全 pass する (具体コマンドは ClaudeCode 実行時に現行環境に合わせて確認)。
+    test_name: test_validate_pass_case
+    priority: highest
+    completion_criteria_refs:
+      - CC-192-09

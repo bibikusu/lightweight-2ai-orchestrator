@@ -1,0 +1,241 @@
+{
+  "session_id": "session-192",
+  "phase_id": "phase-orchestrated-foundation",
+  "title": "Implement handoff validator for compact context pack",
+  "goal": "session-191 が生成する compact_context_pack.json と元の session JSON / acceptance YAML を入力に、handoff の境界条件 (必須9キー欠落・AC-CC id 双方向整合性違反・scope 越境フィールド混入) を read-only で検証する handoff_validator を新規モジュール orchestration/handoff_validator/ として実装する。",
+  "scope": [
+    "orchestration/handoff_validator/ パッケージを新規追加する。",
+    "validate_handoff(context_pack_path: pathlib.Path, session_json_path: pathlib.Path, acceptance_yaml_path: pathlib.Path) -> ValidationResult を core.py に新規追加する。",
+    "必須9キー検証 / AC-CC id 双方向整合性検証 / scope 越境フィールド検証 の 3 系統 rule 関数群を rules.py に新規追加する。",
+    "ValidationResult dataclass (schema_version / passed / errors / warnings) を result.py に新規追加し frozen=True とする。",
+    "ValidationResult は schema_version='handoff_validator.v1' を持つ。",
+    "compact_context_pack.json / session JSON / acceptance YAML を read-only で読み込み、絶対に書き換えない。",
+    "warnings は 191 が生成した compact_context_pack.warnings を透過する (192 は新規 warning を生成しない)。",
+    "warnings は passed 判定に影響しない (errors のみが passed=false に寄与する)。",
+    "tests/test_handoff_validator.py を新規追加し、pass 系・必須キー欠落 fail 系・AC-CC id 双方向不整合 fail 系・scope 越境 fail 系の 4 ケースを定義する。",
+    "docs/sessions/session-192.json と docs/acceptance/session-192.yaml を新規作成する。"
+  ],
+  "out_of_scope": [
+    "orchestration/run_session.py の変更",
+    "orchestration/context_pack/ 配下の変更 (session-191 で確立済み schema を維持)",
+    "selector/ 配下の変更",
+    "providers / backend / .github 配下の変更",
+    "LLM API call の実装",
+    "MCP integration の実装",
+    "queue engine の変更",
+    "scheduler の変更",
+    "compact_context_pack.json / session JSON / acceptance YAML の書き換え (read-only 原則)",
+    "新規 warning の生成 (191 由来 warnings の透過のみ)",
+    "dependency graph 情報の検証 (session-190 / session-194 責務)",
+    "GPT Judge 判定結果の検証 (session-188 / session-194 責務)",
+    "handoff_pipeline (191+192 統合) の実装 (session-193 責務)",
+    "session-193 / 190 / 188 / 194 の先取り実装",
+    "既存テストの変更",
+    "main 直接 commit",
+    "CLI entry point の実装 (別 session 責務)",
+    "compact_context_pack schema の変更 (session-191 の責務)"
+  ],
+  "constraints": [
+    "1セッション1目的",
+    "最大7ファイル以内で完結すること (migration ありルール適用、内訳: docs 2 + 実装 4 + test 1)",
+    "正本ルールは master_instruction.md と global_rules.md を基準にすること",
+    "allowed_changes_detail は list[str] 形式とし、各要素は 'パス: 許可内容' の形式とすること",
+    "completion_criteria は object 配列とし、各要素は id, type, condition を持つこと",
+    "acceptance_criteria の各要素は id, description, test_name を持つこと (description フィールド、text ではない)",
+    "review_points は短文4軸固定 ['仕様一致（AC達成）','変更範囲遵守','副作用なし','検証十分性']",
+    "failure_type は 'test_failure' とする",
+    "schema_version は文字列定数 'handoff_validator.v1' で固定する",
+    "ValidationResult は dataclass(frozen=True) で immutable にする",
+    "必須9キー集合は {schema_version, source_session_id, session_summary, acceptance_summary, completion_summary, reports_summary, inputs, handoff_ready, warnings} で固定し、rules.py 内に定数定義する",
+    "scope 越境フィールド集合は {dependency_graph, judge_result, dependencies} の 3 キーで固定し、rules.py 内に定数定義する (ready は handoff_ready と紛らわしいため除外)",
+    "AC-CC 整合性検証は session JSON の completion_criteria と acceptance YAML の completion_criteria_refs を直接突合する (compact_context_pack 内ではない)",
+    "AC-CC 整合性検証は双方向で行う: (a) AC が参照する CC id が session JSON に存在しない場合 fail、(b) session JSON の CC id がどの AC からも参照されない場合 fail",
+    "warnings は compact_context_pack['warnings'] をそのまま透過する。192 自身は新規 warning を生成しない",
+    "compact_context_pack.json / session JSON / acceptance YAML を読み込んだ後、その内容を書き戻さないこと (read-only 原則)",
+    "session-191 で確立した compact_context_pack schema を一切変更しないこと",
+    "validator が orchestration.context_pack を import することは許可するが、関数呼び出しのみで内部実装に依存しないこと",
+    "selector md5 baseline (core/loader/writer) と run_session.py md5 baseline を破壊しないこと",
+    "branch は sandbox/session-192 を main から新規作成すること",
+    "main 直接 commit を行わないこと"
+  ],
+  "acceptance_ref": "docs/acceptance/session-192.yaml",
+  "inputs": [
+    {
+      "name": "context_pack_path",
+      "type": "file:path",
+      "required": true,
+      "description": "artifacts/<session_id>/context/compact_context_pack.json (session-191 で生成済み)"
+    },
+    {
+      "name": "session_json_path",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/sessions/<session_id>.json (AC-CC 整合性確認の正本)"
+    },
+    {
+      "name": "acceptance_yaml_path",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/acceptance/<session_id>.yaml (AC-CC 整合性確認の正本、completion_criteria_refs を保持)"
+    },
+    {
+      "name": "global_rules_reference",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/global_rules.md"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "validation_result",
+      "type": "object",
+      "required": true,
+      "description": "ValidationResult dataclass instance (schema_version / passed / errors / warnings)"
+    }
+  ],
+  "allowed_changes": [
+    "docs/sessions/session-192.json",
+    "docs/acceptance/session-192.yaml",
+    "orchestration/handoff_validator/__init__.py",
+    "orchestration/handoff_validator/core.py",
+    "orchestration/handoff_validator/rules.py",
+    "orchestration/handoff_validator/result.py",
+    "tests/test_handoff_validator.py"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/session-192.json: 本 session 定義の新規作成。14 canonical keys 完備。",
+    "docs/acceptance/session-192.yaml: 本 session 受入定義の新規作成。9 AC、各要素は id/description/test_name/priority/completion_criteria_refs を持つ。",
+    "orchestration/handoff_validator/__init__.py: パッケージ宣言。validate_handoff / ValidationResult を公開 API として re-export する。",
+    "orchestration/handoff_validator/result.py: ValidationResult を @dataclass(frozen=True) で新規追加。フィールドは schema_version: str / passed: bool / errors: list[str] / warnings: list[str]。schema_version は default='handoff_validator.v1'。",
+    "orchestration/handoff_validator/rules.py: REQUIRED_KEYS={schema_version, source_session_id, session_summary, acceptance_summary, completion_summary, reports_summary, inputs, handoff_ready, warnings} / FORBIDDEN_TOPLEVEL_FIELDS={dependency_graph, judge_result, dependencies} の 2 定数を定義。check_required_keys(context_pack: dict) -> list[str] / check_ac_cc_referential_integrity(session_json: dict, acceptance_yaml: dict) -> list[str] / check_scope_invasion_fields(context_pack: dict) -> list[str] の 3 関数を新規追加。戻り値は error message の list (空なら pass)。",
+    "orchestration/handoff_validator/core.py: validate_handoff(context_pack_path: pathlib.Path, session_json_path: pathlib.Path, acceptance_yaml_path: pathlib.Path) -> ValidationResult を新規追加。json.load / yaml.safe_load で 3 入力を read-only で読み込み、rules.py の 3 関数を順に実行して errors を集約し、warnings は context_pack['warnings'] を透過し、ValidationResult(schema_version='handoff_validator.v1', passed=(len(errors)==0), errors=errors, warnings=warnings) を返す。",
+    "tests/test_handoff_validator.py: test_validate_pass_case / test_validate_fails_on_missing_required_key / test_validate_fails_on_ac_cc_bidirectional_mismatch / test_validate_fails_on_scope_invasion の 4 テストを新規追加。pytest fixture で tmp_path 配下に compact_context_pack.json と session JSON と acceptance YAML を生成して検証する。AC-CC 双方向検証は (a) AC が存在しない CC を参照する fail ケース と (b) CC がどの AC からも参照されない fail ケース の 2 sub-case を含む。"
+  ],
+  "forbidden_changes": [
+    "orchestration/run_session.py を変更しない (md5: 74682928491ab1c0f35df842581281b8 を維持)",
+    "selector/core.py を変更しない (md5: 9b19e2cbe3487d3090096c5343c88611 を維持)",
+    "selector/loader.py を変更しない (md5: 959db533bf086f83765d8f6f16fbbe7b を維持)",
+    "selector/writer.py を変更しない (md5: aaf7e28e0e9c52d12d30c8d3349cf982 を維持)",
+    "orchestration/context_pack/ 配下を変更しない (session-191 で確立した schema を維持)",
+    "providers / backend / .github 配下を変更しない",
+    "docs/global_rules.md / docs/master_instruction.md を変更しない",
+    "compact_context_pack.json を書き換えない (read-only 原則)",
+    "session JSON / acceptance YAML を書き換えない (read-only 原則)",
+    "ValidationResult に dependency graph 情報を含めない (session-190 / 194 責務)",
+    "ValidationResult に GPT Judge 判定結果を含めない (session-188 / 194 責務)",
+    "handoff_pipeline (build → validate の統合関数) を実装しない (session-193 責務)",
+    "新規 warning を 192 内で生成しない (191 由来 warnings の透過のみ)",
+    "LLM API call を実装しない (import openai / import anthropic 等を含めない)",
+    "MCP integration を実装しない",
+    "queue engine / scheduler を変更しない",
+    "CLI entry point を新規追加しない (別 session 責務)",
+    "既存テストを変更しない",
+    "docs/sessions/session-188-pre.json / session-189-pre.json / session-190-pre.json / session-191-pre.json / session-192-pre.json を変更しない",
+    "docs/acceptance/session-188-pre.yaml / session-189-pre.yaml / session-190-pre.yaml / session-191-pre.yaml / session-192-pre.yaml を変更しない",
+    "docs/sessions/session-191.json を変更しない (session-191 main 統合済の正本を維持)",
+    "docs/acceptance/session-191.yaml を変更しない (session-191 main 統合済の正本を維持)",
+    "main / origin/main 上で直接 commit しない",
+    "git stash 家族コマンド (stash / stash pop / stash apply / stash drop) を ClaudeCode 経由で実行しない"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-192-01",
+      "type": "artifact",
+      "condition": "ValidationResult dataclass が schema_version='handoff_validator.v1' を default 値として持ち、frozen=True で immutable である。"
+    },
+    {
+      "id": "CC-192-02",
+      "type": "artifact",
+      "condition": "check_required_keys が compact_context_pack 必須9キー (schema_version / source_session_id / session_summary / acceptance_summary / completion_summary / reports_summary / inputs / handoff_ready / warnings) のいずれかが欠落した場合に error message を返す。"
+    },
+    {
+      "id": "CC-192-03",
+      "type": "artifact",
+      "condition": "check_ac_cc_referential_integrity が双方向で検証する: (a) acceptance YAML の AC が参照する CC id が session JSON の completion_criteria に存在しない場合 error message を返し、(b) session JSON の completion_criteria の CC id がどの AC の completion_criteria_refs からも参照されない場合 error message を返す。"
+    },
+    {
+      "id": "CC-192-04",
+      "type": "artifact",
+      "condition": "check_scope_invasion_fields が compact_context_pack のトップレベルに {dependency_graph, judge_result, dependencies} のいずれかが含まれる場合に error message を返す。"
+    },
+    {
+      "id": "CC-192-05",
+      "type": "artifact",
+      "condition": "validate_handoff が pass 時に ValidationResult(passed=True, errors=[]) を返し、fail 時に ValidationResult(passed=False, errors=[...具体message]) を返す。"
+    },
+    {
+      "id": "CC-192-06",
+      "type": "side_effect_free",
+      "condition": "validate_handoff 実行前後で context_pack_path / session_json_path / acceptance_yaml_path の 3 ファイル内容 (bytes) が完全一致する (read-only 原則維持)。"
+    },
+    {
+      "id": "CC-192-07",
+      "type": "artifact",
+      "condition": "validate_handoff の戻り値の warnings は compact_context_pack['warnings'] と完全一致する (透過原則)。192 が新規 warning を生成しない。"
+    },
+    {
+      "id": "CC-192-08",
+      "type": "side_effect_free",
+      "condition": "orchestration/context_pack/ 配下のファイルが本 session で変更されておらず、session-191 の md5 baseline が維持されている。"
+    },
+    {
+      "id": "CC-192-09",
+      "type": "non_regression",
+      "condition": "ruff / pytest / mypy / compileall の 4-gate が全 pass し、orchestration/run_session.py と selector/* の md5 が baseline と一致する。"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-192-01",
+      "description": "ValidationResult dataclass が schema_version='handoff_validator.v1' を default 値として持ち、frozen=True で immutable である (setattr で AttributeError が発生する)。",
+      "test_name": "test_validate_pass_case"
+    },
+    {
+      "id": "AC-192-02",
+      "description": "compact_context_pack の必須9キー (schema_version / source_session_id / session_summary / acceptance_summary / completion_summary / reports_summary / inputs / handoff_ready / warnings) のいずれかが欠落した場合、validate_handoff は passed=False を返し errors に欠落キー名を含むメッセージが入る。",
+      "test_name": "test_validate_fails_on_missing_required_key"
+    },
+    {
+      "id": "AC-192-03",
+      "description": "AC-CC 整合性を双方向で検証する: (a) acceptance YAML の AC が completion_criteria_refs で参照する CC id が session JSON の completion_criteria に存在しない場合、passed=False かつ errors に id 不整合メッセージが入る。(b) session JSON の completion_criteria の CC id がどの AC からも参照されない場合、passed=False かつ errors に orphan CC を示すメッセージが入る。",
+      "test_name": "test_validate_fails_on_ac_cc_bidirectional_mismatch"
+    },
+    {
+      "id": "AC-192-04",
+      "description": "compact_context_pack のトップレベルに {dependency_graph, judge_result, dependencies} のいずれかが含まれる場合、validate_handoff は passed=False を返し errors に scope 越境フィールド名を含むメッセージが入る。ready は越境集合に含めない (handoff_ready と紛らわしいため)。",
+      "test_name": "test_validate_fails_on_scope_invasion"
+    },
+    {
+      "id": "AC-192-05",
+      "description": "全 rule が pass する正常な compact_context_pack / session JSON / acceptance YAML に対し、validate_handoff は ValidationResult(passed=True, errors=[]) を返す。",
+      "test_name": "test_validate_pass_case"
+    },
+    {
+      "id": "AC-192-06",
+      "description": "validate_handoff 実行前後で context_pack_path / session_json_path / acceptance_yaml_path の 3 ファイル内容 (bytes) が完全一致する (read-only 原則維持)。",
+      "test_name": "test_validate_pass_case"
+    },
+    {
+      "id": "AC-192-07",
+      "description": "validate_handoff の戻り値の warnings は compact_context_pack['warnings'] と完全一致する (透過原則維持、192 は新規 warning を生成しない)。warnings の有無に関わらず errors が空であれば passed=True となる。",
+      "test_name": "test_validate_pass_case"
+    },
+    {
+      "id": "AC-192-08",
+      "description": "本 session 実行で orchestration/context_pack/ 配下のファイルが変更されていない (session-191 確立 schema を維持)。",
+      "test_name": "test_validate_pass_case"
+    },
+    {
+      "id": "AC-192-09",
+      "description": "ruff / pytest / mypy / compileall の 4-gate が全 pass する (具体コマンドは ClaudeCode 実行時に現行環境に合わせて確認)。",
+      "test_name": "test_validate_pass_case"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし",
+    "検証十分性"
+  ],
+  "failure_type": "test_failure"
+}

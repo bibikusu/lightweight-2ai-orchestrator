@@ -1,0 +1,245 @@
+{
+  "session_id": "session-194-pre",
+  "phase_id": "phase-orchestrated-foundation",
+  "title": "Canonicalize readiness pipeline integration spec (dependency_graph + gpt_judge stub)",
+  "goal": "session-190 (dependency_graph) と session-188 (gpt_judge stub interface) を統合する readiness_pipeline の入出力契約・AND 条件・エラーハンドリング・副作用境界を docs-only で正本化し、session-194 implementation の rev4 雛形となる仕様書を確定する。",
+  "scope": [
+    "docs/sessions/session-194-pre.json を新規作成し、readiness_pipeline.v1 の入出力契約を 14 canonical keys で正本化する。",
+    "docs/acceptance/session-194-pre.yaml を新規作成し、9 AC を id/description/test_name/priority/completion_criteria_refs で正本化する。",
+    "readiness_pipeline の中心関数 judge_and_ready(session_id: str, completed_set: frozenset[str], repo_root: pathlib.Path) -> ReadinessResult の契約を明文化する。",
+    "judge_and_ready の入力契約を明文化する (session_id / completed_set / repo_root の 3 引数のみ、completed_set は frozenset[str] で immutable)。",
+    "judge_and_ready の出力契約を明文化する (ReadinessResult dataclass(frozen=True): schema_version='readiness_pipeline.v1' / ready: bool / dependency_passed: bool / judge_passed: bool / reasons: list[str])。",
+    "AND 条件契約の明文化: ready = (dependency_passed AND judge_passed)。片方でも False なら ready=False。",
+    "judge_and_ready のエラーハンドリング契約を明文化する (対称設計: dependency_graph 構築失敗時は judge を呼ばずに例外 re-raise / judge 呼出失敗時も例外 re-raise)。",
+    "judge_and_ready の副作用契約を明文化する (副作用なし。読み取り専用関数として動作する)。",
+    "responsibility 境界の明文化: 統合関数は呼び出しのみ。190 / 188 内部実装に依存しない。",
+    "module 配置の明文化: orchestration/integration/readiness_pipeline.py に独立配置 (orchestration/dependency_graph/ や orchestration/gpt_judge/ には含めない)。orchestration/integration/handoff_pipeline.py (session-193 責務) とも独立する。",
+    "188 stub interface 前提の明文化: 194 implementation でも実 LLM call を含めない。judge は LLMJudgeProtocol を満たす任意実装を受け取れる契約とする。",
+    "190 phase_id-base graph 前提の明文化: 194 implementation でも depends_on フィールドを使用しない。dependency_graph は phase_id + acceptance_ref ベースで構築される前提を維持する。"
+  ],
+  "out_of_scope": [
+    "実装コードの追加 (194-pre は docs-only)",
+    "orchestration/integration/readiness_pipeline.py の新規作成 (194 implementation の責務)",
+    "ReadinessResult dataclass の実装 (194 implementation の責務)",
+    "tests/test_readiness_pipeline.py の新規作成 (194 implementation の責務)",
+    "session-190 の dependency_graph schema 変更",
+    "session-188 の gpt_judge stub interface schema 変更",
+    "session-191 / 192 / 193 / 193-pre の先取り spec 化",
+    "session JSON schema への depends_on 追加 (司令塔判定 B により禁止)",
+    "実 LLM call の契約 (司令塔判定 A により禁止)",
+    "prompt template の契約 (LLM binding 別 session 責務)",
+    "judge と handoff_pipeline (193) の結合契約 (別 session 責務)",
+    "run_session.py への接続契約",
+    "queue engine / scheduler への接続契約",
+    "MCP integration の契約",
+    "CLI entry point の契約",
+    "main 直接 commit"
+  ],
+  "constraints": [
+    "1セッション1目的",
+    "最大2ファイル以内で完結すること (docs-only: docs/sessions/session-194-pre.json + docs/acceptance/session-194-pre.yaml)",
+    "正本ルールは master_instruction.md と global_rules.md を基準にすること",
+    "session-188-pre / 189-pre / 193-pre YAML template 構造完全準拠 (rev4 雛形流用方式)",
+    "allowed_changes_detail は list[str] 形式とし、各要素は 'パス: 許可内容' の形式とすること",
+    "completion_criteria は object 配列とし、各要素は id, type, condition を持つこと",
+    "acceptance_criteria の各要素は id, description, test_name を持つこと (description フィールド、text ではない)",
+    "review_points は短文4軸固定 ['仕様一致（AC達成）','変更範囲遵守','副作用なし','検証十分性']",
+    "failure_type は 'spec_missing' とする (docs-only canonicalization 規律)",
+    "schema_version 文字列定数 'readiness_pipeline.v1' を 194 implementation の ReadinessResult dataclass に持たせる契約を含めること",
+    "ReadinessResult は dataclass(frozen=True) で immutable とする契約を含めること (192 ValidationResult と同型の規律)",
+    "AND 条件契約: ready = (dependency_passed AND judge_passed) を厳密に明文化すること",
+    "エラーハンドリングは対称設計とする: dependency_graph 構築失敗 / judge 呼出失敗 のいずれも例外を re-raise する",
+    "副作用契約: judge_and_ready は副作用なしの読み取り専用関数とする (compact_context_pack.json のような出力ファイルを生成しない)",
+    "実装コードを一切変更しないこと (orchestration/ 配下を一切触らない)",
+    "session-190 / 188 で確立される schema を一切変更しないこと",
+    "司令塔判定 A 反映: 実 LLM call を契約に含めない。judge は LLMJudgeProtocol を満たす任意実装を受け取れる",
+    "司令塔判定 B 反映: depends_on フィールドを使用しない。dependency_graph は phase_id + acceptance_ref ベース",
+    "responsibility 境界明文化: 統合は関数合成のみ。queue / scheduler / 実 LLM / MCP / CLI / handoff_pipeline は含めない契約とする",
+    "module 配置は orchestration/integration/readiness_pipeline.py に固定する契約とする (handoff_pipeline.py と同階層、独立 module)",
+    "branch は sandbox/session-194-pre を main から新規作成すること",
+    "main 直接 commit を行わないこと"
+  ],
+  "acceptance_ref": "docs/acceptance/session-194-pre.yaml",
+  "inputs": [
+    {
+      "name": "session_190_pre_spec",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/sessions/session-190-pre.json (main 統合済の dependency_graph spec 正本)"
+    },
+    {
+      "name": "session_188_pre_spec",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/sessions/session-188-pre.json (main 統合済の gpt_judge spec 正本 + rev4 雛形正本)"
+    },
+    {
+      "name": "session_193_pre_spec",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/sessions/session-193-pre.json (handoff_pipeline 統合契約、194-pre と同型の rev4 流用元)"
+    },
+    {
+      "name": "global_rules_reference",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/global_rules.md"
+    },
+    {
+      "name": "master_instruction_reference",
+      "type": "file:path",
+      "required": true,
+      "description": "docs/master_instruction.md"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "readiness_pipeline_spec_json",
+      "type": "json",
+      "required": true,
+      "description": "docs/sessions/session-194-pre.json"
+    },
+    {
+      "name": "readiness_pipeline_spec_yaml",
+      "type": "yaml",
+      "required": true,
+      "description": "docs/acceptance/session-194-pre.yaml"
+    }
+  ],
+  "allowed_changes": [
+    "docs/sessions/session-194-pre.json",
+    "docs/acceptance/session-194-pre.yaml"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/session-194-pre.json: readiness_pipeline 統合契約の正本化。14 canonical keys 完備。judge_and_ready 関数の入出力契約・AND 条件契約・対称エラーハンドリング契約・副作用契約 (副作用なし)・responsibility 境界・module 配置契約・188 stub interface 前提・190 phase_id-base graph 前提・schema_version='readiness_pipeline.v1' を明文化する。",
+    "docs/acceptance/session-194-pre.yaml: readiness_pipeline 統合契約の受入定義。9 AC、各要素は id/description/test_name/priority/completion_criteria_refs を持つ。"
+  ],
+  "forbidden_changes": [
+    "orchestration/run_session.py を変更しない (md5: 74682928491ab1c0f35df842581281b8 を維持)",
+    "orchestration/context_pack/ 配下を変更しない (session-191 確立 schema を維持)",
+    "orchestration/handoff_validator/ 配下を変更しない (session-192 確立 schema を維持)",
+    "orchestration/dependency_graph/ 配下を新規作成しない (190 implementation の責務)",
+    "orchestration/gpt_judge/ 配下を新規作成しない (188 implementation の責務)",
+    "orchestration/integration/ 配下を新規作成しない (193 / 194 implementation の責務)",
+    "selector/ 配下を変更しない (md5 baseline を維持)",
+    "providers / backend / .github 配下を変更しない",
+    "tests/ 配下を変更しない (docs-only)",
+    "docs/global_rules.md / docs/master_instruction.md を変更しない",
+    "docs/sessions/session-188-pre.json / session-189-pre.json / session-190-pre.json / session-191-pre.json / session-192-pre.json / session-193-pre.json を変更しない",
+    "docs/acceptance/session-188-pre.yaml / session-189-pre.yaml / session-190-pre.yaml / session-191-pre.yaml / session-192-pre.yaml / session-193-pre.yaml を変更しない",
+    "docs/sessions/session-191.json / session-192.json を変更しない (main 統合済の正本を維持)",
+    "docs/acceptance/session-191.yaml / session-192.yaml を変更しない (main 統合済の正本を維持)",
+    "docs/sessions/session-193.json / session-190.json / session-188.json / session-194.json を新規作成しない (本 session の責務外)",
+    "session JSON schema に depends_on フィールドを追加する契約を含めない (司令塔判定 B 反映)",
+    "実 LLM call の契約を含めない (司令塔判定 A 反映、188 stub interface 前提を維持)",
+    "prompt template の契約を含めない (LLM binding 別 session 責務)",
+    "judge と handoff_pipeline (193) の結合契約を含めない (別 session 責務)",
+    "MCP integration の契約を含めない",
+    "queue engine / scheduler への接続契約を含めない",
+    "CLI entry point の契約を含めない",
+    "session-190 / 188 の責務領域 (graph 構築 / judge stub のロジック内部) を再定義しない",
+    "main / origin/main 上で直接 commit しない",
+    "git stash 家族コマンド (stash / stash pop / stash apply / stash drop) を ClaudeCode 経由で実行しない"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-194-pre-01",
+      "type": "document_rule",
+      "condition": "docs/sessions/session-194-pre.json と docs/acceptance/session-194-pre.yaml の両方に schema_version='readiness_pipeline.v1' を 194 implementation の ReadinessResult dataclass(frozen=True) に持たせる契約が明記されている。"
+    },
+    {
+      "id": "CC-194-pre-02",
+      "type": "document_rule",
+      "condition": "judge_and_ready の入力契約 (session_id: str, completed_set: frozenset[str], repo_root: pathlib.Path の 3 引数のみ、completed_set は immutable な frozenset) が session-194-pre.json と session-194-pre.yaml の両方に明記されている。"
+    },
+    {
+      "id": "CC-194-pre-03",
+      "type": "document_rule",
+      "condition": "judge_and_ready の出力契約 (ReadinessResult dataclass のフィールド: schema_version: str / ready: bool / dependency_passed: bool / judge_passed: bool / reasons: list[str] の 5 フィールド固定) が session-194-pre.json と session-194-pre.yaml の両方に明記されている。"
+    },
+    {
+      "id": "CC-194-pre-04",
+      "type": "document_rule",
+      "condition": "AND 条件契約 (ready = dependency_passed AND judge_passed / 片方でも False なら ready=False / 両方 True の場合のみ ready=True) が session-194-pre.json と session-194-pre.yaml の両方に明記されている。"
+    },
+    {
+      "id": "CC-194-pre-05",
+      "type": "document_rule",
+      "condition": "judge_and_ready の対称エラーハンドリング契約 (dependency_graph 構築失敗時は judge を呼ばずに例外 re-raise / judge 呼出失敗時も例外 re-raise) が session-194-pre.json と session-194-pre.yaml の両方に明記されている。"
+    },
+    {
+      "id": "CC-194-pre-06",
+      "type": "document_rule",
+      "condition": "judge_and_ready の副作用契約 (副作用なし、読み取り専用関数として動作する / session JSON / acceptance YAML / その他いかなる artifact も書き換えない) が session-194-pre.json と session-194-pre.yaml の両方に明記されている。"
+    },
+    {
+      "id": "CC-194-pre-07",
+      "type": "document_rule",
+      "condition": "responsibility 境界 (統合関数は呼び出しのみ / 190 / 188 内部実装に依存しない / queue / scheduler / 実 LLM / MCP / CLI / handoff_pipeline を含めない) と module 配置 (orchestration/integration/readiness_pipeline.py に固定) と 司令塔判定 A 反映 (実 LLM call 不採用 / judge は LLMJudgeProtocol を満たす任意実装を受け取れる) と 司令塔判定 B 反映 (depends_on 不使用 / dependency_graph は phase_id + acceptance_ref ベース) の 4 要素が session-194-pre.json と session-194-pre.yaml の両方に明記されている。"
+    },
+    {
+      "id": "CC-194-pre-08",
+      "type": "side_effect_free",
+      "condition": "本 session 実行で docs/sessions/session-194-pre.json と docs/acceptance/session-194-pre.yaml の 2 ファイル以外が変更されていない (orchestration / selector / tests / 他 session ファイル不変)。"
+    },
+    {
+      "id": "CC-194-pre-09",
+      "type": "non_regression",
+      "condition": "ruff / pytest / mypy / compileall の 4-gate が全 pass し、orchestration/run_session.py と selector/* の md5 が baseline と一致する。"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-194-pre-01",
+      "description": "docs/sessions/session-194-pre.json と docs/acceptance/session-194-pre.yaml の両方に schema_version='readiness_pipeline.v1' を 194 implementation の ReadinessResult dataclass(frozen=True) に持たせる契約が明記されている。",
+      "test_name": "test_session_194_pre_declares_readiness_pipeline_schema_version"
+    },
+    {
+      "id": "AC-194-pre-02",
+      "description": "judge_and_ready の入力契約 (session_id: str, completed_set: frozenset[str], repo_root: pathlib.Path の 3 引数のみ、completed_set は immutable な frozenset) が session-194-pre.json と session-194-pre.yaml の両方に明記されている。",
+      "test_name": "test_session_194_pre_declares_input_contract"
+    },
+    {
+      "id": "AC-194-pre-03",
+      "description": "judge_and_ready の出力契約 (ReadinessResult dataclass のフィールド: schema_version: str / ready: bool / dependency_passed: bool / judge_passed: bool / reasons: list[str] の 5 フィールド固定) が session-194-pre.json と session-194-pre.yaml の両方に明記されている。",
+      "test_name": "test_session_194_pre_declares_output_contract"
+    },
+    {
+      "id": "AC-194-pre-04",
+      "description": "AND 条件契約 (ready = dependency_passed AND judge_passed / 片方でも False なら ready=False / 両方 True の場合のみ ready=True) が session-194-pre.json と session-194-pre.yaml の両方に明記されている。",
+      "test_name": "test_session_194_pre_declares_and_condition_contract"
+    },
+    {
+      "id": "AC-194-pre-05",
+      "description": "judge_and_ready の対称エラーハンドリング契約 (dependency_graph 構築失敗時は judge を呼ばずに例外 re-raise / judge 呼出失敗時も例外 re-raise) が session-194-pre.json と session-194-pre.yaml の両方に明記されている。",
+      "test_name": "test_session_194_pre_declares_error_handling_contract"
+    },
+    {
+      "id": "AC-194-pre-06",
+      "description": "judge_and_ready の副作用契約 (副作用なし、読み取り専用関数として動作する / session JSON / acceptance YAML / その他いかなる artifact も書き換えない) が session-194-pre.json と session-194-pre.yaml の両方に明記されている。",
+      "test_name": "test_session_194_pre_declares_side_effect_contract"
+    },
+    {
+      "id": "AC-194-pre-07",
+      "description": "responsibility 境界 (統合関数は呼び出しのみ / 190 / 188 内部実装に依存しない / queue / scheduler / 実 LLM / MCP / CLI / handoff_pipeline を含めない)、module 配置 (orchestration/integration/readiness_pipeline.py に固定)、司令塔判定 A 反映 (実 LLM call 不採用 / judge は LLMJudgeProtocol を満たす任意実装を受け取れる)、司令塔判定 B 反映 (depends_on 不使用 / dependency_graph は phase_id + acceptance_ref ベース) の 4 要素が session-194-pre.json と session-194-pre.yaml の両方に明記されている。",
+      "test_name": "test_session_194_pre_declares_responsibility_module_and_judgment_alignment"
+    },
+    {
+      "id": "AC-194-pre-08",
+      "description": "本 session 実行で docs/sessions/session-194-pre.json と docs/acceptance/session-194-pre.yaml の 2 ファイル以外が変更されていない (orchestration / selector / tests / 他 session ファイル不変)。",
+      "test_name": "test_session_194_pre_changed_files_within_allowed_scope"
+    },
+    {
+      "id": "AC-194-pre-09",
+      "description": "ruff / pytest / mypy / compileall の 4-gate が全 pass し、orchestration/run_session.py と selector/* の md5 が baseline と一致する (具体コマンドは ClaudeCode 実行時に現行環境に合わせて確認)。",
+      "test_name": "test_session_194_pre_four_gate_pass"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし",
+    "検証十分性"
+  ],
+  "failure_type": "spec_missing"
+}
