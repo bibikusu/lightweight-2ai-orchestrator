@@ -1,0 +1,207 @@
+{
+  "session_id": "session-188-pre",
+  "phase_id": "phase-orchestrated-foundation",
+  "title": "100 session orchestrated operation design canonicalization",
+  "goal": "100 session sequential ではなく 100 session orchestrated を安全に運用するための構造・責務境界・依存解決・事故防止・execution lanes・judge routing を docs-only で正本化する。",
+  "scope": [
+    "100 sequential と 100 orchestrated の定義差分と適用条件を明文化する。",
+    "dependency graph の責務境界（depends_on / blocks / ready 判定 / cycle detection）を明文化する。",
+    "GPT Judge の判定 enum（pass / blocked / retry / human_review）と stale report 除外 / AC pass 偽装検知の責務を明文化する。",
+    "compact context pack の責務(各 AI へ渡す context の最小構成と肥大防止規律)を明文化する。",
+    "handoff validator の検証範囲（GPT→ClaudeCode→Cursor の受け渡し schema）を明文化する。",
+    "queue orchestration の責務（ready / running / retry / blocked_human の状態管理）を明文化する。",
+    "scheduler orchestration の責務（plan 単位起動と L3 監督付き自動の境界）を明文化する。",
+    "PCC orchestration の責務を read-only projection として明文化し、表示可能フィールド / 表示禁止フィールド / 書き込み禁止境界（PCC は queue / scheduler / state / session 定義を変更しない）を定義する。",
+    "execution lanes の 5 分類（docs-only / safe-code / DB-risk / media / deploy）と各 lane の停止条件を明文化する。",
+    "branch lifecycle management の状態遷移（sandbox 作成 / 終了 / 残留検知 / main 復帰確認）を明文化する。",
+    "retry routing の判定軸（max_retry=1 / same_failure_retry 禁止 / cause_fingerprint 規律）の責務境界を明文化する。",
+    "ready_legacy separation の境界（新規 session canonical 強制 / legacy ready_legacy 分離）を明文化する。",
+    "stale contamination handling の検出方針（report timestamp / HEAD 照合 / sealed 露出検知）を明文化する。",
+    "後続セッション起票順序（session-188 / 189-pre / 189 / 190-pre / 190 / 191-pre / 191 / 192-pre / 192 / 193 / 194 / 195 / 196 / 197 / 198）と依存関係を明文化する。",
+    "事故パターン分類（正本盲信 / ID 衝突 / sealed 露出 / AC pass 偽装 / 参謀越権 / sandbox branch residual / stale report contamination / legacy collision / dirty worktree 誤停止 / retry 暴走 / branch main 汚染 / scope 膨張 / context 肥大 / dependency 抜け / human gate 未定義）と対策の対応関係を明文化する。"
+  ],
+  "out_of_scope": [
+    "本セッション JSON / YAML 以外のファイルに対する変更",
+    "実装コードの追加変更",
+    "orchestration/run_session.py の変更",
+    "queue engine 関連コードの変更",
+    "scheduler 関連コードの変更",
+    "PCC backend コードの変更",
+    "PCC frontend コードの変更",
+    "providers 配下の変更",
+    "backend 配下の変更",
+    ".github 配下の変更",
+    "既存 session JSON / YAML の rewrite",
+    "legacy session の rewrite",
+    "docs/sessions/session-188.json 以降の新規作成",
+    "branch 操作（作成 / 切替 / 削除）",
+    "commit / push 操作",
+    "Layer1 canonical guard の実装",
+    "Layer2 git allowlist の実装",
+    "GPT Judge の実装",
+    "dependency graph の実装",
+    "compact context pack の実装",
+    "handoff validator の実装",
+    "queue engine v2 の実装",
+    "scheduler L3 の実装",
+    "PCC orchestration view の実装",
+    "100 sequential safe test の実行",
+    "100 orchestrated dry-run の実行",
+    "100 orchestrated limited real-run の実行"
+  ],
+  "constraints": [
+    "1 セッション 1 目的を遵守すること。",
+    "docs-only セッションとして実装コードを一切変更しないこと。",
+    "変更ファイルは docs/sessions/session-188-pre.json と docs/acceptance/session-188-pre.yaml の 2 件に限定すること。",
+    "acceptance_ref は repository 相対パスとすること。",
+    "session_id とファイル名が一致すること。",
+    "曖昧語（適切に / 必要に応じて / など）を使用しないこと。",
+    "後続実装セッション（session-188 以降）はすべて本セッションの正本を参照する前提とすること。",
+    "本セッション内で実装ロードマップを確定しても、実装着手は別セッションに切ること。",
+    "review_points は 4 軸固定（仕様一致（AC達成）/ 変更範囲遵守 / 副作用なし / 検証十分性）とすること。",
+    "completion_criteria の type は document_rule / artifact / non_regression / state_transition_consistent / side_effect_free のいずれかとすること。",
+    "本セッションは責務境界の定義に留め、実装側との整合検証は後続実装セッションに委ねること。"
+  ],
+  "acceptance_ref": "docs/acceptance/session-188-pre.yaml",
+  "allowed_changes_detail": [
+    "docs/sessions/session-188-pre.json: 本セッション定義の新規作成（14 キー canonical 構造に準拠）",
+    "docs/acceptance/session-188-pre.yaml: 本セッション用 acceptance 定義の新規作成（session_id / phase_id / title / acceptance トップレベル必須）"
+  ],
+  "forbidden_changes": [
+    "orchestration/run_session.py の変更",
+    "selector 配下の変更",
+    "providers 配下の変更",
+    "backend 配下の変更",
+    ".github 配下の変更",
+    "docs/templates 配下の変更",
+    "docs/global_rules.md の変更",
+    "docs/master_instruction.md の変更",
+    "docs/roadmap.yaml の変更",
+    "既存 docs/sessions/ 配下 JSON の変更",
+    "既存 docs/acceptance/ 配下 YAML の変更",
+    "queue engine 関連コードの追加変更",
+    "scheduler 関連コードの追加変更",
+    "PCC backend / frontend コードの追加変更",
+    "Layer1 canonical guard の実装コミット",
+    "Layer2 git allowlist の実装コミット",
+    "branch 作成 / 切替 / 削除",
+    "git stash 操作（sealed stash 露出禁止）",
+    "commit / push 操作",
+    "docs/sessions/session-188.json 以降の新規作成"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-188-pre-01",
+      "type": "artifact",
+      "condition": "docs/sessions/session-188-pre.json が 14 キー canonical 構造に準拠して保存されている。"
+    },
+    {
+      "id": "CC-188-pre-02",
+      "type": "artifact",
+      "condition": "docs/acceptance/session-188-pre.yaml が保存され、session_id がトップレベルに存在し session-188-pre と一致する。"
+    },
+    {
+      "id": "CC-188-pre-03",
+      "type": "document_rule",
+      "condition": "scope 内に 100 sequential と 100 orchestrated の定義差分と適用条件が明記されている。"
+    },
+    {
+      "id": "CC-188-pre-04",
+      "type": "document_rule",
+      "condition": "scope 内に orchestration components（GPT Judge / queue orchestration / scheduler orchestration / PCC orchestration）の責務境界が明記され、PCC は read-only projection として書き込み禁止境界が明示されている。"
+    },
+    {
+      "id": "CC-188-pre-05",
+      "type": "document_rule",
+      "condition": "scope 内に dependency graph / handoff validator / compact context pack の責務境界が明記されている。"
+    },
+    {
+      "id": "CC-188-pre-06",
+      "type": "document_rule",
+      "condition": "scope 内に execution lanes の 5 分類と branch lifecycle management の状態遷移が明記されている。"
+    },
+    {
+      "id": "CC-188-pre-07",
+      "type": "document_rule",
+      "condition": "scope 内に retry routing / stale contamination handling / ready_legacy separation の責務境界が明記されている。"
+    },
+    {
+      "id": "CC-188-pre-08",
+      "type": "document_rule",
+      "condition": "scope 内に後続セッション起票順序（session-188 から session-198）と依存関係が明記されている。"
+    },
+    {
+      "id": "CC-188-pre-09",
+      "type": "document_rule",
+      "condition": "scope 内に事故パターン分類と対策の対応関係が明記されている。"
+    },
+    {
+      "id": "CC-188-pre-10",
+      "type": "side_effect_free",
+      "condition": "変更が docs/sessions/session-188-pre.json と docs/acceptance/session-188-pre.yaml の 2 件に限定され、実装コード・既存 session・既存 docs に副作用が発生していない。"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-188-pre-01",
+      "description": "docs/sessions/session-188-pre.json が 14 キー canonical 構造で保存され、docs/acceptance/session-188-pre.yaml のトップレベル session_id が session-188-pre と一致する。",
+      "test_name": "test_session_188_pre_canonical_14_keys_and_yaml_session_id",
+      "completion_criteria_refs": ["CC-188-pre-01", "CC-188-pre-02"]
+    },
+    {
+      "id": "AC-188-pre-02",
+      "description": "scope 内に 100 sequential と 100 orchestrated の定義差分が明記されている。",
+      "test_name": "test_session_188_pre_documents_sequential_vs_orchestrated",
+      "completion_criteria_refs": ["CC-188-pre-03"]
+    },
+    {
+      "id": "AC-188-pre-03",
+      "description": "scope 内に orchestration components（GPT Judge / queue / scheduler / PCC）の責務境界が明記され、PCC は read-only projection として書き込み禁止境界が明示されている。",
+      "test_name": "test_session_188_pre_documents_orchestration_components_boundaries",
+      "completion_criteria_refs": ["CC-188-pre-04"]
+    },
+    {
+      "id": "AC-188-pre-04",
+      "description": "scope 内に dependency graph / handoff validator / compact context pack の責務境界が明記されている。",
+      "test_name": "test_session_188_pre_documents_dependency_handoff_context_boundaries",
+      "completion_criteria_refs": ["CC-188-pre-05"]
+    },
+    {
+      "id": "AC-188-pre-05",
+      "description": "scope 内に execution lanes の 5 分類と branch lifecycle management の状態遷移が明記されている。",
+      "test_name": "test_session_188_pre_documents_execution_lanes_and_branch_lifecycle",
+      "completion_criteria_refs": ["CC-188-pre-06"]
+    },
+    {
+      "id": "AC-188-pre-06",
+      "description": "scope 内に retry routing / stale contamination handling / ready_legacy separation の責務境界が明記されている。",
+      "test_name": "test_session_188_pre_documents_retry_stale_legacy_boundaries",
+      "completion_criteria_refs": ["CC-188-pre-07"]
+    },
+    {
+      "id": "AC-188-pre-07",
+      "description": "scope 内に後続セッション起票順序（session-188 から session-198）と依存関係が明記されている。",
+      "test_name": "test_session_188_pre_documents_followup_session_roadmap",
+      "completion_criteria_refs": ["CC-188-pre-08"]
+    },
+    {
+      "id": "AC-188-pre-08",
+      "description": "scope 内に事故パターン分類と対策の対応関係が明記されている。",
+      "test_name": "test_session_188_pre_documents_accident_patterns_and_countermeasures",
+      "completion_criteria_refs": ["CC-188-pre-09"]
+    },
+    {
+      "id": "AC-188-pre-09",
+      "description": "変更ファイルが docs/sessions/session-188-pre.json と docs/acceptance/session-188-pre.yaml の 2 件に限定され、実装コード・既存 session・既存 docs への副作用が発生していない。",
+      "test_name": "test_session_188_pre_changed_files_limited_to_two_docs_only",
+      "completion_criteria_refs": ["CC-188-pre-10"]
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし",
+    "検証十分性"
+  ],
+  "failure_type": "spec_missing"
+}

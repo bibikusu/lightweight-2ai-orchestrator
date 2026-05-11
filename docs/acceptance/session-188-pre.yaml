@@ -1,0 +1,96 @@
+session_id: "session-188-pre"
+phase_id: "phase-orchestrated-foundation"
+title: "100 session orchestrated operation design canonicalization"
+acceptance:
+  - id: "AC-188-pre-01"
+    description: "docs/sessions/session-188-pre.json が 14 キー canonical 構造で保存され、docs/acceptance/session-188-pre.yaml のトップレベル session_id が session-188-pre と一致する。"
+    test_name: "test_session_188_pre_canonical_14_keys_and_yaml_session_id"
+    type: "manual"
+    manual_check: true
+    completion_criteria_refs:
+      - "CC-188-pre-01"
+      - "CC-188-pre-02"
+    verification:
+      - "docs/sessions/session-188-pre.json をパースし、session_id / phase_id / title / goal / scope / out_of_scope / constraints / acceptance_ref / allowed_changes_detail / forbidden_changes / completion_criteria / acceptance_criteria / review_points / failure_type の 14 キーがすべて存在することを確認する。"
+      - "docs/acceptance/session-188-pre.yaml のトップレベル session_id が session-188-pre であることを確認する。"
+  - id: "AC-188-pre-02"
+    description: "scope 内に 100 sequential と 100 orchestrated の定義差分が明記されている。"
+    test_name: "test_session_188_pre_documents_sequential_vs_orchestrated"
+    type: "manual"
+    manual_check: true
+    completion_criteria_refs:
+      - "CC-188-pre-03"
+    verification:
+      - "scope 配列に sequential / orchestrated の定義差分と適用条件を扱う項目が含まれていることを目視確認する。"
+  - id: "AC-188-pre-03"
+    description: "scope 内に orchestration components（GPT Judge / queue / scheduler / PCC）の責務境界が明記され、PCC は read-only projection として書き込み禁止境界が明示されている。"
+    test_name: "test_session_188_pre_documents_orchestration_components_boundaries"
+    type: "manual"
+    manual_check: true
+    completion_criteria_refs:
+      - "CC-188-pre-04"
+    verification:
+      - "scope 配列に GPT Judge の判定 enum 4 値（pass / blocked / retry / human_review）が含まれることを確認する。"
+      - "scope 配列に queue orchestration の 4 状態（ready / running / retry / blocked_human）が含まれることを確認する。"
+      - "scope 配列に scheduler orchestration の plan 単位起動と L3 監督付き自動の境界が含まれることを確認する。"
+      - "scope 配列に PCC orchestration の read-only projection としての表示可能フィールド / 表示禁止フィールド / 書き込み禁止境界が含まれ、PCC が queue / scheduler / state / session 定義を変更しない旨が明記されていることを確認する。"
+  - id: "AC-188-pre-04"
+    description: "scope 内に dependency graph / handoff validator / compact context pack の責務境界が明記されている。"
+    test_name: "test_session_188_pre_documents_dependency_handoff_context_boundaries"
+    type: "manual"
+    manual_check: true
+    completion_criteria_refs:
+      - "CC-188-pre-05"
+    verification:
+      - "scope 配列に dependency graph の 4 要素（depends_on / blocks / ready 判定 / cycle detection）が含まれることを確認する。"
+      - "scope 配列に handoff validator の GPT→ClaudeCode→Cursor schema が含まれることを確認する。"
+      - "scope 配列に compact context pack の最小構成と肥大防止規律が含まれることを確認する。"
+  - id: "AC-188-pre-05"
+    description: "scope 内に execution lanes の 5 分類と branch lifecycle management の状態遷移が明記されている。"
+    test_name: "test_session_188_pre_documents_execution_lanes_and_branch_lifecycle"
+    type: "manual"
+    manual_check: true
+    completion_criteria_refs:
+      - "CC-188-pre-06"
+    verification:
+      - "scope 配列に execution lanes の 5 分類（docs-only / safe-code / DB-risk / media / deploy）と各 lane の停止条件が含まれることを確認する。"
+      - "scope 配列に branch lifecycle の 4 状態遷移（sandbox 作成 / 終了 / 残留検知 / main 復帰確認）が含まれることを確認する。"
+  - id: "AC-188-pre-06"
+    description: "scope 内に retry routing / stale contamination handling / ready_legacy separation の責務境界が明記されている。"
+    test_name: "test_session_188_pre_documents_retry_stale_legacy_boundaries"
+    type: "manual"
+    manual_check: true
+    completion_criteria_refs:
+      - "CC-188-pre-07"
+    verification:
+      - "scope 配列に retry routing の 3 軸（max_retry=1 / same_failure_retry 禁止 / cause_fingerprint 規律）が含まれることを確認する。"
+      - "scope 配列に stale contamination handling の 3 検出方針（report timestamp / HEAD 照合 / sealed 露出検知）が含まれることを確認する。"
+      - "scope 配列に ready_legacy separation の境界（新規 canonical 強制 / legacy 分離）が含まれることを確認する。"
+  - id: "AC-188-pre-07"
+    description: "scope 内に後続セッション起票順序（session-188 から session-198）と依存関係が明記されている。"
+    test_name: "test_session_188_pre_documents_followup_session_roadmap"
+    type: "manual"
+    manual_check: true
+    completion_criteria_refs:
+      - "CC-188-pre-08"
+    verification:
+      - "scope 配列に session-188 / 189-pre / 189 / 190-pre / 190 / 191-pre / 191 / 192-pre / 192 / 193 / 194 / 195 / 196 / 197 / 198 の起票順序が含まれることを確認する。"
+  - id: "AC-188-pre-08"
+    description: "scope 内に事故パターン分類と対策の対応関係が明記されている。"
+    test_name: "test_session_188_pre_documents_accident_patterns_and_countermeasures"
+    type: "manual"
+    manual_check: true
+    completion_criteria_refs:
+      - "CC-188-pre-09"
+    verification:
+      - "scope 配列に 15 分類の事故パターン（正本盲信 / ID 衝突 / sealed 露出 / AC pass 偽装 / 参謀越権 / sandbox branch residual / stale report contamination / legacy collision / dirty worktree 誤停止 / retry 暴走 / branch main 汚染 / scope 膨張 / context 肥大 / dependency 抜け / human gate 未定義）と対策の対応関係が含まれることを確認する。"
+  - id: "AC-188-pre-09"
+    description: "変更ファイルが docs/sessions/session-188-pre.json と docs/acceptance/session-188-pre.yaml の 2 件に限定され、実装コード・既存 session・既存 docs への副作用が発生していない。"
+    test_name: "test_session_188_pre_changed_files_limited_to_two_docs_only"
+    type: "manual"
+    manual_check: true
+    completion_criteria_refs:
+      - "CC-188-pre-10"
+    verification:
+      - "git diff --name-only で変更ファイル一覧を取得し、docs/sessions/session-188-pre.json と docs/acceptance/session-188-pre.yaml の 2 件のみであることを確認する。"
+      - "orchestration/run_session.py / selector / providers / backend / .github / docs/templates / docs/global_rules.md / docs/master_instruction.md に差分がないことを確認する。"
