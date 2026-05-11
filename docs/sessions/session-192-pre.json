@@ -1,0 +1,199 @@
+{
+  "session_id": "session-192-pre",
+  "phase_id": "phase-orchestrated-foundation",
+  "title": "Handoff validator canonicalization",
+  "goal": "GPT→ClaudeCode / ClaudeCode→Cursor / Cursor→GPT / GPT判定→queue の 4 ハンドオフ境界における引き渡し schema・検証軸・fail-fast 条件・例外分類を docs-only で正本化する。",
+  "scope": [
+    "GPT→ClaudeCode ハンドオフの input schema（session_id / phase_id / goal / scope[] / context_pack_ref / allowed_changes[] / forbidden_changes[] / acceptance_ref）を明文化する。",
+    "ClaudeCode→Cursor ハンドオフの input schema（session_id / phase_id / task_id / file_targets[] / diff_plan / context_pack_ref / forbidden_changes[] / acceptance_ref）を明文化する。",
+    "Cursor→GPT ハンドオフの output schema（session_id / task_id / result_type enum: pass|fail|partial / changed_files[] / summary / evidence_refs[]）を明文化する。",
+    "GPT判定→queue ハンドオフの output schema（session_id / judge_result enum: pass|blocked|retry|human_review / judge_timestamp / cause_fingerprint / next_action）を明文化する。",
+    "handoff validator の検証 4 軸（schema_integrity / type_check / enum_check / scope_compliance）を明文化し、各軸の合否判定条件を定義する。",
+    "fail-fast 条件（必須フィールド欠損 / enum 値逸脱 / forbidden_changes 侵犯 / acceptance_ref 不一致）を明文化し、fail-fast 発動時に queue へ blocked 状態を書き込む規律を定義する。",
+    "例外分類（schema_error / type_error / enum_error / scope_violation）と各分類に対する queue 書き込み値・human gate 発動条件を明文化する。",
+    "hook wiring および MCP integration はインフラセッションへ委譲し、本セッションでは schema・検証軸・fail-fast・例外分類の定義のみを扱うことを明文化する。",
+    "handoff validator の責務境界（validator は schema 整合・enum 合否の判定のみを行い、session state / queue state の変更は queue orchestration に委譲する）を明文化する。",
+    "後続セッション起票順序（session-193 / 194 / 195 / 196 / 197 / 198）における handoff validator 依存関係を明文化する。"
+  ],
+  "out_of_scope": [
+    "本セッション JSON / YAML 以外のファイルに対する変更",
+    "handoff validator の実装コード追加変更",
+    "hook wiring の実装",
+    "MCP integration の実装",
+    "orchestration/run_session.py の変更",
+    "queue engine 関連コードの変更",
+    "scheduler 関連コードの変更",
+    "PCC backend コードの変更",
+    "PCC frontend コードの変更",
+    "providers 配下の変更",
+    "backend 配下の変更",
+    ".github 配下の変更",
+    "既存 session JSON / YAML の rewrite",
+    "legacy session の rewrite",
+    "docs/sessions/session-192.json 以降の新規作成",
+    "branch 操作（作成 / 切替 / 削除）",
+    "commit / push 操作（commit は session 終端で 1 回のみ許可）",
+    "GPT Judge の実装",
+    "dependency graph の実装",
+    "compact context pack の実装",
+    "queue engine v2 の実装",
+    "scheduler L3 の実装",
+    "PCC orchestration view の実装"
+  ],
+  "constraints": [
+    "1 セッション 1 目的を遵守すること。",
+    "docs-only セッションとして実装コードを一切変更しないこと。",
+    "変更ファイルは docs/sessions/session-192-pre.json と docs/acceptance/session-192-pre.yaml の 2 件に限定すること。",
+    "acceptance_ref は repository 相対パスとすること。",
+    "session_id とファイル名が一致すること。",
+    "曖昧語（適切に / 必要に応じて / など）を使用しないこと。",
+    "後続実装セッション（session-192 以降）はすべて本セッションの正本を参照する前提とすること。",
+    "本セッション内で実装ロードマップを確定しても、実装着手は別セッションに切ること。",
+    "review_points は 4 軸固定（仕様一致（AC達成）/ 変更範囲遵守 / 副作用なし / 検証十分性）とすること。",
+    "completion_criteria の type は document_rule / artifact / non_regression / state_transition_consistent / side_effect_free のいずれかとすること。",
+    "本セッションは責務境界の定義に留め、実装側との整合検証は後続実装セッションに委ねること。"
+  ],
+  "acceptance_ref": "docs/acceptance/session-192-pre.yaml",
+  "allowed_changes_detail": [
+    "docs/sessions/session-192-pre.json: 本セッション定義の新規作成（14 キー canonical 構造に準拠）",
+    "docs/acceptance/session-192-pre.yaml: 本セッション用 acceptance 定義の新規作成（session_id / phase_id / title / acceptance トップレベル必須）"
+  ],
+  "forbidden_changes": [
+    "orchestration/run_session.py の変更",
+    "selector 配下の変更",
+    "providers 配下の変更",
+    "backend 配下の変更",
+    ".github 配下の変更",
+    "docs/templates 配下の変更",
+    "docs/global_rules.md の変更",
+    "docs/master_instruction.md の変更",
+    "docs/roadmap.yaml の変更",
+    "既存 docs/sessions/ 配下 JSON の変更",
+    "既存 docs/acceptance/ 配下 YAML の変更",
+    "queue engine 関連コードの追加変更",
+    "scheduler 関連コードの追加変更",
+    "PCC backend / frontend コードの追加変更",
+    "handoff validator 実装コードの追加変更",
+    "hook wiring の実装コミット",
+    "MCP integration の実装コミット",
+    "branch 作成 / 切替 / 削除",
+    "git stash 操作（sealed stash 露出禁止）",
+    "commit / push 操作（commit は session 終端で 1 回のみ許可）",
+    "docs/sessions/session-192.json 以降の新規作成"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-192-pre-01",
+      "type": "artifact",
+      "condition": "docs/sessions/session-192-pre.json が 14 キー canonical 構造に準拠して保存されている。"
+    },
+    {
+      "id": "CC-192-pre-02",
+      "type": "artifact",
+      "condition": "docs/acceptance/session-192-pre.yaml が保存され、session_id がトップレベルに存在し session-192-pre と一致する。"
+    },
+    {
+      "id": "CC-192-pre-03",
+      "type": "document_rule",
+      "condition": "scope 内に GPT→ClaudeCode ハンドオフの input schema（8 フィールド）が明記されている。"
+    },
+    {
+      "id": "CC-192-pre-04",
+      "type": "document_rule",
+      "condition": "scope 内に ClaudeCode→Cursor ハンドオフの input schema（8 フィールド）が明記されている。"
+    },
+    {
+      "id": "CC-192-pre-05",
+      "type": "document_rule",
+      "condition": "scope 内に Cursor→GPT ハンドオフの output schema（6 フィールド、result_type enum: pass|fail|partial）が明記されている。"
+    },
+    {
+      "id": "CC-192-pre-06",
+      "type": "document_rule",
+      "condition": "scope 内に GPT判定→queue ハンドオフの output schema（5 フィールド、judge_result enum: pass|blocked|retry|human_review）が明記されている。"
+    },
+    {
+      "id": "CC-192-pre-07",
+      "type": "document_rule",
+      "condition": "scope 内に handoff validator の検証 4 軸（schema_integrity / type_check / enum_check / scope_compliance）と各軸の合否判定条件が明記されている。"
+    },
+    {
+      "id": "CC-192-pre-08",
+      "type": "document_rule",
+      "condition": "scope 内に fail-fast 条件（4 項目）と fail-fast 発動時の queue blocked 書き込み規律が明記されている。"
+    },
+    {
+      "id": "CC-192-pre-09",
+      "type": "document_rule",
+      "condition": "scope 内に例外分類（schema_error / type_error / enum_error / scope_violation）と各分類に対する queue 書き込み値・human gate 発動条件が明記されている。"
+    },
+    {
+      "id": "CC-192-pre-10",
+      "type": "side_effect_free",
+      "condition": "変更が docs/sessions/session-192-pre.json と docs/acceptance/session-192-pre.yaml の 2 件に限定され、実装コード・既存 session・既存 docs に副作用が発生していない。"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-192-pre-01",
+      "description": "docs/sessions/session-192-pre.json が 14 キー canonical 構造で保存され、docs/acceptance/session-192-pre.yaml のトップレベル session_id が session-192-pre と一致する。",
+      "test_name": "test_session_192_pre_canonical_14_keys_and_yaml_session_id",
+      "completion_criteria_refs": ["CC-192-pre-01", "CC-192-pre-02"]
+    },
+    {
+      "id": "AC-192-pre-02",
+      "description": "scope 内に GPT→ClaudeCode ハンドオフの input schema（session_id / phase_id / goal / scope[] / context_pack_ref / allowed_changes[] / forbidden_changes[] / acceptance_ref の 8 フィールド）が明記されている。",
+      "test_name": "test_session_192_pre_documents_gpt_to_claudecode_schema",
+      "completion_criteria_refs": ["CC-192-pre-03"]
+    },
+    {
+      "id": "AC-192-pre-03",
+      "description": "scope 内に ClaudeCode→Cursor ハンドオフの input schema（session_id / phase_id / task_id / file_targets[] / diff_plan / context_pack_ref / forbidden_changes[] / acceptance_ref の 8 フィールド）が明記されている。",
+      "test_name": "test_session_192_pre_documents_claudecode_to_cursor_schema",
+      "completion_criteria_refs": ["CC-192-pre-04"]
+    },
+    {
+      "id": "AC-192-pre-04",
+      "description": "scope 内に Cursor→GPT ハンドオフの output schema（session_id / task_id / result_type enum: pass|fail|partial / changed_files[] / summary / evidence_refs[] の 6 フィールド）が明記されている。",
+      "test_name": "test_session_192_pre_documents_cursor_to_gpt_schema",
+      "completion_criteria_refs": ["CC-192-pre-05"]
+    },
+    {
+      "id": "AC-192-pre-05",
+      "description": "scope 内に GPT判定→queue ハンドオフの output schema（session_id / judge_result enum: pass|blocked|retry|human_review / judge_timestamp / cause_fingerprint / next_action の 5 フィールド）が明記されている。",
+      "test_name": "test_session_192_pre_documents_gpt_judge_to_queue_schema",
+      "completion_criteria_refs": ["CC-192-pre-06"]
+    },
+    {
+      "id": "AC-192-pre-06",
+      "description": "scope 内に handoff validator の検証 4 軸（schema_integrity / type_check / enum_check / scope_compliance）と各軸の合否判定条件が明記されている。",
+      "test_name": "test_session_192_pre_documents_validator_4_axes",
+      "completion_criteria_refs": ["CC-192-pre-07"]
+    },
+    {
+      "id": "AC-192-pre-07",
+      "description": "scope 内に fail-fast 条件（必須フィールド欠損 / enum 値逸脱 / forbidden_changes 侵犯 / acceptance_ref 不一致）と fail-fast 発動時の queue blocked 書き込み規律が明記されている。",
+      "test_name": "test_session_192_pre_documents_fail_fast_conditions_and_queue_blocked",
+      "completion_criteria_refs": ["CC-192-pre-08"]
+    },
+    {
+      "id": "AC-192-pre-08",
+      "description": "scope 内に例外分類（schema_error / type_error / enum_error / scope_violation）と各分類に対する queue 書き込み値・human gate 発動条件が明記されている。",
+      "test_name": "test_session_192_pre_documents_exception_classification_and_human_gate",
+      "completion_criteria_refs": ["CC-192-pre-09"]
+    },
+    {
+      "id": "AC-192-pre-09",
+      "description": "変更ファイルが docs/sessions/session-192-pre.json と docs/acceptance/session-192-pre.yaml の 2 件に限定され、実装コード・既存 session・既存 docs への副作用が発生していない。",
+      "test_name": "test_session_192_pre_changed_files_limited_to_two_docs_only",
+      "completion_criteria_refs": ["CC-192-pre-10"]
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし",
+    "検証十分性"
+  ],
+  "failure_type": "spec_missing"
+}

@@ -1,0 +1,116 @@
+session_id: session-192-pre
+phase_id: phase-orchestrated-foundation
+title: Handoff validator canonicalization
+acceptance:
+- id: AC-192-pre-01
+  description: docs/sessions/session-192-pre.json が 14 キー canonical 構造で保存され、docs/acceptance/session-192-pre.yaml
+    のトップレベル session_id が session-192-pre と一致する。
+  test_name: test_session_192_pre_canonical_14_keys_and_yaml_session_id
+  type: manual
+  manual_check: true
+  completion_criteria_refs:
+  - CC-192-pre-01
+  - CC-192-pre-02
+  verification:
+  - docs/sessions/session-192-pre.json をパースし、session_id / phase_id / title / goal
+    / scope / out_of_scope / constraints / acceptance_ref / allowed_changes_detail
+    / forbidden_changes / completion_criteria / acceptance_criteria / review_points
+    / failure_type の 14 キーがすべて存在することを確認する。
+  - docs/acceptance/session-192-pre.yaml のトップレベル session_id が session-192-pre であることを確認する。
+- id: AC-192-pre-02
+  description: scope 内に GPT→ClaudeCode ハンドオフの input schema（session_id / phase_id /
+    goal / scope[] / context_pack_ref / allowed_changes[] / forbidden_changes[] /
+    acceptance_ref の 8 フィールド）が明記されている。
+  test_name: test_session_192_pre_documents_gpt_to_claudecode_schema
+  type: manual
+  manual_check: true
+  completion_criteria_refs:
+  - CC-192-pre-03
+  verification:
+  - scope 配列に GPT→ClaudeCode ハンドオフの input schema として session_id / phase_id / goal
+    / scope[] / context_pack_ref / allowed_changes[] / forbidden_changes[] / acceptance_ref
+    の 8 フィールドが含まれることを目視確認する。
+- id: AC-192-pre-03
+  description: scope 内に ClaudeCode→Cursor ハンドオフの input schema（session_id / phase_id
+    / task_id / file_targets[] / diff_plan / context_pack_ref / forbidden_changes[]
+    / acceptance_ref の 8 フィールド）が明記されている。
+  test_name: test_session_192_pre_documents_claudecode_to_cursor_schema
+  type: manual
+  manual_check: true
+  completion_criteria_refs:
+  - CC-192-pre-04
+  verification:
+  - scope 配列に ClaudeCode→Cursor ハンドオフの input schema として session_id / phase_id / task_id
+    / file_targets[] / diff_plan / context_pack_ref / forbidden_changes[] / acceptance_ref
+    の 8 フィールドが含まれることを目視確認する。
+- id: AC-192-pre-04
+  description: 'scope 内に Cursor→GPT ハンドオフの output schema（session_id / task_id / result_type
+    enum: pass|fail|partial / changed_files[] / summary / evidence_refs[] の 6 フィールド）が明記されている。'
+  test_name: test_session_192_pre_documents_cursor_to_gpt_schema
+  type: manual
+  manual_check: true
+  completion_criteria_refs:
+  - CC-192-pre-05
+  verification:
+  - scope 配列に Cursor→GPT ハンドオフの output schema として session_id / task_id / result_type
+    enum(pass|fail|partial) / changed_files[] / summary / evidence_refs[] の 6 フィールドが含まれることを目視確認する。
+- id: AC-192-pre-05
+  description: 'scope 内に GPT判定→queue ハンドオフの output schema（session_id / judge_result
+    enum: pass|blocked|retry|human_review / judge_timestamp / cause_fingerprint /
+    next_action の 5 フィールド）が明記されている。'
+  test_name: test_session_192_pre_documents_gpt_judge_to_queue_schema
+  type: manual
+  manual_check: true
+  completion_criteria_refs:
+  - CC-192-pre-06
+  verification:
+  - scope 配列に GPT判定→queue ハンドオフの output schema として session_id / judge_result enum(pass|blocked|retry|human_review)
+    / judge_timestamp / cause_fingerprint / next_action の 5 フィールドが含まれることを目視確認する。
+- id: AC-192-pre-06
+  description: scope 内に handoff validator の検証 4 軸（schema_integrity / type_check /
+    enum_check / scope_compliance）と各軸の合否判定条件が明記されている。
+  test_name: test_session_192_pre_documents_validator_4_axes
+  type: manual
+  manual_check: true
+  completion_criteria_refs:
+  - CC-192-pre-07
+  verification:
+  - scope 配列に handoff validator の検証 4 軸として schema_integrity / type_check / enum_check
+    / scope_compliance が含まれ、各軸の合否判定条件が記述されていることを目視確認する。
+- id: AC-192-pre-07
+  description: scope 内に fail-fast 条件（必須フィールド欠損 / enum 値逸脱 / forbidden_changes 侵犯 /
+    acceptance_ref 不一致）と fail-fast 発動時の queue blocked 書き込み規律が明記されている。
+  test_name: test_session_192_pre_documents_fail_fast_conditions_and_queue_blocked
+  type: manual
+  manual_check: true
+  completion_criteria_refs:
+  - CC-192-pre-08
+  verification:
+  - scope 配列に fail-fast 条件として必須フィールド欠損 / enum 値逸脱 / forbidden_changes 侵犯 / acceptance_ref
+    不一致 の 4 項目が含まれることを確認する。
+  - scope 配列に fail-fast 発動時に queue へ blocked 状態を書き込む規律が含まれることを確認する。
+- id: AC-192-pre-08
+  description: scope 内に例外分類（schema_error / type_error / enum_error / scope_violation）と各分類に対する
+    queue 書き込み値・human gate 発動条件が明記されている。
+  test_name: test_session_192_pre_documents_exception_classification_and_human_gate
+  type: manual
+  manual_check: true
+  completion_criteria_refs:
+  - CC-192-pre-09
+  verification:
+  - scope 配列に例外分類として schema_error / type_error / enum_error / scope_violation の 4
+    分類が含まれることを確認する。
+  - scope 配列に各例外分類に対する queue 書き込み値と human gate 発動条件が含まれることを確認する。
+- id: AC-192-pre-09
+  description: 変更ファイルが docs/sessions/session-192-pre.json と docs/acceptance/session-192-pre.yaml
+    の 2 件に限定され、実装コード・既存 session・既存 docs への副作用が発生していない。
+  test_name: test_session_192_pre_changed_files_limited_to_two_docs_only
+  type: manual
+  manual_check: true
+  completion_criteria_refs:
+  - CC-192-pre-10
+  verification:
+  - git diff --name-only で変更ファイル一覧を取得し、docs/sessions/session-192-pre.json と docs/acceptance/session-192-pre.yaml
+    の 2 件のみであることを確認する。
+  - orchestration/run_session.py / selector / providers / backend / .github / docs/templates
+    / docs/global_rules.md / docs/master_instruction.md に差分がないことを確認する。
