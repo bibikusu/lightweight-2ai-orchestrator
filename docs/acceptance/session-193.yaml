@@ -1,0 +1,66 @@
+session_id: session-193
+phase_id: phase-orchestrated-foundation
+title: Implement handoff pipeline integration
+acceptance:
+  - id: AC-193-01
+    description: HandoffPipelineResult dataclass が schema_version='handoff_pipeline.v1' を持ち、frozen=True で immutable である。
+    test_name: test_build_then_validate_pass_case
+    priority: highest
+    completion_criteria_refs:
+      - CC-193-01
+
+  - id: AC-193-02
+    description: "build_then_validate が session_id: str と repo_root: pathlib.Path の2引数のみを受け取る。"
+    test_name: test_build_then_validate_pass_case
+    priority: highest
+    completion_criteria_refs:
+      - CC-193-02
+
+  - id: AC-193-03
+    description: build_then_validate が compact_context_pack.json の Path と ValidationResult を HandoffPipelineResult として返す。
+    test_name: test_build_then_validate_pass_case
+    priority: highest
+    completion_criteria_refs:
+      - CC-193-03
+
+  - id: AC-193-04
+    description: context_pack 生成失敗時は validate_handoff を呼ばず、例外を re-raise する。
+    test_name: test_build_then_validate_reraises_context_pack_failure
+    priority: highest
+    completion_criteria_refs:
+      - CC-193-04
+
+  - id: AC-193-05
+    description: validator fail 時も compact_context_pack.json の Path と ValidationResult(passed=False) を返す。
+    test_name: test_build_then_validate_returns_validator_failure
+    priority: highest
+    completion_criteria_refs:
+      - CC-193-05
+
+  - id: AC-193-06
+    description: 副作用は compact_context_pack.json の出力のみに限定され、session JSON / acceptance YAML / context_pack / validator 実装を変更しない。
+    test_name: test_build_then_validate_side_effects_limited_to_context_pack
+    priority: high
+    completion_criteria_refs:
+      - CC-193-06
+
+  - id: AC-193-07
+    description: orchestration/integration/handoff_pipeline.py に実装し、orchestration/context_pack/ や orchestration/handoff_validator/ には統合関数を追加しない。
+    test_name: test_build_then_validate_pass_case
+    priority: high
+    completion_criteria_refs:
+      - CC-193-07
+
+  - id: AC-193-08
+    description: 本 session の変更ファイルが allowed_changes_detail に記載された5ファイルのみに限定されている。
+    test_name: test_build_then_validate_side_effects_limited_to_context_pack
+    priority: high
+    completion_criteria_refs:
+      - CC-193-08
+
+  - id: AC-193-09
+    description: ruff / pytest / mypy / compileall の4-gateが全 pass する。
+    test_name: test_build_then_validate_pass_case
+    priority: highest
+    completion_criteria_refs:
+      - CC-193-09
