@@ -1,0 +1,110 @@
+session_id: session-191-pre
+phase_id: phase-orchestrated-foundation
+title: Compact context pack canonicalization
+acceptance:
+- id: AC-191-pre-01
+  description: docs/sessions/session-191-pre.json が 14 キー canonical 構造で保存され、docs/acceptance/session-191-pre.yaml
+    のトップレベル session_id が session-191-pre と一致する。
+  test_name: test_session_191_pre_canonical_14_keys_and_yaml_session_id
+  type: manual
+  manual_check: true
+  verification:
+  - docs/sessions/session-191-pre.json をパースし、session_id / phase_id / title / goal
+    / scope / out_of_scope / constraints / acceptance_ref / allowed_changes_detail
+    / forbidden_changes / completion_criteria / acceptance_criteria / review_points
+    / failure_type の 14 キーがすべて存在することを確認する。
+  - docs/acceptance/session-191-pre.yaml のトップレベル session_id が session-191-pre であることを確認する。
+  completion_criteria_refs:
+  - CC-191-pre-05
+  - CC-191-pre-06
+- id: AC-191-pre-02
+  description: scope 内に compact context pack の schema 必須 fields が明記されている。
+  test_name: test_session_191_pre_documents_pack_schema
+  type: manual
+  manual_check: true
+  verification:
+  - scope 配列に compact context pack の schema として session_id / previous_session_summary
+    / required_files / forbidden_files / compression_policy / max_tokens / max_files
+    の必須 fields が含まれることを確認する。
+  completion_criteria_refs:
+  - CC-191-pre-01
+- id: AC-191-pre-03
+  description: scope 内に context pack の最大量制限（max_tokens / max_files / 超過時 fail-fast）が明記されている。
+  test_name: test_session_191_pre_documents_max_size_limits
+  type: manual
+  manual_check: true
+  verification:
+  - scope 配列に context pack の最大量制限として max_tokens 上限と max_files 上限が含まれることを確認する。
+  - scope 配列に最大量超過時の fail-fast 規律が含まれることを確認する。
+  completion_criteria_refs:
+  - CC-191-pre-02
+- id: AC-191-pre-04
+  description: scope 内に previous session summary 形式（必須 fields と要約上限文字数）が明記されている。
+  test_name: test_session_191_pre_documents_previous_session_summary
+  type: manual
+  manual_check: true
+  verification:
+  - scope 配列に previous session summary 形式として goal / scope / completion_status / failure_type
+    / next_session の必須 fields が含まれることを確認する。
+  - scope 配列に summary 要約上限文字数のルールが含まれることを確認する。
+  completion_criteria_refs:
+  - CC-191-pre-02
+- id: AC-191-pre-05
+  description: scope 内に required files 規則（正本強制含有 + session 固有追加）が明記されている。
+  test_name: test_session_191_pre_documents_required_files_rule
+  type: manual
+  manual_check: true
+  verification:
+  - scope 配列に required files 規則として global_rules.md / master_instruction.md 等の正本ファイルの強制含有条件が含まれることを確認する。
+  - scope 配列に session 固有 required の追加ルールが含まれることを確認する。
+  completion_criteria_refs:
+  - CC-191-pre-03
+- id: AC-191-pre-06
+  description: scope 内に forbidden files 規則（sealed / .git / .env / secret 強制除外 + session
+    固有追加）が明記されている。
+  test_name: test_session_191_pre_documents_forbidden_files_rule
+  type: manual
+  manual_check: true
+  verification:
+  - scope 配列に forbidden files 規則として sealed stash / .git 配下 / .env / secret 系の強制除外条件が含まれることを確認する。
+  - scope 配列に session 固有 forbidden の追加ルールが含まれることを確認する。
+  completion_criteria_refs:
+  - CC-191-pre-03
+- id: AC-191-pre-07
+  description: scope 内に compression 規則（diff_only / summary / drop の 3 方式）と肥大防止規律（max_tokens
+    超過時 summary→drop の優先順位）が明記され、LLM 呼出は別 session（router 担当）に委譲する責務境界が明示されている。
+  test_name: test_session_191_pre_documents_compression_with_delegation
+  type: manual
+  manual_check: true
+  verification:
+  - scope 配列に compression 規則として diff_only / summary / drop の 3 方式が含まれることを確認する。
+  - scope 配列に肥大防止規律として max_tokens 超過時 summary→drop の優先順位が含まれることを確認する。
+  - constraints と out_of_scope 配列に LLM 呼出は別 session（router 担当）に委譲する責務境界が明記されていることを確認する。
+  completion_criteria_refs:
+  - CC-191-pre-04
+- id: AC-191-pre-08
+  description: review_points が短文 4 軸（仕様一致（AC達成）/ 変更範囲遵守 / 副作用なし / 検証十分性）で配列順固定であり、failure_type
+    が spec_missing である。
+  test_name: test_session_191_pre_review_points_short_form_and_failure_type_spec_missing
+  type: manual
+  manual_check: true
+  verification:
+  - docs/sessions/session-191-pre.json の review_points が ['仕様一致（AC達成）', '変更範囲遵守',
+    '副作用なし', '検証十分性'] で配列順固定であることを確認する。
+  - docs/sessions/session-191-pre.json の failure_type が spec_missing であることを確認する。
+  completion_criteria_refs:
+  - CC-191-pre-07
+- id: AC-191-pre-09
+  description: 変更ファイルが docs/sessions/session-191-pre.json と docs/acceptance/session-191-pre.yaml
+    の 2 件に限定され、実装コード・既存 session・既存 docs への副作用が発生していない。
+  test_name: test_session_191_pre_changed_files_limited_to_two_docs_only
+  type: manual
+  manual_check: true
+  verification:
+  - git diff --name-only で変更ファイル一覧を取得し、docs/sessions/session-191-pre.json と docs/acceptance/session-191-pre.yaml
+    の 2 件のみであることを確認する。
+  - orchestration/run_session.py / orchestration/drift_detector.py / selector / providers
+    / backend / .github / docs/templates / docs/global_rules.md / docs/master_instruction.md
+    / docs/sessions/ 配下の既存 session 定義 / docs/acceptance/ 配下の既存 acceptance 定義に差分がないことを確認する。
+  completion_criteria_refs:
+  - CC-191-pre-08
