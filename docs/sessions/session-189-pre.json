@@ -1,0 +1,154 @@
+{
+  "session_id": "session-189-pre",
+  "phase_id": "phase-orchestrated-foundation",
+  "title": "GPT Judge canonicalization",
+  "goal": "session-188-pre で宣言した GPT Judge コンポーネントの責務を、入力スキーマ・出力スキーマ・4 値判定 enum 優先順位・stale report exclusion 条件・AC pass 偽装検知ルール・failure_type 優先順位の詳細 schema 正本へ分解し、後続 session-189（GPT Judge 実装 session）が参照可能な正本ドキュメントを docs-only で固定する。",
+  "scope": [
+    "GPT Judge の input schema として session_id / check_results / artifact_paths / timestamp / report_freshness の必須 fields を文書化する。",
+    "GPT Judge の output schema として judge_result（pass / blocked / retry / human_review）/ failure_type / cause_summary / evidence_refs / next_action の必須 fields を文書化する。",
+    "judge_result enum の 4 値（pass / blocked / retry / human_review）それぞれの発火条件と、複数条件成立時の優先順位ルール（blocked > human_review > retry > pass）を文書化する。",
+    "stale report exclusion 条件として report timestamp と session 開始時刻の関係（report が session 開始より前なら exclude）、HEAD 照合（commit SHA mismatch なら exclude）、tracked status check（untracked なら exclude）の 3 検出方針を文書化する。",
+    "AC pass 偽装検知ルールとして、4-gate 全 pass 後の artifact 必須キー手動 grep / failure_type 欠落検知 / scope 外差分検知の 3 軸を文書化する。",
+    "failure_type 優先順位として scope_violation > regression > spec_missing > test_insufficient > runtime_error の順序ルールを文書化する。",
+    "依存関係: session-188-pre 完了を前提とする。本 session の正本確定が session-189（GPT Judge 実装）の前提となる。"
+  ],
+  "out_of_scope": [
+    "GPT Judge の Python 実装",
+    "orchestration/run_session.py の変更",
+    "queue engine の変更",
+    "retry_loop の変更",
+    "既存 session 定義の rewrite",
+    "legacy session の rewrite",
+    "docs/global_rules.md / orchestration/drift_detector.py の review_points 長文／短文表記差の是正",
+    "session-190-pre 以降の起票",
+    "drift_detector の起動・実行"
+  ],
+  "constraints": [
+    "1 セッション 1 目的",
+    "docs-only",
+    "最大 5 ファイル以内",
+    "review_points は現行実 JSON 運用層に合わせて短文 4 軸を採用する。global_rules / drift_detector の長文表記差は本 session の scope 外とし、別 session で解消する。",
+    "drift_detector は本 session 中起動禁止",
+    "YAML 構造は docs/acceptance/session-188-pre.yaml の正本構造に完全準拠する（雛形読込＋値差替方式、自動整合）",
+    "branch 操作は sandbox/session-189-pre のみ許可。commit までは許可、push と main 直接 commit は commander 明示指示まで禁止",
+    "sealed stash（stash@{0}=chat51 WIP 等）への touch 禁止"
+  ],
+  "acceptance_ref": "docs/acceptance/session-189-pre.yaml",
+  "allowed_changes_detail": [
+    "docs/sessions/session-189-pre.json: session-189-pre の docs-only session 定義の新規作成のみ",
+    "docs/acceptance/session-189-pre.yaml: session-189-pre の acceptance 定義の新規作成のみ"
+  ],
+  "forbidden_changes": [
+    "orchestration/run_session.py",
+    "orchestration/drift_detector.py",
+    "orchestration/ 配下のその他 Python ファイル",
+    "queue engine 関連ファイル",
+    "scheduler 関連ファイル",
+    "PCC backend / frontend",
+    "hooks 配下",
+    "MCP 設定",
+    "docs/global_rules.md",
+    "docs/master_instruction.md",
+    "docs/sessions/ 配下の既存 session 定義",
+    "docs/acceptance/ 配下の既存 acceptance 定義",
+    "backend/tests/ 配下",
+    "branch の force-push / rebase / sealed stash 操作",
+    "main への直接 commit / push"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-189-pre-01",
+      "type": "document_rule",
+      "condition": "docs/sessions/session-189-pre.json に GPT Judge の input schema と output schema の両方が必須 fields 列挙形式で記述されていること。"
+    },
+    {
+      "id": "CC-189-pre-02",
+      "type": "document_rule",
+      "condition": "docs/sessions/session-189-pre.json に judge_result enum の 4 値（pass / blocked / retry / human_review）それぞれの発火条件と複数条件成立時の優先順位が記述されていること。"
+    },
+    {
+      "id": "CC-189-pre-03",
+      "type": "document_rule",
+      "condition": "docs/sessions/session-189-pre.json に stale report exclusion の 3 検出方針と AC pass 偽装検知の 3 軸が記述されていること。"
+    },
+    {
+      "id": "CC-189-pre-04",
+      "type": "document_rule",
+      "condition": "docs/sessions/session-189-pre.json に failure_type の優先順位ルール（scope_violation > regression > spec_missing > test_insufficient > runtime_error）が記述されていること。"
+    },
+    {
+      "id": "CC-189-pre-05",
+      "type": "document_rule",
+      "condition": "docs/sessions/session-189-pre.json のトップレベルキーが 14 個 canonical 構造（session_id / phase_id / title / goal / scope / out_of_scope / constraints / acceptance_ref / allowed_changes_detail / forbidden_changes / completion_criteria / acceptance_criteria / review_points / failure_type）で保存されていること。"
+    },
+    {
+      "id": "CC-189-pre-06",
+      "type": "document_rule",
+      "condition": "docs/acceptance/session-189-pre.yaml のトップレベル session_id が session-189-pre と一致し、構造が docs/acceptance/session-188-pre.yaml に準拠していること。"
+    },
+    {
+      "id": "CC-189-pre-07",
+      "type": "document_rule",
+      "condition": "docs/sessions/session-189-pre.json の review_points が短文 4 軸（仕様一致（AC達成）/ 変更範囲遵守 / 副作用なし / 検証十分性）で配列順固定であり、failure_type が spec_missing であること。"
+    },
+    {
+      "id": "CC-189-pre-08",
+      "type": "side_effect_free",
+      "condition": "変更ファイルが docs/sessions/session-189-pre.json と docs/acceptance/session-189-pre.yaml の 2 件に限定され、実装コード・既存 session・既存 docs への副作用が発生していないこと。"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-189-pre-01",
+      "description": "docs/sessions/session-189-pre.json が 14 キー canonical 構造で保存され、docs/acceptance/session-189-pre.yaml のトップレベル session_id が session-189-pre と一致する。",
+      "test_name": "test_session_189_pre_canonical_14_keys_and_yaml_session_id"
+    },
+    {
+      "id": "AC-189-pre-02",
+      "description": "scope 内に GPT Judge の input schema 必須 fields が明記されている。",
+      "test_name": "test_session_189_pre_documents_judge_input_schema"
+    },
+    {
+      "id": "AC-189-pre-03",
+      "description": "scope 内に GPT Judge の output schema 必須 fields が明記されている。",
+      "test_name": "test_session_189_pre_documents_judge_output_schema"
+    },
+    {
+      "id": "AC-189-pre-04",
+      "description": "scope 内に judge_result enum の 4 値（pass / blocked / retry / human_review）の発火条件と優先順位ルールが明記されている。",
+      "test_name": "test_session_189_pre_documents_judge_result_enum_and_priority"
+    },
+    {
+      "id": "AC-189-pre-05",
+      "description": "scope 内に stale report exclusion の 3 検出方針（report timestamp / HEAD 照合 / tracked status）が明記されている。",
+      "test_name": "test_session_189_pre_documents_stale_report_exclusion"
+    },
+    {
+      "id": "AC-189-pre-06",
+      "description": "scope 内に AC pass 偽装検知ルールの 3 軸（artifact 手動 grep / failure_type 欠落検知 / scope 外差分検知）が明記されている。",
+      "test_name": "test_session_189_pre_documents_ac_fake_pass_detection"
+    },
+    {
+      "id": "AC-189-pre-07",
+      "description": "scope 内に failure_type の優先順位ルール（scope_violation > regression > spec_missing > test_insufficient > runtime_error）が明記されている。",
+      "test_name": "test_session_189_pre_documents_failure_type_priority"
+    },
+    {
+      "id": "AC-189-pre-08",
+      "description": "review_points が短文 4 軸（仕様一致（AC達成）/ 変更範囲遵守 / 副作用なし / 検証十分性）で配列順固定であり、failure_type が spec_missing である。",
+      "test_name": "test_session_189_pre_review_points_short_form_and_failure_type_spec_missing"
+    },
+    {
+      "id": "AC-189-pre-09",
+      "description": "変更ファイルが docs/sessions/session-189-pre.json と docs/acceptance/session-189-pre.yaml の 2 件に限定され、実装コード・既存 session・既存 docs への副作用が発生していない。",
+      "test_name": "test_session_189_pre_changed_files_limited_to_two_docs_only"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし",
+    "検証十分性"
+  ],
+  "failure_type": "spec_missing"
+}

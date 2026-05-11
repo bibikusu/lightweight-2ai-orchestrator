@@ -1,0 +1,110 @@
+session_id: session-189-pre
+phase_id: phase-orchestrated-foundation
+title: GPT Judge canonicalization
+acceptance:
+- id: AC-189-pre-01
+  description: docs/sessions/session-189-pre.json が 14 キー canonical 構造で保存され、docs/acceptance/session-189-pre.yaml
+    のトップレベル session_id が session-189-pre と一致する。
+  test_name: test_session_189_pre_canonical_14_keys_and_yaml_session_id
+  type: manual
+  manual_check: true
+  verification:
+  - docs/sessions/session-189-pre.json をパースし、session_id / phase_id / title / goal
+    / scope / out_of_scope / constraints / acceptance_ref / allowed_changes_detail
+    / forbidden_changes / completion_criteria / acceptance_criteria / review_points
+    / failure_type の 14 キーがすべて存在することを確認する。
+  - docs/acceptance/session-189-pre.yaml のトップレベル session_id が session-189-pre であることを確認する。
+  completion_criteria_refs:
+  - CC-189-pre-05
+  - CC-189-pre-06
+- id: AC-189-pre-02
+  description: scope 内に GPT Judge の input schema 必須 fields が明記されている。
+  test_name: test_session_189_pre_documents_judge_input_schema
+  type: manual
+  manual_check: true
+  verification:
+  - scope 配列に GPT Judge の input schema として session_id / check_results / artifact_paths
+    / timestamp / report_freshness の必須 fields が含まれることを確認する。
+  completion_criteria_refs:
+  - CC-189-pre-01
+- id: AC-189-pre-03
+  description: scope 内に GPT Judge の output schema 必須 fields が明記されている。
+  test_name: test_session_189_pre_documents_judge_output_schema
+  type: manual
+  manual_check: true
+  verification:
+  - scope 配列に GPT Judge の output schema として judge_result / failure_type / cause_summary
+    / evidence_refs / next_action の必須 fields が含まれることを確認する。
+  completion_criteria_refs:
+  - CC-189-pre-01
+- id: AC-189-pre-04
+  description: scope 内に judge_result enum の 4 値（pass / blocked / retry / human_review）の発火条件と優先順位ルールが明記されている。
+  test_name: test_session_189_pre_documents_judge_result_enum_and_priority
+  type: manual
+  manual_check: true
+  verification:
+  - scope 配列に judge_result enum の 4 値（pass / blocked / retry / human_review）それぞれの発火条件が含まれることを確認する。
+  - scope 配列に複数条件成立時の優先順位ルール（blocked > human_review > retry > pass）が含まれることを確認する。
+  completion_criteria_refs:
+  - CC-189-pre-02
+- id: AC-189-pre-05
+  description: scope 内に stale report exclusion の 3 検出方針（report timestamp / HEAD 照合
+    / tracked status）が明記されている。
+  test_name: test_session_189_pre_documents_stale_report_exclusion
+  type: manual
+  manual_check: true
+  verification:
+  - scope 配列に stale report exclusion として report timestamp と session 開始時刻の関係（report
+    が session 開始より前なら exclude）が含まれることを確認する。
+  - scope 配列に HEAD 照合（commit SHA mismatch なら exclude）と tracked status check（untracked
+    なら exclude）が含まれることを確認する。
+  completion_criteria_refs:
+  - CC-189-pre-03
+- id: AC-189-pre-06
+  description: scope 内に AC pass 偽装検知ルールの 3 軸（artifact 手動 grep / failure_type 欠落検知
+    / scope 外差分検知）が明記されている。
+  test_name: test_session_189_pre_documents_ac_fake_pass_detection
+  type: manual
+  manual_check: true
+  verification:
+  - scope 配列に AC pass 偽装検知ルールとして 4-gate 全 pass 後の artifact 必須キー手動 grep が含まれることを確認する。
+  - scope 配列に failure_type 欠落検知と scope 外差分検知の 2 軸が含まれることを確認する。
+  completion_criteria_refs:
+  - CC-189-pre-03
+- id: AC-189-pre-07
+  description: scope 内に failure_type の優先順位ルール（scope_violation > regression > spec_missing
+    > test_insufficient > runtime_error）が明記されている。
+  test_name: test_session_189_pre_documents_failure_type_priority
+  type: manual
+  manual_check: true
+  verification:
+  - scope 配列に failure_type の優先順位ルール（scope_violation > regression > spec_missing >
+    test_insufficient > runtime_error）が含まれることを確認する。
+  completion_criteria_refs:
+  - CC-189-pre-04
+- id: AC-189-pre-08
+  description: review_points が短文 4 軸（仕様一致（AC達成）/ 変更範囲遵守 / 副作用なし / 検証十分性）で配列順固定であり、failure_type
+    が spec_missing である。
+  test_name: test_session_189_pre_review_points_short_form_and_failure_type_spec_missing
+  type: manual
+  manual_check: true
+  verification:
+  - docs/sessions/session-189-pre.json の review_points が ['仕様一致（AC達成）', '変更範囲遵守',
+    '副作用なし', '検証十分性'] で配列順固定であることを確認する。
+  - docs/sessions/session-189-pre.json の failure_type が spec_missing であることを確認する。
+  completion_criteria_refs:
+  - CC-189-pre-07
+- id: AC-189-pre-09
+  description: 変更ファイルが docs/sessions/session-189-pre.json と docs/acceptance/session-189-pre.yaml
+    の 2 件に限定され、実装コード・既存 session・既存 docs への副作用が発生していない。
+  test_name: test_session_189_pre_changed_files_limited_to_two_docs_only
+  type: manual
+  manual_check: true
+  verification:
+  - git diff --name-only で変更ファイル一覧を取得し、docs/sessions/session-189-pre.json と docs/acceptance/session-189-pre.yaml
+    の 2 件のみであることを確認する。
+  - orchestration/run_session.py / orchestration/drift_detector.py / selector / providers
+    / backend / .github / docs/templates / docs/global_rules.md / docs/master_instruction.md
+    / docs/sessions/ 配下の既存 session 定義 / docs/acceptance/ 配下の既存 acceptance 定義に差分がないことを確認する。
+  completion_criteria_refs:
+  - CC-189-pre-08
