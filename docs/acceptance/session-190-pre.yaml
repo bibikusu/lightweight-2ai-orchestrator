@@ -1,0 +1,109 @@
+session_id: session-190-pre
+phase_id: phase-orchestrated-foundation
+title: Dependency graph canonicalization
+acceptance:
+- id: AC-190-pre-01
+  description: docs/sessions/session-190-pre.json が 14 キー canonical 構造で保存され、docs/acceptance/session-190-pre.yaml
+    のトップレベル session_id が session-190-pre と一致する。
+  test_name: test_session_190_pre_canonical_14_keys_and_yaml_session_id
+  type: manual
+  manual_check: true
+  verification:
+  - docs/sessions/session-190-pre.json をパースし、session_id / phase_id / title / goal
+    / scope / out_of_scope / constraints / acceptance_ref / allowed_changes_detail
+    / forbidden_changes / completion_criteria / acceptance_criteria / review_points
+    / failure_type の 14 キーがすべて存在することを確認する。
+  - docs/acceptance/session-190-pre.yaml のトップレベル session_id が session-190-pre であることを確認する。
+  completion_criteria_refs:
+  - CC-190-pre-05
+  - CC-190-pre-06
+- id: AC-190-pre-02
+  description: scope 内に dependency graph の depends_on schema 必須 fields が明記されている。
+  test_name: test_session_190_pre_documents_depends_on_schema
+  type: manual
+  manual_check: true
+  verification:
+  - scope 配列に dependency graph の depends_on schema として session_id / required_session_ids
+    / required_artifacts / required_state の必須 fields が含まれることを確認する。
+  completion_criteria_refs:
+  - CC-190-pre-01
+- id: AC-190-pre-03
+  description: scope 内に dependency graph の blocks schema 必須 fields が明記されている。
+  test_name: test_session_190_pre_documents_blocks_schema
+  type: manual
+  manual_check: true
+  verification:
+  - scope 配列に dependency graph の blocks schema として session_id / blocked_session_ids
+    / blocking_reason の必須 fields が含まれることを確認する。
+  completion_criteria_refs:
+  - CC-190-pre-01
+- id: AC-190-pre-04
+  description: scope 内に ready 判定条件の 3 条件 AND ルール（depends_on / required_artifacts /
+    required_state）が明記されている。
+  test_name: test_session_190_pre_documents_ready_condition
+  type: manual
+  manual_check: true
+  verification:
+  - scope 配列に ready 判定条件として depends_on 全件 pass が含まれることを確認する。
+  - scope 配列に required_artifacts 全件 tracked と required_state 一致の条件が含まれ、3 条件 AND ルールであることを確認する。
+  completion_criteria_refs:
+  - CC-190-pre-02
+- id: AC-190-pre-05
+  description: scope 内に cycle detection 規則の 3 方針（DAG 違反検知 / 自己参照禁止 / 検出時 fail-fast）が明記されている。
+  test_name: test_session_190_pre_documents_cycle_detection
+  type: manual
+  manual_check: true
+  verification:
+  - scope 配列に cycle detection として DAG 違反検知（A→B→A）と自己参照禁止（A→A）が含まれることを確認する。
+  - scope 配列に cycle 検出時の fail-fast 規律が含まれることを確認する。
+  completion_criteria_refs:
+  - CC-190-pre-03
+- id: AC-190-pre-06
+  description: scope 内に dependency resolution 順序（topological sort / 同階層 session_id
+    昇順 / tie-break）が明記されている。
+  test_name: test_session_190_pre_documents_resolution_order
+  type: manual
+  manual_check: true
+  verification:
+  - scope 配列に dependency resolution 順序として topological sort が含まれることを確認する。
+  - scope 配列に同階層は session_id 昇順 / tie-break ルールが含まれることを確認する。
+  completion_criteria_refs:
+  - CC-190-pre-04
+- id: AC-190-pre-07
+  description: scope 内に followup session chain ルールが明記され、dependency graph では直接実行せず
+    plan または queue 側に委譲する責務境界が明示されている。
+  test_name: test_session_190_pre_documents_followup_chain_with_delegation
+  type: manual
+  manual_check: true
+  verification:
+  - scope 配列に followup session chain として next_session 単方向 / chain 上限 / 終端条件 / 並列分岐が含まれることを確認する。
+  - scope 配列に dependency graph が直接実行せず plan または queue 側に委譲する責務境界が明記されていることを確認する。
+  - out_of_scope 配列に dependency graph が session を直接 dispatch / execute することの禁止が含まれることを確認する。
+  completion_criteria_refs:
+  - CC-190-pre-04
+- id: AC-190-pre-08
+  description: review_points が短文 4 軸（仕様一致（AC達成）/ 変更範囲遵守 / 副作用なし / 検証十分性）で配列順固定であり、failure_type
+    が spec_missing である。
+  test_name: test_session_190_pre_review_points_short_form_and_failure_type_spec_missing
+  type: manual
+  manual_check: true
+  verification:
+  - docs/sessions/session-190-pre.json の review_points が ['仕様一致（AC達成）', '変更範囲遵守',
+    '副作用なし', '検証十分性'] で配列順固定であることを確認する。
+  - docs/sessions/session-190-pre.json の failure_type が spec_missing であることを確認する。
+  completion_criteria_refs:
+  - CC-190-pre-07
+- id: AC-190-pre-09
+  description: 変更ファイルが docs/sessions/session-190-pre.json と docs/acceptance/session-190-pre.yaml
+    の 2 件に限定され、実装コード・既存 session・既存 docs への副作用が発生していない。
+  test_name: test_session_190_pre_changed_files_limited_to_two_docs_only
+  type: manual
+  manual_check: true
+  verification:
+  - git diff --name-only で変更ファイル一覧を取得し、docs/sessions/session-190-pre.json と docs/acceptance/session-190-pre.yaml
+    の 2 件のみであることを確認する。
+  - orchestration/run_session.py / orchestration/drift_detector.py / selector / providers
+    / backend / .github / docs/templates / docs/global_rules.md / docs/master_instruction.md
+    / docs/sessions/ 配下の既存 session 定義 / docs/acceptance/ 配下の既存 acceptance 定義に差分がないことを確認する。
+  completion_criteria_refs:
+  - CC-190-pre-08
