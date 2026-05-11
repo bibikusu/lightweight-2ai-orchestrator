@@ -60,56 +60,6 @@
     "main 直接 commit を行わないこと"
   ],
   "acceptance_ref": "docs/acceptance/session-194-pre.yaml",
-  "inputs": [
-    {
-      "name": "session_190_pre_spec",
-      "type": "file:path",
-      "required": true,
-      "description": "docs/sessions/session-190-pre.json (main 統合済の dependency_graph spec 正本)"
-    },
-    {
-      "name": "session_188_pre_spec",
-      "type": "file:path",
-      "required": true,
-      "description": "docs/sessions/session-188-pre.json (main 統合済の gpt_judge spec 正本 + rev4 雛形正本)"
-    },
-    {
-      "name": "session_193_pre_spec",
-      "type": "file:path",
-      "required": true,
-      "description": "docs/sessions/session-193-pre.json (handoff_pipeline 統合契約、194-pre と同型の rev4 流用元)"
-    },
-    {
-      "name": "global_rules_reference",
-      "type": "file:path",
-      "required": true,
-      "description": "docs/global_rules.md"
-    },
-    {
-      "name": "master_instruction_reference",
-      "type": "file:path",
-      "required": true,
-      "description": "docs/master_instruction.md"
-    }
-  ],
-  "outputs": [
-    {
-      "name": "readiness_pipeline_spec_json",
-      "type": "json",
-      "required": true,
-      "description": "docs/sessions/session-194-pre.json"
-    },
-    {
-      "name": "readiness_pipeline_spec_yaml",
-      "type": "yaml",
-      "required": true,
-      "description": "docs/acceptance/session-194-pre.yaml"
-    }
-  ],
-  "allowed_changes": [
-    "docs/sessions/session-194-pre.json",
-    "docs/acceptance/session-194-pre.yaml"
-  ],
   "allowed_changes_detail": [
     "docs/sessions/session-194-pre.json: readiness_pipeline 統合契約の正本化。14 canonical keys 完備。judge_and_ready 関数の入出力契約・AND 条件契約・対称エラーハンドリング契約・副作用契約 (副作用なし)・responsibility 境界・module 配置契約・188 stub interface 前提・190 phase_id-base graph 前提・schema_version='readiness_pipeline.v1' を明文化する。",
     "docs/acceptance/session-194-pre.yaml: readiness_pipeline 統合契約の受入定義。9 AC、各要素は id/description/test_name/priority/completion_criteria_refs を持つ。"

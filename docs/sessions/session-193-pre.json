@@ -49,56 +49,6 @@
     "main 直接 commit を行わないこと"
   ],
   "acceptance_ref": "docs/acceptance/session-193-pre.yaml",
-  "inputs": [
-    {
-      "name": "session_191_spec",
-      "type": "file:path",
-      "required": true,
-      "description": "docs/sessions/session-191.json (main 統合済の正本)"
-    },
-    {
-      "name": "session_192_spec",
-      "type": "file:path",
-      "required": true,
-      "description": "docs/sessions/session-192.json (main 統合済の正本)"
-    },
-    {
-      "name": "session_188_pre_template",
-      "type": "file:path",
-      "required": true,
-      "description": "docs/sessions/session-188-pre.json (rev4 雛形正本)"
-    },
-    {
-      "name": "global_rules_reference",
-      "type": "file:path",
-      "required": true,
-      "description": "docs/global_rules.md"
-    },
-    {
-      "name": "master_instruction_reference",
-      "type": "file:path",
-      "required": true,
-      "description": "docs/master_instruction.md"
-    }
-  ],
-  "outputs": [
-    {
-      "name": "handoff_pipeline_spec_json",
-      "type": "json",
-      "required": true,
-      "description": "docs/sessions/session-193-pre.json"
-    },
-    {
-      "name": "handoff_pipeline_spec_yaml",
-      "type": "yaml",
-      "required": true,
-      "description": "docs/acceptance/session-193-pre.yaml"
-    }
-  ],
-  "allowed_changes": [
-    "docs/sessions/session-193-pre.json",
-    "docs/acceptance/session-193-pre.yaml"
-  ],
   "allowed_changes_detail": [
     "docs/sessions/session-193-pre.json: handoff_pipeline 統合契約の正本化。14 canonical keys 完備。build_then_validate 関数の入出力契約・エラーハンドリング契約・副作用契約・responsibility 境界・module 配置契約・schema_version='handoff_pipeline.v1' を明文化する。",
     "docs/acceptance/session-193-pre.yaml: handoff_pipeline 統合契約の受入定義。9 AC、各要素は id/description/test_name/priority/completion_criteria_refs を持つ。"

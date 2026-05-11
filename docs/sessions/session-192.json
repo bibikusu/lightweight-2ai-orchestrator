@@ -59,49 +59,6 @@
     "main 直接 commit を行わないこと"
   ],
   "acceptance_ref": "docs/acceptance/session-192.yaml",
-  "inputs": [
-    {
-      "name": "context_pack_path",
-      "type": "file:path",
-      "required": true,
-      "description": "artifacts/<session_id>/context/compact_context_pack.json (session-191 で生成済み)"
-    },
-    {
-      "name": "session_json_path",
-      "type": "file:path",
-      "required": true,
-      "description": "docs/sessions/<session_id>.json (AC-CC 整合性確認の正本)"
-    },
-    {
-      "name": "acceptance_yaml_path",
-      "type": "file:path",
-      "required": true,
-      "description": "docs/acceptance/<session_id>.yaml (AC-CC 整合性確認の正本、completion_criteria_refs を保持)"
-    },
-    {
-      "name": "global_rules_reference",
-      "type": "file:path",
-      "required": true,
-      "description": "docs/global_rules.md"
-    }
-  ],
-  "outputs": [
-    {
-      "name": "validation_result",
-      "type": "object",
-      "required": true,
-      "description": "ValidationResult dataclass instance (schema_version / passed / errors / warnings)"
-    }
-  ],
-  "allowed_changes": [
-    "docs/sessions/session-192.json",
-    "docs/acceptance/session-192.yaml",
-    "orchestration/handoff_validator/__init__.py",
-    "orchestration/handoff_validator/core.py",
-    "orchestration/handoff_validator/rules.py",
-    "orchestration/handoff_validator/result.py",
-    "tests/test_handoff_validator.py"
-  ],
   "allowed_changes_detail": [
     "docs/sessions/session-192.json: 本 session 定義の新規作成。14 canonical keys 完備。",
     "docs/acceptance/session-192.yaml: 本 session 受入定義の新規作成。9 AC、各要素は id/description/test_name/priority/completion_criteria_refs を持つ。",
