@@ -5,7 +5,7 @@ import json
 import re
 import subprocess
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from backend.pcc.pcc_v0_5 import derive_operational_fields, enrich_cards
 
