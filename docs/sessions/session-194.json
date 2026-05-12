@@ -1,0 +1,182 @@
+{
+  "session_id": "session-194",
+  "phase_id": "phase-orchestrated-foundation",
+  "title": "Implement dependency graph (build_dependency_graph)",
+  "goal": "session-190.json で正本化した dependency graph implementation contract をコード化する。build_dependency_graph(session_ids: list[str], repo_root: pathlib.Path) により session JSON を read-only で読み取り、DependencyGraphResult(success, failure_type, nodes, edges, metadata, errors) を返し、graph artifact を artifacts/session-190/dependency_graph/graph.json に JSON 出力する。orchestration/dependency_graph/ を新規パッケージとして追加し、public API を orchestration.dependency_graph から re-export する。",
+  "scope": [
+    "orchestration/dependency_graph/ パッケージを新規追加する。",
+    "DependencyGraphResult dataclass(frozen=True) を実装し、session-190 の graph schema (success / failure_type / nodes / edges / metadata / errors) を満たす。",
+    "build_dependency_graph(session_ids: list[str], repo_root: pathlib.Path) を実装し、session_id 昇順の deterministic な nodes 順序を返す。",
+    "depends_on / blocks から edge を構築し、ready 判定を depends_on 全完了の AND 条件として各 node に反映する。",
+    "cycle 検出時は例外を raise せず、success=False / failure_type='spec_missing' / errors 非空の DependencyGraphResult を返す。",
+    "成功時は artifacts/session-190/dependency_graph/graph.json に有効な JSON を書き出す。",
+    "orchestration/dependency_graph/__init__.py で build_dependency_graph と DependencyGraphResult を public API として re-export する。",
+    "tests/test_dependency_graph.py の @pytest.mark.skip を解除し、fixtures (tests/fixtures/dependency_graph/*.json) を用いて AC-194 に沿って検証する。"
+  ],
+  "out_of_scope": [
+    "readiness_pipeline (session-194-pre 以降の統合) の実装",
+    "orchestration/integration/readiness_pipeline.py の新規作成",
+    "GPT Judge 実 LLM 呼び出し",
+    "run_session.py への接続",
+    "queue / scheduler / selector の state mutate",
+    "orchestration/context_pack/ 配下の変更",
+    "orchestration/handoff_validator/ 配下の変更",
+    "orchestration/integration/handoff_pipeline.py の変更",
+    "session-191.json / session-192.json / session-193.json および対応 acceptance YAML の変更",
+    "docs/global_rules.md / docs/master_instruction.md の変更",
+    "main 直接 commit",
+    "git push"
+  ],
+  "constraints": [
+    "1セッション1目的",
+    "14 canonical keys のみを使用すること",
+    "allowed_changes_detail は list[str] とし、各要素は 'ファイルパス: 許可内容' 形式とすること",
+    "completion_criteria は object 配列とし、各要素は id / type / condition を持つこと",
+    "acceptance_criteria は object 配列とし、各要素は id / description / test_name を持つこと",
+    "review_points は短文4軸固定とすること",
+    "failure_type は test_failure とすること",
+    "session-190 の public API シグネチャと artifact path を厳守すること",
+    "Python 3.9 互換を維持し、PEP 604 のインライン Union 構文（例: typing の代わりに縦棒で型を結ぶ記法）は実装コードに含めないこと。Optional / Union は typing モジュールを用いること",
+    "既存公開契約 build_compact_context_pack / validate_handoff / build_then_validate のシグネチャと挙動を変更しないこと",
+    "selector / queue / PCC のファイルを読み取り専用で扱い、state を mutate しないこと"
+  ],
+  "acceptance_ref": "docs/acceptance/session-194.yaml",
+  "allowed_changes_detail": [
+    "orchestration/dependency_graph/__init__.py: パッケージ宣言。build_dependency_graph / DependencyGraphResult を public API として re-export する。",
+    "orchestration/dependency_graph/graph.py: DependencyGraphResult dataclass(frozen=True) と build_dependency_graph(session_ids: list[str], repo_root: pathlib.Path) を実装する（サブモジュール名は実装で調整可だが public エクスポートは __init__.py 経由とする）。",
+    "tests/test_dependency_graph.py: skip を解除し、session-194.yaml の test_name に対応する検証を実装する。"
+  ],
+  "forbidden_changes": [
+    "orchestration/run_session.py を変更しない",
+    "orchestration/selector/ 配下を変更しない",
+    "orchestration/queue/ 配下を変更しない",
+    "orchestration/scheduler/ 配下を変更しない",
+    "orchestration/integration/ 配下を変更しない",
+    "backend/pcc/ 配下を変更しない",
+    "orchestration/context_pack/ 配下を変更しない",
+    "orchestration/handoff_validator/ 配下を変更しない",
+    "providers / backend / .github 配下を変更しない",
+    "docs/global_rules.md / docs/master_instruction.md を変更しない",
+    "docs/sessions/session-190.json / session-194-pre.json を変更しない",
+    "docs/acceptance/session-190.yaml / session-194-pre.yaml を変更しない",
+    "docs/sessions/session-191.json / session-192.json / session-193.json を変更しない",
+    "docs/acceptance/session-191.yaml / session-192.yaml / session-193.yaml を変更しない",
+    "build_compact_context_pack / validate_handoff / build_then_validate の公開契約を変更しない",
+    "readiness_pipeline を新規実装しない",
+    "既存 tests/ の session-194 対象以外のファイルを変更しない",
+    "main / origin/main 上で直接 commit しない",
+    "git stash 家族コマンドを実行しない",
+    "git push を実行しない"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-194-01",
+      "type": "document_rule",
+      "condition": "docs/sessions/session-194.json が 14 canonical keys をすべて含み、review_points が canonical 4軸と完全一致し、failure_type が test_failure である。"
+    },
+    {
+      "id": "CC-194-02",
+      "type": "side_effect_free",
+      "condition": "allowed_changes_detail が orchestration/dependency_graph/ 配下と tests/test_dependency_graph.py のみを許可し、selector / queue / PCC / run_session.py / orchestration/integration/ を forbidden_changes に含める。"
+    },
+    {
+      "id": "CC-194-03",
+      "type": "artifact",
+      "condition": "build_dependency_graph 実行後に artifacts/session-190/dependency_graph/graph.json が存在し、有効な JSON として読み込み可能である。"
+    },
+    {
+      "id": "CC-194-04",
+      "type": "artifact",
+      "condition": "DependencyGraphResult が success / failure_type / nodes / edges / metadata / errors を持ち、node 各要素が id (session_id) を持つ。"
+    },
+    {
+      "id": "CC-194-05",
+      "type": "state_transition_consistent",
+      "condition": "valid_chained fixture (A→B→C) で edge が depends_on / blocks から正しく構築され、ready の AND 条件が満たされる。"
+    },
+    {
+      "id": "CC-194-06",
+      "type": "artifact",
+      "condition": "session_ids を逆順で渡した場合も正順で渡した場合も nodes 順序が session_id 昇順で一致する。"
+    },
+    {
+      "id": "CC-194-07",
+      "type": "artifact",
+      "condition": "from orchestration.dependency_graph import build_dependency_graph, DependencyGraphResult が ImportError なく成功し、DependencyGraphResult が dataclass(frozen=True) である。"
+    },
+    {
+      "id": "CC-194-08",
+      "type": "state_transition_consistent",
+      "condition": "invalid_cycle fixture の build で例外が raise されず、result.success=False / result.failure_type='spec_missing' / len(result.errors) > 0 を返す。"
+    },
+    {
+      "id": "CC-194-09",
+      "type": "side_effect_free",
+      "condition": "build_dependency_graph 実行前後で selector / queue / PCC の state ファイルが変更されない。"
+    },
+    {
+      "id": "CC-194-10",
+      "type": "non_regression",
+      "condition": "orchestration/context_pack/__init__.py / orchestration/handoff_validator/__init__.py / orchestration/integration/__init__.py の md5 が session-193 完了時点の baseline と一致する。"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-194-01",
+      "description": "session-194.json は 14 canonical keys をすべて含み、review_points が canonical 4軸と完全一致し、failure_type が test_failure である。",
+      "test_name": "test_session_194_json_has_canonical_keys_and_review_points"
+    },
+    {
+      "id": "AC-194-02",
+      "description": "session-194.json の allowed_changes_detail は orchestration/dependency_graph/ 配下の実装ファイルと tests/test_dependency_graph.py (skip 解除版) のみを許可し、selector / queue / PCC / run_session.py を forbidden_changes に含める。",
+      "test_name": "test_session_194_scope_limits_to_dependency_graph_impl"
+    },
+    {
+      "id": "AC-194-03",
+      "description": "build_dependency_graph の実行により artifacts/session-190/dependency_graph/graph.json が JSON 形式で出力される。",
+      "test_name": "test_session_194_graph_artifact_is_written_as_json"
+    },
+    {
+      "id": "AC-194-04",
+      "description": "DependencyGraphResult が nodes / edges / metadata / errors フィールドを持ち、node identity が session_id 基準で固定されている。",
+      "test_name": "test_session_194_graph_schema_nodes_edges_metadata_errors"
+    },
+    {
+      "id": "AC-194-05",
+      "description": "build_dependency_graph が depends_on / blocks から edge structure を構築し、ready 判定が depends_on 全要素完了済みの AND 条件として動作する。",
+      "test_name": "test_session_194_dependency_edges_and_ready_and_condition"
+    },
+    {
+      "id": "AC-194-06",
+      "description": "build_dependency_graph は入力 session_ids の順序によらず session_id 昇順の deterministic な nodes 順序を返す。",
+      "test_name": "test_session_194_deterministic_ordering"
+    },
+    {
+      "id": "AC-194-07",
+      "description": "orchestration/dependency_graph/__init__.py が build_dependency_graph と DependencyGraphResult を public API として re-export する。",
+      "test_name": "test_session_194_public_api_reexport"
+    },
+    {
+      "id": "AC-194-08",
+      "description": "build_dependency_graph は cycle 検出時に例外を raise せず、DependencyGraphResult(success=False, failure_type='spec_missing', errors=[...]) を返す。",
+      "test_name": "test_session_194_cycle_returns_failure_result"
+    },
+    {
+      "id": "AC-194-09",
+      "description": "build_dependency_graph は selector / queue / scheduler / PCC の state や UI を mutate せず、read-only projection として動作する。",
+      "test_name": "test_session_194_read_only_boundary"
+    },
+    {
+      "id": "AC-194-10",
+      "description": "session-194 実装後も既存公開契約 build_compact_context_pack / validate_handoff / build_then_validate / ValidationResult / HandoffPipelineResult は変更されない。",
+      "test_name": "test_session_194_existing_public_contracts_unchanged"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし",
+    "検証十分性"
+  ],
+  "failure_type": "test_failure"
+}
