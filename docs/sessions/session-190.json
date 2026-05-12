@@ -1,0 +1,187 @@
+{
+  "session_id": "session-190",
+  "phase_id": "P7",
+  "title": "Dependency graph implementation contract",
+  "goal": "dependency graph implementation の正式契約を定義し、session 依存関係を read-only projection として deterministic に構築・保存できる実装範囲を固定する",
+  "scope": [
+    "session-190-pre の depends_on schema / blocks schema / ready = AND 条件 / cycle detection boundary / resolution ordering / followup delegation / queue・scheduler 実行制御委譲を継承する",
+    "dependency graph implementation contract を docs-only で固定する",
+    "graph schema を node / edge / metadata / errors に分解して定義する",
+    "node identity を session_id 基準として定義する",
+    "depends_on / blocks から edge structure を構築する規則を定義する",
+    "ready 判定は depends_on 全要素が完了済みである AND 条件として定義する",
+    "deterministic ordering を session_id 昇順と input order 保存の組み合わせで定義する",
+    "serialization は JSON artifact として定義する",
+    "artifact path を artifacts/session-190/dependency_graph/graph.json として定義する",
+    "public API を build_dependency_graph(session_ids: list[str], repo_root: pathlib.Path) -> DependencyGraphResult として定義する",
+    "cycle failure semantics を例外ではなく result object 内の success=false / failure_type=spec_missing / errors[] で返す規則として定義する",
+    "selector / queue / scheduler / PCC との責務境界を明文化する"
+  ],
+  "out_of_scope": [
+    "実装",
+    "orchestration/dependency_graph 配下のコード作成",
+    "queue 変更",
+    "selector 変更",
+    "PCC 変更",
+    "run_session.py 変更",
+    "graph runtime mutation",
+    "scheduler integration",
+    "hooks integration",
+    "persistence layer 追加",
+    "visualization UI 追加",
+    "既存公開契約 build_compact_context_pack / validate_handoff / build_then_validate / ValidationResult / HandoffPipelineResult の変更",
+    "queue state の mutate",
+    "selector input の mutate",
+    "scheduler dispatch 実装",
+    "PCC UI 実装",
+    "graph visualization runtime 実装"
+  ],
+  "constraints": [
+    "docs-only session とする",
+    "作成ファイルは docs/sessions/session-190.json と docs/acceptance/session-190.yaml の2ファイルのみとする",
+    "14 canonical keys をすべて含める",
+    "review_points は canonical 4軸の strict equality とする",
+    "acceptance_criteria は description と test_name を 1:1 で持つ",
+    "allowed_changes_detail は list[str] とし、各要素を 'ファイルパス: 許可内容' 形式にする",
+    "completion_criteria は object array とし、各要素は id / type / condition を持つ",
+    "failure_type は spec_missing とする",
+    "graph artifact は JSON とする",
+    "graph は read-only projection とする",
+    "graph は queue / scheduler / selector state を変更しない",
+    "node identity は session_id 基準とする",
+    "cycle failure は result object で返す",
+    "deterministic sort を必須とする",
+    "既存公開契約 build_compact_context_pack / validate_handoff / build_then_validate / ValidationResult / HandoffPipelineResult を変更しない"
+  ],
+  "acceptance_ref": "docs/acceptance/session-190.yaml",
+  "allowed_changes_detail": [
+    "docs/sessions/session-190.json: dependency graph implementation contract の session 定義のみ新規作成",
+    "docs/acceptance/session-190.yaml: session-190 の acceptance 定義のみ新規作成"
+  ],
+  "forbidden_changes": [
+    "orchestration/**/*.py の変更",
+    "orchestration/run_session.py の変更",
+    "orchestration/selector/**/*.py の変更",
+    "orchestration/queue/**/*.py の変更",
+    "backend/pcc/** の変更",
+    "docs/sessions/session-190-pre.json の変更",
+    "docs/acceptance/session-190-pre.yaml の変更",
+    "docs/sessions/session-191.json の変更",
+    "docs/sessions/session-192.json の変更",
+    "docs/sessions/session-193.json の変更",
+    "docs/acceptance/session-191.yaml の変更",
+    "docs/acceptance/session-192.yaml の変更",
+    "docs/acceptance/session-193.yaml の変更",
+    "build_compact_context_pack の公開契約変更",
+    "validate_handoff の公開契約変更",
+    "build_then_validate の公開契約変更",
+    "ValidationResult の公開契約変更",
+    "HandoffPipelineResult の公開契約変更",
+    "queue state mutation の追加",
+    "scheduler dispatch の追加",
+    "hooks integration の追加",
+    "persistence layer の追加",
+    "visualization UI の追加"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-190-01",
+      "type": "document_rule",
+      "condition": "docs/sessions/session-190.json が 14 canonical keys をすべて含み、allowed_changes_detail が list[str]、completion_criteria が object array、failure_type が spec_missing である"
+    },
+    {
+      "id": "CC-190-02",
+      "type": "document_rule",
+      "condition": "docs/acceptance/session-190.yaml が session_id / goal / scope / out_of_scope / acceptance / completion_checks / change_guardrails を含み、acceptance 各項目が description と test_name を持つ"
+    },
+    {
+      "id": "CC-190-03",
+      "type": "artifact",
+      "condition": "implementation contract に graph artifact path artifacts/session-190/dependency_graph/graph.json が JSON artifact として明記されている"
+    },
+    {
+      "id": "CC-190-04",
+      "type": "document_rule",
+      "condition": "graph schema が nodes / edges / metadata / errors を持ち、node identity が session_id 基準であることを明記している"
+    },
+    {
+      "id": "CC-190-05",
+      "type": "document_rule",
+      "condition": "cycle failure semantics が例外ではなく result object の success=false / failure_type=spec_missing / errors[] で返ることを明記している"
+    },
+    {
+      "id": "CC-190-06",
+      "type": "state_transition_consistent",
+      "condition": "ready 判定が depends_on 全要素完了済みの AND 条件であり、queue / scheduler の実行制御へ委譲されることを明記している"
+    },
+    {
+      "id": "CC-190-07",
+      "type": "side_effect_free",
+      "condition": "selector input / queue state / scheduler dispatch / PCC UI / runtime state を mutate しない read-only projection であることを明記している"
+    },
+    {
+      "id": "CC-190-08",
+      "type": "non_regression",
+      "condition": "既存公開契約 build_compact_context_pack / validate_handoff / build_then_validate / ValidationResult / HandoffPipelineResult の変更禁止が明記されている"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-190-01",
+      "description": "session-190.json は 14 canonical keys をすべて含み、review_points が canonical 4軸と完全一致する",
+      "test_name": "test_session_190_json_has_canonical_keys_and_review_points"
+    },
+    {
+      "id": "AC-190-02",
+      "description": "session-190.json は docs-only 2ファイルのみを allowed_changes_detail に定義し、実装ファイル・queue・selector・PCC・run_session.py を forbidden_changes に含める",
+      "test_name": "test_session_190_scope_is_docs_only_two_files"
+    },
+    {
+      "id": "AC-190-03",
+      "description": "implementation contract は graph artifact を JSON とし、artifact path を artifacts/session-190/dependency_graph/graph.json と定義する",
+      "test_name": "test_session_190_graph_artifact_contract"
+    },
+    {
+      "id": "AC-190-04",
+      "description": "implementation contract は graph schema として nodes / edges / metadata / errors を定義し、node identity を session_id 基準に固定する",
+      "test_name": "test_session_190_graph_schema_contract"
+    },
+    {
+      "id": "AC-190-05",
+      "description": "implementation contract は depends_on / blocks edge structure と ready = AND 条件を定義する",
+      "test_name": "test_session_190_dependency_edges_and_ready_and_condition"
+    },
+    {
+      "id": "AC-190-06",
+      "description": "implementation contract は deterministic ordering と serialization の規則を定義する",
+      "test_name": "test_session_190_deterministic_ordering_and_serialization"
+    },
+    {
+      "id": "AC-190-07",
+      "description": "implementation contract は public API build_dependency_graph(session_ids: list[str], repo_root: pathlib.Path) -> DependencyGraphResult を定義する",
+      "test_name": "test_session_190_public_api_contract"
+    },
+    {
+      "id": "AC-190-08",
+      "description": "implementation contract は cycle failure semantics を result object の success=false / failure_type=spec_missing / errors[] として定義する",
+      "test_name": "test_session_190_cycle_failure_result_semantics"
+    },
+    {
+      "id": "AC-190-09",
+      "description": "implementation contract は selector / queue / scheduler / PCC の state や UI を mutate しない境界を定義する",
+      "test_name": "test_session_190_read_only_boundary_contract"
+    },
+    {
+      "id": "AC-190-10",
+      "description": "implementation contract は既存公開契約 build_compact_context_pack / validate_handoff / build_then_validate / ValidationResult / HandoffPipelineResult を変更禁止として定義する",
+      "test_name": "test_session_190_existing_public_contracts_are_forbidden_to_change"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし",
+    "検証十分性"
+  ],
+  "failure_type": "spec_missing"
+}
