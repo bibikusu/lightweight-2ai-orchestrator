@@ -1,0 +1,177 @@
+session_id: session-194
+phase_id: phase-orchestrated-foundation
+title: Implement dependency graph (build_dependency_graph)
+failure_type: test_failure
+review_points:
+  - 仕様一致（AC達成）
+  - 変更範囲遵守
+  - 副作用なし
+  - 検証十分性
+
+# session-190 の AC-190-01〜10 から派生定義。
+# 派生規則: AC-190-XX の内容を build_dependency_graph 実装 (session-194) の文脈で再記述。
+
+acceptance:
+  - id: AC-194-01
+    description: >-
+      session-194.json は 14 canonical keys をすべて含み、review_points が canonical 4軸と完全一致し、
+      failure_type が test_failure である。
+      (AC-190-01 派生: docs-only 規律の適用対象を build_dependency_graph 実装 session に変更)
+    test_name: test_session_194_json_has_canonical_keys_and_review_points
+    priority: highest
+    completion_criteria_refs:
+      - CC-194-01
+
+  - id: AC-194-02
+    description: >-
+      session-194.json の allowed_changes_detail は orchestration/dependency_graph/ 配下の実装ファイルと
+      tests/test_dependency_graph.py (skip 解除版) のみを許可し、selector / queue / PCC /
+      run_session.py を forbidden_changes に含める。
+      (AC-190-02 派生: scope を dependency_graph 実装に限定した変更範囲)
+    test_name: test_session_194_scope_limits_to_dependency_graph_impl
+    priority: highest
+    completion_criteria_refs:
+      - CC-194-02
+
+  - id: AC-194-03
+    description: >-
+      build_dependency_graph の実行により artifacts/session-190/dependency_graph/graph.json が
+      JSON 形式で出力される。
+      (AC-190-03 派生: artifact path と JSON serialization を実装レベルで検証)
+    test_name: test_session_194_graph_artifact_is_written_as_json
+    priority: highest
+    completion_criteria_refs:
+      - CC-194-03
+
+  - id: AC-194-04
+    description: >-
+      DependencyGraphResult が nodes / edges / metadata / errors フィールドを持ち、
+      node identity が session_id 基準で固定されている。
+      (AC-190-04 派生: graph schema の実装検証)
+    test_name: test_session_194_graph_schema_nodes_edges_metadata_errors
+    priority: highest
+    completion_criteria_refs:
+      - CC-194-04
+
+  - id: AC-194-05
+    description: >-
+      build_dependency_graph が depends_on / blocks から edge structure を構築し、
+      ready 判定が depends_on 全要素完了済みの AND 条件として動作する。
+      (AC-190-05 派生: depends_on / blocks edge 構築と ready=AND 条件の実装検証)
+    test_name: test_session_194_dependency_edges_and_ready_and_condition
+    priority: highest
+    completion_criteria_refs:
+      - CC-194-05
+
+  - id: AC-194-06
+    description: >-
+      build_dependency_graph は入力 session_ids の順序によらず session_id 昇順の
+      deterministic な nodes 順序を返す。
+      (AC-190-06 派生: deterministic ordering の実装検証)
+    test_name: test_session_194_deterministic_ordering
+    priority: highest
+    completion_criteria_refs:
+      - CC-194-06
+
+  - id: AC-194-07
+    description: >-
+      orchestration/dependency_graph/__init__.py が build_dependency_graph と
+      DependencyGraphResult を public API として re-export する。
+      (AC-190-07 派生: public API の実装検証)
+    test_name: test_session_194_public_api_reexport
+    priority: highest
+    completion_criteria_refs:
+      - CC-194-07
+
+  - id: AC-194-08
+    description: >-
+      build_dependency_graph は cycle 検出時に例外を raise せず、
+      DependencyGraphResult(success=False, failure_type='spec_missing', errors=[...]) を返す。
+      (AC-190-08 派生: cycle failure semantics の実装検証)
+    test_name: test_session_194_cycle_returns_failure_result
+    priority: highest
+    completion_criteria_refs:
+      - CC-194-08
+
+  - id: AC-194-09
+    description: >-
+      build_dependency_graph は selector / queue / scheduler / PCC の state や UI を mutate せず、
+      read-only projection として動作する。
+      (AC-190-09 派生: read-only boundary の実装検証)
+    test_name: test_session_194_read_only_boundary
+    priority: highest
+    completion_criteria_refs:
+      - CC-194-09
+
+  - id: AC-194-10
+    description: >-
+      session-194 実装後も既存公開契約 build_compact_context_pack / validate_handoff /
+      build_then_validate / ValidationResult / HandoffPipelineResult は変更されない。
+      (AC-190-10 派生: 既存公開契約不変の実装検証)
+    test_name: test_session_194_existing_public_contracts_unchanged
+    priority: highest
+    completion_criteria_refs:
+      - CC-194-10
+
+completion_checks:
+  - id: CC-194-01
+    type: document_rule
+    condition: >-
+      docs/sessions/session-194.json が 14 canonical keys をすべて含み、
+      review_points が canonical 4軸と完全一致し、failure_type が test_failure である。
+
+  - id: CC-194-02
+    type: side_effect_free
+    condition: >-
+      allowed_changes_detail が orchestration/dependency_graph/ 配下と
+      tests/test_dependency_graph.py のみを許可し、selector / queue / PCC /
+      run_session.py / orchestration/integration/ を forbidden_changes に含める。
+
+  - id: CC-194-03
+    type: artifact
+    condition: >-
+      build_dependency_graph 実行後に artifacts/session-190/dependency_graph/graph.json が
+      存在し、有効な JSON として読み込み可能である。
+
+  - id: CC-194-04
+    type: artifact
+    condition: >-
+      DependencyGraphResult が success / failure_type / nodes / edges / metadata / errors の
+      フィールドを持ち、node 各要素が id (session_id) を持つ。
+
+  - id: CC-194-05
+    type: state_transition_consistent
+    condition: >-
+      valid_chained fixture (A→B→C) の graph build で edge が depends_on / blocks から
+      正しく構築され、A の ready=True / B の ready が A 完了後 True / C の ready が B 完了後 True
+      となる。
+
+  - id: CC-194-06
+    type: artifact
+    condition: >-
+      session_ids を逆順で渡した場合も正順で渡した場合も nodes 順序が session_id 昇順で
+      一致する (test_deterministic_ordering で確認)。
+
+  - id: CC-194-07
+    type: artifact
+    condition: >-
+      from orchestration.dependency_graph import build_dependency_graph, DependencyGraphResult
+      が ImportError なく成功し、DependencyGraphResult が dataclass(frozen=True) である。
+
+  - id: CC-194-08
+    type: state_transition_consistent
+    condition: >-
+      invalid_cycle fixture の build で例外が raise されず、
+      result.success=False / result.failure_type='spec_missing' / len(result.errors) > 0 を返す。
+
+  - id: CC-194-09
+    type: side_effect_free
+    condition: >-
+      build_dependency_graph 実行前後で selector / queue / PCC の state ファイルが
+      変更されない (副作用なし)。
+
+  - id: CC-194-10
+    type: non_regression
+    condition: >-
+      orchestration/context_pack/__init__.py / orchestration/handoff_validator/__init__.py /
+      orchestration/integration/__init__.py の md5 が session-193 完了時点の baseline と一致する。

@@ -1,0 +1,20 @@
+{
+  "description": "AC-194-09: session-A が session_ids に存在しない session-X に depends_on する dangling 参照",
+  "scenario": "invalid_dangling",
+  "input": {
+    "session_ids": ["session-A"]
+  },
+  "sessions": [
+    {
+      "session_id": "session-A",
+      "phase_id": "P1",
+      "depends_on": ["session-X"],
+      "blocks": []
+    }
+  ],
+  "expected": {
+    "success": false,
+    "failure_type": "spec_missing",
+    "errors": ["dangling reference: session-A depends_on session-X which is not in session_ids"]
+  }
+}

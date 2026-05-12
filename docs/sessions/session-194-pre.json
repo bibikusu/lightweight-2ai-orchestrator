@@ -2,7 +2,7 @@
   "session_id": "session-194-pre",
   "phase_id": "phase-orchestrated-foundation",
   "title": "Canonicalize readiness pipeline integration spec (dependency_graph + gpt_judge stub)",
-  "goal": "session-190 (dependency_graph) と session-188 (gpt_judge stub interface) を統合する readiness_pipeline の入出力契約・AND 条件・エラーハンドリング・副作用境界を docs-only で正本化し、session-194 implementation の rev4 雛形となる仕様書を確定する。",
+  "goal": "session-190 (dependency_graph) を検証する test scaffold（tests/test_dependency_graph.py の skip 付き新規 tests）、tests/fixtures/dependency_graph/** の fixture、および docs/acceptance/session-194-pre.yaml / session-194.yaml を新規作成する。readiness_pipeline 契約の正本は session-194-pre.json と acceptance YAML に記述し session-194 implementation の rev4 雛形とするが、本 session のコード変更は allowed_changes_detail 7件に限定し orchestration 実装は行わない。",
   "scope": [
     "docs/sessions/session-194-pre.json を新規作成し、readiness_pipeline.v1 の入出力契約を 14 canonical keys で正本化する。",
     "docs/acceptance/session-194-pre.yaml を新規作成し、9 AC を id/description/test_name/priority/completion_criteria_refs で正本化する。",
@@ -18,7 +18,7 @@
     "190 phase_id-base graph 前提の明文化: 194 implementation でも depends_on フィールドを使用しない。dependency_graph は phase_id + acceptance_ref ベースで構築される前提を維持する。"
   ],
   "out_of_scope": [
-    "実装コードの追加 (194-pre は docs-only)",
+    "allowed_changes_detail 7件を超えるコード・spec の変更（orchestration 実装・既存 tests/ 編集・正本 session/acceptance の不許可変更を含む）",
     "orchestration/integration/readiness_pipeline.py の新規作成 (194 implementation の責務)",
     "ReadinessResult dataclass の実装 (194 implementation の責務)",
     "tests/test_readiness_pipeline.py の新規作成 (194 implementation の責務)",
@@ -37,20 +37,21 @@
   ],
   "constraints": [
     "1セッション1目的",
-    "最大2ファイル以内で完結すること (docs-only: docs/sessions/session-194-pre.json + docs/acceptance/session-194-pre.yaml)",
+    "変更対象は allowed_changes_detail 7件に限定する",
+    "test scaffold と acceptance YAML 作成のみ。orchestration 実装は禁止。",
     "正本ルールは master_instruction.md と global_rules.md を基準にすること",
     "session-188-pre / 189-pre / 193-pre YAML template 構造完全準拠 (rev4 雛形流用方式)",
     "allowed_changes_detail は list[str] 形式とし、各要素は 'パス: 許可内容' の形式とすること",
     "completion_criteria は object 配列とし、各要素は id, type, condition を持つこと",
     "acceptance_criteria の各要素は id, description, test_name を持つこと (description フィールド、text ではない)",
     "review_points は短文4軸固定 ['仕様一致（AC達成）','変更範囲遵守','副作用なし','検証十分性']",
-    "failure_type は 'spec_missing' とする (docs-only canonicalization 規律)",
+    "failure_type は 'scaffold_or_baseline_violation' とする (test scaffold・fixtures・acceptance baseline の逸脱、または禁止領域への変更を検知する規律)",
     "schema_version 文字列定数 'readiness_pipeline.v1' を 194 implementation の ReadinessResult dataclass に持たせる契約を含めること",
     "ReadinessResult は dataclass(frozen=True) で immutable とする契約を含めること (192 ValidationResult と同型の規律)",
     "AND 条件契約: ready = (dependency_passed AND judge_passed) を厳密に明文化すること",
     "エラーハンドリングは対称設計とする: dependency_graph 構築失敗 / judge 呼出失敗 のいずれも例外を re-raise する",
     "副作用契約: judge_and_ready は副作用なしの読み取り専用関数とする (compact_context_pack.json のような出力ファイルを生成しない)",
-    "実装コードを一切変更しないこと (orchestration/ 配下を一切触らない)",
+    "orchestration/ 配下の実装コードを新規作成・変更しないこと (allowed_changes_detail の test scaffold・fixtures・acceptance YAML のみ変更可)",
     "session-190 / 188 で確立される schema を一切変更しないこと",
     "司令塔判定 A 反映: 実 LLM call を契約に含めない。judge は LLMJudgeProtocol を満たす任意実装を受け取れる",
     "司令塔判定 B 反映: depends_on フィールドを使用しない。dependency_graph は phase_id + acceptance_ref ベース",
@@ -61,8 +62,13 @@
   ],
   "acceptance_ref": "docs/acceptance/session-194-pre.yaml",
   "allowed_changes_detail": [
-    "docs/sessions/session-194-pre.json: readiness_pipeline 統合契約の正本化。14 canonical keys 完備。judge_and_ready 関数の入出力契約・AND 条件契約・対称エラーハンドリング契約・副作用契約 (副作用なし)・responsibility 境界・module 配置契約・188 stub interface 前提・190 phase_id-base graph 前提・schema_version='readiness_pipeline.v1' を明文化する。",
-    "docs/acceptance/session-194-pre.yaml: readiness_pipeline 統合契約の受入定義。9 AC、各要素は id/description/test_name/priority/completion_criteria_refs を持つ。"
+    "tests/test_dependency_graph.py: 5 test 関数を @pytest.mark.skip(reason='implementation pending session-194') 付で新規作成",
+    "tests/fixtures/dependency_graph/dep_graph_valid_minimal.json: 単一 session の最小 valid graph fixture を新規作成",
+    "tests/fixtures/dependency_graph/dep_graph_valid_chained.json: depends_on で線形連鎖する valid graph fixture を新規作成",
+    "tests/fixtures/dependency_graph/dep_graph_invalid_cycle.json: A→B→A の cycle を持つ invalid fixture を新規作成",
+    "tests/fixtures/dependency_graph/dep_graph_invalid_dangling.json: 存在しない session_id を depends_on に持つ dangling fixture を新規作成",
+    "docs/acceptance/session-194-pre.yaml: 本 session の AC を 4件・CC を 9件 で定義した新規 YAML",
+    "docs/acceptance/session-194.yaml: 194本体用 AC を session-190 の AC-190-01〜10 から派生して新規定義"
   ],
   "forbidden_changes": [
     "orchestration/run_session.py を変更しない (md5: 74682928491ab1c0f35df842581281b8 を維持)",
@@ -73,7 +79,7 @@
     "orchestration/integration/ 配下を新規作成しない (193 / 194 implementation の責務)",
     "selector/ 配下を変更しない (md5 baseline を維持)",
     "providers / backend / .github 配下を変更しない",
-    "tests/ 配下を変更しない (docs-only)",
+    "既存 tests/ ファイルの編集は禁止。tests/test_dependency_graph.py と tests/fixtures/dependency_graph/** の新規作成のみ許可。",
     "docs/global_rules.md / docs/master_instruction.md を変更しない",
     "docs/sessions/session-188-pre.json / session-189-pre.json / session-190-pre.json / session-191-pre.json / session-192-pre.json / session-193-pre.json を変更しない",
     "docs/acceptance/session-188-pre.yaml / session-189-pre.yaml / session-190-pre.yaml / session-191-pre.yaml / session-192-pre.yaml / session-193-pre.yaml を変更しない",
@@ -130,7 +136,7 @@
     {
       "id": "CC-194-pre-08",
       "type": "side_effect_free",
-      "condition": "本 session 実行で docs/sessions/session-194-pre.json と docs/acceptance/session-194-pre.yaml の 2 ファイル以外が変更されていない (orchestration / selector / tests / 他 session ファイル不変)。"
+      "condition": "本 session 実行で allowed_changes_detail に列挙された 7 パス以外に変更がない (orchestration / selector / 既存 tests / 他 session 正本への不許可変更なし)。"
     },
     {
       "id": "CC-194-pre-09",
@@ -176,7 +182,7 @@
     },
     {
       "id": "AC-194-pre-08",
-      "description": "本 session 実行で docs/sessions/session-194-pre.json と docs/acceptance/session-194-pre.yaml の 2 ファイル以外が変更されていない (orchestration / selector / tests / 他 session ファイル不変)。",
+      "description": "本 session 実行で allowed_changes_detail に列挙された 7 パス以外に変更がない (orchestration / selector / 既存 tests / 他 session 正本への不許可変更なし)。",
       "test_name": "test_session_194_pre_changed_files_within_allowed_scope"
     },
     {
@@ -191,5 +197,5 @@
     "副作用なし",
     "検証十分性"
   ],
-  "failure_type": "spec_missing"
+  "failure_type": "scaffold_or_baseline_violation"
 }

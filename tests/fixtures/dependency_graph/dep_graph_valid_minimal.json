@@ -1,0 +1,24 @@
+{
+  "description": "AC-194-01: 単一 session の最小 valid graph。depends_on=[] / blocks=[]",
+  "scenario": "valid_minimal",
+  "input": {
+    "session_ids": ["session-A"]
+  },
+  "sessions": [
+    {
+      "session_id": "session-A",
+      "phase_id": "P1",
+      "depends_on": [],
+      "blocks": []
+    }
+  ],
+  "expected": {
+    "success": true,
+    "nodes": [
+      {"id": "session-A", "ready": true}
+    ],
+    "edges": [],
+    "metadata": {"count": 1},
+    "errors": []
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "description": "AC-194-02: A→B→C 線形連鎖 valid graph。session_id 昇順の deterministic ordering を確認",
+  "scenario": "valid_chained",
+  "input": {
+    "session_ids": ["session-A", "session-B", "session-C"]
+  },
+  "sessions": [
+    {
+      "session_id": "session-A",
+      "phase_id": "P1",
+      "depends_on": [],
+      "blocks": ["session-B"]
+    },
+    {
+      "session_id": "session-B",
+      "phase_id": "P1",
+      "depends_on": ["session-A"],
+      "blocks": ["session-C"]
+    },
+    {
+      "session_id": "session-C",
+      "phase_id": "P1",
+      "depends_on": ["session-B"],
+      "blocks": []
+    }
+  ],
+  "expected": {
+    "success": true,
+    "edges": [
+      {"source": "session-A", "target": "session-B", "type": "depends_on"},
+      {"source": "session-B", "target": "session-C", "type": "depends_on"}
+    ],
+    "ordering": ["session-A", "session-B", "session-C"],
+    "metadata": {"count": 3},
+    "errors": []
+  }
+}

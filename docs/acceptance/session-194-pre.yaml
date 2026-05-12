@@ -1,85 +1,141 @@
 session_id: session-194-pre
 phase_id: phase-orchestrated-foundation
-title: Canonicalize readiness pipeline integration spec (dependency_graph + gpt_judge stub)
+title: Dependency graph test scaffold and acceptance YAML baseline
+failure_type: scaffold_or_baseline_violation
+review_points:
+  - 仕様一致（AC達成）
+  - 変更範囲遵守
+  - 副作用なし
+  - 検証十分性
+
 acceptance:
   - id: AC-194-pre-01
-    description: "docs/sessions/session-194-pre.json と docs/acceptance/session-194-pre.yaml の両方に schema_version='readiness_pipeline.v1' を 194 implementation の ReadinessResult dataclass(frozen=True) に持たせる契約が明記されている。"
-    test_name: test_session_194_pre_declares_readiness_pipeline_schema_version
+    description: >-
+      tests/test_dependency_graph.py が新規作成され、5つのテスト関数（test_build_valid_minimal_graph /
+      test_build_valid_chained_graph / test_cycle_returns_failure_result /
+      test_dangling_ref_returns_failure_result / test_deterministic_ordering）が
+      @pytest.mark.skip(reason="implementation pending session-194") 付きで定義されており、
+      pytest 実行で "5 skipped, 0 failed, 0 errors" を達成する。
+    test_name: test_build_valid_minimal_graph
     priority: highest
     completion_criteria_refs:
       - CC-194-pre-01
-
-  - id: AC-194-pre-02
-    description: "judge_and_ready の入力契約 (session_id: str, completed_set: frozenset[str], repo_root: pathlib.Path の 3 引数のみ、completed_set は immutable な frozenset) が session-194-pre.json と session-194-pre.yaml の両方に明記されている。"
-    test_name: test_session_194_pre_declares_input_contract
-    priority: highest
-    completion_criteria_refs:
       - CC-194-pre-02
 
-  - id: AC-194-pre-03
-    description: |
-      judge_and_ready の出力契約が session-194-pre.json と session-194-pre.yaml の両方に明記されている:
-      ReadinessResult dataclass のフィールドは以下の 5 つに固定する:
-        schema_version: str
-        ready: bool
-        dependency_passed: bool
-        judge_passed: bool
-        reasons: list[str]
-    test_name: test_session_194_pre_declares_output_contract
+  - id: AC-194-pre-02
+    description: >-
+      tests/fixtures/dependency_graph/ 配下に dep_graph_valid_minimal.json /
+      dep_graph_valid_chained.json / dep_graph_invalid_cycle.json /
+      dep_graph_invalid_dangling.json の4 fixture が有効な JSON ファイルとして存在し、
+      各シナリオ (valid_minimal / valid_chained / invalid_cycle / invalid_dangling) を
+      input / sessions / expected 構造で定義している。
+    test_name: test_build_valid_minimal_graph
     priority: highest
     completion_criteria_refs:
       - CC-194-pre-03
-
-  - id: AC-194-pre-04
-    description: |
-      AND 条件契約が session-194-pre.json と session-194-pre.yaml の両方に明記されている:
-      (a) ready = (dependency_passed AND judge_passed)
-      (b) 片方でも False なら ready=False
-      (c) 両方 True の場合のみ ready=True
-    test_name: test_session_194_pre_declares_and_condition_contract
-    priority: highest
-    completion_criteria_refs:
       - CC-194-pre-04
-
-  - id: AC-194-pre-05
-    description: |
-      judge_and_ready の対称エラーハンドリング契約が session-194-pre.json と session-194-pre.yaml の両方に明記されている:
-      (a) dependency_graph 構築失敗時は judge を呼ばずに例外を re-raise する。
-      (b) judge 呼出失敗時も例外を re-raise する。
-    test_name: test_session_194_pre_declares_error_handling_contract
-    priority: highest
-    completion_criteria_refs:
       - CC-194-pre-05
 
-  - id: AC-194-pre-06
-    description: "judge_and_ready の副作用契約 (副作用なし、読み取り専用関数として動作する / session JSON / acceptance YAML / その他いかなる artifact も書き換えない) が session-194-pre.json と session-194-pre.yaml の両方に明記されている。"
-    test_name: test_session_194_pre_declares_side_effect_contract
+  - id: AC-194-pre-03
+    description: >-
+      docs/acceptance/session-194-pre.yaml（本ファイル）と docs/acceptance/session-194.yaml が
+      作成されており、session-194-pre.yaml は AC 4件・CC 9件を持ち、
+      session-194.yaml は AC-190-01〜10 から派生した AC-194-01〜10 を持つ。
+      completion_checks.type は canonical enum
+      (artifact / non_regression / side_effect_free / document_rule / state_transition_consistent)
+      のみ使用している。
+    test_name: test_build_valid_minimal_graph
+    priority: high
+    completion_criteria_refs:
+      - CC-194-pre-01
+      - CC-194-pre-03
+
+  - id: AC-194-pre-04
+    description: >-
+      ruff check / pytest / mypy --ignore-missing-imports / python -m compileall の
+      4-gate が tests/test_dependency_graph.py を対象に全 pass し、
+      orchestration/selector/core.py / loader.py / writer.py および
+      orchestration/run_session.py の md5 が baseline 値と一致する。
+    test_name: test_build_valid_minimal_graph
     priority: highest
     completion_criteria_refs:
       - CC-194-pre-06
-
-  - id: AC-194-pre-07
-    description: |
-      responsibility 境界・module 配置・司令塔判定 A+B 反映の 4 要素が session-194-pre.json と session-194-pre.yaml の両方に明記されている:
-      (a) responsibility 境界: 統合関数は呼び出しのみで、190 / 188 内部実装に依存しない。queue / scheduler / 実 LLM / MCP / CLI / handoff_pipeline を含めない。
-      (b) module 配置: orchestration/integration/readiness_pipeline.py に固定する。
-      (c) 司令塔判定 A 反映: 実 LLM call を契約に含めず、judge は LLMJudgeProtocol を満たす任意実装を受け取れる契約とする (188 stub interface 前提を維持)。
-      (d) 司令塔判定 B 反映: depends_on フィールドを使用せず、dependency_graph は phase_id + acceptance_ref ベースで構築される前提を維持する。
-    test_name: test_session_194_pre_declares_responsibility_module_and_judgment_alignment
-    priority: highest
-    completion_criteria_refs:
       - CC-194-pre-07
-
-  - id: AC-194-pre-08
-    description: "本 session 実行で docs/sessions/session-194-pre.json と docs/acceptance/session-194-pre.yaml の 2 ファイル以外が変更されていない (orchestration / selector / tests / 他 session ファイル不変)。"
-    test_name: test_session_194_pre_changed_files_within_allowed_scope
-    priority: highest
-    completion_criteria_refs:
       - CC-194-pre-08
-
-  - id: AC-194-pre-09
-    description: "ruff / pytest / mypy / compileall の 4-gate が全 pass し、orchestration/run_session.py と selector/* の md5 が baseline と一致する (具体コマンドは ClaudeCode 実行時に現行環境に合わせて確認)。"
-    test_name: test_session_194_pre_four_gate_pass
-    priority: highest
-    completion_criteria_refs:
       - CC-194-pre-09
+
+completion_checks:
+  - id: CC-194-pre-01
+    type: artifact
+    condition: >-
+      tests/test_dependency_graph.py が存在し、5つのテスト関数
+      (test_build_valid_minimal_graph / test_build_valid_chained_graph /
+      test_cycle_returns_failure_result / test_dangling_ref_returns_failure_result /
+      test_deterministic_ordering) を含む。
+
+  - id: CC-194-pre-02
+    type: artifact
+    condition: >-
+      5つのテスト関数が全て @pytest.mark.skip(reason="implementation pending session-194")
+      で修飾されており、pytest 実行で "5 skipped, 0 failed, 0 errors" を達成する。
+
+  - id: CC-194-pre-03
+    type: artifact
+    condition: >-
+      tests/fixtures/dependency_graph/ 配下に dep_graph_valid_minimal.json /
+      dep_graph_valid_chained.json / dep_graph_invalid_cycle.json /
+      dep_graph_invalid_dangling.json の4ファイルが有効な JSON として存在する。
+
+  - id: CC-194-pre-04
+    type: artifact
+    condition: >-
+      dep_graph_invalid_cycle.json の expected.success が false かつ
+      expected.failure_type が spec_missing として定義されている。
+
+  - id: CC-194-pre-05
+    type: artifact
+    condition: >-
+      dep_graph_invalid_dangling.json の expected.success が false かつ
+      expected.failure_type が spec_missing として定義されている。
+
+  - id: CC-194-pre-06
+    type: non_regression
+    condition: >-
+      orchestration/selector/core.py の md5 が
+      9b19e2cbe3487d3090096c5343c88611 と一致する。
+
+  - id: CC-194-pre-07
+    type: non_regression
+    condition: >-
+      orchestration/selector/loader.py の md5 が
+      959db533bf086f83765d8f6f16fbbe7b と一致する。
+
+  - id: CC-194-pre-08
+    type: non_regression
+    condition: >-
+      orchestration/selector/writer.py の md5 が
+      aaf7e28e0e9c52d12d30c8d3349cf982 と一致する。
+
+  - id: CC-194-pre-09
+    type: non_regression
+    condition: >-
+      orchestration/run_session.py の md5 が
+      4de6affffb9297cdf02b3136e8f55172 と一致する。
+
+change_guardrails:
+  allowed_changes_detail:
+    - "tests/test_dependency_graph.py: 5 test 関数を @pytest.mark.skip(reason='implementation pending session-194') 付で新規作成"
+    - "tests/fixtures/dependency_graph/dep_graph_valid_minimal.json: 単一 session の最小 valid graph fixture を新規作成"
+    - "tests/fixtures/dependency_graph/dep_graph_valid_chained.json: depends_on で線形連鎖する valid graph fixture を新規作成"
+    - "tests/fixtures/dependency_graph/dep_graph_invalid_cycle.json: A→B→A の cycle を持つ invalid fixture を新規作成"
+    - "tests/fixtures/dependency_graph/dep_graph_invalid_dangling.json: 存在しない session_id を depends_on に持つ dangling fixture を新規作成"
+    - "docs/acceptance/session-194-pre.yaml: 本 session の AC を 4件・CC を 9件 で定義した YAML に更新"
+    - "docs/acceptance/session-194.yaml: 194本体用 AC を session-190 の AC-190-01〜10 から派生して新規定義"
+  forbidden_changes:
+    - orchestration/ 配下の実装コードを変更しない
+    - 既存 tests/ ファイルを編集しない (新規追加のみ可)
+    - docs/sessions/session-194-pre.json を編集しない (commander 配備済・git add のみ)
+    - orchestration/selector/ md5 baseline を変更しない
+    - orchestration/run_session.py の md5 baseline を変更しない
+    - git push を実行しない
+    - main へのマージを実行しない

@@ -1,0 +1,26 @@
+{
+  "description": "AC-194-08: A→B→A の cycle を持つ invalid graph。result.success=False / failure_type='spec_missing'",
+  "scenario": "invalid_cycle",
+  "input": {
+    "session_ids": ["session-A", "session-B"]
+  },
+  "sessions": [
+    {
+      "session_id": "session-A",
+      "phase_id": "P1",
+      "depends_on": ["session-B"],
+      "blocks": []
+    },
+    {
+      "session_id": "session-B",
+      "phase_id": "P1",
+      "depends_on": ["session-A"],
+      "blocks": []
+    }
+  ],
+  "expected": {
+    "success": false,
+    "failure_type": "spec_missing",
+    "errors": ["cycle detected: session-A -> session-B -> session-A"]
+  }
+}
