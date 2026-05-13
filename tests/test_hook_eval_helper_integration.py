@@ -117,3 +117,70 @@ def test_hook_wrapper_does_not_reimplement_false_positive_logic() -> None:
             assert not re.search(pattern, content), (
                 f"{hook_file} に禁止パターン '{pattern}' が含まれている"
             )
+
+
+# ────────────────────────────────────────
+# AC-195-03: origin/main が存在する場合の正常系
+# ────────────────────────────────────────
+def test_hook_eval_helper_works_when_origin_main_exists(tmp_path: Path) -> None:
+    import json
+    import sys
+    remote_dir = tmp_path / "remote.git"
+    local_dir = tmp_path / "local"
+    remote_dir.mkdir()
+    local_dir.mkdir()
+    subprocess.run(["git", "init", "--bare", str(remote_dir)], check=True, capture_output=True)
+    subprocess.run(["git", "init", str(local_dir)], check=True, capture_output=True)
+    subprocess.run(["git", "config", "user.email", "t@t.com"], cwd=str(local_dir), check=True)
+    subprocess.run(["git", "config", "user.name", "Test"], cwd=str(local_dir), check=True)
+    subprocess.run(
+        ["git", "commit", "--allow-empty", "-m", "init"],
+        cwd=str(local_dir), check=True, capture_output=True,
+    )
+    subprocess.run(
+        ["git", "remote", "add", "origin", str(remote_dir)],
+        cwd=str(local_dir), check=True,
+    )
+    subprocess.run(
+        ["git", "push", "origin", "HEAD:main"],
+        cwd=str(local_dir), check=True, capture_output=True,
+    )
+    helper_abs = Path(__file__).resolve().parent.parent / HELPER_PATH
+    proc = subprocess.run(
+        [sys.executable, str(helper_abs)],
+        capture_output=True, text=True, check=False,
+        cwd=str(local_dir),
+    )
+    assert proc.returncode == 0, f"exit={proc.returncode}\n{proc.stderr}"
+    result = json.loads(proc.stdout)
+    assert "is_false_positive" in result
+    assert "changed_files" in result
+    assert "reason" in result
+
+
+# ────────────────────────────────────────
+# AC-195-04: origin/main 不在時の fallback (neutral skip)
+# ────────────────────────────────────────
+def test_hook_eval_helper_handles_missing_origin_main_with_safe_default(tmp_path: Path) -> None:
+    import json
+    import sys
+    subprocess.run(["git", "init", str(tmp_path)], check=True, capture_output=True)
+    subprocess.run(["git", "config", "user.email", "t@t.com"], cwd=str(tmp_path), check=True)
+    subprocess.run(["git", "config", "user.name", "Test"], cwd=str(tmp_path), check=True)
+    subprocess.run(
+        ["git", "commit", "--allow-empty", "-m", "init"],
+        cwd=str(tmp_path), check=True, capture_output=True,
+    )
+    helper_abs = Path(__file__).resolve().parent.parent / HELPER_PATH
+    proc = subprocess.run(
+        [sys.executable, str(helper_abs)],
+        capture_output=True, text=True, check=False,
+        cwd=str(tmp_path),
+    )
+    assert proc.returncode == 0, (
+        f"CalledProcessError 防止失敗: exit={proc.returncode}\n{proc.stderr}"
+    )
+    result = json.loads(proc.stdout)
+    assert "scope violation" not in result.get("reason", ""), (
+        f"neutral skip 期待だが scope_violation になった: {result}"
+    )
