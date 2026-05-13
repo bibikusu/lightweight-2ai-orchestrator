@@ -38,7 +38,8 @@
     "session-190 の public API シグネチャと artifact path を厳守すること",
     "Python 3.9 互換を維持し、PEP 604 のインライン Union 構文（例: typing の代わりに縦棒で型を結ぶ記法）は実装コードに含めないこと。Optional / Union は typing モジュールを用いること",
     "既存公開契約 build_compact_context_pack / validate_handoff / build_then_validate のシグネチャと挙動を変更しないこと",
-    "selector / queue / PCC のファイルを読み取り専用で扱い、state を mutate しないこと"
+    "selector / queue / PCC のファイルを読み取り専用で扱い、state を mutate しないこと",
+    "実装コードに `from __future__ import annotations` を含めないこと。"
   ],
   "acceptance_ref": "docs/acceptance/session-194.yaml",
   "allowed_changes_detail": [
