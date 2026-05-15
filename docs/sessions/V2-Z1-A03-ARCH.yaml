@@ -1,0 +1,70 @@
+session_id: V2-Z1-A03-ARCH
+phase_id: phase-v2-foundation
+type: docs-only
+title: A03_mane_bikusu の新世界アーキテクチャ確定 + A02疎結合契約
+goal: |
+  A03_mane_bikusu の役割を「mane.bikusu.net = ポータル案A」として確定し、
+  事務所LLMサーバー上の n8n / Directus / LiteLLM との接続経路を docs 化する。
+  併せて A02-A03 疎結合5要件 (将来API/MCP化前提) を最初から明文化する。
+scope:
+  - projects/A03_mane_bikusu/CLAUDE.md 新規作成
+  - projects/A03_mane_bikusu/docs/architecture-v2.md 新規作成
+  - projects/A03_mane_bikusu/docs/a02-decoupling-contract.md 新規作成
+  - 案A (ポータル) 確定、案B は Phase D 移行条件として明記
+  - 既存 mane.bikusu.net (api_proxy.php 等) との共存方法明記
+  - Tailscale 経由の n8n / Directus / LiteLLM へのリンク構造定義
+  - 疎結合5要件全項目の docs 化
+out_of_scope:
+  - A03 実装着手 (docs-only)
+  - mane.bikusu.net 既存コード改変
+  - n8n / Directus / LiteLLM 実機起動
+  - A02 内部設計
+  - 他プロジェクト docs
+  - sealed stash / .claude 操作
+constraints:
+  - 新規作成3点のみ、既存ファイル改変なし
+  - 案A を主設計、案B は将来移行条件のみ
+  - 疎結合5要件は全項目必須
+  - 公開URLとTailscale URLの分離方針明記
+acceptance_ref: docs/acceptance/V2-Z1-A03-ARCH.yaml
+allowed_changes_detail:
+  - "projects/A03_mane_bikusu/CLAUDE.md: 新規作成"
+  - "projects/A03_mane_bikusu/docs/architecture-v2.md: 新規作成"
+  - "projects/A03_mane_bikusu/docs/a02-decoupling-contract.md: 新規作成"
+forbidden_changes:
+  - projects/A03_mane_bikusu/ 既存ファイル改変
+  - api_proxy.php 改変
+  - 軽量2AI repo 実装スコープでの改変
+completion_criteria:
+  - id: cc1
+    type: artifact
+    condition: A03 CLAUDE.md が新規作成され非空
+  - id: cc2
+    type: artifact
+    condition: architecture-v2.md に案A確定 + 案B移行条件
+  - id: cc3
+    type: artifact
+    condition: a02-decoupling-contract.md に疎結合5要件全て
+  - id: cc4
+    type: document_rule
+    condition: architecture-v2.md に api_proxy.php 共存明記
+  - id: cc5
+    type: document_rule
+    condition: architecture-v2.md に公開/Tailscale URL分離明記
+acceptance_criteria:
+  - description: A03 CLAUDE.md 存在・master/global_rules 参照
+    test_name: test_a03_claude_md_exists_with_refs
+  - description: architecture-v2.md に案A確定マーク
+    test_name: test_arch_v2_marks_option_a_confirmed
+  - description: 疎結合5要件すべて記載
+    test_name: test_decoupling_contract_has_all_5_requirements
+  - description: api_proxy.php 共存記載
+    test_name: test_arch_v2_coexists_with_api_proxy
+  - description: 公開URLとTailscale URL分離
+    test_name: test_arch_v2_separates_public_and_tailscale_urls
+review_points:
+  - 仕様一致（AC達成）
+  - 変更範囲遵守
+  - 副作用なし
+  - 検証十分性
+failure_type: spec_drift

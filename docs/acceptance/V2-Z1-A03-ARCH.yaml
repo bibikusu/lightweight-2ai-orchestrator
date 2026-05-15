@@ -1,0 +1,51 @@
+session_id: V2-Z1-A03-ARCH
+goal: >-
+  A03 を案A（ポータル）として確定し、architecture-v2 / a02-decoupling-contract を正本化する。
+acceptance:
+  - id: AC-Z1-01
+    description: A03 CLAUDE.md が存在し非空、master_instruction/global_rules 参照を含む
+    test_name: test_a03_claude_md_exists_with_refs
+    type: manual
+    manual_check: true
+    verification:
+      - test -s /Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/CLAUDE.md
+      - grep -q 'master_instruction.md' /Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/CLAUDE.md
+      - grep -q 'global_rules.md' /Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/CLAUDE.md
+
+  - id: AC-Z1-02
+    description: architecture-v2.md に案A確定マークが含まれる
+    test_name: test_arch_v2_marks_option_a_confirmed
+    type: manual
+    manual_check: true
+    verification:
+      - grep -q '案A' /Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/docs/architecture-v2.md
+      - grep -q '確定' /Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/docs/architecture-v2.md
+
+  - id: AC-Z1-03
+    description: 疎結合5要件 (schema/workspace/route/read-only-api/auth) が全て記載
+    test_name: test_decoupling_contract_has_all_5_requirements
+    type: manual
+    manual_check: true
+    verification:
+      - grep -q 'schema' /Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/docs/a02-decoupling-contract.md
+      - grep -q 'workspace' /Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/docs/a02-decoupling-contract.md
+      - grep -q 'route' /Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/docs/a02-decoupling-contract.md
+      - grep -q 'read-only-api' /Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/docs/a02-decoupling-contract.md
+      - grep -q 'auth' /Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/docs/a02-decoupling-contract.md
+
+  - id: AC-Z1-04
+    description: architecture-v2.md に api_proxy.php との共存方法が記載
+    test_name: test_arch_v2_coexists_with_api_proxy
+    type: manual
+    manual_check: true
+    verification:
+      - grep -q 'api_proxy.php' /Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/docs/architecture-v2.md
+
+  - id: AC-Z1-05
+    description: architecture-v2.md に公開URLとTailscale URLの分離方針が記載
+    test_name: test_arch_v2_separates_public_and_tailscale_urls
+    type: manual
+    manual_check: true
+    verification:
+      - grep -q 'Tailscale' /Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/docs/architecture-v2.md
+      - grep -q 'mane.bikusu.net' /Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/docs/architecture-v2.md
