@@ -21,6 +21,12 @@ var FIELDS = [
   'failure_type', 'human_gate', 'artifacts'
 ];
 
+// pcc_display_contract.md Section 6 宣言順（変更禁止・ソート禁止）
+var PCC197_SLOTS = [
+  'current_session', 'next_action', 'blocker', 'waiting_human',
+  'queue_status', 'recent_failures', 'dependency_state', 'judge_state'
+];
+
 function renderCards(projects) {
   var cards = document.querySelectorAll('.project-card');
   projects.forEach(function(proj, i) {
@@ -55,6 +61,17 @@ function renderCards(projects) {
       } else {
         var val = proj[field];
         el.textContent = (val == null || val === '') ? '—' : val;
+      }
+    });
+
+    PCC197_SLOTS.forEach(function(slot) {
+      var el = card.querySelector('[data-pcc197="' + slot + '"]');
+      if (!el) return;
+      var val = proj[slot];
+      if (val == null || val === '' || val === 'not_applicable') {
+        el.textContent = (val === 'not_applicable') ? 'not_applicable' : '—';
+      } else {
+        el.textContent = val;
       }
     });
 

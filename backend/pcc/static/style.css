@@ -197,3 +197,20 @@ h1 {
   color: #6e7681;
   border: 1px solid #30363d;
 }
+
+/* session-197: Section 6 スロット（read-only 投影の可視化） */
+.pcc197-slot {
+  margin-bottom: 2px;
+  min-height: 16px;
+}
+
+.pcc197-label {
+  flex: 0 0 108px;
+  font-size: 10px;
+  color: #7d8590;
+}
+
+.pcc197-val {
+  font-size: 10px;
+  line-height: 1.35;
+}
