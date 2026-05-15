@@ -1,0 +1,170 @@
+{
+  "session_id": "session-200",
+  "phase_id": "P10-pre",
+  "type": "docs-only",
+  "title": "judge contract freeze（recommendation schema・commander-only approval・autonomous GO 禁止・docs-only）",
+  "goal": "judge が commander に提出する recommendation の最小契約を docs/specs/judge_contract.md に正本化する。judge recommendation schema・commander-only approval・final_decision_owner='commander' 固定・additionalProperties=false・autonomous GO 禁止・L4 autonomy 禁止・recommendation only（judge は決定しない）を freeze する。routing truth table / machine-readable routing JSON / total deterministic function / exact failure_type→decision mapping は本契約に含めない。routing heuristic / telemetry / deterministic routing freeze は session-201〜203 へ委譲する。",
+  "scope": [
+    "docs/specs/judge_contract.md に judge recommendation の最小契約（recommendation schema / commander-only approval / final_decision_owner 固定 / autonomous GO 禁止 / L4 autonomy 禁止 / recommendation only）を記述する。",
+    "docs/sessions/session-200.json を 14-key 正本として起票する。",
+    "docs/acceptance/session-200.yaml を acceptance 正本として起票する。"
+  ],
+  "out_of_scope": [
+    "routing truth table の定義・freeze",
+    "machine-readable routing JSON の定義・freeze",
+    "total deterministic function の定義",
+    "exact failure_type → decision mapping の freeze",
+    "routing heuristic の定義（session-201 へ委譲）",
+    "telemetry の定義（session-202 へ委譲）",
+    "deterministic routing freeze（session-203 へ委譲）",
+    "orchestration/** / queue/** / scheduler/** / provider/** の変更",
+    "global_rules.md / master_instruction.md の改訂",
+    "allowed_changes に列挙した3ファイル以外の新規作成・変更"
+  ],
+  "constraints": [
+    "1セッション1目的",
+    "docs-only（実装コードを混在させない）",
+    "最大3ファイル（session JSON / acceptance YAML / judge_contract.md）",
+    "14-key 完全準拠（session_id / phase_id / title / goal / scope / out_of_scope / constraints / acceptance_ref / allowed_changes_detail / forbidden_changes / completion_criteria / acceptance_criteria / review_points / failure_type）",
+    "completion_criteria.type は canonical 5値のみ（artifact / document_rule / non_regression / side_effect_free / state_transition_consistent）",
+    "acceptance_criteria の各要素は id / description / test_name の3キーのみを持つ",
+    "review_points は4固定文言（配列順）と完全一致する",
+    "judge_contract.md は recommendation schema と commander-only 境界の宣言に限定し、routing truth table / deterministic routing を含めない",
+    "future evolution blocking 禁止（routing / telemetry の具体化は後続セッションへ委譲）",
+    "曖昧語禁止"
+  ],
+  "acceptance_ref": "docs/acceptance/session-200.yaml",
+  "allowed_changes": [
+    "docs/sessions/session-200.json",
+    "docs/acceptance/session-200.yaml",
+    "docs/specs/judge_contract.md"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/session-200.json: session-200 の 14-key session 定義を起票する",
+    "docs/acceptance/session-200.yaml: session-200 の acceptance 正本を起票する",
+    "docs/specs/judge_contract.md: judge recommendation の最小契約（recommendation schema / commander-only approval / final_decision_owner 固定 / autonomous GO 禁止 / L4 autonomy 禁止）を freeze する"
+  ],
+  "forbidden_changes": [
+    "orchestration/** を変更しない",
+    "queue/** を変更しない",
+    "scheduler/** を変更しない",
+    "provider/** を変更しない",
+    "global_rules.md を変更しない",
+    "master_instruction.md を変更しない",
+    "judge_contract.md に routing truth table を含めない",
+    "judge_contract.md に machine-readable routing JSON を含めない",
+    "judge_contract.md に deterministic routing freeze を含めない",
+    "allowed_changes に列挙した3パス以外のファイルを変更・新規作成しない"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-200-01",
+      "type": "artifact",
+      "condition": "docs/sessions/session-200.json が保存されている。"
+    },
+    {
+      "id": "CC-200-02",
+      "type": "artifact",
+      "condition": "docs/acceptance/session-200.yaml が保存されている。"
+    },
+    {
+      "id": "CC-200-03",
+      "type": "artifact",
+      "condition": "docs/specs/judge_contract.md が保存されている。"
+    },
+    {
+      "id": "CC-200-04",
+      "type": "document_rule",
+      "condition": "judge_contract.md に final_decision_owner が commander として明記されている。"
+    },
+    {
+      "id": "CC-200-05",
+      "type": "document_rule",
+      "condition": "judge_contract.md に recommendation only（judge は決定しない）が明記されている。"
+    },
+    {
+      "id": "CC-200-06",
+      "type": "document_rule",
+      "condition": "judge_contract.md に autonomous GO 禁止が明記されている。"
+    },
+    {
+      "id": "CC-200-07",
+      "type": "document_rule",
+      "condition": "judge_contract.md に L4 autonomy 禁止が明記されている。"
+    },
+    {
+      "id": "CC-200-08",
+      "type": "document_rule",
+      "condition": "judge_contract.md に routing truth table / machine-readable routing JSON / deterministic routing が含まれていない。"
+    },
+    {
+      "id": "CC-200-09",
+      "type": "non_regression",
+      "condition": "git diff に forbidden_changes に列挙したパターンへの変更が含まれない。"
+    },
+    {
+      "id": "CC-200-10",
+      "type": "side_effect_free",
+      "condition": "orchestration / queue / scheduler / provider / global_rules.md に副作用がない（docs-only のみ）。"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-200-01",
+      "description": "session-200.json が保存され、14-key をすべて持つ。",
+      "test_name": "test_session_200_json_has_all_14_keys"
+    },
+    {
+      "id": "AC-200-02",
+      "description": "session-200.yaml の session_id が session-200 と一致する。",
+      "test_name": "test_session_200_yaml_session_id_matches"
+    },
+    {
+      "id": "AC-200-03",
+      "description": "judge_contract.md が存在する。",
+      "test_name": "test_judge_contract_md_exists"
+    },
+    {
+      "id": "AC-200-04",
+      "description": "judge_contract.md に final_decision_owner が commander として明記されている。",
+      "test_name": "test_judge_contract_final_decision_owner_commander"
+    },
+    {
+      "id": "AC-200-05",
+      "description": "judge_contract.md に recommendation only が明記されている。",
+      "test_name": "test_judge_contract_recommendation_only_declared"
+    },
+    {
+      "id": "AC-200-06",
+      "description": "judge_contract.md に autonomous GO 禁止が明記されている。",
+      "test_name": "test_judge_contract_autonomous_go_prohibited"
+    },
+    {
+      "id": "AC-200-07",
+      "description": "judge_contract.md に L4 autonomy 禁止が明記されている。",
+      "test_name": "test_judge_contract_l4_autonomy_prohibited"
+    },
+    {
+      "id": "AC-200-08",
+      "description": "judge_contract.md に routing truth table が含まれていない。",
+      "test_name": "test_judge_contract_no_routing_truth_table"
+    },
+    {
+      "id": "AC-200-09",
+      "description": "completion_criteria.type が canonical 5値のみである。",
+      "test_name": "test_session_200_completion_criteria_types_canonical"
+    },
+    {
+      "id": "AC-200-10",
+      "description": "acceptance_criteria の各要素が id / description / test_name の3キーのみで構成されている。",
+      "test_name": "test_session_200_acceptance_criteria_shape"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし",
+    "検証十分性"
+  ],
+  "failure_type": "spec_missing"
+}

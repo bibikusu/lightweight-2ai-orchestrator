@@ -1,0 +1,124 @@
+session_id: session-200
+goal: >-
+  judge が commander に提出する recommendation の最小契約を
+  docs/specs/judge_contract.md に正本化する。
+  recommendation schema・commander-only approval・final_decision_owner='commander' 固定・
+  additionalProperties=false・autonomous GO 禁止・L4 autonomy 禁止・recommendation only を freeze する。
+  routing truth table / machine-readable routing JSON / deterministic routing freeze は含めない。
+  routing heuristic / telemetry / deterministic routing は session-201〜203 へ委譲する。
+scope:
+  - "docs/specs/judge_contract.md に judge recommendation の最小契約を記述する。"
+  - "docs/sessions/session-200.json を 14-key 正本として起票する。"
+  - "docs/acceptance/session-200.yaml を acceptance 正本として起票する。"
+out_of_scope:
+  - "routing truth table の定義・freeze"
+  - "machine-readable routing JSON の定義・freeze"
+  - "total deterministic function の定義"
+  - "exact failure_type → decision mapping の freeze"
+  - "routing heuristic（session-201 へ委譲）"
+  - "telemetry（session-202 へ委譲）"
+  - "deterministic routing freeze（session-203 へ委譲）"
+  - "orchestration/** / queue/** / scheduler/** / provider/** の変更"
+  - "global_rules.md / master_instruction.md の改訂"
+acceptance:
+  - id: "AC-200-01"
+    description: "session-200.json が保存され、14-key をすべて持つ。"
+    test_name: "test_session_200_json_has_all_14_keys"
+    type: "automated"
+    manual_check: false
+    verification:
+      - >-
+        python3 -c "import json; p='docs/sessions/session-200.json'; d=json.load(open(p));
+        k={'session_id','phase_id','title','goal','scope','out_of_scope','constraints','acceptance_ref','allowed_changes_detail','forbidden_changes','completion_criteria','acceptance_criteria','review_points','failure_type'};
+        assert k<=d.keys(), sorted(k-d.keys())"
+  - id: "AC-200-02"
+    description: "session-200.yaml の session_id が session-200 と一致する。"
+    test_name: "test_session_200_yaml_session_id_matches"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "python3 -c \"import yaml; d=yaml.safe_load(open('docs/acceptance/session-200.yaml')); assert d.get('session_id')=='session-200'\""
+  - id: "AC-200-03"
+    description: "judge_contract.md が存在する。"
+    test_name: "test_judge_contract_md_exists"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "test -f docs/specs/judge_contract.md"
+  - id: "AC-200-04"
+    description: "judge_contract.md に final_decision_owner が commander として明記されている。"
+    test_name: "test_judge_contract_final_decision_owner_commander"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "grep -q 'final_decision_owner\\|commander' docs/specs/judge_contract.md"
+  - id: "AC-200-05"
+    description: "judge_contract.md に recommendation only が明記されている。"
+    test_name: "test_judge_contract_recommendation_only_declared"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "grep -qi 'recommendation\\|提案のみ\\|決定しない' docs/specs/judge_contract.md"
+  - id: "AC-200-06"
+    description: "judge_contract.md に autonomous GO 禁止が明記されている。"
+    test_name: "test_judge_contract_autonomous_go_prohibited"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "grep -qi 'autonomous GO\\|自律.*GO\\|GO.*禁止' docs/specs/judge_contract.md"
+  - id: "AC-200-07"
+    description: "judge_contract.md に L4 autonomy 禁止が明記されている。"
+    test_name: "test_judge_contract_l4_autonomy_prohibited"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "grep -qi 'L4\\|autonomy.*禁止\\|自律.*禁止' docs/specs/judge_contract.md"
+  - id: "AC-200-08"
+    description: "judge_contract.md に routing truth table が含まれていない。"
+    test_name: "test_judge_contract_no_routing_truth_table"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "! grep -qi 'routing truth table\\|truth table\\|deterministic routing' docs/specs/judge_contract.md"
+  - id: "AC-200-09"
+    description: "completion_criteria.type が canonical 5値のみである。"
+    test_name: "test_session_200_completion_criteria_types_canonical"
+    type: "automated"
+    manual_check: false
+    verification:
+      - >-
+        python3 -c "import json; d=json.load(open('docs/sessions/session-200.json'));
+        ok={'artifact','document_rule','non_regression','side_effect_free','state_transition_consistent'};
+        t={c.get('type') for c in d.get('completion_criteria',[])}; assert t<=ok, sorted(t-ok)"
+  - id: "AC-200-10"
+    description: "acceptance_criteria の各要素が id / description / test_name の3キーのみで構成されている。"
+    test_name: "test_session_200_acceptance_criteria_shape"
+    type: "automated"
+    manual_check: false
+    verification:
+      - >-
+        python3 -c "import json; d=json.load(open('docs/sessions/session-200.json'));
+        want={'id','description','test_name'};
+        assert all(set(ac.keys())==want for ac in d['acceptance_criteria'])"
+completion_checks:
+  - "artifact: session-200.json / session-200.yaml / judge_contract.md が存在する"
+  - "document_rule: final_decision_owner=commander / recommendation only / autonomous GO禁止 / L4 autonomy禁止 が明記されている"
+  - "document_rule: routing truth table / machine-readable routing JSON / deterministic routing が含まれていない"
+  - "non_regression: forbidden_changes に該当する diff がない"
+  - "side_effect_free: orchestration / queue / scheduler / provider / global_rules.md に変更がない"
+change_guardrails:
+  allowed_changes:
+    - "docs/sessions/session-200.json"
+    - "docs/acceptance/session-200.yaml"
+    - "docs/specs/judge_contract.md"
+  forbidden_changes:
+    - "orchestration/** を変更しない"
+    - "queue/** を変更しない"
+    - "scheduler/** を変更しない"
+    - "provider/** を変更しない"
+    - "global_rules.md を変更しない"
+    - "master_instruction.md を変更しない"
+    - "judge_contract.md に routing truth table を含めない"
+    - "judge_contract.md に machine-readable routing JSON を含めない"
+    - "judge_contract.md に deterministic routing freeze を含めない"
+    - "allowed_changes に列挙した3パス以外を変更・新規作成しない"
