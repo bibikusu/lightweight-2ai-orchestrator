@@ -1,0 +1,195 @@
+{
+  "session_id": "session-197",
+  "phase_id": "P7",
+  "type": "implementation",
+  "title": "PCC read-only 8-slot display（pcc_display_contract.md Section 6 準拠）",
+  "goal": "baseline commit 2282f82（main / origin main）および正本 docs/specs/pcc_display_contract.md に従い、既存 backend/pcc 実装に read-only 拡張を加え、PCC が current_session / next_action / blocker / waiting_human / queue_status / recent_failures / dependency_state / judge_state を filesystem-first・deterministic に表示する。orchestration/pcc/ 等の新設パスは用いない。state 正本への write・所有権は持たない。queue / scheduler / provider / orchestration / tools / dashboard runtime は変更しない。",
+  "scope": [
+    "backend/pcc/pcc_v0_5.py: Section 6 の8スロットを enrich_cards 経由で各 card dict に付与する read-only 投影（既存 operational 導出との後方互換を維持）",
+    "backend/pcc/pcc_v0.py: aggregate_projects() に必要な filesystem read のみ追加し、既存の registry / state.json / queue_state.json 集約を維持する",
+    "backend/pcc/static/index.html / app.js / style.css: 8 スロットを契約順で表示する deterministic rendering",
+    "tests/test_pcc_display_session_197.py: Section 6・read-only・禁止パスを検証する pytest を新規作成する",
+    "docs/sessions/session-197.json / docs/acceptance/session-197.yaml: 本セッション正本の整合維持"
+  ],
+  "out_of_scope": [
+    "orchestration/** / queue/** / scheduler/** / provider/** / tools/** の変更",
+    "scripts/** の変更",
+    "backend/pcc/server.py の変更",
+    "dashboard runtime（websocket / realtime sync / 実行中 UI 更新契約）の導入",
+    "docs/specs/pcc_display_contract.md の変更",
+    "orchestration/pcc/ 等の新規ディレクトリ・新設エントリポイント",
+    "自律ポーリング・自動リフレッシュ・MCP / 外部 AI API による表示生成",
+    "docs/projects/**/state.json の書き換え"
+  ],
+  "constraints": [
+    "14-key canonical（session_id / phase_id / title / goal / scope / out_of_scope / constraints / acceptance_ref / allowed_changes_detail / forbidden_changes / completion_criteria / acceptance_criteria / review_points / failure_type）に準拠する",
+    "completion_criteria.type は artifact / document_rule / non_regression / side_effect_free / state_transition_consistent の5値のみ",
+    "acceptance_criteria の各要素は id / description / test_name の3キーのみを持つ",
+    "review_points は4固定文言（配列順）と完全一致する",
+    "docs/specs/pcc_display_contract.md は正本として変更しない（2282f82 以降も本文を改変しない）",
+    "filesystem-first: 表示値の primary はリポジトリ上の宣言ファイルからの read に限定する",
+    "deterministic rendering: Section 6 のスロット宣言順を UI/API の並びの正とする",
+    "read-only: Path.write_text / open(...,'w','a') / 正本 state のミューテーションを導入しない",
+    "state ownership 禁止: プロジェクト state を PCC 実装が正としない",
+    "backend/pcc/server.py は変更しない（集約・投影は pcc_v0 / pcc_v0_5 および static のみ）"
+  ],
+  "acceptance_ref": "docs/acceptance/session-197.yaml",
+  "allowed_changes": [
+    "backend/pcc/pcc_v0_5.py",
+    "backend/pcc/pcc_v0.py",
+    "backend/pcc/static/index.html",
+    "backend/pcc/static/app.js",
+    "backend/pcc/static/style.css",
+    "tests/test_pcc_display_session_197.py",
+    "docs/sessions/session-197.json",
+    "docs/acceptance/session-197.yaml"
+  ],
+  "allowed_changes_detail": [
+    "backend/pcc/pcc_v0_5.py: Section 6 の8スロット read-only 投影（enrich_cards）",
+    "backend/pcc/pcc_v0.py: aggregate_projects の filesystem read 拡張（read-only）",
+    "backend/pcc/static/index.html: 8 スロット行の表示 DOM",
+    "backend/pcc/static/app.js: 8 スロットの deterministic バインド",
+    "backend/pcc/static/style.css: 8 スロット表示の体裁",
+    "tests/test_pcc_display_session_197.py: test_pcc_* による受入テスト新規",
+    "docs/sessions/session-197.json: session 正本",
+    "docs/acceptance/session-197.yaml: acceptance 正本"
+  ],
+  "forbidden_changes": [
+    "orchestration/** を変更しない",
+    "queue/** を変更しない",
+    "scheduler/** を変更しない",
+    "provider/** を変更しない",
+    "backend/pcc/server.py を変更しない",
+    "docs/specs/pcc_display_contract.md を変更しない",
+    "tools/** を変更しない",
+    "tests/test_session_validate.py を変更しない",
+    "tests/test_pcc_v0_5.py を変更しない",
+    "allowed_changes に列挙した8パス以外のファイルを変更・新規作成しない"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-197-01",
+      "type": "artifact",
+      "condition": "tests/test_pcc_display_session_197.py が保存され、pytest で当該モジュールのテストがすべて pass する。"
+    },
+    {
+      "id": "CC-197-02",
+      "type": "artifact",
+      "condition": "backend/pcc/static/index.html / app.js / style.css が8スロット表示用に更新されている。"
+    },
+    {
+      "id": "CC-197-03",
+      "type": "document_rule",
+      "condition": "実装が docs/specs/pcc_display_contract.md Section 5（read-only）および Section 6（出典規則）に反しない。"
+    },
+    {
+      "id": "CC-197-04",
+      "type": "document_rule",
+      "condition": "8スロットの JSON キー名および UI 表示順が Section 6 の宣言順と一致する。"
+    },
+    {
+      "id": "CC-197-05",
+      "type": "non_regression",
+      "condition": "tests/test_pcc_v0_5.py がすべて pass する。"
+    },
+    {
+      "id": "CC-197-06",
+      "type": "non_regression",
+      "condition": "git diff に forbidden_changes（orchestration / queue / scheduler / provider / server.py / pcc_display_contract / tools / test_session_validate.py 等）に該当するパスが含まれない。"
+    },
+    {
+      "id": "CC-197-07",
+      "type": "state_transition_consistent",
+      "condition": "registry/state.json（および必要なら session JSON）→ aggregate_projects → enrich_cards → /api/state JSON のデータ経路が一意に説明できる。"
+    },
+    {
+      "id": "CC-197-08",
+      "type": "side_effect_free",
+      "condition": "docs/projects/**/state.json および docs/specs/pcc_display_contract.md に write が行われない（read-only のみ）。"
+    },
+    {
+      "id": "CC-197-09",
+      "type": "side_effect_free",
+      "condition": "変更ファイルに write 系 API（open(...,'w'/'a') / Path.write_text / Path.write_bytes）の新規導入がない。"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-197-01",
+      "description": "session-197.json が保存され、14-key canonical をすべて持つ。",
+      "test_name": "test_session_197_json_has_all_14_keys"
+    },
+    {
+      "id": "AC-197-02",
+      "description": "session-197.yaml が保存され、session_id が session-197 と一致する。",
+      "test_name": "test_session_197_yaml_session_id_matches"
+    },
+    {
+      "id": "AC-197-03",
+      "description": "各 project card の dict に Section 6 順で8キーが存在する。",
+      "test_name": "test_pcc_display_session_197_eight_slot_keys_ordered"
+    },
+    {
+      "id": "AC-197-04",
+      "description": "8スロットの値は filesystem read のみを根拠とする。",
+      "test_name": "test_pcc_display_session_197_projection_filesystem_only"
+    },
+    {
+      "id": "AC-197-05",
+      "description": "queue_status は snapshot のみを根拠とする。",
+      "test_name": "test_pcc_display_session_197_queue_status_snapshot_only"
+    },
+    {
+      "id": "AC-197-06",
+      "description": "recent_failures は last_error 根拠または not_applicable 系。",
+      "test_name": "test_pcc_display_session_197_recent_failures_from_last_error"
+    },
+    {
+      "id": "AC-197-07",
+      "description": "waiting_human は waiting_for / status から決定的に導出される。",
+      "test_name": "test_pcc_display_session_197_waiting_human_derivation"
+    },
+    {
+      "id": "AC-197-08",
+      "description": "dependency_state は宣言フィールドの積であり暗黙ソートを用いない。",
+      "test_name": "test_pcc_display_session_197_dependency_state_bundle"
+    },
+    {
+      "id": "AC-197-09",
+      "description": "allowed_changes 外パスへの変更が git diff に含まれない。",
+      "test_name": "test_session_197_diff_respects_allowed_changes"
+    },
+    {
+      "id": "AC-197-10",
+      "description": "completion_criteria.type が canonical 5値のみである。",
+      "test_name": "test_session_197_completion_criteria_types_canonical"
+    },
+    {
+      "id": "AC-197-11",
+      "description": "acceptance_criteria の各要素が id / description / test_name の3キーのみで構成されている。",
+      "test_name": "test_session_197_acceptance_criteria_shape"
+    },
+    {
+      "id": "AC-197-12",
+      "description": "pytest tests/test_pcc_v0_5.py がすべて pass する（非回帰）。",
+      "test_name": "test_pcc_v0_5_regression_passes"
+    },
+    {
+      "id": "AC-197-13",
+      "description": "docs/specs/pcc_display_contract.md に git diff が無い（正本未改変）。",
+      "test_name": "test_pcc_display_contract_unchanged"
+    },
+    {
+      "id": "AC-197-14",
+      "description": "ブラウザで /api/state の各カードに8スロットが契約順で表示される。",
+      "test_name": "test_pcc_display_session_197_browser_eight_slots"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし",
+    "検証十分性"
+  ],
+  "failure_type": "spec_missing"
+}

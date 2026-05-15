@@ -1,0 +1,148 @@
+session_id: session-197
+goal: >-
+  baseline commit 2282f82 および正本 docs/specs/pcc_display_contract.md に従い、
+  既存 backend/pcc に read-only 拡張を加え、8スロットを filesystem-first・deterministic に表示する最小実装を完了する。
+scope:
+  - "backend/pcc/pcc_v0_5.py / pcc_v0.py / static/* に read-only 投影と UI を実装する（orchestration/pcc/ 新設は行わない）。"
+  - "tests/test_pcc_display_session_197.py を新規作成し pytest で検証する。"
+  - "docs/sessions/session-197.json / docs/acceptance/session-197.yaml を正本として維持する。"
+out_of_scope:
+  - "orchestration/** / queue/** / scheduler/** / provider/** / tools/** の変更"
+  - "backend/pcc/server.py の変更"
+  - "docs/specs/pcc_display_contract.md の変更"
+  - "orchestration/pcc/ 等の新規ディレクトリ・新設エントリポイント"
+  - "dashboard runtime / websocket / realtime sync"
+  - "scripts/** の変更"
+  - "docs/projects/**/state.json の書き換え"
+acceptance:
+  - id: "AC-197-01"
+    description: "session-197.json が保存され、14-key canonical をすべて持つ。"
+    test_name: "test_session_197_json_has_all_14_keys"
+    type: "automated"
+    manual_check: false
+    verification:
+      - >-
+        python3 -c "import json; p='docs/sessions/session-197.json'; d=json.load(open(p));
+        k={'session_id','phase_id','title','goal','scope','out_of_scope','constraints','acceptance_ref','allowed_changes_detail','forbidden_changes','completion_criteria','acceptance_criteria','review_points','failure_type'};
+        assert k<=d.keys(), sorted(k-d.keys())"
+  - id: "AC-197-02"
+    description: "session-197.yaml の session_id が session-197 と一致する。"
+    test_name: "test_session_197_yaml_session_id_matches"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "python3 -c \"import yaml; d=yaml.safe_load(open('docs/acceptance/session-197.yaml')); assert d.get('session_id')=='session-197'\""
+  - id: "AC-197-03"
+    description: "各 project card の dict に Section 6 順で8キーが存在する。"
+    test_name: "test_pcc_display_session_197_eight_slot_keys_ordered"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "pytest -q tests/test_pcc_display_session_197.py::test_pcc_display_session_197_eight_slot_keys_ordered"
+  - id: "AC-197-04"
+    description: "8スロットの値は filesystem read のみを根拠とする。"
+    test_name: "test_pcc_display_session_197_projection_filesystem_only"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "pytest -q tests/test_pcc_display_session_197.py::test_pcc_display_session_197_projection_filesystem_only"
+  - id: "AC-197-05"
+    description: "queue_status は snapshot のみを根拠とする。"
+    test_name: "test_pcc_display_session_197_queue_status_snapshot_only"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "pytest -q tests/test_pcc_display_session_197.py::test_pcc_display_session_197_queue_status_snapshot_only"
+  - id: "AC-197-06"
+    description: "recent_failures は last_error 根拠または not_applicable 系。"
+    test_name: "test_pcc_display_session_197_recent_failures_from_last_error"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "pytest -q tests/test_pcc_display_session_197.py::test_pcc_display_session_197_recent_failures_from_last_error"
+  - id: "AC-197-07"
+    description: "waiting_human は waiting_for / status から決定的に導出される。"
+    test_name: "test_pcc_display_session_197_waiting_human_derivation"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "pytest -q tests/test_pcc_display_session_197.py::test_pcc_display_session_197_waiting_human_derivation"
+  - id: "AC-197-08"
+    description: "dependency_state は宣言フィールドの積であり暗黙ソートを用いない。"
+    test_name: "test_pcc_display_session_197_dependency_state_bundle"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "pytest -q tests/test_pcc_display_session_197.py::test_pcc_display_session_197_dependency_state_bundle"
+  - id: "AC-197-09"
+    description: "allowed_changes 外パスへの変更が git diff に含まれない。"
+    test_name: "test_session_197_diff_respects_allowed_changes"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "pytest -q tests/test_pcc_display_session_197.py::test_session_197_diff_respects_allowed_changes"
+  - id: "AC-197-10"
+    description: "completion_criteria.type が canonical 5値のみである。"
+    test_name: "test_session_197_completion_criteria_types_canonical"
+    type: "automated"
+    manual_check: false
+    verification:
+      - >-
+        python3 -c "import json; d=json.load(open('docs/sessions/session-197.json')); ok={'artifact','document_rule','non_regression','side_effect_free','state_transition_consistent'}; t={c.get('type') for c in d.get('completion_criteria',[])}; assert t<=ok, sorted(t-ok)"
+  - id: "AC-197-11"
+    description: "acceptance_criteria の各要素が id / description / test_name の3キーのみで構成されている。"
+    test_name: "test_session_197_acceptance_criteria_shape"
+    type: "automated"
+    manual_check: false
+    verification:
+      - >-
+        python3 -c "import json; d=json.load(open('docs/sessions/session-197.json')); want={'id','description','test_name'};
+        assert all(set(ac.keys())==want for ac in d['acceptance_criteria'])"
+  - id: "AC-197-12"
+    description: "pytest tests/test_pcc_v0_5.py がすべて pass する（非回帰）。"
+    test_name: "test_pcc_v0_5_regression_passes"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "pytest -q tests/test_pcc_v0_5.py"
+  - id: "AC-197-13"
+    description: "docs/specs/pcc_display_contract.md に git diff が無い（正本未改変）。"
+    test_name: "test_pcc_display_contract_unchanged"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "git diff --exit-code -- docs/specs/pcc_display_contract.md"
+  - id: "AC-197-14"
+    description: "ブラウザで /api/state の各カードに8スロットが契約順で表示される。"
+    test_name: "test_pcc_display_session_197_browser_eight_slots"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "python3 -m backend.pcc.server 8765 を起動し http://127.0.0.1:8765/ を開き、各 project-card に8行スロットが current_session から judge_state までの順で表示されることを目視する。"
+completion_checks:
+  - "artifact: tests/test_pcc_display_session_197.py が存在し pytest pass"
+  - "document_rule: pcc_display_contract.md Section 5/6 に整合する実装"
+  - "non_regression: test_pcc_v0_5.py pass / 禁止パスに diff なし"
+  - "state_transition_consistent: filesystem → aggregate → enrich → JSON の経路が説明可能"
+  - "side_effect_free: state.json / 契約 md へ write なし・write API 新規なし"
+change_guardrails:
+  allowed_changes:
+    - "backend/pcc/pcc_v0_5.py"
+    - "backend/pcc/pcc_v0.py"
+    - "backend/pcc/static/index.html"
+    - "backend/pcc/static/app.js"
+    - "backend/pcc/static/style.css"
+    - "tests/test_pcc_display_session_197.py"
+    - "docs/sessions/session-197.json"
+    - "docs/acceptance/session-197.yaml"
+  forbidden_changes:
+    - "orchestration/** を変更しない"
+    - "queue/** を変更しない"
+    - "scheduler/** を変更しない"
+    - "provider/** を変更しない"
+    - "backend/pcc/server.py を変更しない"
+    - "docs/specs/pcc_display_contract.md を変更しない"
+    - "tools/** を変更しない"
+    - "tests/test_session_validate.py を変更しない"
+    - "tests/test_pcc_v0_5.py を変更しない"
+    - "allowed_changes に列挙した8パス以外のファイルを変更・新規作成しない"
