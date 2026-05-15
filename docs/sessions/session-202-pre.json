@@ -1,0 +1,246 @@
+{
+  "session_id": "session-202-pre",
+  "phase_id": "P12-pre",
+  "type": "docs-only",
+  "title": "worker_report_contract.md / judge_contract.md 実体化（session-199・session-200 forward reference 解消・docs-only）",
+  "goal": "session-199 / session-200 が正本化対象として宣言したが現物未作成だった docs/specs/worker_report_contract.md と docs/specs/judge_contract.md を docs-only で実体化する。worker_report schema（evidence_refs / changed_files / verification_summary / blocker_summary / status_proposal / back-reference 必須 / worker self-approval 禁止 / PASS/FAIL確定禁止 / filesystem-first）および judge recommendation schema（recommendation only / final_decision_owner=commander / autonomous GO 禁止 / L4 autonomy 禁止 / routing truth table 除外）を freeze する。補助 JSON schema ファイルは作成しない。implementation は行わない。",
+  "scope": [
+    "docs/specs/worker_report_contract.md を実体化する（session-199 の forward reference を解消する）。",
+    "docs/specs/judge_contract.md を実体化する（session-200 の forward reference を解消する）。",
+    "docs/sessions/session-202-pre.json を 14-key 正本として起票する。",
+    "docs/acceptance/session-202-pre.yaml を acceptance 正本として起票する。"
+  ],
+  "out_of_scope": [
+    "implementation code の変更",
+    "PCC UI の変更",
+    "queue / scheduler の変更",
+    "run_session.py の変更",
+    "orchestration/** の変更",
+    "backend/** の変更",
+    "tests/** の変更",
+    "補助 JSON schema ファイルの作成",
+    "routing truth table の定義",
+    "machine-readable routing JSON の定義",
+    "deterministic routing freeze",
+    "docs/sessions/session-199.json の変更",
+    "docs/acceptance/session-199.yaml の変更",
+    "docs/sessions/session-200.json の変更",
+    "docs/acceptance/session-200.yaml の変更",
+    "docs/sessions/session-201-pre.json の変更",
+    "docs/acceptance/session-201-pre.yaml の変更",
+    "docs/contracts/judge_observation_contract.md の変更",
+    "docs/global_rules.md の変更",
+    "docs/master_instruction.md の変更",
+    "docs/roadmap.yaml の変更",
+    "allowed_changes_detail に列挙した4ファイル以外の新規作成・変更"
+  ],
+  "constraints": [
+    "1セッション1目的",
+    "docs-only（実装コードを混在させない）",
+    "最大4ファイル（session JSON / acceptance YAML / worker_report_contract.md / judge_contract.md）",
+    "14-key 完全準拠（session_id / phase_id / title / goal / scope / out_of_scope / constraints / acceptance_ref / allowed_changes_detail / forbidden_changes / completion_criteria / acceptance_criteria / review_points / failure_type）",
+    "completion_criteria.type は canonical 5値のみ（artifact / document_rule / non_regression / side_effect_free / state_transition_consistent）",
+    "acceptance_criteria の各要素は id / description / test_name の3キーのみを持つ",
+    "review_points は4固定文言（配列順）と完全一致する",
+    "補助 JSON schema ファイルを作成しない",
+    "上流7ファイルの sha-256 を作業前後で不変に保つ",
+    "曖昧語禁止"
+  ],
+  "acceptance_ref": "docs/acceptance/session-202-pre.yaml",
+  "allowed_changes_detail": [
+    "docs/specs/worker_report_contract.md: session-199 が正本化対象として宣言した worker report の5原則（self-approval 禁止 / filesystem-first / status_proposal / back-reference 必須 / PASS/FAIL確定禁止）と worker_report schema を実体化する",
+    "docs/specs/judge_contract.md: session-200 が正本化対象として宣言した judge recommendation schema（recommendation only / final_decision_owner=commander / autonomous GO 禁止 / L4 autonomy 禁止 / routing truth table 除外）を実体化する",
+    "docs/sessions/session-202-pre.json: session-202-pre の 14-key session 定義を起票する",
+    "docs/acceptance/session-202-pre.yaml: session-202-pre の acceptance 正本を起票する"
+  ],
+  "forbidden_changes": [
+    "implementation code を変更しない",
+    "orchestration/** を変更しない",
+    "backend/** を変更しない",
+    "tests/** を変更しない",
+    "queue / scheduler を変更しない",
+    "run_session.py を変更しない",
+    "PCC UI を変更しない",
+    "docs/sessions/session-199.json を変更しない",
+    "docs/acceptance/session-199.yaml を変更しない",
+    "docs/sessions/session-200.json を変更しない",
+    "docs/acceptance/session-200.yaml を変更しない",
+    "docs/sessions/session-201-pre.json を変更しない",
+    "docs/acceptance/session-201-pre.yaml を変更しない",
+    "docs/contracts/judge_observation_contract.md を変更しない",
+    "docs/global_rules.md を変更しない",
+    "docs/master_instruction.md を変更しない",
+    "docs/roadmap.yaml を変更しない",
+    "judge_contract.md に routing truth table を含めない",
+    "judge_contract.md に machine-readable routing JSON を含めない",
+    "judge_contract.md に deterministic routing freeze を含めない",
+    "補助 JSON schema ファイルを作成しない",
+    "allowed_changes_detail に列挙した4パス以外のファイルを変更・新規作成しない"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-202-01",
+      "type": "artifact",
+      "condition": "docs/sessions/session-202-pre.json が保存されている。"
+    },
+    {
+      "id": "CC-202-02",
+      "type": "artifact",
+      "condition": "docs/acceptance/session-202-pre.yaml が保存されている。"
+    },
+    {
+      "id": "CC-202-03",
+      "type": "artifact",
+      "condition": "docs/specs/worker_report_contract.md が保存されている。"
+    },
+    {
+      "id": "CC-202-04",
+      "type": "artifact",
+      "condition": "docs/specs/judge_contract.md が保存されている。"
+    },
+    {
+      "id": "CC-202-05",
+      "type": "document_rule",
+      "condition": "worker_report_contract.md に worker self-approval 禁止が明記されている。"
+    },
+    {
+      "id": "CC-202-06",
+      "type": "document_rule",
+      "condition": "worker_report_contract.md に status_proposal（worker は status を提案するのみ）が明記されている。"
+    },
+    {
+      "id": "CC-202-07",
+      "type": "document_rule",
+      "condition": "worker_report_contract.md に back-reference 必須（session_id / acceptance_ref）が明記されている。"
+    },
+    {
+      "id": "CC-202-08",
+      "type": "document_rule",
+      "condition": "worker_report_contract.md に PASS/FAIL確定禁止が明記されている。"
+    },
+    {
+      "id": "CC-202-09",
+      "type": "document_rule",
+      "condition": "worker_report_contract.md に evidence_refs / changed_files / verification_summary / blocker_summary が schema フィールドとして明記されている。"
+    },
+    {
+      "id": "CC-202-10",
+      "type": "document_rule",
+      "condition": "judge_contract.md に final_decision_owner が commander として明記されている。"
+    },
+    {
+      "id": "CC-202-11",
+      "type": "document_rule",
+      "condition": "judge_contract.md に recommendation only（judge は決定しない）が明記されている。"
+    },
+    {
+      "id": "CC-202-12",
+      "type": "document_rule",
+      "condition": "judge_contract.md に autonomous GO 禁止が明記されている。"
+    },
+    {
+      "id": "CC-202-13",
+      "type": "document_rule",
+      "condition": "judge_contract.md に L4 autonomy 禁止が明記されている。"
+    },
+    {
+      "id": "CC-202-14",
+      "type": "document_rule",
+      "condition": "judge_contract.md に routing truth table / machine-readable routing JSON / deterministic routing が含まれていない。"
+    },
+    {
+      "id": "CC-202-15",
+      "type": "non_regression",
+      "condition": "上流7ファイル（session-199.json / session-199.yaml / session-200.json / session-200.yaml / session-201-pre.json / session-201-pre.yaml / judge_observation_contract.md）の sha-256 が作業前と一致する。"
+    },
+    {
+      "id": "CC-202-16",
+      "type": "non_regression",
+      "condition": "git diff に forbidden_changes に列挙したパターンへの変更が含まれない。"
+    },
+    {
+      "id": "CC-202-17",
+      "type": "side_effect_free",
+      "condition": "orchestration / backend / tests / queue / scheduler / run_session.py / PCC UI に副作用がない（docs-only のみ）。"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-202-01",
+      "description": "session-202-pre.json が保存され、14-key をすべて持つ。",
+      "test_name": "test_session_202_pre_json_has_all_14_keys"
+    },
+    {
+      "id": "AC-202-02",
+      "description": "session-202-pre.yaml の session_id が session-202-pre と一致する。",
+      "test_name": "test_session_202_pre_yaml_session_id_matches"
+    },
+    {
+      "id": "AC-202-03",
+      "description": "worker_report_contract.md が存在する。",
+      "test_name": "test_worker_report_contract_md_exists"
+    },
+    {
+      "id": "AC-202-04",
+      "description": "worker_report_contract.md に self-approval 禁止が明記されている。",
+      "test_name": "test_worker_report_contract_self_approval_prohibited"
+    },
+    {
+      "id": "AC-202-05",
+      "description": "worker_report_contract.md に status_proposal が明記されている。",
+      "test_name": "test_worker_report_contract_status_proposal_declared"
+    },
+    {
+      "id": "AC-202-06",
+      "description": "worker_report_contract.md に back-reference 必須（session_id / acceptance_ref）が明記されている。",
+      "test_name": "test_worker_report_contract_back_reference_mandatory"
+    },
+    {
+      "id": "AC-202-07",
+      "description": "worker_report_contract.md に PASS/FAIL確定禁止が明記されている。",
+      "test_name": "test_worker_report_contract_pass_fail_finalization_prohibited"
+    },
+    {
+      "id": "AC-202-08",
+      "description": "judge_contract.md が存在する。",
+      "test_name": "test_judge_contract_md_exists"
+    },
+    {
+      "id": "AC-202-09",
+      "description": "judge_contract.md に final_decision_owner が commander として明記されている。",
+      "test_name": "test_judge_contract_final_decision_owner_commander"
+    },
+    {
+      "id": "AC-202-10",
+      "description": "judge_contract.md に autonomous GO 禁止が明記されている。",
+      "test_name": "test_judge_contract_autonomous_go_prohibited"
+    },
+    {
+      "id": "AC-202-11",
+      "description": "judge_contract.md に routing truth table が含まれていない。",
+      "test_name": "test_judge_contract_no_routing_truth_table"
+    },
+    {
+      "id": "AC-202-12",
+      "description": "上流7ファイルの sha-256 が作業前と一致する（不変）。",
+      "test_name": "test_upstream_seven_files_sha256_unchanged"
+    },
+    {
+      "id": "AC-202-13",
+      "description": "completion_criteria.type が canonical 5値のみである。",
+      "test_name": "test_session_202_pre_completion_criteria_types_canonical"
+    },
+    {
+      "id": "AC-202-14",
+      "description": "acceptance_criteria の各要素が id / description / test_name の3キーのみで構成されている。",
+      "test_name": "test_session_202_pre_acceptance_criteria_shape"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし",
+    "検証十分性"
+  ],
+  "failure_type": "spec_missing"
+}
