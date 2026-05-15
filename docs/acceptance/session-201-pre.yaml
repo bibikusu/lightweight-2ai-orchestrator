@@ -1,0 +1,133 @@
+session_id: session-201-pre
+goal: >-
+  worker_report と judge_recommendation を PCC / Commander が read-only で観測可能な
+  judge_observation artifact として接続する docs-only contract を
+  docs/contracts/judge_observation_contract.md に正本化する。
+  judge_observation schema の5フィールド（worker_report_ref / judge_recommendation_ref /
+  observation_metadata / pcc_display_fields / final_decision_boundary）・
+  worker self-approval 禁止・autonomous GO 禁止・
+  final GO/HOLD/FAIL は GPT Commander のみ・PCC read-only invariant を freeze する。
+  補助 JSON schema ファイルは作成しない。
+scope:
+  - "docs/contracts/judge_observation_contract.md に judge_observation の観測契約を記述する。"
+  - "docs/sessions/session-201-pre.json を 14-key 正本として起票する。"
+  - "docs/acceptance/session-201-pre.yaml を acceptance 正本として起票する。"
+out_of_scope:
+  - "補助 JSON schema ファイルの作成"
+  - "judge_observation artifact の physical storage path の freeze"
+  - "routing heuristic の定義（別 session へ委譲）"
+  - "telemetry の定義（session-202 以降）"
+  - "deterministic routing freeze（session-203 以降）"
+  - "orchestration/** / queue/** / scheduler/** / provider/** の変更"
+  - "global_rules.md / master_instruction.md の改訂"
+  - "session-197-pre / session-199 / session-200 の既存成果物の変更"
+acceptance:
+  - id: "AC-201-01"
+    description: "session-201-pre.json が保存され、14-key をすべて持つ。"
+    test_name: "test_session_201_pre_json_has_all_14_keys"
+    type: "automated"
+    manual_check: false
+    verification:
+      - >-
+        python3 -c "import json; p='docs/sessions/session-201-pre.json'; d=json.load(open(p));
+        k={'session_id','phase_id','title','goal','scope','out_of_scope','constraints','acceptance_ref','allowed_changes_detail','forbidden_changes','completion_criteria','acceptance_criteria','review_points','failure_type'};
+        assert k<=d.keys(), sorted(k-d.keys())"
+  - id: "AC-201-02"
+    description: "session-201-pre.yaml の session_id が session-201-pre と一致する。"
+    test_name: "test_session_201_pre_yaml_session_id_matches"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "python3 -c \"import yaml; d=yaml.safe_load(open('docs/acceptance/session-201-pre.yaml')); assert d.get('session_id')=='session-201-pre'\""
+  - id: "AC-201-03"
+    description: "judge_observation_contract.md が存在する。"
+    test_name: "test_judge_observation_contract_md_exists"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "test -f docs/contracts/judge_observation_contract.md"
+  - id: "AC-201-04"
+    description: "judge_observation_contract.md に5フィールド（worker_report_ref / judge_recommendation_ref / observation_metadata / pcc_display_fields / final_decision_boundary）が全て明記されている。"
+    test_name: "test_judge_observation_contract_five_fields_present"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "grep -q 'worker_report_ref' docs/contracts/judge_observation_contract.md"
+      - "grep -q 'judge_recommendation_ref' docs/contracts/judge_observation_contract.md"
+      - "grep -q 'observation_metadata' docs/contracts/judge_observation_contract.md"
+      - "grep -q 'pcc_display_fields' docs/contracts/judge_observation_contract.md"
+      - "grep -q 'final_decision_boundary' docs/contracts/judge_observation_contract.md"
+  - id: "AC-201-05"
+    description: "judge_observation_contract.md に worker self-approval 禁止が明記されている。"
+    test_name: "test_judge_observation_contract_worker_self_approval_prohibited"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "grep -qi 'self-approval\\|self_approval\\|自己承認' docs/contracts/judge_observation_contract.md"
+  - id: "AC-201-06"
+    description: "judge_observation_contract.md に autonomous GO 禁止が明記されている。"
+    test_name: "test_judge_observation_contract_autonomous_go_prohibited"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "grep -qi 'autonomous GO\\|自律.*GO\\|GO.*禁止' docs/contracts/judge_observation_contract.md"
+  - id: "AC-201-07"
+    description: "judge_observation_contract.md に final_decision_boundary が commander_only として明記されている。"
+    test_name: "test_judge_observation_contract_final_decision_boundary_commander_only"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "grep -q 'commander_only' docs/contracts/judge_observation_contract.md"
+  - id: "AC-201-08"
+    description: "judge_observation_contract.md に PCC read-only invariant が明記されている。"
+    test_name: "test_judge_observation_contract_pcc_read_only_invariant"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "grep -qi 'read-only\\|read_only\\|書き換えない' docs/contracts/judge_observation_contract.md"
+  - id: "AC-201-09"
+    description: "completion_criteria.type が canonical 5値のみである。"
+    test_name: "test_session_201_pre_completion_criteria_types_canonical"
+    type: "automated"
+    manual_check: false
+    verification:
+      - >-
+        python3 -c "import json; d=json.load(open('docs/sessions/session-201-pre.json'));
+        ok={'artifact','document_rule','non_regression','side_effect_free','state_transition_consistent'};
+        t={c.get('type') for c in d.get('completion_criteria',[])}; assert t<=ok, sorted(t-ok)"
+  - id: "AC-201-10"
+    description: "acceptance_criteria の各要素が id / description / test_name の3キーのみで構成されている。"
+    test_name: "test_session_201_pre_acceptance_criteria_shape"
+    type: "automated"
+    manual_check: false
+    verification:
+      - >-
+        python3 -c "import json; d=json.load(open('docs/sessions/session-201-pre.json'));
+        want={'id','description','test_name'};
+        assert all(set(ac.keys())==want for ac in d['acceptance_criteria'])"
+completion_checks:
+  - "artifact: session-201-pre.json / session-201-pre.yaml / judge_observation_contract.md が存在する"
+  - "document_rule: 5フィールド（worker_report_ref / judge_recommendation_ref / observation_metadata / pcc_display_fields / final_decision_boundary）が明記されている"
+  - "document_rule: worker self-approval 禁止 / autonomous GO 禁止 / final_decision_boundary=commander_only / PCC read-only invariant が明記されている"
+  - "non_regression: forbidden_changes に該当する diff がない"
+  - "side_effect_free: orchestration / queue / scheduler / provider / global_rules.md / session-197-pre / session-199 / session-200 に変更がない"
+change_guardrails:
+  allowed_changes:
+    - "docs/sessions/session-201-pre.json"
+    - "docs/acceptance/session-201-pre.yaml"
+    - "docs/contracts/judge_observation_contract.md"
+  forbidden_changes:
+    - "orchestration/** を変更しない"
+    - "queue/** を変更しない"
+    - "scheduler/** を変更しない"
+    - "provider/** を変更しない"
+    - "global_rules.md を変更しない"
+    - "master_instruction.md を変更しない"
+    - "docs/sessions/session-199* を変更しない"
+    - "docs/sessions/session-200* を変更しない"
+    - "docs/sessions/session-197-pre* を変更しない"
+    - "docs/acceptance/session-199* を変更しない"
+    - "docs/acceptance/session-200* を変更しない"
+    - "docs/acceptance/session-197-pre* を変更しない"
+    - "補助 JSON schema ファイルを作成しない"
+    - "allowed_changes に列挙した3パス以外を変更・新規作成しない"
