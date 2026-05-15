@@ -1,0 +1,154 @@
+session_id: session-196
+goal: >-
+  next_action artifact contract、filesystem-first relay contract、Terminal short verification contract、
+  GO/HOLD/FAIL routing semantics を canonical docs として freeze する。runtime implementation は scope 外とする。
+scope:
+  - "docs/sessions/session-196.json を 14-key 正本準拠で確定する。"
+  - "docs/acceptance/session-196.yaml を acceptance 正本準拠で確定する。"
+  - "docs/specs/next_action_artifact_contract.md を contract freeze docs として新規作成する。"
+  - "docs/templates/terminal_short_verification.md を deterministic short verification template として新規作成する。"
+  - "artifact relay を mandatory にしないことを明記する。"
+  - "filesystem-first audit を primary と明記する。"
+  - "Terminal short verification を deterministic 短文検証に限定することを明記する。"
+  - "GO/HOLD/FAIL routing semantics を一意に定義する。"
+out_of_scope:
+  - "runtime implementation（GO/HOLD/FAIL ルーティングロジックの実装）"
+  - "queue runtime 変更"
+  - "scheduler 変更"
+  - "dashboard UI"
+  - "provider 変更"
+  - "sandbox autonomy implementation"
+  - "orchestration/ 配下の実装コード変更"
+  - "variant→shape 選択ロジック・dispatch（198-pre 領域）"
+  - "projection / PCC semantics（197-pre 領域）"
+acceptance:
+  - id: "AC-196-01"
+    description: "docs/sessions/session-196.json が保存され、14-key を完全に持つ。"
+    test_name: "test_session_196_json_has_all_14_keys"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "docs/sessions/session-196.json をロードし、14-key すべてがトップレベルに存在することを確認する。"
+  - id: "AC-196-02"
+    description: "docs/acceptance/session-196.yaml が保存され、acceptance YAML 正本準拠である。"
+    test_name: "test_session_196_yaml_is_canonical"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "docs/acceptance/session-196.yaml をロードし、session_id / goal / scope / out_of_scope / acceptance が存在することを確認する。"
+  - id: "AC-196-03"
+    description: "docs/specs/next_action_artifact_contract.md が保存されている。"
+    test_name: "test_next_action_artifact_contract_md_exists"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "test -f docs/specs/next_action_artifact_contract.md で存在を確認する。"
+  - id: "AC-196-04"
+    description: "docs/templates/terminal_short_verification.md が保存されている。"
+    test_name: "test_terminal_short_verification_md_exists"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "test -f docs/templates/terminal_short_verification.md で存在を確認する。"
+  - id: "AC-196-05"
+    description: "next_action_artifact_contract.md に artifact relay を mandatory にしない旨が明記されている。"
+    test_name: "test_artifact_relay_not_mandatory_stated"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "docs/specs/next_action_artifact_contract.md の Section 3.2 を目視し、relay が NOT mandatory である旨が明記されていることを確認する。"
+  - id: "AC-196-06"
+    description: "next_action_artifact_contract.md に filesystem-first audit を primary とする旨が明記されている。"
+    test_name: "test_filesystem_first_audit_primary_stated"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "docs/specs/next_action_artifact_contract.md の Section 3.2 と 3.3 を目視し、filesystem-first が PRIMARY と明記されていることを確認する。"
+  - id: "AC-196-07"
+    description: "next_action_artifact_contract.md の Section 4 に GO/HOLD/FAIL の定義が mutually exclusive かつ一意に記述されている。"
+    test_name: "test_go_hold_fail_semantics_unique_and_exclusive"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "docs/specs/next_action_artifact_contract.md Section 4.1 の表を目視し、GO/HOLD/FAIL が排他的かつ一意に定義されていることを確認する。"
+      - "Section 4.3 に『A session cannot simultaneously produce GO and HOLD』相当の記述があることを確認する。"
+  - id: "AC-196-08"
+    description: "terminal_short_verification.md に Terminal short verification が deterministic 短文検証に限定される旨が明記されている。"
+    test_name: "test_terminal_short_verification_is_deterministic"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "docs/templates/terminal_short_verification.md の Section 2 と Section 3 を目視し、deterministic / binary / reproducible の旨が明記されていることを確認する。"
+  - id: "AC-196-09"
+    description: "session-196.json の completion_criteria.type が canonical 5値のみである。"
+    test_name: "test_session_196_completion_criteria_types_are_canonical"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "python tools/session_validate.py docs/sessions/session-196.json を実行し exit 0 を確認する。"
+  - id: "AC-196-10"
+    description: "session-196.json の acceptance_criteria が description + test_name を持ち text / requirement キーを含まない。"
+    test_name: "test_session_196_acceptance_criteria_uses_description_only"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "docs/sessions/session-196.json の acceptance_criteria 配列の各要素に description / test_name が存在し、text / requirement が存在しないことを確認する。"
+  - id: "AC-196-11"
+    description: "session-196.json の review_points が canonical 4軸と完全一致する。"
+    test_name: "test_session_196_review_points_is_canonical_four_axes"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "docs/sessions/session-196.json の review_points が ['仕様一致（AC達成）','変更範囲遵守','副作用なし','検証十分性'] と完全一致することを確認する。"
+  - id: "AC-196-12"
+    description: "orchestration/ 配下に変更がない。"
+    test_name: "test_session_196_no_orchestration_changes"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "git diff --name-only を実行し orchestration/ が含まれないことを確認する。"
+  - id: "AC-196-13"
+    description: "変更ファイル数が4ファイル以内に収まっている。"
+    test_name: "test_session_196_changed_files_within_four"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "git diff --name-only の行数が4以内であることを確認する。"
+  - id: "AC-196-14"
+    description: "docs/schemas/next_action_v0.json / orchestration_contract_v0.md / orchestration_enums_v0.md が未変更である。"
+    test_name: "test_session_196_pre_artifacts_unchanged"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "sha256sum docs/schemas/next_action_v0.json docs/contracts/orchestration_contract_v0.md docs/contracts/orchestration_enums_v0.md と artifacts/session-196/baseline_hashes.txt を照合する。"
+completion_checks:
+  - "artifact: docs/sessions/session-196.json が保存されている。"
+  - "artifact: docs/acceptance/session-196.yaml が保存されている。"
+  - "artifact: docs/specs/next_action_artifact_contract.md が保存されている。"
+  - "artifact: docs/templates/terminal_short_verification.md が保存されている。"
+  - "document_rule: artifact relay を mandatory にしない旨が明記されている。"
+  - "document_rule: filesystem-first audit が primary と明記されている。"
+  - "document_rule: GO/HOLD/FAIL が mutually exclusive かつ一意に定義されている。"
+  - "document_rule: Terminal short verification が deterministic 短文検証に限定されている。"
+  - "document_rule: completion_criteria.type が canonical 5値のみである。"
+  - "document_rule: acceptance_criteria が description + test_name を持つ。"
+  - "document_rule: review_points が canonical 4軸と完全一致する。"
+  - "side_effect_free: orchestration/ 配下に変更がない。"
+  - "side_effect_free: 変更ファイル数が4ファイル以内である。"
+  - "non_regression: docs/schemas/next_action_v0.json 等が未変更である。"
+change_guardrails:
+  allowed_changes:
+    - "docs/sessions/session-196.json"
+    - "docs/acceptance/session-196.yaml"
+    - "docs/specs/next_action_artifact_contract.md"
+    - "docs/templates/terminal_short_verification.md"
+  forbidden_changes:
+    - "orchestration/**/*.py を変更しない"
+    - "dashboard/** を変更しない"
+    - "scheduler/** を変更しない"
+    - "provider/** を変更しない"
+    - "runtime execution flow を変更しない"
+    - "queue runtime behavior を変更しない"
+    - "docs/schemas/next_action_v0.json を変更しない"
+    - "docs/contracts/orchestration_contract_v0.md を変更しない"
+    - "docs/contracts/orchestration_enums_v0.md を変更しない"
