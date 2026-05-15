@@ -1,0 +1,86 @@
+session_id: session-201
+goal: >-
+  worker_report artifact を入力として docs/contracts/judge_observation_contract.md
+  に準拠した observation artifact を filesystem に出力する最小ビルダーを実装する。
+  LLM 呼び出し・GO/HOLD/FAIL 確定・worker self-approval・autonomous GO は行わない。
+acceptance:
+  - id: "AC-201-01"
+    description: "build_judge_observation の戻り値が 5 フィールドのみを持つ。"
+    test_name: "test_judge_observation_has_exactly_5_keys"
+    type: "automated"
+    manual_check: false
+    verification:
+      - >-
+        PYTHONPATH=. .venv/bin/pytest backend/tests/test_judge_observation_builder.py::test_judge_observation_has_exactly_5_keys -q
+
+  - id: "AC-201-02"
+    description: "final_decision_boundary が commander_only に固定されている。"
+    test_name: "test_judge_observation_final_decision_boundary_is_commander_only"
+    type: "automated"
+    manual_check: false
+    verification:
+      - >-
+        PYTHONPATH=. .venv/bin/pytest backend/tests/test_judge_observation_builder.py::test_judge_observation_final_decision_boundary_is_commander_only -q
+
+  - id: "AC-201-03"
+    description: "戻り値 dict および保存 JSON に decision / verdict / judgement / go_hold_fail が含まれない。"
+    test_name: "test_judge_observation_no_forbidden_fields"
+    type: "automated"
+    manual_check: false
+    verification:
+      - >-
+        PYTHONPATH=. .venv/bin/pytest backend/tests/test_judge_observation_builder.py::test_judge_observation_no_forbidden_fields -q
+
+  - id: "AC-201-04"
+    description: "worker_report が dict でない場合 ValueError が送出される。"
+    test_name: "test_judge_observation_raises_on_non_dict_input"
+    type: "automated"
+    manual_check: false
+    verification:
+      - >-
+        PYTHONPATH=. .venv/bin/pytest backend/tests/test_judge_observation_builder.py::test_judge_observation_raises_on_non_dict_input -q
+
+  - id: "AC-201-05"
+    description: "worker_report に必須キーが欠落している場合 ValueError が送出される。"
+    test_name: "test_judge_observation_raises_on_missing_required_keys"
+    type: "automated"
+    manual_check: false
+    verification:
+      - >-
+        PYTHONPATH=. .venv/bin/pytest backend/tests/test_judge_observation_builder.py::test_judge_observation_raises_on_missing_required_keys -q
+
+  - id: "AC-201-06"
+    description: "output_path に有効な JSON ファイルが保存され、parse 可能で 5 フィールドを持つ。"
+    test_name: "test_judge_observation_output_is_valid_json"
+    type: "automated"
+    manual_check: false
+    verification:
+      - >-
+        PYTHONPATH=. .venv/bin/pytest backend/tests/test_judge_observation_builder.py::test_judge_observation_output_is_valid_json -q
+
+  - id: "AC-201-07"
+    description: "pcc_display_fields が Section 6 の宣言順 8 スロットを持つ。"
+    test_name: "test_judge_observation_pcc_display_fields_has_8_slots"
+    type: "automated"
+    manual_check: false
+    verification:
+      - >-
+        PYTHONPATH=. .venv/bin/pytest backend/tests/test_judge_observation_builder.py::test_judge_observation_pcc_display_fields_has_8_slots -q
+
+  - id: "AC-201-08"
+    description: "docs/sessions/session-201.json が存在し 14-key をすべて持つ。"
+    test_name: "test_session_201_json_has_all_14_keys"
+    type: "automated"
+    manual_check: false
+    verification:
+      - >-
+        PYTHONPATH=. .venv/bin/pytest backend/tests/test_judge_observation_builder.py::test_session_201_json_has_all_14_keys -q
+
+  - id: "AC-201-09"
+    description: "docs/acceptance/session-201.yaml の session_id が session-201 と一致する。"
+    test_name: "test_session_201_yaml_session_id_matches"
+    type: "automated"
+    manual_check: false
+    verification:
+      - >-
+        PYTHONPATH=. .venv/bin/pytest backend/tests/test_judge_observation_builder.py::test_session_201_yaml_session_id_matches -q

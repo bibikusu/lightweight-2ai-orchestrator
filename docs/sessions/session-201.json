@@ -1,0 +1,186 @@
+{
+  "session_id": "session-201",
+  "phase_id": "P13",
+  "type": "implementation",
+  "title": "judge_observation_builder 実装（worker_report → observation artifact・LLMなし）",
+  "goal": "worker_report artifact を入力として docs/contracts/judge_observation_contract.md に準拠した observation artifact を filesystem に出力する最小ビルダー（build_judge_observation）を orchestration/judge/observation_builder.py に実装する。LLM 呼び出し・GO/HOLD/FAIL 確定・worker self-approval・autonomous GO は行わない。final_decision_boundary は commander_only 固定。",
+  "scope": [
+    "orchestration/judge/__init__.py を新規作成する。",
+    "orchestration/judge/observation_builder.py に build_judge_observation を実装する。",
+    "backend/tests/test_judge_observation_builder.py にテストを実装する。",
+    "docs/sessions/session-201.json を 14-key 正本として起票する。",
+    "docs/acceptance/session-201.yaml を acceptance 正本として起票する。"
+  ],
+  "out_of_scope": [
+    "LLM 呼び出し（openai / anthropic / litellm）",
+    "GO / HOLD / FAIL の最終確定",
+    "worker self-approval",
+    "autonomous GO",
+    "orchestration/run_session.py の変更",
+    "orchestration/queue/** の変更",
+    "orchestration/scheduler/** の変更",
+    "orchestration/providers/** の変更",
+    "backend/pcc/** の変更",
+    "scripts/pcc の変更",
+    "PCC UI / dashboard の変更",
+    "docs/specs/worker_report_contract.md の変更",
+    "docs/specs/judge_contract.md の変更",
+    "docs/contracts/judge_observation_contract.md の変更",
+    "docs/global_rules.md の変更",
+    "docs/master_instruction.md の変更",
+    "docs/roadmap.yaml の変更",
+    "session-199 / session-200 / session-201-pre / session-202-pre の既存成果物の変更",
+    "allowed_changes_detail に列挙した 5 パス以外の新規作成・変更"
+  ],
+  "constraints": [
+    "Python 3.9 互換",
+    "PEP604 union syntax 禁止（X | Y 形式の型注釈禁止）",
+    "from __future__ import annotations 禁止",
+    "typing.Optional / List / Dict / Tuple / Any を使用する",
+    "openai / anthropic / litellm を import しない",
+    "orchestration.run_session / orchestration.queue / orchestration.scheduler / orchestration.providers を import しない",
+    "戻り値 dict および保存 JSON に decision / verdict / judgement / go_hold_fail を含めない",
+    "worker_report が dict でない、または必須キー欠落の場合は ValueError を送出する",
+    "1セッション1目的",
+    "最大 5 ファイル",
+    "曖昧語禁止"
+  ],
+  "acceptance_ref": "docs/acceptance/session-201.yaml",
+  "allowed_changes": [
+    "orchestration/judge/__init__.py",
+    "orchestration/judge/observation_builder.py",
+    "backend/tests/test_judge_observation_builder.py",
+    "docs/sessions/session-201.json",
+    "docs/acceptance/session-201.yaml"
+  ],
+  "allowed_changes_detail": [
+    "orchestration/judge/__init__.py: judge パッケージの初期化ファイルを新規作成する。",
+    "orchestration/judge/observation_builder.py: build_judge_observation(worker_report, output_path) を実装する。",
+    "backend/tests/test_judge_observation_builder.py: AC-201-01〜09 に対応するテストを実装する。",
+    "docs/sessions/session-201.json: session-201 の 14-key session 定義を起票する。",
+    "docs/acceptance/session-201.yaml: session-201 の acceptance 正本を起票する。"
+  ],
+  "forbidden_changes": [
+    "orchestration/run_session.py を変更しない",
+    "orchestration/queue/** を変更しない",
+    "orchestration/scheduler/** を変更しない",
+    "orchestration/providers/** を変更しない",
+    "backend/pcc/** を変更しない",
+    "scripts/pcc を変更しない",
+    "docs/specs/worker_report_contract.md を変更しない",
+    "docs/specs/judge_contract.md を変更しない",
+    "docs/contracts/judge_observation_contract.md を変更しない",
+    "docs/global_rules.md を変更しない",
+    "docs/master_instruction.md を変更しない",
+    "docs/roadmap.yaml を変更しない",
+    "docs/contracts/session_throughput_fastlane_v0.md を add / 変更 / commit しない",
+    "session-199 / session-200 / session-201-pre / session-202-pre の既存成果物を変更しない",
+    "allowed_changes_detail に列挙した 5 パス以外のファイルを変更・新規作成しない"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-201-01",
+      "type": "artifact",
+      "condition": "orchestration/judge/__init__.py が保存されている。"
+    },
+    {
+      "id": "CC-201-02",
+      "type": "artifact",
+      "condition": "orchestration/judge/observation_builder.py が保存されており、build_judge_observation が定義されている。"
+    },
+    {
+      "id": "CC-201-03",
+      "type": "artifact",
+      "condition": "backend/tests/test_judge_observation_builder.py が保存されている。"
+    },
+    {
+      "id": "CC-201-04",
+      "type": "non_regression",
+      "condition": "PYTHONPATH=. .venv/bin/pytest backend/tests/test_judge_observation_builder.py -q がすべて PASSED で終了する。"
+    },
+    {
+      "id": "CC-201-05",
+      "type": "non_regression",
+      "condition": ".venv/bin/ruff check orchestration/judge backend/tests/test_judge_observation_builder.py がエラーなしで終了する。"
+    },
+    {
+      "id": "CC-201-06",
+      "type": "non_regression",
+      "condition": ".venv/bin/mypy orchestration/judge --ignore-missing-imports --explicit-package-bases がエラーなしで終了する。"
+    },
+    {
+      "id": "CC-201-07",
+      "type": "side_effect_free",
+      "condition": "openai / anthropic / litellm / orchestration.run_session / orchestration.queue / orchestration.scheduler / orchestration.providers が import されていない。"
+    },
+    {
+      "id": "CC-201-08",
+      "type": "side_effect_free",
+      "condition": "戻り値 dict および保存 JSON に decision / verdict / judgement / go_hold_fail が含まれない。"
+    },
+    {
+      "id": "CC-201-09",
+      "type": "state_transition_consistent",
+      "condition": "docs/sessions/session-201.json が 14-key を持ち、JSON として parse 可能。"
+    },
+    {
+      "id": "CC-201-10",
+      "type": "state_transition_consistent",
+      "condition": "docs/acceptance/session-201.yaml の session_id が session-201 と一致する。"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-201-01",
+      "description": "build_judge_observation の戻り値が 5 フィールドのみ（worker_report_ref / judge_recommendation_ref / observation_metadata / pcc_display_fields / final_decision_boundary）を持つ。",
+      "test_name": "test_judge_observation_has_exactly_5_keys"
+    },
+    {
+      "id": "AC-201-02",
+      "description": "final_decision_boundary の値が commander_only に固定されている。",
+      "test_name": "test_judge_observation_final_decision_boundary_is_commander_only"
+    },
+    {
+      "id": "AC-201-03",
+      "description": "戻り値 dict および保存 JSON に decision / verdict / judgement / go_hold_fail が含まれない。",
+      "test_name": "test_judge_observation_no_forbidden_fields"
+    },
+    {
+      "id": "AC-201-04",
+      "description": "worker_report が dict でない場合 ValueError が送出される。",
+      "test_name": "test_judge_observation_raises_on_non_dict_input"
+    },
+    {
+      "id": "AC-201-05",
+      "description": "worker_report に必須キーが欠落している場合 ValueError が送出される。",
+      "test_name": "test_judge_observation_raises_on_missing_required_keys"
+    },
+    {
+      "id": "AC-201-06",
+      "description": "output_path に有効な JSON ファイルが保存され、parse 可能で 5 フィールドを持つ。",
+      "test_name": "test_judge_observation_output_is_valid_json"
+    },
+    {
+      "id": "AC-201-07",
+      "description": "pcc_display_fields が pcc_display_contract.md Section 6 の宣言順 8 スロットを持つ。",
+      "test_name": "test_judge_observation_pcc_display_fields_has_8_slots"
+    },
+    {
+      "id": "AC-201-08",
+      "description": "docs/sessions/session-201.json が存在し 14-key をすべて持つ。",
+      "test_name": "test_session_201_json_has_all_14_keys"
+    },
+    {
+      "id": "AC-201-09",
+      "description": "docs/acceptance/session-201.yaml の session_id が session-201 と一致する。",
+      "test_name": "test_session_201_yaml_session_id_matches"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし",
+    "検証十分性"
+  ],
+  "failure_type": "spec_missing"
+}
