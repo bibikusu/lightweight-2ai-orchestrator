@@ -1,0 +1,82 @@
+session_id: session-197-pre
+goal: >-
+  PCC を dashboard runtime / websocket / realtime sync なしで参照・表示する際の
+  filesystem-first かつ deterministic な文書契約を正本化する。
+scope:
+  - "docs/specs/pcc_display_contract.md に PCC display 契約を記述する。"
+  - "docs/sessions/session-197-pre.json を 14-key 正本として起票する。"
+  - "docs/acceptance/session-197-pre.yaml を acceptance 正本として起票する。"
+out_of_scope:
+  - "orchestration/**/*.py / queue/** / scheduler/** / provider/** の runtime 実装・設定変更"
+  - "dashboard runtime / websocket / realtime sync の導入・実装・要件化"
+  - "variant→shape 選択ロジック・dispatch（198-pre 領域）"
+  - "run_session.py / global_rules.md / master_instruction.md の変更"
+acceptance:
+  - id: "AC-197P-01"
+    description: "session-197-pre.json が保存され、14-key をすべて持つ。"
+    test_name: "test_session_197_pre_json_has_all_14_keys"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "python3 -c \"import json; p='docs/sessions/session-197-pre.json'; d=json.load(open(p)); k={'session_id','phase_id','title','goal','scope','out_of_scope','constraints','acceptance_ref','allowed_changes_detail','forbidden_changes','completion_criteria','acceptance_criteria','review_points','failure_type'}; assert k<=d.keys(), sorted(k-d.keys())\""
+  - id: "AC-197P-02"
+    description: "session-197-pre.yaml の session_id が session-197-pre と一致する。"
+    test_name: "test_session_197_pre_yaml_session_id_matches"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "python3 -c \"import yaml; d=yaml.safe_load(open('docs/acceptance/session-197-pre.yaml')); assert d.get('session_id')=='session-197-pre'\""
+  - id: "AC-197P-03"
+    description: "pcc_display_contract.md が存在する。"
+    test_name: "test_pcc_display_contract_md_exists"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "test -f docs/specs/pcc_display_contract.md"
+  - id: "AC-197P-04"
+    description: "pcc_display_contract.md に filesystem-first が primary と明記されている。"
+    test_name: "test_pcc_display_filesystem_first_primary"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "docs/specs/pcc_display_contract.md の Section 1 を目視する。"
+  - id: "AC-197P-05"
+    description: "deterministic semantics が明記されている。"
+    test_name: "test_pcc_display_deterministic_semantics"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "docs/specs/pcc_display_contract.md の Section 2 を目視する。"
+  - id: "AC-197P-06"
+    description: "websocket / realtime sync / dashboard runtime が非スコープとして明記されている。"
+    test_name: "test_pcc_display_out_of_scope_transport_and_runtime"
+    type: "manual"
+    manual_check: true
+    verification:
+      - "docs/specs/pcc_display_contract.md の Section 3 を目視する。"
+  - id: "AC-197P-07"
+    description: "静的検証コマンドが通る。"
+    test_name: "test_session_197_pre_session_validate_cli"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "python3 tools/session_validate.py docs/sessions/session-197-pre.json"
+completion_checks:
+  - "artifact: session-197-pre 系3ファイルが存在する"
+  - "document_rule: PCC display contract が freeze されている"
+  - "non_regression: forbidden_changes に触れていない"
+  - "state_transition_consistent: Section 4 の手順が一意に追える"
+  - "side_effect_free: docs-only の範囲に閉じている"
+change_guardrails:
+  allowed_changes:
+    - "docs/sessions/session-197-pre.json"
+    - "docs/acceptance/session-197-pre.yaml"
+    - "docs/specs/pcc_display_contract.md"
+  forbidden_changes:
+    - "orchestration/**/*.py を変更しない"
+    - "queue/** を変更しない"
+    - "scheduler/** を変更しない"
+    - "provider/** を変更しない"
+    - "dashboard runtime を変更しない"
+    - "websocket を要件化しない"
+    - "realtime sync を要件化しない"

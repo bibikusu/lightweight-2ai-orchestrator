@@ -1,0 +1,148 @@
+{
+  "session_id": "session-197-pre",
+  "phase_id": "P7-pre",
+  "type": "docs-only",
+  "title": "PCC display contract freeze (projection semantics, docs-only)",
+  "goal": "PCC を dashboard runtime / websocket / realtime sync なしで参照・表示する際の filesystem-first かつ deterministic な文書契約を正本化する。queue / scheduler / provider / orchestration 実装は scope 外とする。",
+  "scope": [
+    "docs/specs/pcc_display_contract.md に PCC display の filesystem-first 要件を記述する。",
+    "docs/specs/pcc_display_contract.md に deterministic semantics（ラベル・順序・列挙の正）を記述する。",
+    "docs/sessions/session-197-pre.json を 14-key 正本として起票する。",
+    "docs/acceptance/session-197-pre.yaml を acceptance 正本として起票する。"
+  ],
+  "out_of_scope": [
+    "orchestration/**/*.py / queue/** / scheduler/** / provider/** の runtime 実装・設定変更",
+    "dashboard runtime / websocket / realtime sync の導入・実装・要件化",
+    "variant→shape 選択ロジック・dispatch（198-pre 領域）",
+    "run_session.py / global_rules.md / master_instruction.md の変更"
+  ],
+  "constraints": [
+    "1セッション1目的",
+    "docs-only（実装コードを混在させない）",
+    "最大3ファイル（session JSON / acceptance YAML / pcc_display_contract.md）",
+    "14-key 完全準拠",
+    "completion_criteria.type は canonical 5値のみ",
+    "acceptance_criteria は description と test_name の 1:1 ペア",
+    "review_points は次の4固定文言（配列順）と完全一致する",
+    "filesystem-first を primary とする",
+    "deterministic semantics（自由生成ラベルを正にしない）",
+    "曖昧語禁止"
+  ],
+  "acceptance_ref": "docs/acceptance/session-197-pre.yaml",
+  "allowed_changes": [
+    "docs/sessions/session-197-pre.json",
+    "docs/acceptance/session-197-pre.yaml",
+    "docs/specs/pcc_display_contract.md"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/session-197-pre.json: session-197-pre の 14-key session 定義を起票する",
+    "docs/acceptance/session-197-pre.yaml: session-197-pre の acceptance 正本を起票する",
+    "docs/specs/pcc_display_contract.md: PCC display の filesystem-first / deterministic 契約を freeze する"
+  ],
+  "forbidden_changes": [
+    "orchestration/**/*.py を変更しない",
+    "queue/** を変更しない",
+    "scheduler/** を変更しない",
+    "provider/** を変更しない",
+    "dashboard runtime を変更・要件化しない",
+    "websocket を導入・要件化しない",
+    "realtime sync を導入・要件化しない",
+    "allowed_changes に列挙した3ファイル以外を変更・新規作成しない"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-197P-01",
+      "type": "artifact",
+      "condition": "docs/sessions/session-197-pre.json が保存されている。"
+    },
+    {
+      "id": "CC-197P-02",
+      "type": "artifact",
+      "condition": "docs/acceptance/session-197-pre.yaml が保存されている。"
+    },
+    {
+      "id": "CC-197P-03",
+      "type": "artifact",
+      "condition": "docs/specs/pcc_display_contract.md が保存されている。"
+    },
+    {
+      "id": "CC-197P-04",
+      "type": "document_rule",
+      "condition": "pcc_display_contract.md に filesystem-first が primary と明記されている。"
+    },
+    {
+      "id": "CC-197P-05",
+      "type": "document_rule",
+      "condition": "pcc_display_contract.md に deterministic semantics（ラベル・順序・列挙の正）が明記されている。"
+    },
+    {
+      "id": "CC-197P-06",
+      "type": "document_rule",
+      "condition": "pcc_display_contract.md に websocket / realtime sync / dashboard runtime が非スコープとして明記されている。"
+    },
+    {
+      "id": "CC-197P-07",
+      "type": "non_regression",
+      "condition": "forbidden_changes に列挙したパターンに該当する変更が git diff に含まれない。"
+    },
+    {
+      "id": "CC-197P-08",
+      "type": "state_transition_consistent",
+      "condition": "PCC display の最小定義（Section 4）が手順として一意に追える。"
+    },
+    {
+      "id": "CC-197P-09",
+      "type": "side_effect_free",
+      "condition": "実装コード・queue・scheduler・provider に副作用がない（docs-only のみ）。"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-197P-01",
+      "description": "session-197-pre.json が保存され、14-key をすべて持つ。",
+      "test_name": "test_session_197_pre_json_has_all_14_keys"
+    },
+    {
+      "id": "AC-197P-02",
+      "description": "session-197-pre.yaml が保存され、session_id が session-197-pre と一致する。",
+      "test_name": "test_session_197_pre_yaml_session_id_matches"
+    },
+    {
+      "id": "AC-197P-03",
+      "description": "pcc_display_contract.md が保存されている。",
+      "test_name": "test_pcc_display_contract_md_exists"
+    },
+    {
+      "id": "AC-197P-04",
+      "description": "pcc_display_contract.md に filesystem-first が primary と明記されている。",
+      "test_name": "test_pcc_display_filesystem_first_primary"
+    },
+    {
+      "id": "AC-197P-05",
+      "description": "pcc_display_contract.md に deterministic semantics が明記されている。",
+      "test_name": "test_pcc_display_deterministic_semantics"
+    },
+    {
+      "id": "AC-197P-06",
+      "description": "websocket / realtime sync / dashboard runtime が非スコープとして明記されている。",
+      "test_name": "test_pcc_display_out_of_scope_transport_and_runtime"
+    },
+    {
+      "id": "AC-197P-07",
+      "description": "completion_criteria.type が canonical 5値のみである。",
+      "test_name": "test_session_197_pre_completion_criteria_types_canonical"
+    },
+    {
+      "id": "AC-197P-08",
+      "description": "acceptance_criteria が description と test_name のみで構成されている。",
+      "test_name": "test_session_197_pre_acceptance_criteria_shape"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし",
+    "検証十分性"
+  ],
+  "failure_type": "spec_missing"
+}
