@@ -1,0 +1,166 @@
+{
+  "session_id": "session-199",
+  "phase_id": "P9-pre",
+  "type": "docs-only",
+  "title": "worker report contract freeze（self-approval 禁止・status_proposal・back-reference 必須・PASS/FAIL確定禁止）",
+  "goal": "worker が orchestrator/commander に提出する report の最小契約を docs/specs/worker_report_contract.md に正本化する。worker self-approval 禁止・filesystem-first・status_proposal（worker は status を提案するのみ、決定しない）・back-reference 必須（session_id / acceptance_ref を参照）・PASS/FAIL確定禁止 の5原則に限定し、artifacts/ の exact path topology・runtime storage hierarchy・execution artifact structure は freeze しない。",
+  "scope": [
+    "docs/specs/worker_report_contract.md に worker report の5原則（self-approval 禁止 / filesystem-first / status_proposal / back-reference 必須 / PASS/FAIL確定禁止）を記述する。",
+    "docs/sessions/session-199.json を 14-key 正本として起票する。",
+    "docs/acceptance/session-199.yaml を acceptance 正本として起票する。"
+  ],
+  "out_of_scope": [
+    "artifacts/checks/ の exact path topology freeze",
+    "artifacts/responses/ の exact path topology freeze",
+    "runtime storage hierarchy の確定・freeze",
+    "execution artifact structure の確定・freeze",
+    "orchestration/** / queue/** / scheduler/** / provider/** の変更",
+    "global_rules.md / master_instruction.md の改訂",
+    "allowed_changes に列挙した3ファイル以外の新規作成・変更"
+  ],
+  "constraints": [
+    "1セッション1目的",
+    "docs-only（実装コードを混在させない）",
+    "最大3ファイル（session JSON / acceptance YAML / worker_report_contract.md）",
+    "14-key 完全準拠（session_id / phase_id / title / goal / scope / out_of_scope / constraints / acceptance_ref / allowed_changes_detail / forbidden_changes / completion_criteria / acceptance_criteria / review_points / failure_type）",
+    "completion_criteria.type は canonical 5値のみ（artifact / document_rule / non_regression / side_effect_free / state_transition_consistent）",
+    "acceptance_criteria の各要素は id / description / test_name の3キーのみを持つ",
+    "review_points は4固定文言（配列順）と完全一致する",
+    "artifacts/ の exact path freeze を本契約に含めない（evolution blocking 禁止）",
+    "worker_report_contract.md は5原則の宣言に限定し、runtime artifact topology を定義しない",
+    "曖昧語禁止"
+  ],
+  "acceptance_ref": "docs/acceptance/session-199.yaml",
+  "allowed_changes": [
+    "docs/sessions/session-199.json",
+    "docs/acceptance/session-199.yaml",
+    "docs/specs/worker_report_contract.md"
+  ],
+  "allowed_changes_detail": [
+    "docs/sessions/session-199.json: session-199 の 14-key session 定義を起票する",
+    "docs/acceptance/session-199.yaml: session-199 の acceptance 正本を起票する",
+    "docs/specs/worker_report_contract.md: worker report の5原則（self-approval 禁止 / filesystem-first / status_proposal / back-reference 必須 / PASS/FAIL確定禁止）を freeze する"
+  ],
+  "forbidden_changes": [
+    "orchestration/** を変更しない",
+    "queue/** を変更しない",
+    "scheduler/** を変更しない",
+    "provider/** を変更しない",
+    "global_rules.md を変更しない",
+    "master_instruction.md を変更しない",
+    "worker_report_contract.md の責務逸脱（runtime topology / artifact path freeze）を含めない",
+    "artifacts/ の exact storage hierarchy を定義・freeze しない",
+    "allowed_changes に列挙した3パス以外のファイルを変更・新規作成しない"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-199-01",
+      "type": "artifact",
+      "condition": "docs/sessions/session-199.json が保存されている。"
+    },
+    {
+      "id": "CC-199-02",
+      "type": "artifact",
+      "condition": "docs/acceptance/session-199.yaml が保存されている。"
+    },
+    {
+      "id": "CC-199-03",
+      "type": "artifact",
+      "condition": "docs/specs/worker_report_contract.md が保存されている。"
+    },
+    {
+      "id": "CC-199-04",
+      "type": "document_rule",
+      "condition": "worker_report_contract.md に worker self-approval 禁止が明記されている。"
+    },
+    {
+      "id": "CC-199-05",
+      "type": "document_rule",
+      "condition": "worker_report_contract.md に status_proposal（worker は status を提案するのみ）が明記されている。"
+    },
+    {
+      "id": "CC-199-06",
+      "type": "document_rule",
+      "condition": "worker_report_contract.md に back-reference 必須（session_id / acceptance_ref）が明記されている。"
+    },
+    {
+      "id": "CC-199-07",
+      "type": "document_rule",
+      "condition": "worker_report_contract.md に PASS/FAIL確定禁止が明記されている。"
+    },
+    {
+      "id": "CC-199-08",
+      "type": "document_rule",
+      "condition": "worker_report_contract.md に artifacts/ の exact path topology / runtime storage hierarchy が含まれていない。"
+    },
+    {
+      "id": "CC-199-09",
+      "type": "non_regression",
+      "condition": "git diff に forbidden_changes に列挙したパターンへの変更が含まれない。"
+    },
+    {
+      "id": "CC-199-10",
+      "type": "side_effect_free",
+      "condition": "orchestration / queue / scheduler / provider / global_rules.md に副作用がない（docs-only のみ）。"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-199-01",
+      "description": "session-199.json が保存され、14-key をすべて持つ。",
+      "test_name": "test_session_199_json_has_all_14_keys"
+    },
+    {
+      "id": "AC-199-02",
+      "description": "session-199.yaml の session_id が session-199 と一致する。",
+      "test_name": "test_session_199_yaml_session_id_matches"
+    },
+    {
+      "id": "AC-199-03",
+      "description": "worker_report_contract.md が存在する。",
+      "test_name": "test_worker_report_contract_md_exists"
+    },
+    {
+      "id": "AC-199-04",
+      "description": "worker_report_contract.md に self-approval 禁止が明記されている。",
+      "test_name": "test_worker_report_contract_self_approval_prohibited"
+    },
+    {
+      "id": "AC-199-05",
+      "description": "worker_report_contract.md に status_proposal が明記されている。",
+      "test_name": "test_worker_report_contract_status_proposal_declared"
+    },
+    {
+      "id": "AC-199-06",
+      "description": "worker_report_contract.md に back-reference 必須（session_id / acceptance_ref）が明記されている。",
+      "test_name": "test_worker_report_contract_back_reference_mandatory"
+    },
+    {
+      "id": "AC-199-07",
+      "description": "worker_report_contract.md に PASS/FAIL確定禁止が明記されている。",
+      "test_name": "test_worker_report_contract_pass_fail_finalization_prohibited"
+    },
+    {
+      "id": "AC-199-08",
+      "description": "worker_report_contract.md に artifacts/ exact path freeze が含まれていない。",
+      "test_name": "test_worker_report_contract_no_artifact_path_freeze"
+    },
+    {
+      "id": "AC-199-09",
+      "description": "completion_criteria.type が canonical 5値のみである。",
+      "test_name": "test_session_199_completion_criteria_types_canonical"
+    },
+    {
+      "id": "AC-199-10",
+      "description": "acceptance_criteria の各要素が id / description / test_name の3キーのみで構成されている。",
+      "test_name": "test_session_199_acceptance_criteria_shape"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし",
+    "検証十分性"
+  ],
+  "failure_type": "spec_missing"
+}

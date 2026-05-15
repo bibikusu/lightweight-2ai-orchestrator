@@ -1,0 +1,117 @@
+session_id: session-199
+goal: >-
+  worker が orchestrator/commander に提出する report の最小契約を
+  docs/specs/worker_report_contract.md に正本化する。
+  self-approval 禁止・filesystem-first・status_proposal・back-reference 必須・PASS/FAIL確定禁止
+  の5原則に限定し、artifacts/ の exact path topology / runtime storage hierarchy は freeze しない。
+scope:
+  - "docs/specs/worker_report_contract.md に worker report 5原則を記述する。"
+  - "docs/sessions/session-199.json を 14-key 正本として起票する。"
+  - "docs/acceptance/session-199.yaml を acceptance 正本として起票する。"
+out_of_scope:
+  - "artifacts/checks/ の exact path topology freeze"
+  - "artifacts/responses/ の exact path topology freeze"
+  - "runtime storage hierarchy の確定・freeze"
+  - "execution artifact structure の確定・freeze"
+  - "orchestration/** / queue/** / scheduler/** / provider/** の変更"
+  - "global_rules.md / master_instruction.md の改訂"
+acceptance:
+  - id: "AC-199-01"
+    description: "session-199.json が保存され、14-key をすべて持つ。"
+    test_name: "test_session_199_json_has_all_14_keys"
+    type: "automated"
+    manual_check: false
+    verification:
+      - >-
+        python3 -c "import json; p='docs/sessions/session-199.json'; d=json.load(open(p));
+        k={'session_id','phase_id','title','goal','scope','out_of_scope','constraints','acceptance_ref','allowed_changes_detail','forbidden_changes','completion_criteria','acceptance_criteria','review_points','failure_type'};
+        assert k<=d.keys(), sorted(k-d.keys())"
+  - id: "AC-199-02"
+    description: "session-199.yaml の session_id が session-199 と一致する。"
+    test_name: "test_session_199_yaml_session_id_matches"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "python3 -c \"import yaml; d=yaml.safe_load(open('docs/acceptance/session-199.yaml')); assert d.get('session_id')=='session-199'\""
+  - id: "AC-199-03"
+    description: "worker_report_contract.md が存在する。"
+    test_name: "test_worker_report_contract_md_exists"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "test -f docs/specs/worker_report_contract.md"
+  - id: "AC-199-04"
+    description: "worker_report_contract.md に self-approval 禁止が明記されている。"
+    test_name: "test_worker_report_contract_self_approval_prohibited"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "grep -q 'self.approval\\|self_approval\\|自己承認' docs/specs/worker_report_contract.md"
+  - id: "AC-199-05"
+    description: "worker_report_contract.md に status_proposal が明記されている。"
+    test_name: "test_worker_report_contract_status_proposal_declared"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "grep -q 'status_proposal\\|提案' docs/specs/worker_report_contract.md"
+  - id: "AC-199-06"
+    description: "worker_report_contract.md に back-reference 必須（session_id / acceptance_ref）が明記されている。"
+    test_name: "test_worker_report_contract_back_reference_mandatory"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "grep -q 'back.reference\\|back_reference\\|session_id\\|acceptance_ref' docs/specs/worker_report_contract.md"
+  - id: "AC-199-07"
+    description: "worker_report_contract.md に PASS/FAIL確定禁止が明記されている。"
+    test_name: "test_worker_report_contract_pass_fail_finalization_prohibited"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "grep -qi 'PASS.*FAIL\\|確定禁止\\|finalization' docs/specs/worker_report_contract.md"
+  - id: "AC-199-08"
+    description: "worker_report_contract.md に artifacts/ exact path freeze が含まれていない。"
+    test_name: "test_worker_report_contract_no_artifact_path_freeze"
+    type: "automated"
+    manual_check: false
+    verification:
+      - "! grep -q 'artifacts/checks\\|artifacts/responses\\|storage hierarchy' docs/specs/worker_report_contract.md"
+  - id: "AC-199-09"
+    description: "completion_criteria.type が canonical 5値のみである。"
+    test_name: "test_session_199_completion_criteria_types_canonical"
+    type: "automated"
+    manual_check: false
+    verification:
+      - >-
+        python3 -c "import json; d=json.load(open('docs/sessions/session-199.json'));
+        ok={'artifact','document_rule','non_regression','side_effect_free','state_transition_consistent'};
+        t={c.get('type') for c in d.get('completion_criteria',[])}; assert t<=ok, sorted(t-ok)"
+  - id: "AC-199-10"
+    description: "acceptance_criteria の各要素が id / description / test_name の3キーのみで構成されている。"
+    test_name: "test_session_199_acceptance_criteria_shape"
+    type: "automated"
+    manual_check: false
+    verification:
+      - >-
+        python3 -c "import json; d=json.load(open('docs/sessions/session-199.json'));
+        want={'id','description','test_name'};
+        assert all(set(ac.keys())==want for ac in d['acceptance_criteria'])"
+completion_checks:
+  - "artifact: session-199.json / session-199.yaml / worker_report_contract.md が存在する"
+  - "document_rule: 5原則（self-approval禁止・filesystem-first・status_proposal・back-reference必須・PASS/FAIL確定禁止）が明記されている"
+  - "document_rule: artifacts/ exact path freeze が含まれていない"
+  - "non_regression: forbidden_changes に該当する diff がない"
+  - "side_effect_free: orchestration / queue / scheduler / provider / global_rules.md に変更がない"
+change_guardrails:
+  allowed_changes:
+    - "docs/sessions/session-199.json"
+    - "docs/acceptance/session-199.yaml"
+    - "docs/specs/worker_report_contract.md"
+  forbidden_changes:
+    - "orchestration/** を変更しない"
+    - "queue/** を変更しない"
+    - "scheduler/** を変更しない"
+    - "provider/** を変更しない"
+    - "global_rules.md を変更しない"
+    - "master_instruction.md を変更しない"
+    - "worker_report_contract.md に artifacts/ exact path / runtime storage hierarchy を含めない"
+    - "allowed_changes に列挙した3パス以外を変更・新規作成しない"
