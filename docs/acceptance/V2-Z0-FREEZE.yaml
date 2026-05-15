@@ -1,0 +1,43 @@
+session_id: V2-Z0-FREEZE
+goal: >-
+  master_instruction.md / global_rules.md に v1 凍結マークを追記し、
+  docs/archive/v1-2026-Q2-README.md で v1 打ち切り・凍結線を明文化する。
+acceptance:
+  - id: AC-Z0-01
+    description: master_instruction.md / global_rules.md 冒頭に v1 凍結マークが存在
+    test_name: test_v1_freeze_marker_exists_in_top_docs
+    type: manual
+    manual_check: true
+    verification:
+      - head -n 8 docs/master_instruction.md | grep -q 'v1 凍結'
+      - head -n 8 docs/global_rules.md | grep -q 'v1 凍結'
+
+  - id: AC-Z0-02
+    description: docs/archive/v1-2026-Q2-README.md が存在し非空
+    test_name: test_archive_readme_exists_nonempty
+    type: manual
+    manual_check: true
+    verification:
+      - test -s docs/archive/v1-2026-Q2-README.md
+
+  - id: AC-Z0-03
+    description: GPT判定待ち4件 (178-pre / 172d / 179 / T2) が打ち切りとして明記
+    test_name: test_gpt_pending_4items_marked_terminated
+    type: manual
+    manual_check: true
+    verification:
+      - grep -q 'session-178-pre' docs/archive/v1-2026-Q2-README.md
+      - grep -q 'session-172d' docs/archive/v1-2026-Q2-README.md
+      - grep -q 'session-179' docs/archive/v1-2026-Q2-README.md
+      - grep -q '`T2`' docs/archive/v1-2026-Q2-README.md
+      - grep -q '打ち切り' docs/archive/v1-2026-Q2-README.md
+
+  - id: AC-Z0-04
+    description: Role v2 (session-179/180-pre/180/181-pre/181) が凍結として明記
+    test_name: test_role_v2_line_marked_frozen
+    type: manual
+    manual_check: true
+    verification:
+      - grep -q 'session-180-pre' docs/archive/v1-2026-Q2-README.md
+      - grep -q 'session-181' docs/archive/v1-2026-Q2-README.md
+      - grep -q '凍結' docs/archive/v1-2026-Q2-README.md

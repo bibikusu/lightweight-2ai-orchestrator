@@ -1,0 +1,104 @@
+{
+  "session_id": "V2-Z0-FREEZE",
+  "phase_id": "phase-v2-foundation",
+  "type": "docs-only",
+  "title": "旧軽量2AIオーケストレーター方式の凍結マーキング",
+  "goal": "/Users/kunihideyamane/AI_Team/軽量2AIオーケストレーター方式/ 配下の master_instruction.md / global_rules.md に v1 凍結マークを追記し、archive/v1-2026-Q2-README.md を新規作成して、新旧体制の境界を docs に明文化する。GPT判定待ち4件 (178-pre / 172d / 179 / T2) と Role v2 線 (179-181)、構造改修線 (T1-T4) を「打ち切り or 凍結」明記する。",
+  "scope": [
+    "docs/master_instruction.md 冒頭に v1 凍結マーク追記 (1ブロック)",
+    "docs/global_rules.md 冒頭に v1 凍結マーク追記 (1ブロック)",
+    "docs/archive/v1-2026-Q2-README.md 新規作成",
+    "GPT判定待ち4件の打ち切り宣言を archive README に記載",
+    "Role v2 (session-179/180-pre/180/181-pre/181) 凍結宣言を archive README に記載",
+    "構造改修線 (T1/T2/T3/T4) 凍結宣言を archive README に記載"
+  ],
+  "out_of_scope": [
+    "凍結対象ファイルの内容書き換え (マーク追記のみ)",
+    "run_session.py 等の実装ファイル改変",
+    "他プロジェクト (A01-A12) の docs",
+    "既存 sessions/ acceptance/ artifacts/ 配下の改変",
+    "sealed stash@{0..6} の操作",
+    ".claude/ 配下の改変",
+    "物理的なファイル移動 (archive/ への退避は別セッションで)"
+  ],
+  "constraints": [
+    "新規作成1点 + 修正2点のみ",
+    "既存内容は削除しない、上書きしない (追記のみ)",
+    "凍結マークは Markdown 引用ブロックで冒頭追記",
+    "git add は対象ファイル個別指定 (git add . / -A 禁止)",
+    "14-key 完全準拠",
+    "review_points 4軸固定"
+  ],
+  "acceptance_ref": "docs/acceptance/V2-Z0-FREEZE.yaml",
+  "allowed_changes": [
+    "docs/master_instruction.md",
+    "docs/global_rules.md",
+    "docs/archive/v1-2026-Q2-README.md"
+  ],
+  "allowed_changes_detail": [
+    "docs/master_instruction.md: 冒頭に v1 凍結マーク追記 (記述追加のみ、既存削除なし)",
+    "docs/global_rules.md: 冒頭に v1 凍結マーク追記 (記述追加のみ、既存削除なし)",
+    "docs/archive/v1-2026-Q2-README.md: 新規作成 (旧体制履歴・打ち切り宣言)"
+  ],
+  "forbidden_changes": [
+    "master_instruction.md / global_rules.md 既存内容の削除・改変",
+    "run_session.py への変更",
+    "docs/sessions/ / docs/acceptance/ 配下の既存ファイル改変",
+    "artifacts/ 配下の改変",
+    ".claude/ 配下の改変",
+    "sealed stash@{0..6} の操作",
+    "他プロジェクト (projects/A01-A12) の docs 改変",
+    "archive/ への物理ファイル移動 (別セッション扱い)"
+  ],
+  "completion_criteria": [
+    {
+      "id": "cc1",
+      "type": "artifact",
+      "condition": "docs/master_instruction.md 冒頭に \"v1 凍結\" 表記が含まれる"
+    },
+    {
+      "id": "cc2",
+      "type": "artifact",
+      "condition": "docs/global_rules.md 冒頭に \"v1 凍結\" 表記が含まれる"
+    },
+    {
+      "id": "cc3",
+      "type": "artifact",
+      "condition": "docs/archive/v1-2026-Q2-README.md が存在し、GPT判定待ち4件の打ち切り + Role v2線凍結 + 構造改修線T1-T4凍結を明記"
+    },
+    {
+      "id": "cc4",
+      "type": "side_effect_free",
+      "condition": "既存ファイル内容変更は追記のみ、削除・書き換えなし"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-Z0-01",
+      "description": "master_instruction.md / global_rules.md 冒頭に v1 凍結マークが存在",
+      "test_name": "test_v1_freeze_marker_exists_in_top_docs"
+    },
+    {
+      "id": "AC-Z0-02",
+      "description": "docs/archive/v1-2026-Q2-README.md が存在し非空",
+      "test_name": "test_archive_readme_exists_nonempty"
+    },
+    {
+      "id": "AC-Z0-03",
+      "description": "GPT判定待ち4件 (178-pre / 172d / 179 / T2) が打ち切りとして明記",
+      "test_name": "test_gpt_pending_4items_marked_terminated"
+    },
+    {
+      "id": "AC-Z0-04",
+      "description": "Role v2 (session-179/180-pre/180/181-pre/181) が凍結として明記",
+      "test_name": "test_role_v2_line_marked_frozen"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし",
+    "検証十分性"
+  ],
+  "failure_type": "spec_drift"
+}
