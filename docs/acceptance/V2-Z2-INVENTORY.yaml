@@ -1,0 +1,89 @@
+session_id: V2-Z2-INVENTORY
+phase_id: Phase-0
+title: untracked 31 ファイル棚卸し：削除/archive/継承 3 区分分類
+goal: >-
+  untracked 31 件を read-only 調査し、A（削除）/B（archive）/C（継承）/D（KUNIHIDE 判定要請）の
+  4 区分に分類する。実削除・移動は V2-Z3 で実施するため、本セッションは分類 docs の起草と commit のみとする。
+scope:
+  - "docs/sessions/V2-Z2-INVENTORY-classification.md を新規作成する。"
+  - "docs/sessions/V2-Z2-INVENTORY.json を新規作成する（14-key 正本）。"
+  - "docs/acceptance/V2-Z2-INVENTORY.yaml を新規作成する（acceptance criteria）。"
+  - "sandbox/window-2-z2 ブランチで作業し、上記 3 ファイルのみを commit する。"
+out_of_scope:
+  - "untracked ファイルの削除・移動（V2-Z3 で実施）"
+  - "strategy/ / docs/strategy/ の変更（Window 1 スコープ）"
+  - "master_instruction.md / global_rules.md / .claude/** / run_session.py / sealed stash の変更"
+  - "git push / git add . / git add -A"
+acceptance:
+  - id: AC-Z2-01
+    description: "docs/sessions/V2-Z2-INVENTORY-classification.md が存在し、A/B/C/D 4 区分を含む。"
+    test_name: test_v2z2_classification_md_exists
+    type: automated
+    manual_check: false
+    verification:
+      - "test -f docs/sessions/V2-Z2-INVENTORY-classification.md"
+      - "grep -q '## A\\.' docs/sessions/V2-Z2-INVENTORY-classification.md"
+      - "grep -q '## B\\.' docs/sessions/V2-Z2-INVENTORY-classification.md"
+      - "grep -q '## C\\.' docs/sessions/V2-Z2-INVENTORY-classification.md"
+      - "grep -q '## D\\.' docs/sessions/V2-Z2-INVENTORY-classification.md"
+
+  - id: AC-Z2-02
+    description: "docs/sessions/V2-Z2-INVENTORY.json が存在し、14-key を全て含む。"
+    test_name: test_v2z2_session_json_14keys
+    type: automated
+    manual_check: false
+    verification:
+      - >-
+        python3 -c "
+        import json; d=json.load(open('docs/sessions/V2-Z2-INVENTORY.json'));
+        k={'session_id','phase_id','title','goal','scope','out_of_scope','constraints',
+           'acceptance_ref','allowed_changes_detail','forbidden_changes',
+           'completion_criteria','acceptance_criteria','review_points','failure_type'};
+        miss=k-d.keys(); assert not miss, f'missing keys: {sorted(miss)}'
+        print('OK: all 14 keys present')"
+
+  - id: AC-Z2-03
+    description: "docs/acceptance/V2-Z2-INVENTORY.yaml が存在し、session_id が一致する。"
+    test_name: test_v2z2_acceptance_yaml_exists
+    type: automated
+    manual_check: false
+    verification:
+      - "test -f docs/acceptance/V2-Z2-INVENTORY.yaml"
+      - >-
+        python3 -c "
+        import yaml; d=yaml.safe_load(open('docs/acceptance/V2-Z2-INVENTORY.yaml'));
+        assert d.get('session_id')=='V2-Z2-INVENTORY', f'got: {d.get(\"session_id\")}'"
+
+  - id: AC-Z2-04
+    description: "分類件数の合計（A+B+C+D）が untracked 件数 31 と一致する。"
+    test_name: test_v2z2_classification_total_matches_untracked
+    type: manual
+    manual_check: true
+    verification:
+      - "docs/sessions/V2-Z2-INVENTORY-classification.md の集計表を目視確認。A+B+C+D = 31 であること。"
+
+  - id: AC-Z2-05
+    description: "forbidden_changes に記載のファイルが変更されていない。"
+    test_name: test_v2z2_forbidden_files_untouched
+    type: automated
+    manual_check: false
+    verification:
+      - "git diff --name-only HEAD | grep -vE '^docs/sessions/V2-Z2|^docs/acceptance/V2-Z2' | wc -l | grep -q '^0$'"
+      - "git diff --name-only HEAD | grep -E '(master_instruction|global_rules|\\.claude/|run_session\\.py|strategy/)' | wc -l | grep -q '^0$'"
+
+  - id: AC-Z2-06
+    description: "sandbox/window-2-z2 ブランチに commit が存在し、git push が実行されていない。"
+    test_name: test_v2z2_sandbox_only_no_push
+    type: automated
+    manual_check: false
+    verification:
+      - "git rev-parse --abbrev-ref HEAD | grep -q '^sandbox/window-2-z2$'"
+      - "git log --oneline sandbox/window-2-z2 ^main | wc -l | grep -qv '^0$'"
+
+  - id: AC-Z2-07
+    description: "KUNIHIDE 判定要請（D 区分）に不明点が明記されている。"
+    test_name: test_v2z2_d_section_has_content
+    type: manual
+    manual_check: true
+    verification:
+      - "docs/sessions/V2-Z2-INVENTORY-classification.md の D 区分に、不明点の説明文が記載されていること。"
