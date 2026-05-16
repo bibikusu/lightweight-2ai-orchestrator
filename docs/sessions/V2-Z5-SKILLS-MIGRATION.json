@@ -1,0 +1,165 @@
+{
+  "session_id": "V2-Z5-SKILLS-MIGRATION",
+  "phase_id": "V2-Phase0",
+  "title": "旧 5 層分離の責務を Claude Code Skills 雛形に移植",
+  "goal": "旧 orchestrator (run_session.py) の認知の分離 (session-pre / worker / judge / observation) を docs/strategy/skills-template/ 配下の 4 つの Skills 雛形として記述し、KUNIHIDE が ~/.claude/skills/ にコピーすれば即座に ClaudeCode で利用できる状態にする",
+  "scope": [
+    "docs/strategy/skills-template/session-planner.md の新規作成",
+    "docs/strategy/skills-template/worker.md の新規作成",
+    "docs/strategy/skills-template/judge-4axis.md の新規作成",
+    "docs/strategy/skills-template/reporter.md の新規作成",
+    "docs/sessions/V2-Z5-SKILLS-MIGRATION.json の新規作成 (本ファイル)",
+    "docs/acceptance/V2-Z5-SKILLS-MIGRATION.yaml の新規作成"
+  ],
+  "out_of_scope": [
+    "~/.claude/skills/ への実際のファイル配置 (KUNIHIDE 個人作業)",
+    "~/.claude/CLAUDE.md / ~/.claude/settings.json の変更",
+    "run_session.py / orchestration/ 配下のコード変更",
+    "strategy/ 配下の戦略文書変更",
+    "docs/strategy/vision-and-principles.md の変更",
+    "docs/strategy/roadmap-2026.md の変更",
+    "docs/strategy/session-plan.yaml の変更",
+    "docs/strategy/lessons-learned.md の変更",
+    "Window 1 担当箇所 (docs/sessions/V2-Z4*, docs/acceptance/V2-Z4*)",
+    "Window 2 担当箇所 (docs/sessions/V2-Z2*, docs/acceptance/V2-Z2*)",
+    "Skills の実際の動作テスト (Phase A でのセルフテストに委ねる)",
+    "~/.claude/agents/ の builder/validator 定義 (A-8-AGENTS セッションで別途実施)"
+  ],
+  "constraints": [
+    "sandbox branch (sandbox/window-3-z5) のみで作業すること",
+    "git add . / git add -A は禁止",
+    "git push は禁止",
+    "main / master への直接変更は禁止",
+    "review_points は固定 4 軸を使用すること",
+    "completion_criteria.type は canonical enum のみ使用すること",
+    "Skills 雛形は ~/.claude/skills/{name}/SKILL.md 形式で読み込まれることを前提とした内容にすること",
+    "旧 orchestrator のコード変更は一切行わないこと",
+    "session-plan.yaml の V2-Z5-SKILLS-MIGRATION の status 更新は KUNIHIDE main merge 後に行うこと"
+  ],
+  "acceptance_ref": "docs/acceptance/V2-Z5-SKILLS-MIGRATION.yaml",
+  "allowed_changes_detail": [
+    "docs/strategy/skills-template/session-planner.md: 旧 session-pre / prepared_spec ステージの責務を Skills 形式で記述。14 キー仕様・固定 4 軸・canonical enum を含む",
+    "docs/strategy/skills-template/worker.md: 旧 implementation / patch_apply ステージの責務を Skills 形式で記述。Sandbox-First 原則・変更範囲チェック・完了報告フォーマットを含む",
+    "docs/strategy/skills-template/judge-4axis.md: 旧 drift_check / judge ステージの責務を Skills 形式で記述。4 軸判定・failure_type 分類・verdict 定義を含む",
+    "docs/strategy/skills-template/reporter.md: 旧 worker_report / observation ステージの責務を Skills 形式で記述。検収レポート命名規則・Early Warning Sign 8 カテゴリ・完了報告フォーマットを含む",
+    "docs/sessions/V2-Z5-SKILLS-MIGRATION.json: 本セッション定義ファイルの新規作成",
+    "docs/acceptance/V2-Z5-SKILLS-MIGRATION.yaml: 本セッションの acceptance 基準ファイルの新規作成"
+  ],
+  "forbidden_changes": [
+    "strategy/ (永久固定階層 L1)",
+    "docs/strategy/vision-and-principles.md",
+    "docs/strategy/roadmap-2026.md",
+    "docs/strategy/session-plan.yaml",
+    "docs/strategy/lessons-learned.md",
+    "docs/master_instruction.md",
+    "docs/global_rules.md",
+    ".claude/ 配下 (全ファイル)",
+    "orchestration/run_session.py",
+    "orchestration/ 配下 (全ファイル)",
+    "docs/sessions/V2-Z4-STRATEGY-LOCK.json",
+    "docs/acceptance/V2-Z4-STRATEGY-LOCK.yaml",
+    "docs/sessions/V2-Z2-INVENTORY.json",
+    "docs/acceptance/V2-Z2-INVENTORY.yaml",
+    "stash@{0} (sealed stash)",
+    "stash@{1} (sealed stash)",
+    "stash@{2} (sealed stash)",
+    "stash@{3} (sealed stash)",
+    "stash@{4} (sealed stash)",
+    "stash@{5} (sealed stash)",
+    "stash@{6} (sealed stash)",
+    "stash@{7} (sealed stash)",
+    "main branch",
+    "master branch"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-Z5-01",
+      "type": "artifact",
+      "condition": "docs/strategy/skills-template/session-planner.md が存在し、14 キー仕様・固定 4 軸・canonical enum が記述されていること"
+    },
+    {
+      "id": "CC-Z5-02",
+      "type": "artifact",
+      "condition": "docs/strategy/skills-template/worker.md が存在し、Sandbox-First 原則・変更範囲チェック・完了報告フォーマットが記述されていること"
+    },
+    {
+      "id": "CC-Z5-03",
+      "type": "artifact",
+      "condition": "docs/strategy/skills-template/judge-4axis.md が存在し、4 軸判定・failure_type 分類・verdict 定義が記述されていること"
+    },
+    {
+      "id": "CC-Z5-04",
+      "type": "artifact",
+      "condition": "docs/strategy/skills-template/reporter.md が存在し、検収レポート命名規則・Early Warning Sign 8 カテゴリが記述されていること"
+    },
+    {
+      "id": "CC-Z5-05",
+      "type": "artifact",
+      "condition": "docs/sessions/V2-Z5-SKILLS-MIGRATION.json が存在し、14 キーすべてを含むこと"
+    },
+    {
+      "id": "CC-Z5-06",
+      "type": "artifact",
+      "condition": "docs/acceptance/V2-Z5-SKILLS-MIGRATION.yaml が存在し、acceptance_criteria が 6 件以上含まれること"
+    },
+    {
+      "id": "CC-Z5-07",
+      "type": "side_effect_free",
+      "condition": "sandbox/window-3-z5 branch のみで変更が完結しており、main / master / strategy/ / .claude/ / orchestration/ への変更がないこと"
+    },
+    {
+      "id": "CC-Z5-08",
+      "type": "document_rule",
+      "condition": "各 Skills 雛形の frontmatter に name / description / allowed-tools / model が定義されていること"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-Z5-01",
+      "description": "session-planner.md の frontmatter に name: session-planner、allowed-tools に Bash(git log:*) が含まれる",
+      "test_name": "test_MANUAL_session_planner_frontmatter_contains_git_log_tool"
+    },
+    {
+      "id": "AC-Z5-02",
+      "description": "session-planner.md に 14 キーの仕様表が記載されており、review_points の固定 4 軸が明示されている",
+      "test_name": "test_MANUAL_session_planner_contains_14keys_and_4axis"
+    },
+    {
+      "id": "AC-Z5-03",
+      "description": "worker.md に Sandbox-First 原則として git branch --show-current の確認手順が含まれる",
+      "test_name": "test_MANUAL_worker_contains_sandbox_first_check"
+    },
+    {
+      "id": "AC-Z5-04",
+      "description": "judge-4axis.md に verdict の 3 値 (pass / conditional_pass / fail) と failure_type の 7 値が定義されている",
+      "test_name": "test_MANUAL_judge_4axis_contains_verdict_and_failure_type_definitions"
+    },
+    {
+      "id": "AC-Z5-05",
+      "description": "reporter.md に検収レポートの命名規則 (spec_review / implementation_review) が記載されており、Early Warning Sign 8 カテゴリがすべて列挙されている",
+      "test_name": "test_MANUAL_reporter_contains_naming_convention_and_8_ews_categories"
+    },
+    {
+      "id": "AC-Z5-06",
+      "description": "4 つの Skills 雛形がそれぞれ旧 orchestrator の異なるフェーズ (session-pre / implementation / judge / observation) に 1:1 対応していることがコメントで明示されている",
+      "test_name": "test_MANUAL_skills_templates_map_to_legacy_orchestrator_phases"
+    },
+    {
+      "id": "AC-Z5-07",
+      "description": "git diff --name-only で変更ファイルが allowed_changes_detail の 6 ファイルのみであること",
+      "test_name": "test_MANUAL_changed_files_match_allowed_changes_detail"
+    },
+    {
+      "id": "AC-Z5-08",
+      "description": "forbidden_changes に列挙されたファイル (strategy/ / .claude/ / orchestration/ / stash@{0..7}) に変更がないこと",
+      "test_name": "test_MANUAL_forbidden_changes_are_untouched"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし",
+    "検証十分性"
+  ],
+  "failure_type": "artifact_missing"
+}
