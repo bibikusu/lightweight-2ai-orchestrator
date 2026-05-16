@@ -1,0 +1,94 @@
+{
+  "_comment": "将来 KUNIHIDE が settings.json として採用するかもしれない提案ファイル。現行の settings.json (32 bytes, placeholder) には触らない。KUNIHIDE manual review 後に settings.json へリネームすること。",
+  "_created": "2026-05-16",
+  "_session": "sandbox/window-a-claude-config",
+
+  "permissions": {
+    "allow": [
+      "Bash(git status:*)",
+      "Bash(git log:*)",
+      "Bash(git diff:*)",
+      "Bash(git branch:*)",
+      "Bash(git stash list:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(git show:*)",
+      "Bash(git grep:*)",
+      "Bash(ruff check:*)",
+      "Bash(pytest:*)",
+      "Bash(mypy:*)",
+      "Bash(python -m compileall:*)",
+      "Bash(python -m py_compile:*)",
+      "Read",
+      "Grep",
+      "Glob"
+    ],
+    "deny": [
+      "Bash(git push:*)",
+      "Bash(git push --force:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(git stash pop:*)",
+      "Bash(git stash drop:*)",
+      "Bash(git stash apply:*)",
+      "Bash(git add .:*)",
+      "Bash(git add -A:*)",
+      "Bash(rm -rf:*)",
+      "Bash(sudo:*)",
+      "Bash(curl * | sh:*)",
+      "Bash(curl * | bash:*)",
+      "Bash(wget * | sh:*)",
+      "Bash(npm install:*)",
+      "Bash(pip install:*)",
+      "Bash(docker run:*)",
+      "Bash(mysql:*)",
+      "Bash(psql:*)"
+    ]
+  },
+
+  "hooks": {
+    "_comment": "hooks は Phase A-3 で別途実装予定。本ファイルでは定義しない。",
+    "_ref": "docs/strategy/roadmap-2026.md §3.3 Step A-3"
+  },
+
+  "env": {
+    "CLAUDE_SANDBOX_MODE": "true",
+    "CLAUDE_PROJECT_ID": "mane_bikusu_orchestrator",
+    "CLAUDE_PHASE": "Phase-A"
+  },
+
+  "autoApprove": {
+    "_comment": "approval_default: proceed 原則に基づく設定。不可逆操作は必ず ask。",
+    "read_only_ops": "auto",
+    "git_readonly": "auto",
+    "test_run": "auto",
+    "lint_run": "auto",
+    "file_write_sandbox": "ask",
+    "git_commit": "ask",
+    "npm_install": "deny",
+    "git_push": "deny",
+    "db_access": "deny"
+  },
+
+  "sandbox": {
+    "branch_prefix": "sandbox/",
+    "worktree_root": ".claude/worktrees/",
+    "require_sandbox_branch": true,
+    "block_main_direct_commit": true
+  },
+
+  "warnings": {
+    "sealed_stash_count": 8,
+    "sealed_stash_action": "abort_if_count_changes",
+    "forbidden_files": [
+      ".claude/settings.json",
+      ".claude/settings.json.bak_20260508_governance_pause",
+      "docs/strategy/vision-and-principles.md",
+      "docs/strategy/roadmap-2026.md",
+      "docs/strategy/lessons-learned.md",
+      "docs/strategy/session-plan.yaml",
+      "docs/master_instruction.md",
+      "docs/global_rules.md",
+      "run_session.py",
+      "orchestration/"
+    ]
+  }
+}
