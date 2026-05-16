@@ -1,0 +1,80 @@
+{
+  "session_id": "V2-Z2-INVENTORY",
+  "phase_id": "Phase-0",
+  "title": "untracked 31 ファイル棚卸し：削除/archive/継承 3 区分分類",
+  "goal": "untracked 31 件を read-only 調査し、A（削除）/B（archive）/C（継承）/D（KUNIHIDE 判定要請）の 4 区分に分類する。実削除・移動は V2-Z3 で実施するため、本セッションは分類 docs の起草と commit のみとする。",
+  "scope": [
+    "docs/sessions/V2-Z2-INVENTORY-classification.md を新規作成する。",
+    "docs/sessions/V2-Z2-INVENTORY.json を新規作成する（14-key 正本）。",
+    "docs/acceptance/V2-Z2-INVENTORY.yaml を新規作成する（acceptance criteria）。",
+    "sandbox/window-2-z2 ブランチで作業し、上記 3 ファイルのみを commit する。"
+  ],
+  "out_of_scope": [
+    "untracked ファイルの削除・移動（V2-Z3 で実施）",
+    "strategy/ / docs/strategy/ の変更（Window 1 スコープ）",
+    "docs/sessions/V2-Z4* / docs/acceptance/V2-Z4* の変更（Window 1 スコープ）",
+    "docs/strategy/skills-template/ / docs/sessions/V2-Z5* / docs/acceptance/V2-Z5* の変更（Window 3 スコープ）",
+    "master_instruction.md / global_rules.md / .claude/** / run_session.py / sealed stash の変更",
+    "git push",
+    "git add . / git add -A"
+  ],
+  "constraints": [
+    "1 セッション 1 目的",
+    "sandbox/window-2-z2 ブランチのみで作業",
+    "Window 1 / Window 3 のスコープファイルに不触",
+    "untracked 対象ファイルは本セッションで削除/移動しない"
+  ],
+  "acceptance_ref": "docs/acceptance/V2-Z2-INVENTORY.yaml",
+  "allowed_changes_detail": [
+    "docs/sessions/V2-Z2-INVENTORY-classification.md（新規作成）",
+    "docs/sessions/V2-Z2-INVENTORY.json（新規作成）",
+    "docs/acceptance/V2-Z2-INVENTORY.yaml（新規作成）"
+  ],
+  "forbidden_changes": [
+    "strategy/**",
+    "docs/strategy/**",
+    "docs/sessions/V2-Z4*",
+    "docs/acceptance/V2-Z4*",
+    "docs/strategy/skills-template/**",
+    "docs/sessions/V2-Z5*",
+    "docs/acceptance/V2-Z5*",
+    "master_instruction.md",
+    "global_rules.md",
+    ".claude/**",
+    "run_session.py",
+    "stash@{0}（sealed stash 不触）"
+  ],
+  "completion_criteria": [
+    {
+      "type": "document_rule",
+      "description": "docs/sessions/V2-Z2-INVENTORY-classification.md が存在し、A/B/C/D 4 区分を含む。"
+    },
+    {
+      "type": "document_rule",
+      "description": "docs/sessions/V2-Z2-INVENTORY.json が存在し、14-key を全て持つ。"
+    },
+    {
+      "type": "document_rule",
+      "description": "docs/acceptance/V2-Z2-INVENTORY.yaml が存在し、5 件以上の acceptance criteria を持つ。"
+    },
+    {
+      "type": "document_rule",
+      "description": "sandbox/window-2-z2 に commit が存在し、forbidden_changes に記載のファイルが変更されていない。"
+    }
+  ],
+  "acceptance_criteria": [
+    "AC-Z2-01: docs/sessions/V2-Z2-INVENTORY-classification.md が存在する。",
+    "AC-Z2-02: docs/sessions/V2-Z2-INVENTORY.json が存在し、14-key を全て含む。",
+    "AC-Z2-03: docs/acceptance/V2-Z2-INVENTORY.yaml が存在する。",
+    "AC-Z2-04: 分類件数の合計が untracked 件数（31）と一致する。",
+    "AC-Z2-05: forbidden_changes に記載のファイルが変更されていない。",
+    "AC-Z2-06: git push が実行されていない（sandbox branch のみ）。"
+  ],
+  "review_points": [
+    "仕様一致（AC 達成）",
+    "変更範囲遵守（forbidden_changes 不触）",
+    "副作用なし（untracked ファイル自体の変更なし）",
+    "検証十分性（分類根拠が明記されているか）"
+  ],
+  "failure_type": "scope_violation"
+}
