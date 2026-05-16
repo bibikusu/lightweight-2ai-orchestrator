@@ -1,0 +1,115 @@
+{
+  "session_id": "V2-Z7-HOOKS-PROPOSAL",
+  "phase_id": "A02-Phase-A3-prep",
+  "title": ".claude/hooks/ proposed hook script 雛形整備 (Phase A-3 前倒し)",
+  "goal": "ClaudeCode の Tool 実行前後で自動チェックを発火する hook script の提案版を整備し、KUNIHIDE が Phase A-3 で有効化判断できる状態にする",
+  "scope": [
+    ".claude/hooks/preflight_session.sh.proposed (PreToolUse hook 提案版)",
+    ".claude/hooks/post_tool_use.sh.proposed (PostToolUse hook 提案版)",
+    ".claude/hooks/README.md (有効化手順・仕様書)",
+    ".claude/hooks/test_hooks.sh.proposed (動作テスト script)",
+    "docs/sessions/V2-Z7-HOOKS-PROPOSAL.json (本ファイル)",
+    "docs/acceptance/V2-Z7-HOOKS-PROPOSAL.yaml (検収基準)"
+  ],
+  "out_of_scope": [
+    ".claude/settings.json への hook 登録 (有効化は KUNIHIDE が Phase A-3 で別途判断)",
+    "既存 pre_tool_use.sh / post_tool_use.sh / post_push.sh の変更",
+    ".claude/settings.json (32 bytes placeholder) の改変",
+    ".claude/settings.json.bak_* の改変",
+    ".claude/worktrees/ 配下",
+    "docs/strategy/ 配下の戦略文書",
+    "run_session.py / orchestration/ (凍結済)",
+    "sealed stash@{0..7} への操作"
+  ],
+  "constraints": [
+    "git add . / -A 禁止 (個別ファイル指定のみ)",
+    "git push 禁止 (KUNIHIDE manual only)",
+    "sandbox/window-e-hooks ブランチのみで作業",
+    "proposed ファイルは .proposed 拡張子のまま (実有効化しない)",
+    "settings.json は 32 bytes / permission_mode: plan のまま維持"
+  ],
+  "acceptance_ref": "docs/acceptance/V2-Z7-HOOKS-PROPOSAL.yaml",
+  "allowed_changes_detail": [
+    {
+      "file": ".claude/hooks/preflight_session.sh.proposed",
+      "change": "PreToolUse hook 新規作成 (stash 保護 / forbidden_changes / branch チェック)"
+    },
+    {
+      "file": ".claude/hooks/post_tool_use.sh.proposed",
+      "change": "PostToolUse hook 新規作成 (read-after-write / .env 検出 / ログ記録)"
+    },
+    {
+      "file": ".claude/hooks/README.md",
+      "change": "hook 一覧・有効化手順・動作仕様を新規作成"
+    },
+    {
+      "file": ".claude/hooks/test_hooks.sh.proposed",
+      "change": "hook テスト script 新規作成 (9 テスト)"
+    },
+    {
+      "file": "docs/sessions/V2-Z7-HOOKS-PROPOSAL.json",
+      "change": "14 キー JSON セッション定義 (本ファイル)"
+    },
+    {
+      "file": "docs/acceptance/V2-Z7-HOOKS-PROPOSAL.yaml",
+      "change": "検収基準 YAML 新規作成"
+    }
+  ],
+  "forbidden_changes": [
+    ".claude/settings.json (32 bytes placeholder)",
+    ".claude/settings.json.bak_20260508_governance_pause",
+    ".claude/worktrees/ 配下",
+    ".claude/hooks/pre_tool_use.sh (既存有効 hook)",
+    ".claude/hooks/post_tool_use.sh (既存有効 hook)",
+    ".claude/hooks/post_push.sh (既存有効 hook)",
+    "docs/strategy/vision-and-principles.md",
+    "docs/strategy/roadmap-2026.md",
+    "docs/strategy/lessons-learned.md",
+    "docs/strategy/session-plan.yaml",
+    "docs/master_instruction.md",
+    "docs/global_rules.md",
+    "run_session.py",
+    "orchestration/ 配下",
+    "sealed stash@{0..7}"
+  ],
+  "completion_criteria": "all_gates_pass",
+  "acceptance_criteria": [
+    {
+      "test_name": "preflight bash 構文チェック",
+      "command": "bash -n .claude/hooks/preflight_session.sh.proposed",
+      "expected": "exit 0"
+    },
+    {
+      "test_name": "post_tool_use bash 構文チェック",
+      "command": "bash -n .claude/hooks/post_tool_use.sh.proposed",
+      "expected": "exit 0"
+    },
+    {
+      "test_name": "README.md 行数確認",
+      "command": "wc -l .claude/hooks/README.md | awk '{print $1}'",
+      "expected": ">= 50"
+    },
+    {
+      "test_name": "settings.json 不変確認 (32 bytes)",
+      "command": "wc -c .claude/settings.json | awk '{print $1}'",
+      "expected": "32"
+    },
+    {
+      "test_name": "sealed stash 8 件不変",
+      "command": "git stash list | wc -l | tr -d ' '",
+      "expected": "8"
+    },
+    {
+      "test_name": "既存 hook 不変確認",
+      "command": "git diff HEAD .claude/hooks/pre_tool_use.sh .claude/hooks/post_tool_use.sh .claude/hooks/post_push.sh",
+      "expected": "出力なし (変更なし)"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし",
+    "検証十分性"
+  ],
+  "failure_type": "artifact_missing"
+}

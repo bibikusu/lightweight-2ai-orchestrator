@@ -1,0 +1,50 @@
+session_id: V2-Z7-HOOKS-PROPOSAL
+phase_id: A02-Phase-A3-prep
+created_at: "2026-05-17"
+sandbox_branch: sandbox/window-e-hooks
+
+acceptance_criteria:
+  - test_name: preflight_session.sh.proposed bash 構文チェック
+    command: "bash -n .claude/hooks/preflight_session.sh.proposed && echo OK"
+    expected: "OK"
+    result: pending
+
+  - test_name: post_tool_use.sh.proposed bash 構文チェック
+    command: "bash -n .claude/hooks/post_tool_use.sh.proposed && echo OK"
+    expected: "OK"
+    result: pending
+
+  - test_name: README.md 行数 (50 行以上)
+    command: "wc -l .claude/hooks/README.md | awk '{print $1}'"
+    expected: ">= 50"
+    result: pending
+
+  - test_name: test_hooks.sh.proposed bash 構文チェック
+    command: "bash -n .claude/hooks/test_hooks.sh.proposed && echo OK"
+    expected: "OK"
+    result: pending
+
+  - test_name: settings.json 不変確認 (32 bytes)
+    command: "wc -c .claude/settings.json | awk '{print $1}'"
+    expected: "32"
+    result: pending
+
+  - test_name: sealed stash 8 件不変
+    command: "git stash list | wc -l | tr -d ' '"
+    expected: "8"
+    result: pending
+
+  - test_name: 既存 hook ファイル不変 (pre_tool_use / post_tool_use / post_push)
+    command: "git diff HEAD .claude/hooks/pre_tool_use.sh .claude/hooks/post_tool_use.sh .claude/hooks/post_push.sh | wc -l | awk '{print $1}'"
+    expected: "0"
+    result: pending
+
+review_points:
+  - name: 仕様一致（AC達成）
+    status: pending
+  - name: 変更範囲遵守
+    status: pending
+  - name: 副作用なし
+    status: pending
+  - name: 検証十分性
+    status: pending

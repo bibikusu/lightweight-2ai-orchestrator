@@ -1,0 +1,142 @@
+#!/usr/bin/env bash
+# =============================================================================
+# preflight_session.sh.proposed
+# PreToolUse hook — ClaudeCode の Tool 実行前に発火するセキュリティゲート
+#
+# 有効化方法 (KUNIHIDE が settings.json に追記する):
+#   "hooks": {
+#     "PreToolUse": [
+#       { "matcher": "*", "hooks": [{ "type": "command", "command": "bash .claude/hooks/preflight_session.sh" }] }
+#     ]
+#   }
+#
+# exit 0 = 許可、exit 2 = block (ClaudeCode がツール実行を中止)
+# exit 1 = 警告のみ (実行は継続)
+#
+# 有効化前に必ず: bash .claude/hooks/test_hooks.sh.proposed でテストすること
+# =============================================================================
+
+set -uo pipefail
+
+# =============================================================================
+# 設定
+# =============================================================================
+
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || echo ".")"
+LOG_FILE="${REPO_ROOT}/.claude/logs/hooks.log"
+LOG_DIR="$(dirname "${LOG_FILE}")"
+
+UNTRACKED_WARN_THRESHOLD=50
+UNTRACKED_BLOCK_THRESHOLD=100
+SEALED_STASH_COUNT=8
+
+# forbidden_changes リスト (vision-and-principles.md §4 と同期)
+FORBIDDEN_PATHS=(
+  ".claude/settings.json"
+  ".claude/worktrees/"
+  "docs/strategy/vision-and-principles.md"
+  "docs/strategy/roadmap-2026.md"
+  "docs/strategy/lessons-learned.md"
+  "docs/strategy/session-plan.yaml"
+  "docs/master_instruction.md"
+  "docs/global_rules.md"
+  "run_session.py"
+  "orchestration/"
+)
+
+# =============================================================================
+# ログ初期化
+# =============================================================================
+
+mkdir -p "${LOG_DIR}"
+TIMESTAMP="$(date '+%Y-%m-%d %H:%M:%S')"
+TOOL_NAME="${CLAUDE_TOOL_NAME:-unknown}"
+SESSION_ID="${CLAUDE_SESSION_ID:-unknown}"
+
+log() {
+  local level="$1"; shift
+  echo "[${TIMESTAMP}] [${level}] [tool:${TOOL_NAME}] $*" >> "${LOG_FILE}"
+}
+
+log "INFO" "PreToolUse hook 開始"
+
+# =============================================================================
+# チェック 1: untracked ファイル数
+# =============================================================================
+
+UNTRACKED_COUNT=$(git -C "${REPO_ROOT}" status --porcelain 2>/dev/null | grep -c '^??' || true)
+
+if [ "${UNTRACKED_COUNT}" -ge "${UNTRACKED_BLOCK_THRESHOLD}" ]; then
+  MSG="❌ [BLOCK] untracked ファイルが ${UNTRACKED_COUNT} 件 (閾値: ${UNTRACKED_BLOCK_THRESHOLD})。git add または .gitignore を確認してください。"
+  echo "${MSG}" >&2
+  log "BLOCK" "${MSG}"
+  exit 2
+elif [ "${UNTRACKED_COUNT}" -ge "${UNTRACKED_WARN_THRESHOLD}" ]; then
+  MSG="⚠️ [WARN] untracked ファイルが ${UNTRACKED_COUNT} 件 (警告閾値: ${UNTRACKED_WARN_THRESHOLD})。"
+  echo "${MSG}" >&2
+  log "WARN" "${MSG}"
+fi
+
+# =============================================================================
+# チェック 2: ブランチ保護 (main/master への git push 系をブロック)
+# =============================================================================
+
+CURRENT_BRANCH="$(git -C "${REPO_ROOT}" branch --show-current 2>/dev/null || echo "")"
+log "INFO" "current branch: ${CURRENT_BRANCH}"
+
+if [[ "${CURRENT_BRANCH}" == "main" || "${CURRENT_BRANCH}" == "master" ]]; then
+  # push / merge / reset 系の操作はブロック
+  if [[ "${TOOL_NAME}" == "Bash" ]]; then
+    # 標準入力から Tool の引数を読み取る (ClaudeCode hook protocol)
+    TOOL_INPUT="$(cat /dev/stdin 2>/dev/null || true)"
+    if echo "${TOOL_INPUT}" | grep -qE 'git\s+(push|merge|reset|rebase)'; then
+      MSG="❌ [BLOCK] main/master ブランチ上で git push/merge/reset/rebase が検出されました。sandbox branch で作業してください。"
+      echo "${MSG}" >&2
+      log "BLOCK" "branch=${CURRENT_BRANCH} tool_input=${TOOL_INPUT} ${MSG}"
+      exit 2
+    fi
+  fi
+  MSG="⚠️ [WARN] 現在 main/master ブランチにいます。sandbox/* ブランチで作業することを推奨します。"
+  echo "${MSG}" >&2
+  log "WARN" "${MSG}"
+fi
+
+# =============================================================================
+# チェック 3: sealed stash 件数保護
+# =============================================================================
+
+STASH_COUNT="$(git -C "${REPO_ROOT}" stash list 2>/dev/null | wc -l | tr -d ' ')"
+
+if [ "${STASH_COUNT}" -lt "${SEALED_STASH_COUNT}" ]; then
+  MSG="❌ [BLOCK] sealed stash の件数が ${STASH_COUNT} 件です (期待値: ${SEALED_STASH_COUNT})。stash が操作された可能性があります。KUNIHIDE に報告してください。"
+  echo "${MSG}" >&2
+  log "BLOCK" "stash_count=${STASH_COUNT} expected=${SEALED_STASH_COUNT} ${MSG}"
+  exit 2
+elif [ "${STASH_COUNT}" -gt "${SEALED_STASH_COUNT}" ]; then
+  MSG="⚠️ [WARN] stash が ${STASH_COUNT} 件あります (基準: ${SEALED_STASH_COUNT})。新しい stash が追加されています。"
+  echo "${MSG}" >&2
+  log "WARN" "stash_count=${STASH_COUNT} ${MSG}"
+fi
+
+# =============================================================================
+# チェック 4: forbidden_changes リストとの突合
+# =============================================================================
+
+if [[ "${TOOL_NAME}" == "Edit" || "${TOOL_NAME}" == "Write" || "${TOOL_NAME}" == "Bash" ]]; then
+  TOOL_INPUT="$(cat /dev/stdin 2>/dev/null || true)"
+  for FORBIDDEN in "${FORBIDDEN_PATHS[@]}"; do
+    if echo "${TOOL_INPUT}" | grep -qF "${FORBIDDEN}"; then
+      MSG="❌ [BLOCK] forbidden_changes に含まれるパス「${FORBIDDEN}」への操作が検出されました。CLAUDE.md §4 参照。"
+      echo "${MSG}" >&2
+      log "BLOCK" "forbidden=${FORBIDDEN} ${MSG}"
+      exit 2
+    fi
+  done
+fi
+
+# =============================================================================
+# 全チェック通過
+# =============================================================================
+
+log "INFO" "PreToolUse hook 通過 (exit 0)"
+exit 0

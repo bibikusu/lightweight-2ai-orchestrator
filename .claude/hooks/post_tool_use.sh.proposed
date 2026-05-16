@@ -1,0 +1,129 @@
+#!/usr/bin/env bash
+# =============================================================================
+# post_tool_use.sh.proposed
+# PostToolUse hook — ClaudeCode の Tool 実行後に発火する検証ゲート
+#
+# 有効化方法 (KUNIHIDE が settings.json に追記する):
+#   "hooks": {
+#     "PostToolUse": [
+#       { "matcher": "*", "hooks": [{ "type": "command", "command": "bash .claude/hooks/post_tool_use.sh" }] }
+#     ]
+#   }
+#
+# exit 0 = 正常、exit 1 = 警告ありで継続、exit 2 = 危険検出 (停止推奨)
+#
+# 有効化前に必ず: bash .claude/hooks/test_hooks.sh.proposed でテストすること
+# =============================================================================
+
+set -uo pipefail
+
+# =============================================================================
+# 設定
+# =============================================================================
+
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || echo ".")"
+LOG_FILE="${REPO_ROOT}/.claude/logs/hooks.log"
+LOG_DIR="$(dirname "${LOG_FILE}")"
+
+TIMESTAMP="$(date '+%Y-%m-%d %H:%M:%S')"
+TOOL_NAME="${CLAUDE_TOOL_NAME:-unknown}"
+
+# =============================================================================
+# ログ初期化
+# =============================================================================
+
+mkdir -p "${LOG_DIR}"
+
+log() {
+  local level="$1"; shift
+  echo "[${TIMESTAMP}] [${level}] [post][tool:${TOOL_NAME}] $*" >> "${LOG_FILE}"
+}
+
+log "INFO" "PostToolUse hook 開始"
+
+ALERT_LEVEL=0  # 0=正常, 1=警告, 2=危険
+
+# =============================================================================
+# チェック 1: read-after-write verification (Gemini CLI 事故予防)
+# 変更されたファイルが実際に存在するか確認
+# =============================================================================
+
+CHANGED_FILES="$(git -C "${REPO_ROOT}" diff --name-only HEAD 2>/dev/null || true)"
+STAGED_FILES="$(git -C "${REPO_ROOT}" diff --name-only --cached 2>/dev/null || true)"
+ALL_CHANGED="${CHANGED_FILES}${STAGED_FILES}"
+
+if [ -n "${ALL_CHANGED}" ]; then
+  while IFS= read -r fpath; do
+    [ -z "${fpath}" ] && continue
+    FULL_PATH="${REPO_ROOT}/${fpath}"
+    if [ ! -e "${FULL_PATH}" ]; then
+      MSG="⚠️ [WARN] git diff に記録されたファイルが実体なし: ${fpath} (削除された可能性)"
+      echo "${MSG}" >&2
+      log "WARN" "${MSG}"
+      ALERT_LEVEL=1
+    fi
+  done <<< "${ALL_CHANGED}"
+  log "INFO" "変更ファイル一覧: $(echo "${ALL_CHANGED}" | tr '\n' ' ')"
+fi
+
+# =============================================================================
+# チェック 2: .env / secrets/ への書込検出
+# =============================================================================
+
+NEWLY_MODIFIED="$(git -C "${REPO_ROOT}" status --short 2>/dev/null || true)"
+
+if echo "${NEWLY_MODIFIED}" | grep -qE '^\s*[AM]\s+.*(\.env|secrets/)'; then
+  MATCHED="$(echo "${NEWLY_MODIFIED}" | grep -E '^\s*[AM]\s+.*(\.env|secrets/)')"
+  MSG="❌ [DANGER] .env または secrets/ への書込が検出されました:\n${MATCHED}\n\n秘密情報がステージされた可能性があります。git restore でリセットしてください。"
+  echo -e "${MSG}" >&2
+  log "DANGER" "env/secrets write detected: ${MATCHED}"
+  ALERT_LEVEL=2
+fi
+
+# =============================================================================
+# チェック 3: main/master への直接 commit 検出
+# =============================================================================
+
+CURRENT_BRANCH="$(git -C "${REPO_ROOT}" branch --show-current 2>/dev/null || echo "")"
+LATEST_COMMIT_BRANCH="$(git -C "${REPO_ROOT}" log -1 --pretty=format:'%D' 2>/dev/null || true)"
+
+if [[ "${CURRENT_BRANCH}" == "main" || "${CURRENT_BRANCH}" == "master" ]]; then
+  # tool 実行後に新しい commit が main にできていないか確認
+  COMMIT_COUNT_AFTER="$(git -C "${REPO_ROOT}" rev-list HEAD --count 2>/dev/null || echo "0")"
+  MSG="⚠️ [WARN] main/master ブランチで作業中です。commit は sandbox branch で行ってください。"
+  echo "${MSG}" >&2
+  log "WARN" "branch=${CURRENT_BRANCH} ${MSG}"
+  [ "${ALERT_LEVEL}" -lt 1 ] && ALERT_LEVEL=1
+fi
+
+# =============================================================================
+# チェック 4: git diff --name-only をログに記録
+# =============================================================================
+
+DIFF_FILES="$(git -C "${REPO_ROOT}" diff --name-only 2>/dev/null || true)"
+DIFF_STAGED="$(git -C "${REPO_ROOT}" diff --name-only --cached 2>/dev/null || true)"
+
+if [ -n "${DIFF_FILES}" ] || [ -n "${DIFF_STAGED}" ]; then
+  log "INFO" "diff (unstaged): ${DIFF_FILES:-none}"
+  log "INFO" "diff (staged):   ${DIFF_STAGED:-none}"
+else
+  log "INFO" "diff: 変更なし"
+fi
+
+# =============================================================================
+# 結果
+# =============================================================================
+
+log "INFO" "PostToolUse hook 完了 (alert_level=${ALERT_LEVEL})"
+
+if [ "${ALERT_LEVEL}" -eq 2 ]; then
+  echo "❌ PostToolUse: 危険な変更を検出しました。詳細は .claude/logs/hooks.log を確認してください。" >&2
+  exit 2
+elif [ "${ALERT_LEVEL}" -eq 1 ]; then
+  echo "⚠️ PostToolUse: 警告あり。詳細は .claude/logs/hooks.log を確認してください。" >&2
+  exit 1
+fi
+
+echo "[post_tool_use] 全チェック通過 (exit 0)" >&2
+log "INFO" "exit 0"
+exit 0
