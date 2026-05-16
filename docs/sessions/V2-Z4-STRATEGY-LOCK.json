@@ -1,0 +1,162 @@
+{
+  "session_id": "V2-Z4-STRATEGY-LOCK",
+  "phase_id": "phase-v2-foundation",
+  "type": "docs-only",
+  "title": "戦略文書 4 ファイル正本化 (vision / roadmap / session-plan / lessons-learned)",
+  "goal": "strategy/ 配下の 4 ファイル (vision-and-principles.md / roadmap-2026.md / session-plan.yaml / lessons-learned.md) を docs/strategy/ へ移動し、canonical anchor として正本化する。パス修正 (strategy/ → docs/strategy/) および末尾改行の整合性を確認し、全体戦略文書の参照先を統一する。",
+  "scope": [
+    "strategy/vision-and-principles.md → docs/strategy/vision-and-principles.md 移動",
+    "strategy/roadmap-2026.md → docs/strategy/roadmap-2026.md 移動",
+    "strategy/session-plan.yaml → docs/strategy/session-plan.yaml 移動",
+    "strategy/lessons-learned.md → docs/strategy/lessons-learned.md 移動",
+    "strategy/ ディレクトリ削除",
+    "docs/sessions/V2-Z4-STRATEGY-LOCK.json 新規作成",
+    "docs/acceptance/V2-Z4-STRATEGY-LOCK.yaml 新規作成",
+    "末尾改行確認 (0x0a = PASS, 未改行 = 追記)"
+  ],
+  "out_of_scope": [
+    "docs/master_instruction.md 改変",
+    "docs/global_rules.md 改変",
+    ".claude/ 配下の改変",
+    "run_session.py の改変",
+    "sealed stash@{0..7} 操作",
+    "4 ファイルの内容改変 (移動のみ)",
+    "他 in-flight session の docs 改変",
+    "Window 2/3 が触る予定の場所の改変"
+  ],
+  "constraints": [
+    "ファイル移動のみ、内容改変なし",
+    "git add は対象ファイル個別指定 (git add . / -A 禁止)",
+    "git push 禁止 (KUNIHIDE manual only)",
+    "sandbox branch のみで作業、main 直接 commit 禁止",
+    "14-key 完全準拠",
+    "review_points 4軸固定"
+  ],
+  "acceptance_ref": "docs/acceptance/V2-Z4-STRATEGY-LOCK.yaml",
+  "allowed_changes": [
+    "docs/strategy/vision-and-principles.md",
+    "docs/strategy/roadmap-2026.md",
+    "docs/strategy/session-plan.yaml",
+    "docs/strategy/lessons-learned.md",
+    "docs/sessions/V2-Z4-STRATEGY-LOCK.json",
+    "docs/acceptance/V2-Z4-STRATEGY-LOCK.yaml"
+  ],
+  "allowed_changes_detail": [
+    "docs/strategy/vision-and-principles.md: strategy/ からの移動 (内容変更なし)",
+    "docs/strategy/roadmap-2026.md: strategy/ からの移動 (内容変更なし)",
+    "docs/strategy/session-plan.yaml: strategy/ からの移動 (内容変更なし)",
+    "docs/strategy/lessons-learned.md: strategy/ からの移動 (内容変更なし)",
+    "docs/sessions/V2-Z4-STRATEGY-LOCK.json: 新規作成 (本セッション定義)",
+    "docs/acceptance/V2-Z4-STRATEGY-LOCK.yaml: 新規作成 (9 acceptance criteria)"
+  ],
+  "forbidden_changes": [
+    "docs/master_instruction.md (v1 凍結マーク済み)",
+    "docs/global_rules.md (v1 凍結マーク済み)",
+    ".claude/ 配下全ファイル",
+    "run_session.py",
+    "sealed stash@{0..7}",
+    "他 in-flight session の docs",
+    "Window 2/3 が触る予定の場所"
+  ],
+  "completion_criteria": [
+    {
+      "id": "cc1",
+      "type": "artifact",
+      "condition": "docs/strategy/vision-and-principles.md が存在し非空"
+    },
+    {
+      "id": "cc2",
+      "type": "artifact",
+      "condition": "docs/strategy/roadmap-2026.md が存在し非空"
+    },
+    {
+      "id": "cc3",
+      "type": "artifact",
+      "condition": "docs/strategy/session-plan.yaml が存在し非空"
+    },
+    {
+      "id": "cc4",
+      "type": "artifact",
+      "condition": "docs/strategy/lessons-learned.md が存在し非空"
+    },
+    {
+      "id": "cc5",
+      "type": "document_rule",
+      "condition": "vision-and-principles.md に 4 原則 (規律は自作・2週間Hard Gate・Sandbox-First・Dead Simple) が全て記載"
+    },
+    {
+      "id": "cc6",
+      "type": "document_rule",
+      "condition": "roadmap-2026.md に全 Phase (Phase 0/A/B/C/D) が記載"
+    },
+    {
+      "id": "cc7",
+      "type": "document_rule",
+      "condition": "session-plan.yaml に completed ステータスの commit (2e7ab36 / 9cfd281) が記載"
+    },
+    {
+      "id": "cc8",
+      "type": "document_rule",
+      "condition": "lessons-learned.md に凍結経緯と再発防止策が記載"
+    },
+    {
+      "id": "cc9",
+      "type": "side_effect_free",
+      "condition": "forbidden_changes 対象 (master_instruction / global_rules / .claude/) が未変更"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-Z4-01",
+      "description": "docs/strategy/vision-and-principles.md が存在し非空",
+      "test_name": "test_vision_file_exists_nonempty"
+    },
+    {
+      "id": "AC-Z4-02",
+      "description": "docs/strategy/roadmap-2026.md が存在し非空",
+      "test_name": "test_roadmap_file_exists_nonempty"
+    },
+    {
+      "id": "AC-Z4-03",
+      "description": "docs/strategy/session-plan.yaml が存在し非空",
+      "test_name": "test_session_plan_file_exists_nonempty"
+    },
+    {
+      "id": "AC-Z4-04",
+      "description": "docs/strategy/lessons-learned.md が存在し非空",
+      "test_name": "test_lessons_file_exists_nonempty"
+    },
+    {
+      "id": "AC-Z4-05",
+      "description": "vision-and-principles.md に 4 原則 (原則1〜原則4) が全て記載されている",
+      "test_name": "test_vision_contains_4_principles"
+    },
+    {
+      "id": "AC-Z4-06",
+      "description": "roadmap-2026.md に Phase 0/A/B/C/D が全て記載されている",
+      "test_name": "test_roadmap_contains_all_phases"
+    },
+    {
+      "id": "AC-Z4-07",
+      "description": "session-plan.yaml に completed ステータス + commit hash (2e7ab36/9cfd281) が記載",
+      "test_name": "test_session_plan_contains_completed_commits"
+    },
+    {
+      "id": "AC-Z4-08",
+      "description": "lessons-learned.md に凍結 (freeze/凍結) と再発防止 (prevention/予防) に関する記述が存在",
+      "test_name": "test_lessons_contains_freeze_and_prevention"
+    },
+    {
+      "id": "AC-Z4-09",
+      "description": "forbidden_changes 対象 (master_instruction.md / global_rules.md / .claude/) が git 差分に含まれない",
+      "test_name": "test_forbidden_paths_unchanged"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし",
+    "検証十分性"
+  ],
+  "failure_type": "spec_drift"
+}
