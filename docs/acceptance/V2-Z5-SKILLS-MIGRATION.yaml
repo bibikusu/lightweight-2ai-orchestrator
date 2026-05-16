@@ -1,0 +1,150 @@
+session_id: V2-Z5-SKILLS-MIGRATION
+review_type: spec_review
+date: "2026-05-16"
+verdict: pass
+failure_type: null
+
+description: |
+  旧 5 層分離 (session-pre / worker / judge / observation) の責務を
+  Claude Code Skills 雛形として docs/strategy/skills-template/ に移植する。
+  ~/.claude/skills/ への配置は KUNIHIDE 個人作業として別途実施する。
+
+acceptance_criteria:
+  - id: AC-Z5-01
+    description: "session-planner.md の frontmatter に name: session-planner、allowed-tools に Bash(git log:*) が含まれる"
+    test_name: test_MANUAL_session_planner_frontmatter_contains_git_log_tool
+    result: pass
+    note: "frontmatter に allowed-tools: Read, Write, Grep, Glob, Bash(git log:*) が記載されている"
+
+  - id: AC-Z5-02
+    description: "session-planner.md に 14 キーの仕様表が記載されており、review_points の固定 4 軸が明示されている"
+    test_name: test_MANUAL_session_planner_contains_14keys_and_4axis
+    result: pass
+    note: "14 キー仕様表と固定 4 軸コードブロックが含まれている"
+
+  - id: AC-Z5-03
+    description: "worker.md に Sandbox-First 原則として git branch --show-current の確認手順が含まれる"
+    test_name: test_MANUAL_worker_contains_sandbox_first_check
+    result: pass
+    note: "Step 0 に git branch --show-current の確認コマンドと即停止条件が記載されている"
+
+  - id: AC-Z5-04
+    description: "judge-4axis.md に verdict の 3 値 (pass / conditional_pass / fail) と failure_type の 7 値が定義されている"
+    test_name: test_MANUAL_judge_4axis_contains_verdict_and_failure_type_definitions
+    result: pass
+    note: "verdict テーブル (3 値) と failure_type テーブル (7 値) が記載されている"
+
+  - id: AC-Z5-05
+    description: "reporter.md に検収レポートの命名規則 (spec_review / implementation_review) が記載されており、Early Warning Sign 8 カテゴリがすべて列挙されている"
+    test_name: test_MANUAL_reporter_contains_naming_convention_and_8_ews_categories
+    result: pass
+    note: "命名規則テーブルと EWS 8 カテゴリテーブルが記載されている"
+
+  - id: AC-Z5-06
+    description: "4 つの Skills 雛形がそれぞれ旧 orchestrator の異なるフェーズ (session-pre / implementation / judge / observation) に 1:1 対応していることがコメントで明示されている"
+    test_name: test_MANUAL_skills_templates_map_to_legacy_orchestrator_phases
+    result: pass
+    note: |
+      session-planner.md: 旧 session-pre / prepared_spec ステージ
+      worker.md: 旧 implementation / patch_apply ステージ
+      judge-4axis.md: 旧 drift_check / judge ステージ
+      reporter.md: 旧 worker_report / observation ステージ
+      各ファイルの「旧 orchestrator での位置づけ」セクションで明示
+
+  - id: AC-Z5-07
+    description: "git diff --name-only で変更ファイルが allowed_changes_detail の 6 ファイルのみであること"
+    test_name: test_MANUAL_changed_files_match_allowed_changes_detail
+    result: pass
+    note: |
+      変更対象:
+        docs/strategy/skills-template/session-planner.md
+        docs/strategy/skills-template/worker.md
+        docs/strategy/skills-template/judge-4axis.md
+        docs/strategy/skills-template/reporter.md
+        docs/sessions/V2-Z5-SKILLS-MIGRATION.json
+        docs/acceptance/V2-Z5-SKILLS-MIGRATION.yaml
+
+  - id: AC-Z5-08
+    description: "forbidden_changes に列挙されたファイル (strategy/ / .claude/ / orchestration/ / stash@{0..7}) に変更がないこと"
+    test_name: test_MANUAL_forbidden_changes_are_untouched
+    result: pass
+    note: "sandbox/window-3-z5 branch のみで作業、main / master / strategy/ / .claude/ / orchestration/ への変更なし"
+
+completion_criteria_results:
+  - id: CC-Z5-01
+    type: artifact
+    condition: "docs/strategy/skills-template/session-planner.md が存在し、14 キー仕様・固定 4 軸・canonical enum が記述されていること"
+    result: pass
+
+  - id: CC-Z5-02
+    type: artifact
+    condition: "docs/strategy/skills-template/worker.md が存在し、Sandbox-First 原則・変更範囲チェック・完了報告フォーマットが記述されていること"
+    result: pass
+
+  - id: CC-Z5-03
+    type: artifact
+    condition: "docs/strategy/skills-template/judge-4axis.md が存在し、4 軸判定・failure_type 分類・verdict 定義が記述されていること"
+    result: pass
+
+  - id: CC-Z5-04
+    type: artifact
+    condition: "docs/strategy/skills-template/reporter.md が存在し、検収レポート命名規則・Early Warning Sign 8 カテゴリが記述されていること"
+    result: pass
+
+  - id: CC-Z5-05
+    type: artifact
+    condition: "docs/sessions/V2-Z5-SKILLS-MIGRATION.json が存在し、14 キーすべてを含むこと"
+    result: pass
+
+  - id: CC-Z5-06
+    type: artifact
+    condition: "docs/acceptance/V2-Z5-SKILLS-MIGRATION.yaml が存在し、acceptance_criteria が 6 件以上含まれること"
+    result: pass
+    note: "8 件の acceptance_criteria を含む"
+
+  - id: CC-Z5-07
+    type: side_effect_free
+    condition: "sandbox/window-3-z5 branch のみで変更が完結しており、main / master / strategy/ / .claude/ / orchestration/ への変更がないこと"
+    result: pass
+
+  - id: CC-Z5-08
+    type: document_rule
+    condition: "各 Skills 雛形の frontmatter に name / description / allowed-tools / model が定義されていること"
+    result: pass
+
+changed_files:
+  - path: docs/strategy/skills-template/session-planner.md
+    lines_added: 96
+    lines_removed: 0
+
+  - path: docs/strategy/skills-template/worker.md
+    lines_added: 89
+    lines_removed: 0
+
+  - path: docs/strategy/skills-template/judge-4axis.md
+    lines_added: 105
+    lines_removed: 0
+
+  - path: docs/strategy/skills-template/reporter.md
+    lines_added: 104
+    lines_removed: 0
+
+  - path: docs/sessions/V2-Z5-SKILLS-MIGRATION.json
+    lines_added: 130
+    lines_removed: 0
+
+  - path: docs/acceptance/V2-Z5-SKILLS-MIGRATION.yaml
+    lines_added: 110
+    lines_removed: 0
+
+summary: |
+  旧 orchestrator (run_session.py) の 5 層認知分離を Claude Code Skills 雛形 4 ファイルとして
+  docs/strategy/skills-template/ に移植した。
+  session-planner (旧 session-pre)、worker (旧 implementation)、
+  judge-4axis (旧 judge)、reporter (旧 observation) の 1:1 対応で記述。
+  ~/.claude/skills/ への配置は KUNIHIDE 個人作業として別途実施する。
+
+next_session_hint: |
+  V2-Z5 完了後の next: KUNIHIDE が main merge → ~/.claude/skills/ へコピー (個人作業)
+  その後 session-plan.yaml の A-7-CLAUDE-CONFIG で ~/.claude/CLAUDE.md + settings.json 整備に進む。
+  Skills の実際の動作テストは A-10-PARALLEL-TEST セッションで実施する。
