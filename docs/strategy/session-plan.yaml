@@ -1,0 +1,848 @@
+# session-plan.yaml
+# 全 80-100 セッション計画 (実数 ±30% 変動)
+# 最終更新: 2026-05-16
+# 次回見直し: 2026-06-16 (月次)
+# 用途: 全プロジェクト横断のセッション ID/status/順序/依存の正本
+# 正本性: 月次見直し可、Stage 構造は半年見直しで判定
+# 整合性: vision-and-principles.md > roadmap-2026.md > 本ファイル の優先順位
+
+metadata:
+  version: "1.0"
+  last_updated: "2026-05-16"
+  next_review: "2026-06-16"
+  total_sessions_estimate: "80-100 (±30% 変動)"
+  session_naming_rule: "プロジェクト prefix 必須 (例: A02-session-04、V2-Z0、NSFW-D1)"
+  authority_order:
+    - "vision-and-principles.md (永久固定)"
+    - "roadmap-2026.md (四半期見直し)"
+    - "session-plan.yaml (月次見直し)"
+    - "lessons-learned.md (事故追記のみ)"
+
+# ============================================================
+# Stage 0: Phase 0-A (凍結処理 + 基盤構築) — Month 1
+# ============================================================
+stage_0:
+  description: "凍結処理 + 既製スタック基盤構築"
+  phase_ref: "Phase 0 + Phase A"
+  period: "2026-05-16 〜 2026-06-08 (Week 1-3)"
+  estimated_hours: 45  # Phase 0 (20h) + Phase A (25h)
+  
+  sessions:
+    # ---------- Phase 0: 凍結処理 ----------
+    - id: V2-Z0-FREEZE
+      status: ✅completed
+      commit: "2e7ab36"
+      date: "2026-05-15"
+      description: "旧 orchestrator 凍結 + 判定待ち 4 件打ち切り + Role v2 線凍結 + T1-T4 凍結"
+      autonomy_level: docs-only
+      
+    - id: V2-Z1-A03-ARCH
+      status: ✅completed
+      commit: "9cfd281"
+      date: "2026-05-15"
+      description: "A03 アーキ確定 (案A ポータル) + A02-A03 疎結合契約 + 命名規則"
+      autonomy_level: docs-only
+      
+    - id: V2-Z4-STRATEGY-LOCK
+      status: in_progress
+      date: "2026-05-16"
+      description: "戦略文書 4 ファイル正本化 (本セッション)"
+      autonomy_level: docs-only
+      depends_on: [V2-Z0-FREEZE, V2-Z1-A03-ARCH]
+      hard_gate_date: "2026-05-29"
+      
+    - id: V2-Z2-INVENTORY
+      status: pending
+      description: "untracked 38 ファイル棚卸し、docs/projects/A01-A10/ 既存中身確認、削除/archive/継承 3 区分"
+      autonomy_level: L2_supervised
+      depends_on: [V2-Z4-STRATEGY-LOCK]
+      hard_gate_date: "2026-05-29"
+      
+    - id: V2-Z3-ARCHIVE
+      status: pending
+      description: "物理 archive 退避 (archive/orchestrator-frozen-2026-05 ブランチへ run_session.py 等)"
+      autonomy_level: L1_required_approval
+      depends_on: [V2-Z2-INVENTORY]
+      hard_gate_date: "2026-05-29"
+      
+    - id: V2-Z5-SKILLS-MIGRATION
+      status: pending
+      description: "旧 5 層分離 (session-pre/worker/judge/observation) を ~/.claude/skills/ に移植"
+      autonomy_level: L2_supervised
+      depends_on: [V2-Z3-ARCHIVE]
+      hard_gate_date: "2026-05-29"
+      output_skills:
+        - "~/.claude/skills/session-planner/SKILL.md"
+        - "~/.claude/skills/worker/SKILL.md"
+        - "~/.claude/skills/judge-4axis/SKILL.md"
+        - "~/.claude/skills/reporter/SKILL.md"
+      
+    # ---------- Phase A: 基盤構築 ----------
+    - id: A-0-SERVER-DIAG
+      status: pending
+      description: "事務所サーバー (desktop-s7afe9q / 100.75.209.57) SSH 接続診断、Ollama 動作確認"
+      autonomy_level: L2_supervised
+      assignee: ClaudeCode  # ssh 委任
+      depends_on: [V2-Z5-SKILLS-MIGRATION]
+      
+    - id: A-1-MAX20X-CONTRACT
+      status: pending
+      description: "Claude Code Max 20x ($200/月) 契約、Cursor Pro + Copilot Pro 追加"
+      autonomy_level: L1_required_approval
+      assignee: KUNIHIDE
+      
+    - id: A-2-WSL-CONFIG
+      status: pending
+      description: "WSL2 .wslconfig 設定 (memory=64GB, processors=10)"
+      autonomy_level: L1_required_approval
+      depends_on: [A-0-SERVER-DIAG]
+      
+    - id: A-3-DOCKER-COMPOSE
+      status: pending
+      description: "docker-compose.yml で n8n + LiteLLM + Directus + PG + Redis + Ollama 起動"
+      autonomy_level: L2_supervised
+      depends_on: [A-2-WSL-CONFIG]
+      hard_gate_date: "2026-06-08"
+      
+    - id: A-4-OLLAMA-QWEN
+      status: pending
+      description: "Ollama に Qwen2.5-Coder-14B Q4_K_M pull、30+ tok/s 確認"
+      autonomy_level: L2_supervised
+      depends_on: [A-3-DOCKER-COMPOSE]
+      
+    - id: A-5-LITELLM-ROUTES
+      status: pending
+      description: "LiteLLM ルート登録 (commander / advisor / lightweight / nsfw-safe-text) + fallback + budget"
+      autonomy_level: L2_supervised
+      depends_on: [A-4-OLLAMA-QWEN]
+      
+    - id: A-6-DIRECTUS-COLLECTIONS
+      status: pending
+      description: "Directus 4 collection 作成 (projects / sessions / artifacts / early_warning)"
+      autonomy_level: L3_auto
+      depends_on: [A-3-DOCKER-COMPOSE]
+      
+    - id: A-7-CLAUDE-CONFIG
+      status: pending
+      description: "~/.claude/CLAUDE.md + ~/.claude/settings.json 整備、4 原則明記"
+      autonomy_level: L2_supervised
+      depends_on: [V2-Z5-SKILLS-MIGRATION]
+      
+    - id: A-8-AGENTS
+      status: pending
+      description: "~/.claude/agents/{builder,validator}.md 整備、isolation: worktree 設定"
+      autonomy_level: L2_supervised
+      depends_on: [A-7-CLAUDE-CONFIG]
+      
+    - id: A-9-A02-DEPLOY-CONFIG
+      status: pending
+      description: "A02 リポジトリに .claude/{CLAUDE.md, settings.json, hooks/} 配備"
+      autonomy_level: L2_supervised
+      depends_on: [A-7-CLAUDE-CONFIG, A-8-AGENTS]
+      
+    - id: A-10-PARALLEL-TEST
+      status: pending
+      description: "Builder + Validator 3 並列 (tmux + worktree) 試行テスト"
+      autonomy_level: L1_required_approval
+      depends_on: [A-9-A02-DEPLOY-CONFIG, A-5-LITELLM-ROUTES]
+      hard_gate_date: "2026-06-08"
+      
+  stage_0_completion_criteria:
+    - "V2-Z0-Z5 完了、旧 orchestrator が 7 日連続 touch されない"
+    - "Phase A 完了、Docker サンドボックス起動"
+    - "A02 で sandbox 内 auto-allow + Builder/Validator が動く"
+    - "承認回数 1 日 30 回以下 (Phase 0 比 70% 削減)"
+
+# ============================================================
+# Stage 1: Phase B-C (A02 深耕 + 量産) — Month 1 後半-3
+# ============================================================
+stage_1:
+  description: "A02_fina 最高優先 — SEO 自動化 + WordPress 公開 + 17+ セッション完走"
+  phase_ref: "Phase B + Phase C (A02 部分)"
+  period: "2026-06-09 〜 2026-08-15 (Week 4-13)"
+  estimated_hours: 110  # Phase B (60h) + Phase C A02 部分 (50h)
+  
+  sessions:
+    # ---------- A02 サイト本体 + SEO ツール ----------
+    - id: A02-B1-WORDPRESS
+      status: pending
+      description: "WordPress + Rank Math プラグイン整備 (Xserver 既存)"
+      autonomy_level: L1_required_approval
+      
+    - id: A02-B2-SERPBEAR
+      status: pending
+      description: "SerpBear Docker 起動、A02 ターゲットキーワード登録"
+      autonomy_level: L2_supervised
+      depends_on: [A-3-DOCKER-COMPOSE]
+      
+    - id: A02-B3-GREENFLARE
+      status: pending
+      description: "Greenflare Docker 起動 (技術 SEO crawler)"
+      autonomy_level: L3_auto
+      depends_on: [A-3-DOCKER-COMPOSE]
+      
+    - id: A02-B4-GSC-GA4
+      status: pending
+      description: "GSC Bulk Data Downloader + GA4/Search Console OAuth 連携"
+      autonomy_level: L1_required_approval
+      
+    - id: A02-B5-SEOMACHINE-FORK
+      status: pending
+      description: "seomachine (TheCraigHewitt) を A02 用 Skills に fork"
+      autonomy_level: L2_supervised
+      output_skills:
+        - "A02_fina/.claude/skills/article-generate/SKILL.md"
+        - "A02_fina/.claude/skills/seo-rewrite/SKILL.md"
+        - "A02_fina/.claude/skills/publish-wp/SKILL.md"
+      
+    - id: A02-B6-UBERSUGGEST-MCP
+      status: pending
+      description: "Ubersuggest MCP 経由のキーワードリサーチ自動化"
+      autonomy_level: L3_auto
+      
+    # ---------- A02 ロードマップ session-04〜17 ----------
+    - id: A02-session-04
+      status: pending
+      description: "量産 (一括生成)"
+      autonomy_level: L3_auto
+      skill: article-generate
+      depends_on: [A02-B5-SEOMACHINE-FORK]
+      hard_gate_date: "2026-06-22"  # Phase B Day 14
+      
+    - id: A02-session-05
+      status: pending
+      description: "導線 (投稿用整形)"
+      autonomy_level: L3_auto
+      skill: article-format-wp
+      depends_on: [A02-session-04]
+      
+    - id: A02-session-06
+      status: pending
+      description: "vertical 切替 (金融→不用品回収→美容)"
+      autonomy_level: L2_supervised
+      skill: vertical-template
+      
+    - id: A02-session-07
+      status: pending
+      description: "キーワードマップ + トピッククラスター設計"
+      autonomy_level: L2_supervised
+      skill: keyword-cluster + Ubersuggest-MCP
+      
+    - id: A02-session-08
+      status: pending
+      description: "カニバリチェック + 公開順序計画"
+      autonomy_level: L3_auto
+      skill: canibalize-check
+      
+    - id: A02-session-09
+      status: pending
+      description: "URL 設計 + ディレクトリ構造"
+      autonomy_level: L1_required_approval
+      skill: url-design
+      note: "やり直しコスト大、人間判断必須"
+      
+    - id: A02-session-10
+      status: pending
+      description: "記事ページ HTML 生成 (blueprint から)"
+      autonomy_level: L3_auto
+      skill: article-to-html
+      
+    - id: A02-session-11
+      status: pending
+      description: "E-E-A-T 表記 + 構造化データ + 更新日管理"
+      autonomy_level: L3_auto
+      skill: eeat-markup + schema-org
+      
+    - id: A02-session-12
+      status: pending
+      description: "sitemap.xml + robots.txt + canonical + OGP"
+      autonomy_level: L3_auto
+      skill: sitemap-generate
+      
+    - id: A02-session-13
+      status: pending
+      description: "Xserver デプロイ + deploy 自動化"
+      autonomy_level: L1_required_approval
+      skill: deploy-xserver
+      note: "本番反映、人間判断必須"
+      
+    - id: A02-session-14
+      status: pending
+      description: "GA4 + Search Console 連携 (設定画面)"
+      autonomy_level: L1_required_approval
+      skill: analytics-setup
+      note: "OAuth、人間判断必須"
+      
+    - id: A02-session-15
+      status: pending
+      description: "リライトスケジュール + 改善優先度判定 (定期実行)"
+      autonomy_level: L3_auto
+      skill: seo-rewrite
+      
+    - id: A02-session-16
+      status: pending
+      description: "AI API 設定基盤 (LiteLLM 経由)"
+      autonomy_level: L1_required_approval
+      skill: api-config
+      
+    - id: A02-session-17
+      status: pending
+      description: "キュー + スケジューラ (n8n workflow)"
+      autonomy_level: L1_required_approval
+      skill: scheduler-setup
+      
+    - id: A02-session-18
+      status: pending
+      description: "A02-A03 疎結合接続契約 (API/MCP 仕様)"
+      autonomy_level: L1_required_approval
+      skill: api-contract
+      depends_on: [A02-session-17]
+      note: "疎結合 5 要件の API/MCP 仕様確定"
+      
+    # ---------- A02 後日項目 ----------
+    - id: A02-future-1
+      status: backlog
+      description: "AI 検索対応 (プラグイン)"
+      autonomy_level: L2_supervised
+      
+    - id: A02-future-2
+      status: backlog
+      description: "SNS マーケティング (プラグイン)"
+      autonomy_level: L2_supervised
+      
+  stage_1_completion_criteria:
+    - "A02 で WordPress 公開記事 1 本 (Phase B Day 14)"
+    - "A02 session-04 〜 18 完走"
+    - "A02 月間 5+ 本記事公開"
+    - "承認回数 1 日 20 回以下 (Phase A 比 50% 削減)"
+
+# ============================================================
+# Stage 2: Phase C (A01 SaaS 化) — Month 2-3
+# ============================================================
+stage_2:
+  description: "A01_Card_task SaaS 化 — 業種横断タスク管理"
+  phase_ref: "Phase C (A01 部分)"
+  period: "2026-06-30 〜 2026-08-15 (Month 2-3、A02 と並行)"
+  estimated_hours: 50
+  
+  sessions:
+    - id: A01-P0-VALIDATE
+      status: pending
+      description: "validateAppState 実装"
+      autonomy_level: L3_auto
+      project_repo: "/Users/kunihideyamane/domain/task.bikusu.net/"
+      note: "既定済、別 chat で実装"
+      
+    - id: A01-P0-HEALTH-WARNING
+      status: pending
+      description: "showHealthWarning 実装"
+      autonomy_level: L3_auto
+      project_repo: "/Users/kunihideyamane/domain/task.bikusu.net/"
+      
+    - id: A01-P0-EXPORT-BACKUP
+      status: pending
+      description: "exportBackupNow 実装"
+      autonomy_level: L3_auto
+      project_repo: "/Users/kunihideyamane/domain/task.bikusu.net/"
+      
+    - id: A01-P1-ROTATE-BACKUP
+      status: pending
+      description: "rotateBackup 実装"
+      autonomy_level: L3_auto
+      
+    - id: A01-P1-AUTO-BACKUP
+      status: pending
+      description: "maybeAutoBackup 実装"
+      autonomy_level: L3_auto
+      
+    - id: A01-P1-RING-BUFFER
+      status: pending
+      description: "5 世代リングバッファ実装"
+      autonomy_level: L3_auto
+      
+    - id: A01-MULTI-TENANT-DESIGN
+      status: pending
+      description: "業種別テンプレ抽出設計 (デリヘル/ラーメン屋/不動産で同基盤)"
+      autonomy_level: L1_required_approval
+      
+    - id: A01-MULTI-TENANT-IMPL
+      status: pending
+      description: "業種別テンプレート実装"
+      autonomy_level: L2_supervised
+      depends_on: [A01-MULTI-TENANT-DESIGN]
+      
+    - id: A01-SAAS-AUTH
+      status: pending
+      description: "課金・認証・サブドメイン分離"
+      autonomy_level: L1_required_approval
+      depends_on: [A01-MULTI-TENANT-IMPL]
+      
+    - id: A01-SAAS-BILLING
+      status: pending
+      description: "Stripe 連携 (将来用)"
+      autonomy_level: L1_required_approval
+      depends_on: [A01-SAAS-AUTH]
+      
+  stage_2_completion_criteria:
+    - "A01 P0/P1 完了、SaaS 化への布石完成"
+    - "A01 マルチテナント設計完了"
+    - "別 chat で A01 専用議論が確立"
+
+# ============================================================
+# Stage 3: Phase C-D (A03 dashboard + NSFW 共通基盤) — Month 2-4
+# ============================================================
+stage_3:
+  description: "A03 dashboard 拡張 + NSFW 共通基盤 + A05 パイロット"
+  phase_ref: "Phase C (A03 部分) + Phase D"
+  period: "2026-06-30 〜 2026-09-15 (Month 2-4)"
+  estimated_hours: 80
+  
+  sessions:
+    # ---------- A03 dashboard ----------
+    - id: A03-PORTAL
+      status: pending
+      description: "案A ポータル基本実装 (mane.bikusu.net 拡張)"
+      autonomy_level: L2_supervised
+      project_repo: "/Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/"
+      
+    - id: A03-DASHBOARD-V1
+      status: pending
+      description: "12 プロジェクト状態の集約表示 (Directus collection 投入)"
+      autonomy_level: L2_supervised
+      depends_on: [A03-PORTAL, A-6-DIRECTUS-COLLECTIONS]
+      
+    - id: A03-ALERTS
+      status: pending
+      description: "失敗通知 + リソース監視 + コスト集計"
+      autonomy_level: L2_supervised
+      
+    # ---------- NSFW 共通基盤 ----------
+    - id: NSFW-D1-NETWORK
+      status: pending
+      description: "docker-compose.nsfw.yml で物理隔離 network 構築"
+      autonomy_level: L1_required_approval
+      
+    - id: NSFW-D2-OLLAMA
+      status: pending
+      description: "別 Ollama instance + Qwen2.5-Coder-14B 配置"
+      autonomy_level: L2_supervised
+      depends_on: [NSFW-D1-NETWORK]
+      
+    - id: NSFW-D3-LITELLM-ROUTE
+      status: pending
+      description: "LiteLLM nsfw-safe-text ルート設定、Anthropic/OpenAI deny"
+      autonomy_level: L1_required_approval
+      depends_on: [NSFW-D2-OLLAMA]
+      
+    - id: NSFW-D4-POSTGRES
+      status: pending
+      description: "別 PostgreSQL instance + Directus schema 分離"
+      autonomy_level: L2_supervised
+      depends_on: [NSFW-D1-NETWORK]
+      
+    - id: NSFW-D5-TAILSCALE-ACL
+      status: pending
+      description: "Tailscale ACL で tag:nsfw を Funnel 不可に"
+      autonomy_level: L1_required_approval
+      
+    - id: NSFW-D6-CLAUDE-TEMPLATE
+      status: pending
+      description: "NSFW 共通 CLAUDE.md 雛形 (Anthropic/OpenAI 禁止明記)"
+      autonomy_level: L2_supervised
+      
+    # ---------- A05 パイロット ----------
+    - id: A05-01-DB-SCHEMA
+      status: pending
+      description: "キャスト管理 DB schema 設計"
+      autonomy_level: L1_required_approval
+      depends_on: [NSFW-D4-POSTGRES, NSFW-D6-CLAUDE-TEMPLATE]
+      
+    - id: A05-02-UI-SKELETON
+      status: pending
+      description: "UI 雛形 (PHP/MySQL 既存パターン)"
+      autonomy_level: L2_supervised
+      depends_on: [A05-01-DB-SCHEMA]
+      
+    - id: A05-03-ATTENDANCE
+      status: pending
+      description: "キャスト出退勤管理機能"
+      autonomy_level: L2_supervised
+      depends_on: [A05-02-UI-SKELETON]
+      
+    - id: A05-04-VERIFY
+      status: pending
+      description: "パイロット動作確認、Anthropic/OpenAI 経由 0 回確認"
+      autonomy_level: L1_required_approval
+      depends_on: [A05-03-ATTENDANCE]
+      hard_gate_date: "2026-08-30"
+      
+  stage_3_completion_criteria:
+    - "A03 dashboard で 12 プロジェクト一覧稼働"
+    - "NSFW 共通基盤起動、6 プロジェクト同じ基盤で動く準備"
+    - "A05 で動く feature 1 つ、Anthropic/OpenAI 経由 0 回"
+
+# ============================================================
+# Stage 4: Phase E (NSFW 残り 5 本 + 動画・データ系) — Month 5-6
+# ============================================================
+stage_4:
+  description: "NSFW 残り 5 本 (A04/A06/A07/A11/A12) + 動画・データ系 (A08/A09/A10) 着手"
+  phase_ref: "Phase E"
+  period: "2026-09-16 〜 2026-11-15 (Month 5-6)"
+  estimated_hours: 120
+  
+  sessions:
+    # ---------- NSFW 残り 5 本 ----------
+    # A11 (ベンリ模倣) - 8 セッション
+    - id: A11-01-DB
+      status: pending
+      description: "ベンリ模倣 DB schema"
+      autonomy_level: L2_supervised
+      
+    - id: A11-02-UI
+      status: pending
+      description: "ベンリ模倣 UI"
+      autonomy_level: L2_supervised
+      
+    - id: A11-03-POST-AUTO
+      status: pending
+      description: "投稿自動化"
+      autonomy_level: L2_supervised
+      
+    - id: A11-04-API
+      status: pending
+      description: "風俗媒体 API 連携"
+      autonomy_level: L1_required_approval
+      
+    # A12 (イージーダイヤリー模倣) - 10 セッション
+    - id: A12-01-DB
+      status: pending
+      description: "イージーダイヤリー模倣 DB schema"
+      autonomy_level: L2_supervised
+      
+    - id: A12-02-DIARY-UI
+      status: pending
+      description: "写メ日記 UI"
+      autonomy_level: L2_supervised
+      
+    - id: A12-03-SNS-HYBRID
+      status: pending
+      description: "SNS ハイブリッド機能"
+      autonomy_level: L2_supervised
+      
+    - id: A12-04-IMAGE-GEN
+      status: pending
+      description: "AI 画像生成連携"
+      autonomy_level: L2_supervised
+      
+    # A07 (ポチャデリワーク SEO) - 6 セッション
+    - id: A07-01-SEO-BASE
+      status: pending
+      description: "A02 SEO 基盤流用、求人特化"
+      autonomy_level: L2_supervised
+      depends_on: [A02-session-17]
+      
+    - id: A07-02-JOB-LISTING
+      status: pending
+      description: "求人一覧ページ"
+      autonomy_level: L2_supervised
+      
+    # A04 (デリヘル顧客管理 v-up) - 10 セッション
+    - id: A04-01-CURRENT-AUDIT
+      status: pending
+      description: "現行システム監査"
+      autonomy_level: L2_supervised
+      
+    - id: A04-02-VUP-DESIGN
+      status: pending
+      description: "v-up 設計"
+      autonomy_level: L1_required_approval
+      
+    - id: A04-03-VUP-IMPL
+      status: pending
+      description: "v-up 実装"
+      autonomy_level: L2_supervised
+      depends_on: [A04-02-VUP-DESIGN]
+      
+    # A06 (cecare 全国展開) - 12 セッション
+    - id: A06-01-MULTI-STORE
+      status: pending
+      description: "多店舗管理基盤"
+      autonomy_level: L1_required_approval
+      
+    - id: A06-02-NATIONAL-SEARCH
+      status: pending
+      description: "全国検索機能"
+      autonomy_level: L2_supervised
+      depends_on: [A06-01-MULTI-STORE]
+      
+    - id: A06-03-ACCESSIBILITY
+      status: pending
+      description: "障害者対応 UI 拡張"
+      autonomy_level: L1_required_approval
+      
+    # ---------- 動画・データ系 ----------
+    # A08 (SNS 短尺動画) - 6 セッション
+    - id: A08-01-SUNO
+      status: pending
+      description: "Suno + 楽曲生成自動化"
+      autonomy_level: L2_supervised
+      
+    - id: A08-02-NANO-BANANA
+      status: pending
+      description: "ナノバナナ画像生成連携"
+      autonomy_level: L2_supervised
+      
+    - id: A08-03-VEO3
+      status: pending
+      description: "Veo3 動画生成連携"
+      autonomy_level: L2_supervised
+      
+    - id: A08-04-SNS-POST
+      status: pending
+      description: "SNS 投稿自動化 (X/Instagram/TikTok)"
+      autonomy_level: L1_required_approval
+      
+    # A09 (動画マーケ 10 分ロング) - 6 セッション
+    - id: A09-01-SCRIPT-GEN
+      status: pending
+      description: "台本生成 Skill"
+      autonomy_level: L3_auto
+      
+    - id: A09-02-HEYGEN
+      status: pending
+      description: "HeyGen アバター動画連携"
+      autonomy_level: L2_supervised
+      
+    - id: A09-03-YOUTUBE
+      status: pending
+      description: "YouTube 投稿自動化"
+      autonomy_level: L1_required_approval
+      
+    # A10 (データ研究) - 6 セッション
+    - id: A10-01-JUPYTER
+      status: pending
+      description: "Jupyter + pgvector 環境構築"
+      autonomy_level: L2_supervised
+      
+    - id: A10-02-CLUSTERING
+      status: pending
+      description: "データクラスタリング"
+      autonomy_level: L3_auto
+      
+    - id: A10-03-CONTENT-IDEAS
+      status: pending
+      description: "コンテンツ案抽出、A02/A08 逆輸入"
+      autonomy_level: L2_supervised
+      
+    # ---------- A03 拡張 ----------
+    - id: A03-SAAS-PREP
+      status: pending
+      description: "将来 SaaS 化への布石"
+      autonomy_level: L1_required_approval
+      
+    - id: A03-COST-MONITOR
+      status: pending
+      description: "コスト集計・API 使用量集計"
+      autonomy_level: L2_supervised
+      
+    - id: A03-EARLY-WARNING
+      status: pending
+      description: "Early Warning Sign の Directus 投入 + アラート"
+      autonomy_level: L2_supervised
+      
+  stage_4_completion_criteria:
+    - "12 プロジェクトすべて active 状態"
+    - "承認回数 1 日 10-15 回以下 (月 300 回以下、Phase A 比 90% 削減)"
+    - "KUNIHIDE 投入時間 週 10-15h で運用可能"
+    - "Early Warning Sign 赤 0-1 件"
+
+# ============================================================
+# Stage 5: Phase F (安定運用 + 余剰) — Month 7-12
+# ============================================================
+stage_5:
+  description: "安定運用 + 新機能 + 経営復帰"
+  phase_ref: "Phase F"
+  period: "2026-11-16 〜 2027-05-15 (Month 7-12)"
+  estimated_hours: 200  # 週 8h × 25 週
+  
+  sessions:
+    - id: F-01-MANAGED-AGENTS
+      status: backlog
+      description: "Managed Agents Dreaming/Outcomes/Multiagent 検証"
+      autonomy_level: L1_required_approval
+      
+    - id: F-02-TEAM-ONBOARDING
+      status: backlog
+      description: "/team-onboarding でクライアント引き継ぎ"
+      autonomy_level: L2_supervised
+      
+    - id: F-03-SKILL-MARKETPLACE
+      status: backlog
+      description: "Skill marketplace 公開準備"
+      autonomy_level: L1_required_approval
+      
+    - id: F-04-NEW-PROJECTS
+      status: backlog
+      description: "新規プロジェクト企画 (A13+)"
+      autonomy_level: L1_required_approval
+      
+    - id: F-05-ANNUAL-REVIEW
+      status: backlog
+      description: "4 原則の有効性検証、vision v2 判定"
+      autonomy_level: L1_required_approval
+      hard_gate_date: "2027-05-16"
+      
+  stage_5_completion_criteria:
+    - "12 プロジェクト安定運用、月次維持作業のみ"
+    - "KUNIHIDE が監督業 + 経営に専念"
+    - "Friday public post で「動く output: YES」継続"
+
+# ============================================================
+# Autonomy Level 凡例
+# ============================================================
+autonomy_levels:
+  L0_hard_block:
+    description: "永久禁止"
+    examples:
+      - "本番 DB 直接 SQL"
+      - "rm -rf"
+      - "sudo"
+      - "git push --force"
+      - "PII export"
+      - "Anthropic/OpenAI 経由 NSFW (規約NG)"
+      
+  L1_required_approval:
+    description: "人間承認必須 (不可逆な action)"
+    examples:
+      - "main branch merge"
+      - "git push"
+      - "本番 deploy"
+      - "DB migration"
+      - "OAuth 設定"
+      - "新規依存追加 (npm install / pip install)"
+      - "規約 NG 領域への参入判断"
+      
+  L2_supervised:
+    description: "通知のみ、AI が実行可能"
+    examples:
+      - "sandbox 内大規模 refactor"
+      - "新規 collection / table 作成"
+      - "外部 API GET 通信"
+      
+  L3_auto:
+    description: "完全自動、人間関与なし"
+    examples:
+      - "sandbox 内 file read/write"
+      - "4-gate 検証 (ruff/pytest/mypy/compileall)"
+      - "git commit (sandbox branch)"
+      - "artifact 生成"
+      - "lint/format 自動修正"
+      - "ローカル LLM 呼出"
+      
+  docs-only:
+    description: "ドキュメントのみ変更、コード変更なし"
+    examples:
+      - "session JSON / acceptance YAML 起票"
+      - "CLAUDE.md 整備"
+      - "戦略文書作成"
+
+# ============================================================
+# Status 凡例
+# ============================================================
+status_definitions:
+  ✅completed:
+    description: "完了、commit 確定"
+    requires: ["commit hash", "date"]
+    
+  in_progress:
+    description: "進行中"
+    requires: ["date", "expected_completion"]
+    
+  pending:
+    description: "未着手、依存解消待ちまたは順序待ち"
+    requires: []
+    
+  backlog:
+    description: "将来やる、優先度低、後日項目"
+    requires: []
+    
+  blocked:
+    description: "依存解消待ち、外部要因で止まっている"
+    requires: ["blocker_description"]
+    
+  frozen:
+    description: "凍結、再開時期未定"
+    requires: ["freeze_date", "freeze_reason"]
+    
+  killed:
+    description: "中止、再開しない"
+    requires: ["kill_date", "kill_reason"]
+
+# ============================================================
+# Session ID 命名規則 (再掲)
+# ============================================================
+naming_convention:
+  pattern: "<PREFIX>-<SUBPHASE>-<SHORT-DESC>"
+  prefixes:
+    - "V2-Z{0..9}: 体制 v2 への移行セッション"
+    - "A{01..12}-session-{NN}: 各プロジェクト個別 session (例: A02-session-04)"
+    - "A{01..12}-{phase}-{desc}: Phase 別 (例: A01-P0-VALIDATE, A05-04-VERIFY)"
+    - "NSFW-D{1..6}: NSFW 共通基盤セッション"
+    - "F-{NN}-{desc}: Phase F 安定運用セッション"
+    - "A-{0..14}: Phase A 基盤構築セッション"
+    - "A02-B{1..6}: Phase B 準備セッション (A02 専用)"
+  collision_check:
+    rule: "起票前に git log --grep '<session_id>' で衝突確認必須"
+    
+# ============================================================
+# 月次見直しルール (次回 2026-06-16)
+# ============================================================
+review_rules:
+  monthly:
+    when: "毎月 16 日 (前月分の総括 + 翌月分の調整)"
+    actions:
+      - "完了済 session の commit hash 記録"
+      - "delayed session の理由分析、新 hard_gate_date 設定"
+      - "frozen / killed の追加"
+      - "新規 session 追加 (実装中に発見されたもの)"
+      - "Early Warning Sign 結果反映 (lessons-learned.md §4)"
+      
+  quarterly:
+    when: "3 ヶ月ごと"
+    actions:
+      - "Stage 構造の見直し"
+      - "AI 自走比率の実績 vs 計画比較"
+      - "投入時間実績の集計"
+      - "次四半期の Phase 内容調整"
+      
+  semi_annual:
+    when: "6 ヶ月ごと"
+    actions:
+      - "Phase 構造の大幅修正可"
+      - "12 プロジェクト優先順位の再判定"
+      - "AI モデル切替判定"
+      - "並列数調整"
+
+# ============================================================
+# 整合性チェック
+# ============================================================
+consistency:
+  vision_principles_md_section_3: "12 プロジェクト構成と一致"
+  roadmap_2026_md_phase_structure: "Stage 0-5 = Phase 0-F に 1:1 対応"
+  lessons_learned_md_section_4: "Early Warning Sign 8 カテゴリの月次運用"
+  authority_order: "vision-and-principles.md > roadmap-2026.md > 本ファイル > lessons-learned.md"
+
+# ============================================================
+# 参照リソース
+# ============================================================
+references:
+  parent_documents:
+    - "docs/strategy/vision-and-principles.md (永久固定、4 原則)"
+    - "docs/strategy/roadmap-2026.md (四半期見直し、Phase 0-F)"
+    - "docs/strategy/lessons-learned.md (過去事故 + 再発防止)"
+  research_artifact: "wf-4acc611a-0950-4df3-bc11-8fa709eec1ba (2026-05-16 参謀リサーチ)"
+  external_specs:
+    - "/Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/docs/architecture-v2.md"
+    - "/Users/kunihideyamane/AI_Team/projects/A03_mane_bikusu/docs/a02-decoupling-contract.md"
+
+# END OF FILE

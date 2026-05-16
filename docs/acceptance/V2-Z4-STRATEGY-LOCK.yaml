@@ -1,0 +1,88 @@
+session_id: V2-Z4-STRATEGY-LOCK
+goal: >-
+  戦略文書 4 ファイル (vision-and-principles / roadmap-2026 / session-plan / lessons-learned) を
+  docs/strategy/ へ正本化し、canonical anchor として配置する。
+acceptance:
+  - id: AC-Z4-01
+    description: docs/strategy/vision-and-principles.md が存在し非空
+    test_name: test_vision_file_exists_nonempty
+    type: manual
+    manual_check: true
+    verification:
+      - test -s docs/strategy/vision-and-principles.md
+
+  - id: AC-Z4-02
+    description: docs/strategy/roadmap-2026.md が存在し非空
+    test_name: test_roadmap_file_exists_nonempty
+    type: manual
+    manual_check: true
+    verification:
+      - test -s docs/strategy/roadmap-2026.md
+
+  - id: AC-Z4-03
+    description: docs/strategy/session-plan.yaml が存在し非空
+    test_name: test_session_plan_file_exists_nonempty
+    type: manual
+    manual_check: true
+    verification:
+      - test -s docs/strategy/session-plan.yaml
+
+  - id: AC-Z4-04
+    description: docs/strategy/lessons-learned.md が存在し非空
+    test_name: test_lessons_file_exists_nonempty
+    type: manual
+    manual_check: true
+    verification:
+      - test -s docs/strategy/lessons-learned.md
+
+  - id: AC-Z4-05
+    description: vision-and-principles.md に 4 原則 (原則1〜原則4) が全て記載されている
+    test_name: test_vision_contains_4_principles
+    type: manual
+    manual_check: true
+    verification:
+      - grep -q '原則 1' docs/strategy/vision-and-principles.md
+      - grep -q '原則 2' docs/strategy/vision-and-principles.md
+      - grep -q '原則 3' docs/strategy/vision-and-principles.md
+      - grep -q '原則 4' docs/strategy/vision-and-principles.md
+
+  - id: AC-Z4-06
+    description: roadmap-2026.md に Phase 0/A/B/C/D が全て記載されている
+    test_name: test_roadmap_contains_all_phases
+    type: manual
+    manual_check: true
+    verification:
+      - grep -q 'Phase 0' docs/strategy/roadmap-2026.md
+      - grep -q 'Phase A' docs/strategy/roadmap-2026.md
+      - grep -q 'Phase B' docs/strategy/roadmap-2026.md
+      - grep -q 'Phase C' docs/strategy/roadmap-2026.md
+      - grep -q 'Phase D' docs/strategy/roadmap-2026.md
+
+  - id: AC-Z4-07
+    description: session-plan.yaml に completed ステータス + commit hash (2e7ab36/9cfd281) が記載
+    test_name: test_session_plan_contains_completed_commits
+    type: manual
+    manual_check: true
+    verification:
+      - grep -q 'completed' docs/strategy/session-plan.yaml
+      - grep -q '2e7ab36' docs/strategy/session-plan.yaml
+      - grep -q '9cfd281' docs/strategy/session-plan.yaml
+
+  - id: AC-Z4-08
+    description: lessons-learned.md に凍結と再発防止に関する記述が存在
+    test_name: test_lessons_contains_freeze_and_prevention
+    type: manual
+    manual_check: true
+    verification:
+      - grep -q '凍結' docs/strategy/lessons-learned.md
+      - grep -q '予防\|防止\|prevention' docs/strategy/lessons-learned.md
+
+  - id: AC-Z4-09
+    description: forbidden_changes 対象 (master_instruction.md / global_rules.md / .claude/) が git 差分に含まれない
+    test_name: test_forbidden_paths_unchanged
+    type: manual
+    manual_check: true
+    verification:
+      - "! git diff HEAD -- docs/master_instruction.md | grep -q '.'"
+      - "! git diff HEAD -- docs/global_rules.md | grep -q '.'"
+      - "! git diff HEAD -- .claude/ | grep -q '.'"
