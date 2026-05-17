@@ -1,0 +1,233 @@
+{
+  "session_id": "session-203-pre",
+  "phase_id": "P13-pre",
+  "type": "docs-only",
+  "title": "CLAUDE.md スケルトン + hooks 契約仕様の docs-only 作成（CLAUDE.md 実体は未配置・session-203 領域）",
+  "goal": "CLAUDE.md の 3 層階層構造（project / user / local）・責務分担・読み込み順序・記載必須項目（Commander=KUNIHIDE 明示 / 各 Path 切替時の挙動 / 禁止操作 / 4-gate コマンド / md5 baseline 一覧）・記載禁止項目（秘密情報 / API キー / 内部資産パス）・master_instruction.md との競合解消ルール・path_mode_policy_v1.md からの参照ポイント・改訂手順を docs/specs/claude_md_contract_v1.md に freeze し、hooks 8 種（PreToolUse / PostToolUse / UserPromptSubmit / Stop / SubagentStop / Notification / SessionStart / PreCompact）の発火条件・.claude/settings.json 構造定義・.claude/hooks.bak 復活手順・PreToolUse での git push ブロックロジック・PostToolUse 監査ログ（audit jsonl）・Python 3.9 互換要件（PEP604 禁止）・13 個の事故防止ガードを docs/specs/hooks_contract_v1.md に freeze する。CLAUDE.md 実体の物理配置・.claude/settings.json 変更・.claude/hooks.bak 復活は本セッションでは行わない（docs-only）。",
+  "scope": [
+    "docs/specs/claude_md_contract_v1.md を新規作成し、CLAUDE.md 契約仕様（7 章: 階層構造 / 責務分担と読み込み順序 / 記載必須項目 / 記載禁止項目 / master_instruction.md 競合解消 / path_mode_policy_v1.md 参照 / 改訂手順）を 400 行以上で freeze する。",
+    "docs/specs/hooks_contract_v1.md を新規作成し、hooks 契約仕様（7 章: hook 8 種と発火条件 / settings.json 構造 / hooks.bak 復活手順 / git push ブロックロジック / 監査ログ / Python 3.9 互換 / 13 ガード）を 300 行以上で freeze する。",
+    "docs/sessions/session-203-pre.json を 14-key 正本として起票する。",
+    "docs/acceptance/session-203-pre.yaml を acceptance 正本として起票する。"
+  ],
+  "out_of_scope": [
+    "CLAUDE.md 実体のリポジトリルートへの物理配置（session-203 領域）",
+    "~/.claude/CLAUDE.md（user 層）の作成",
+    ".claude/CLAUDE.local.md（local 層）の作成",
+    ".claude/settings.json の変更",
+    ".claude/settings.json.proposed の変更",
+    ".claude/hooks.bak の復活・リネーム・有効化",
+    ".claude/hooks/ 配下スクリプトの実装・改変",
+    "hooks の settings.json への登録",
+    "implementation code の変更",
+    "orchestration/** の変更",
+    "run_session.py の変更",
+    "tests/** の変更",
+    "docs/strategy/** の変更",
+    "docs/master_instruction.md の変更",
+    "docs/sessions/session-202-pre.json の変更",
+    "docs/acceptance/session-202-pre.yaml の変更",
+    "sealed stash@{0..7} への操作",
+    "allowed_changes_detail に列挙した 4 ファイル以外の新規作成・変更"
+  ],
+  "constraints": [
+    "1セッション1目的",
+    "docs-only（実装コードを混在させない）",
+    "最大4ファイル（claude_md_contract_v1.md / hooks_contract_v1.md / session-203-pre.json / session-203-pre.yaml）",
+    "CLAUDE.md の実体配置を行わない（契約仕様だけを書く・session-203 で実体化）",
+    ".claude/settings.json を変更しない（32 bytes placeholder 不変）",
+    ".claude/hooks.bak を復活させない（governance pause 中）",
+    "claude_md_contract_v1.md は 400 行以上",
+    "hooks_contract_v1.md は 300 行以上",
+    "14-key 完全準拠（session_id / phase_id / title / goal / scope / out_of_scope / constraints / acceptance_ref / allowed_changes_detail / forbidden_changes / completion_criteria / acceptance_criteria / review_points / failure_type）",
+    "completion_criteria.type は canonical 5値のみ（artifact / document_rule / non_regression / side_effect_free / state_transition_consistent）",
+    "completion_criteria に document_rule タイプを最低4件含む",
+    "acceptance_criteria の各要素は id / description / test_name の3キーのみを持ち、最低6件・test_name と 1:1",
+    "review_points は4固定文言（配列順）と完全一致する",
+    "秘密情報 / API キー実値 / 内部資産パスを成果物に含めない",
+    "曖昧語禁止"
+  ],
+  "acceptance_ref": "docs/acceptance/session-203-pre.yaml",
+  "allowed_changes_detail": [
+    "docs/specs/claude_md_contract_v1.md: 新規作成",
+    "docs/specs/hooks_contract_v1.md: 新規作成",
+    "docs/sessions/session-203-pre.json: 新規作成",
+    "docs/acceptance/session-203-pre.yaml: 新規作成"
+  ],
+  "forbidden_changes": [
+    "CLAUDE.md の実体配置",
+    ".claude/settings.json 変更",
+    ".claude/hooks.bak 復活",
+    "session-202-pre 成果物変更",
+    "orchestration/** を変更しない",
+    "run_session.py を変更しない",
+    "tests/** を変更しない",
+    "docs/strategy/** を変更しない",
+    "docs/master_instruction.md を変更しない",
+    "docs/sessions/session-202-pre.json を変更しない",
+    "docs/acceptance/session-202-pre.yaml を変更しない",
+    "sealed stash@{0..7} を操作しない",
+    "allowed_changes_detail に列挙した4パス以外のファイルを変更・新規作成しない"
+  ],
+  "completion_criteria": [
+    {
+      "id": "CC-203-01",
+      "type": "artifact",
+      "condition": "docs/specs/claude_md_contract_v1.md が保存され 400 行以上である。"
+    },
+    {
+      "id": "CC-203-02",
+      "type": "artifact",
+      "condition": "docs/specs/hooks_contract_v1.md が保存され 300 行以上である。"
+    },
+    {
+      "id": "CC-203-03",
+      "type": "artifact",
+      "condition": "docs/sessions/session-203-pre.json が保存されている。"
+    },
+    {
+      "id": "CC-203-04",
+      "type": "artifact",
+      "condition": "docs/acceptance/session-203-pre.yaml が保存されている。"
+    },
+    {
+      "id": "CC-203-05",
+      "type": "document_rule",
+      "condition": "claude_md_contract_v1.md に Commander = KUNIHIDE の明示が記述されている。"
+    },
+    {
+      "id": "CC-203-06",
+      "type": "document_rule",
+      "condition": "claude_md_contract_v1.md に project / user / local の 3 層階層構造と読み込み順序が記述されている。"
+    },
+    {
+      "id": "CC-203-07",
+      "type": "document_rule",
+      "condition": "claude_md_contract_v1.md に記載必須項目（4-gate コマンド / md5 baseline 一覧 / 禁止操作 / 各 Path 切替時の挙動）と記載禁止項目（秘密情報 / API キー / 内部資産パス）が記述されている。"
+    },
+    {
+      "id": "CC-203-08",
+      "type": "document_rule",
+      "condition": "claude_md_contract_v1.md に master_instruction.md との競合解消ルールと改訂手順（変更権限 / PR レビュー必須事項）が記述されている。"
+    },
+    {
+      "id": "CC-203-09",
+      "type": "document_rule",
+      "condition": "hooks_contract_v1.md に hooks 8 種（PreToolUse / PostToolUse / UserPromptSubmit / Stop / SubagentStop / Notification / SessionStart / PreCompact）と各発火条件が記述されている。"
+    },
+    {
+      "id": "CC-203-10",
+      "type": "document_rule",
+      "condition": "hooks_contract_v1.md に PreToolUse での git push ブロックロジックと PostToolUse 監査ログ（audit jsonl 推奨形式）が記述されている。"
+    },
+    {
+      "id": "CC-203-11",
+      "type": "document_rule",
+      "condition": "hooks_contract_v1.md に Python 3.9 互換要件（PEP604 禁止）と 13 個の事故防止ガード一覧が記述されている。"
+    },
+    {
+      "id": "CC-203-12",
+      "type": "document_rule",
+      "condition": "hooks_contract_v1.md に .claude/settings.json の構造定義（現状 permission_mode のみ・32bytes）と .claude/hooks.bak からの復活手順（docs-only）が記述されている。"
+    },
+    {
+      "id": "CC-203-13",
+      "type": "non_regression",
+      "condition": "git diff に forbidden_changes に列挙したパターンへの変更が含まれない。"
+    },
+    {
+      "id": "CC-203-14",
+      "type": "non_regression",
+      "condition": "リポジトリルートに CLAUDE.md 実体が新規配置されていない（本セッションは契約仕様のみ）。"
+    },
+    {
+      "id": "CC-203-15",
+      "type": "side_effect_free",
+      "condition": ".claude/settings.json / .claude/hooks.bak / orchestration / run_session.py / tests / docs/strategy / session-202-pre 成果物に変更がない（docs-only のみ）。"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-203-01",
+      "description": "session-203-pre.json が保存され、14-key をすべて持つ。",
+      "test_name": "test_session_203_pre_json_has_all_14_keys"
+    },
+    {
+      "id": "AC-203-02",
+      "description": "session-203-pre.yaml の session_id が session-203-pre と一致する。",
+      "test_name": "test_session_203_pre_yaml_session_id_matches"
+    },
+    {
+      "id": "AC-203-03",
+      "description": "claude_md_contract_v1.md が存在し 400 行以上である。",
+      "test_name": "test_claude_md_contract_v1_exists_min_400_lines"
+    },
+    {
+      "id": "AC-203-04",
+      "description": "claude_md_contract_v1.md に Commander = KUNIHIDE の明示が記述されている。",
+      "test_name": "test_claude_md_contract_commander_kunihide_declared"
+    },
+    {
+      "id": "AC-203-05",
+      "description": "claude_md_contract_v1.md に project / user / local の 3 層階層構造が記述されている。",
+      "test_name": "test_claude_md_contract_three_layer_hierarchy"
+    },
+    {
+      "id": "AC-203-06",
+      "description": "claude_md_contract_v1.md に 4-gate コマンドと md5 baseline 一覧の記載要件が記述されている。",
+      "test_name": "test_claude_md_contract_four_gate_and_md5_baseline"
+    },
+    {
+      "id": "AC-203-07",
+      "description": "claude_md_contract_v1.md に記載禁止項目（秘密情報 / API キー / 内部資産パス）が記述されている。",
+      "test_name": "test_claude_md_contract_forbidden_content_listed"
+    },
+    {
+      "id": "AC-203-08",
+      "description": "claude_md_contract_v1.md に master_instruction.md との競合解消ルールが記述されている。",
+      "test_name": "test_claude_md_contract_master_instruction_conflict_rule"
+    },
+    {
+      "id": "AC-203-09",
+      "description": "hooks_contract_v1.md が存在し 300 行以上である。",
+      "test_name": "test_hooks_contract_v1_exists_min_300_lines"
+    },
+    {
+      "id": "AC-203-10",
+      "description": "hooks_contract_v1.md に hooks 8 種が全て記述されている。",
+      "test_name": "test_hooks_contract_eight_hook_types_present"
+    },
+    {
+      "id": "AC-203-11",
+      "description": "hooks_contract_v1.md に PreToolUse の git push ブロックロジックと audit jsonl 監査ログが記述されている。",
+      "test_name": "test_hooks_contract_git_push_block_and_audit_jsonl"
+    },
+    {
+      "id": "AC-203-12",
+      "description": "hooks_contract_v1.md に Python 3.9 互換要件（PEP604 禁止）と 13 個の事故防止ガードが記述されている。",
+      "test_name": "test_hooks_contract_py39_pep604_and_13_guards"
+    },
+    {
+      "id": "AC-203-13",
+      "description": "リポジトリルートに CLAUDE.md 実体が新規配置されていない（docs-only / session-203 領域）。",
+      "test_name": "test_claude_md_entity_not_placed_in_session_203_pre"
+    },
+    {
+      "id": "AC-203-14",
+      "description": "completion_criteria.type が canonical 5値のみで、document_rule が最低4件ある。",
+      "test_name": "test_session_203_pre_completion_criteria_types_canonical_min4_document_rule"
+    },
+    {
+      "id": "AC-203-15",
+      "description": "acceptance_criteria の各要素が id / description / test_name の3キーのみで構成され、最低6件ある。",
+      "test_name": "test_session_203_pre_acceptance_criteria_shape_min6"
+    }
+  ],
+  "review_points": [
+    "仕様一致（AC達成）",
+    "変更範囲遵守",
+    "副作用なし",
+    "検証十分性"
+  ],
+  "failure_type": "spec_missing"
+}
