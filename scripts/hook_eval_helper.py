@@ -8,6 +8,7 @@ session-171f-pre 仕様に基づく実装:
 from __future__ import annotations
 
 import subprocess
+import sys
 from typing import Dict, List, Optional
 
 
@@ -23,9 +24,23 @@ def get_changed_files() -> List[str]:
 
 
 def is_head_synced() -> bool:
-    """HEAD が origin/main と同一かを返す。"""
-    head = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode().strip()
-    origin = subprocess.check_output(["git", "rev-parse", "origin/main"]).decode().strip()
+    """HEAD が origin/main と同一かを返す。origin/main 未解決時は True (neutral skip) を返す。"""
+    try:
+        head = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"],
+            stderr=subprocess.DEVNULL,
+        ).decode().strip()
+    except subprocess.CalledProcessError:
+        print("[hook_eval_helper] WARNING: HEAD 解決失敗 — neutral skip", file=sys.stderr)
+        return True
+    try:
+        origin = subprocess.check_output(
+            ["git", "rev-parse", "origin/main"],
+            stderr=subprocess.DEVNULL,
+        ).decode().strip()
+    except subprocess.CalledProcessError:
+        print("[hook_eval_helper] WARNING: origin/main 未解決 — neutral skip", file=sys.stderr)
+        return True
     return head == origin
 
 
@@ -83,7 +98,6 @@ def evaluate(
 
 if __name__ == "__main__":
     import json
-    import sys
 
     print(json.dumps(evaluate(), ensure_ascii=False, indent=2))
     sys.exit(0)

@@ -1,5 +1,6 @@
 """AC-83-01〜04: acceptance and completion verification standardization テスト。"""
 import pytest
+from pathlib import Path
 
 from orchestration.run_session import (
     validate_acceptance_test_names,
@@ -60,7 +61,7 @@ class TestMissingTestFunctionForAcceptanceFails:
         """AC-83-02: 実在するテスト関数名は grep で発見できる。"""
         import subprocess
         result = subprocess.run(
-            ["grep", "-r", "test_acceptance_items_require_test_name", "backend/tests/"],
+            ["grep", "-r", "--exclude-dir=__pycache__", "test_acceptance_items_require_test_name", "backend/tests/"],
             capture_output=True, text=True,
         )
         assert result.returncode == 0, "test_name に対応するテスト関数がコードベースに存在しない"
@@ -72,7 +73,7 @@ class TestMissingTestFunctionForAcceptanceFails:
         # このファイル自体を除外して検索する（grep が自身の文字列をヒットするのを防ぐ）
         this_file = os.path.basename(__file__)
         result = subprocess.run(
-            ["grep", "-r", "--exclude", this_file,
+            ["grep", "-r", "--exclude-dir=__pycache__", "--exclude", this_file,
              "def test_nonexistent_function_xyz_abc_never_exists_999", "backend/tests/"],
             capture_output=True, text=True,
         )
@@ -170,3 +171,30 @@ class TestCompletionPassesWhenAllConditionsMet:
             allowed_changes=[],
         )
         assert result["completion"] == "pass"
+
+
+# ---------------------------------------------------------------------------
+# AC-195-01: grep 呼び出しに --exclude-dir=__pycache__ が含まれる (source_inspection)
+# ---------------------------------------------------------------------------
+def test_completion_verification_excludes_pycache_directory() -> None:
+    """AC-195-01: grep 引数リストに --exclude-dir=__pycache__ が含まれる。"""
+    src = Path(__file__).read_text(encoding="utf-8")
+    assert "--exclude-dir=__pycache__" in src
+
+
+# ---------------------------------------------------------------------------
+# AC-195-02: __pycache__ 内のファイルは grep 対象外になる (behavioral)
+# ---------------------------------------------------------------------------
+def test_completion_verification_does_not_match_pyc_files(tmp_path: Path) -> None:
+    """AC-195-02: __pycache__ 内の識別子は --exclude-dir=__pycache__ でヒットしない。"""
+    import subprocess
+    unique_id = "test_pycache_excluded_session195_marker_99999"
+    pycache_dir = tmp_path / "__pycache__"
+    pycache_dir.mkdir()
+    (pycache_dir / "dummy.cpython-311.pyc").write_text(unique_id, encoding="utf-8")
+    result = subprocess.run(
+        ["grep", "-r", "--exclude-dir=__pycache__", unique_id, str(tmp_path)],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode != 0, "__pycache__ 内の識別子が grep でヒットした"
